@@ -1,0 +1,90 @@
+Quadratic ID Number | Number in Video | Name
+============================================
+
+Standard Fractals:
+	000 |  1. | Mandelbrot Set
+	100 |  2. | Burning Ship	
+	128 |  3. | Celtic	
+	228 |  4. | Buffalo	
+	004 |  5. | Tricorn/Mandelbar
+	032 |  6. | Burning Ship Mandelbar
+	132 |  7. | Celtic Mandelbar
+	160 |  8. | Buffalo Mandelbar
+	036 |  9. | Perpendicular Mandelbrot
+	064 | 10. | Perpendicular Burning Ship
+	164 | 11. | Perpendicular Celtic
+	196 | 12. | Perpendicular Buffalo
+	
+Asymmetric Fractals Part-1:
+	080 | 13. | Airship
+	027 | 14. | Tail
+	030 | 15. | Quill
+	016 | 16. | Shark Fin
+	020 | 17. | Power Drill
+	111 | 18. | Big and Little
+	125 | 19. | Halo
+	050 | 20. | Genie Lamp
+	072 | 21. | Hook
+	246 | 22. | Cow
+	154 | 23. | Sideways Ship
+	108 | 24. | Inner Snake
+	126 | 25. | Outer Snake
+	206 | 26. | Sock Puppet
+	252 | 27. | Speedy Buffalo
+	242 | 28. | Smooth Buffalo
+	198 | 29. | Aerodynamic
+	238 | 30. | Pointed Buffalo
+	236 | 31. | Smart Buffalo
+	
+Symmetrical Fractals:
+	015 | 32. | Mallet
+	011 | 33. | Alien
+	088 | 34. | Chainsaw
+	044 | 35. | Inner Double Snake
+	060 | 36. | Outer Double Snake
+	008 | 37. | Bat Wing
+	040 | 38. | Heart
+	056 | 39. | Rotated Heart
+	172 | 40. | Crown
+	010 | 41. | Boomerang
+	043 | 42. | Cupids Arrow
+	092 | 43. | Ellipsoid Parallelogram
+	089 | 44. | Bone
+	138 | 45. | Pointed Celtic
+	063 | 46. | Washing Machine
+	142 | 47. | Anchor
+	038 | 48. | Terminator
+	140 | 49. | Double Sector
+	091 | 50. | Super
+	136 | 51. | Wide Celtic
+	170 | 52. | Spade
+	174 | 53. | Umbrella
+	168 | 54. | Temple
+	057 | 55. | Sleeping Snake
+	047 | 56. | Wide Alien
+	
+Asymmetric Fractals Part-2:
+	116 | 57. | Titanic
+	230 | 58. | Mountain
+	146 | 59. | Backwards Ship
+	248 | 60. | Spaceship
+	118 | 61. | Fake Ship
+	082 | 62. | Ray Gun
+	075 | 63. | Claw
+	190 | 64. | Fish
+	178 | 65. | Bike Helmet
+	214 | 66. | Boat Motor
+	148 | 67. | Nail Gun
+	186 | 68. | Speed Boat
+	156 | 69. | Blow Dryer
+	200 | 70. | Left Rectangle
+	218 | 71. | Right Rectangle
+	222 | 72. | Alligator
+	212 | 73. | Crocodile
+	180 | 74. | Tornado
+	052 | 75. | Pitcher
+
+Geometric Shapes:
+	130 | 76. | Rhombus
+	134 | 77. | Teardrop
+	162 | 78. | Pointed Teardrop
