@@ -4,7 +4,12 @@ v1.0.0 | 2023/08/14 | zerico2005
 Description:
 	ABS Fractal Explorer will allow you to explore hundereds of different Mandelbrot variants.
 	Some extra features include changing the starting Z values, along with viewing each fractals Julia set.
+	The software is available for both Windows and Linux.
 	More features, preformance improvements, and bug fixes will be released in later versions.
+
+How to Download:
+	Press the Green [<> Code] button, then select "Download ZIP". Extract/unzip all the contents into a folder.
+	Once you have extracted all of the files, you can run either the Windows or Linux version depending on your operating system.
 
 Controls: (Also see Keybinds.png)
 	Primary:
@@ -34,10 +39,10 @@ Notes:
 		- There is 4 fractals contained within the "Anchor" fractal, can you find more? https://youtu.be/gu1QfON0zxg
 
 System Requirements:
-	-	GPU capable of running OpenCL 1.2 (Most computers from 2012 or later)
-	-	64bit x86 CPU
-	-	640x400 minimum screen resolution
-	-	Program uses ~130megabytes of RAM
+	- GPU capable of running OpenCL 1.2 (Most computers from 2012 or later)
+	- 64bit x86 CPU
+	- 640x400 minimum screen resolution
+	- Program uses ~130megabytes of RAM
 
 The 6x8 pixel font used is a slightly modified version of "even" font by Christian Munk (CMunk) from https://fontstruct.com/fontstructions/show/275268/even_2.
 The "even" font is lincesed under Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
