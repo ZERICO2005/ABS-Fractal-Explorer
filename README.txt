@@ -1,6 +1,8 @@
 ABS-Fractal-Explorer
 v1.0.1 | 2023/08/15 | zerico2005
-(Version v1.0.1 suffers from major compatibility issues)
+
+(Version v1.0.1 suffers from major compatibility issues to be fixed in v1.0.2)
+
 Description:
 	ABS Fractal Explorer will allow you to explore hundereds of different Mandelbrot variants.
 	Some extra features include changing the starting Z values, along with viewing each fractals Julia set.
