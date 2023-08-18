@@ -1,5 +1,5 @@
 ABS-Fractal-Explorer
-v1.0.1 Windows | 2023/08/15 | zerico2005
+v1.0.2 Windows | 2023/08/17 | zerico2005
 
 The Windows version of ABS-Fractal-Explorer was compiled and tested on Windows 10.
 It will probably run on Windows 8.1/8/7 but I am not sure.
