@@ -1,0 +1,18 @@
+To compile, you may need a few to all of the following files in ./imgui
+The files can be obtained from the Dear Imgui github repository https://github.com/ocornut/imgui
+
+imconfig.h
+imgui.cpp
+imgui.h
+imgui_demo.cpp
+imgui_draw.cpp
+imgui_impl_sdl2.cpp
+imgui_impl_sdl2.h
+imgui_impl_sdlrenderer2.cpp
+imgui_impl_sdlrenderer2.h
+imgui_internal.h
+imgui_tables.cpp
+imgui_widgets.cpp
+imstb_rectpack.h
+imstb_textedit.h
+imstb_truetype.h
