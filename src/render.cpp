@@ -27,7 +27,7 @@ BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
 BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
 
-fp64 FRAME_RATE = 120.0; // Double the max screen refresh rate
+fp64 FRAME_RATE = 240.0; // Double the max screen refresh rate
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
@@ -93,7 +93,9 @@ int buttonSelection = -1;
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
-
+	ImGui::Text("%.2lfFPS",1.0 / DeltaTime);
+	ImGui::SameLine();
+	ImGui::Text("%.2lfms",DeltaTime * 1000.0);
     ImGui::Text("Button: %d",buttonSelection); ImGui::SameLine();
     size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
     for (size_t i = 0; i < buttonCount; i++) {
@@ -107,7 +109,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 			
         }
     }
-
 	ImGui::Separator();
 	uint32_t boxSpace = 8;
 	uint32_t boxCount = 8;
@@ -155,7 +156,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::SameLine();
 	static char input_zImag[128] = "0.0";
 	Param_Input_Box("Z-Imag:","##input_zImag",input_zImag);
-	
     // End the ImGui window
     ImGui::End();
 }
@@ -190,7 +190,7 @@ void Menu_Fractal() {
 			ImGui::InputInt("##input_power",&input_power,1,1); valueLimit(input_power,2,10);
 		} else {
 			ImGui::Text("Fractal Power: %s",getPowerText(round(input_polar_power)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.02,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
 			ImGui::Checkbox("Lock position to Cardioid",&lockToCardioid);
 			if (lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&flipCardioidSide);
@@ -199,9 +199,9 @@ void Menu_Fractal() {
 		}
 		ImGui::Checkbox("Adjust zoom value to power",&adjustZoomToPower);
 		if (Combo_FractalType == 0) {
-			ImGui::Text("Cardioid Location: %.5lf",getABSFractalMaxRadius((uint32_t)input_power));
+			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius((uint32_t)input_power));
 		} else {
-			ImGui::Text("Cardioid Location: %.5lf",getABSFractalMaxRadius(input_polar_power));
+			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius(input_polar_power));
 		}
 		if (input_breakoutValue < 100.0) {
 			ImGui::Text("Breakout Value: %.3lf",input_breakoutValue);
@@ -247,6 +247,25 @@ void Menu_Fractal() {
 	ImGui::End();
 }
 
+void Menu_Rendering() {
+	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^7.7","fp128 | 10^32.5"};
+	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
+
+	ImGui::Begin("Rendering Menu");
+	static int Combo_CPU_RenderingMode = 1;
+	ImGui::Text("CPU Rendering Mode:");
+	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, CPU_RenderingModes, ARRAY_LENGTH(CPU_RenderingModes))) {
+
+	}
+	static int Combo_GPU_RenderingMode = 1;
+	ImGui::Text("GPU Rendering Mode:");
+	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, GPU_RenderingModes, ARRAY_LENGTH(GPU_RenderingModes))) {
+		
+	}
+	ImGui::Separator();
+	ImGui::End();
+}
+
 int render_IMGUI() {
 
 	ImGui_ImplSDLRenderer2_NewFrame();
@@ -268,19 +287,21 @@ int render_IMGUI() {
 			case 1:
 			//Export_FracExp();
 			break;
-			//Import_FracExp();
 			case 2:
+			//Import_FracExp();
 			break;
-			//Take_Screenshot();
 			case 3:
+			//Take_Screenshot();
 			break;
-			//Menu_Rendering();
 			case 4:
+			Menu_Rendering();
 			break;
-			//Menu_Settings();
 			case 5:
+			//Menu_Settings();
 			break;
+			case 6:
 			//Abort_Rendering();
+			break;
 		}
 	}
 
@@ -339,7 +360,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	// Allocate Buffers
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
 	window = SDL_CreateWindow("Easy_GUI", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	// IMGUI
 	IMGUI_CHECKVERSION();
