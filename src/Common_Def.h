@@ -83,8 +83,8 @@ typedef double fp64;
 uint64_t getNanoTime(); // Returns the time in nanoseconds
 fp64 getDecimalTime(); // Returns the time in seconds
 
-#define SECONDS_TO_NANO(t) (uint64_t)(t * 1.0e9)
-#define NANO_TO_SECONDS(t) ((fp64)t / 1.0e9)
+#define SECONDS_TO_NANO(t) (uint64_t)((t) * 1.0e9)
+#define NANO_TO_SECONDS(t) ((fp64)(t) / 1.0e9)
 
 class TimerBox {
 	public:

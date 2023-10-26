@@ -68,7 +68,7 @@ fp64 getDecimalTime() { // Returns the time in seconds
 		}
 	/* timerReset */
 		bool TimerBox::timerReset(uint64_t freq) {
-			int64_t delta = getNanoTime() - resetTime;
+			uint64_t delta = getNanoTime() - resetTime;
 			if (delta >= freq) {
 				deltaTime = delta;
 				resetTime = getNanoTime();

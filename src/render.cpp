@@ -27,9 +27,11 @@ BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
 BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
 
-fp64 FRAME_RATE = 240.0; // Double the max screen refresh rate
+fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
+
+fp64 Frame_Time_Display = 0.0;
 
 fp64 r = 0.0;
 fp64 i = 0.0;
@@ -91,11 +93,13 @@ void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characte
 const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds", "Abort"};
 int buttonSelection = -1;
 
+bool yeildSwitch = true;
+
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
-	ImGui::Text("%.2lfFPS",1.0 / DeltaTime);
+	ImGui::Text("%.2lfFPS",1.0 / Frame_Time_Display);
 	ImGui::SameLine();
-	ImGui::Text("%.2lfms",DeltaTime * 1000.0);
+	ImGui::Text("%.2lfms",Frame_Time_Display * 1000.0);
     ImGui::Text("Button: %d",buttonSelection); ImGui::SameLine();
     size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
     for (size_t i = 0; i < buttonCount; i++) {
@@ -186,23 +190,24 @@ void Menu_Fractal() {
 	ImGui::Separator();
 	if (Combo_FractalType == 0 || Combo_FractalType == 1) { /* ABS and Polar */
 		if (Combo_FractalType == 0) {
+			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius((uint32_t)input_power));
+			ImGui::Text("Cardioid Location: %lf",getABSFractalMinRadius(input_polar_power));
+		} else {
+			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius(input_polar_power));
+			ImGui::Text("Cardioid Location: %lf",getABSFractalMinRadius((uint32_t)input_power));
+		}
+		if (Combo_FractalType == 0) {
 			ImGui::Text("Fractal Power: %s",getPowerText(input_power));
 			ImGui::InputInt("##input_power",&input_power,1,1); valueLimit(input_power,2,10);
 		} else {
 			ImGui::Text("Fractal Power: %s",getPowerText(round(input_polar_power)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.02,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.025,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
 			ImGui::Checkbox("Lock position to Cardioid",&lockToCardioid);
 			if (lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&flipCardioidSide);
 			}
-			ImGui::Text("Cardioid Location: %lf",getABSFractalMinRadius(input_polar_power));
 		}
 		ImGui::Checkbox("Adjust zoom value to power",&adjustZoomToPower);
-		if (Combo_FractalType == 0) {
-			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius((uint32_t)input_power));
-		} else {
-			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius(input_polar_power));
-		}
 		if (input_breakoutValue < 100.0) {
 			ImGui::Text("Breakout Value: %.3lf",input_breakoutValue);
 		} else {
@@ -250,19 +255,34 @@ void Menu_Fractal() {
 void Menu_Rendering() {
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^7.7","fp128 | 10^32.5"};
 	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
+	static int input_subSample = 0;
+	static int input_superSample = 0;
+	int CPU_ThreadCount = (int)std::thread::hardware_concurrency();
+	static int input_CPU_MaxThreads = CPU_ThreadCount;
+	static int input_CPU_ThreadMultiplier = 4;
+	static int Combo_CPU_RenderingMode = 1;
+	static int Combo_GPU_RenderingMode = 1;
+
 
 	ImGui::Begin("Rendering Menu");
-	static int Combo_CPU_RenderingMode = 1;
+	
 	ImGui::Text("CPU Rendering Mode:");
 	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, CPU_RenderingModes, ARRAY_LENGTH(CPU_RenderingModes))) {
 
 	}
-	static int Combo_GPU_RenderingMode = 1;
+	ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
+	ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,32);
+	
 	ImGui::Text("GPU Rendering Mode:");
 	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, GPU_RenderingModes, ARRAY_LENGTH(GPU_RenderingModes))) {
 		
 	}
+	ImGui::Text("Sub Sample:");
+	ImGui::SliderInt("##input_subSample",&input_subSample,1,24);
+	ImGui::Text("Samples per pixel:");
+	ImGui::SliderInt("##input_superSample",&input_superSample,1,24);
 	ImGui::Separator();
+
 	ImGui::End();
 }
 
@@ -300,6 +320,7 @@ int render_IMGUI() {
 			//Menu_Settings();
 			break;
 			case 6:
+			yeildSwitch = (yeildSwitch == true) ? false : true;
 			//Abort_Rendering();
 			break;
 		}
@@ -312,7 +333,21 @@ int render_IMGUI() {
 }
 
 int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
+	static bool yeildPrint = false;
+	static uint64_t yeildCount = 0;
+	static uint64_t yeildSum = 0;
+	static uint64_t yeildTimer = getNanoTime();
+	static uint64_t yeildError = 0;
+	
+	uint64_t yeildTimeNano = 100000; /* 100 micro seconds */
+	if (SECONDS_TO_NANO(1.0 / FRAME_RATE) < 2 * yeildTimeNano) {
+		yeildTimeNano = 0;
+	} else {
+		yeildTimeNano = SECONDS_TO_NANO(1.0 / FRAME_RATE) - yeildTimeNano;
+	}
+	printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
 	TimerBox frameTimer = TimerBox(1.0/FRAME_RATE);
+	TimerBox maxFrameReset = TimerBox(1.0/6.0); /* Keeps track of longest frame times */
 	TimerBox quitTimer = TimerBox(6.1);
 	while (QUIT_FLAG == false) {
 		SDL_Event event;
@@ -322,6 +357,19 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
                 QUIT_FLAG = true;
             }
         }
+		if (frameTimer.timerReady() == false) {
+			uint64_t yeildLimit = frameTimer.timeElapsedNano();
+			if (yeildLimit < yeildTimeNano) {
+				std::this_thread::yield();
+				yeildCount++;
+				if (frameTimer.timerReady() == true) {
+					yeildError++;
+					yeildPrint = true;
+					printFlush("\n%.3lfus",(NANO_TO_SECONDS(yeildLimit) - (1.0/FRAME_RATE)) * 1.0e6);
+				}
+			}
+		}
+		
 		/*
 		#define TIME_SCALE 1000
 		if (frameTimer.timerReady() == false) {
@@ -338,6 +386,25 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 		*/
 		if (frameTimer.timerReset()) {
 			DeltaTime = frameTimer.getDeltaTime();
+			{
+				static fp64 maxFrameTime = 0.0;
+				if (maxFrameReset.timerReset()) {
+					Frame_Time_Display = maxFrameTime;
+					maxFrameTime = 0.0;
+
+					if (yeildPrint == true || yeildSwitch == true) {
+						yeildSwitch = false;
+						yeildPrint = false;
+						printFlush("\n\nYeild Count: %llu Errors: %llu",yeildCount, yeildError);
+						yeildSum += yeildCount;
+						printFlush("\nYeild Error: %.3lfms per error\n",((fp64)(getNanoTime() - yeildTimer) / (fp64)yeildError) / 1.0e6);
+						yeildCount = 0;
+					}					
+				}
+				if (DeltaTime > maxFrameTime) {
+					maxFrameTime = DeltaTime;
+				}
+			}
 			windowResizingCode();
 			newFrame();
 		}
@@ -403,9 +470,9 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	size_t z = 0;
 	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
 		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= 3; z++;
-			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= 3; z++;
-			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= 3; z++;
+			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= 5; z++;
+			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= 5; z++;
+			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= 5; z++;
 		}
 	}
 
