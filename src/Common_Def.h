@@ -74,6 +74,10 @@ typedef double fp64;
 
 #define EASY_GUI_VERSION STR_N(EASY_GUI_V_MAJOR) "." STR_N(EASY_GUI_V_MINOR) "." STR_N(EASY_GUI_V_PATCH)
 
+#define valueLimit(value,minimum,maximum) { if (value < minimum) { value = minimum; } else if (value > maximum) { value = maximum; } }
+#define valueMinimum(value,minimum) { if (value < minimum) { value = minimum; } }
+#define valueMaximum(value,maximum) { if (value > maximum) { value = maximum; } }
+
 /* Time */
 
 uint64_t getNanoTime(); // Returns the time in nanoseconds

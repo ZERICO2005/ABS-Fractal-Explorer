@@ -8,7 +8,9 @@
 
 #include "Common_Def.h"
 #include "render.h"
+
 #include "copyBuffer.h"
+#include "fractal.h"
 
 #include <SDL2/SDL.h>
 
@@ -34,9 +36,11 @@ fp64 i = 0.0;
 fp64 zoom = 0.0;
 uint32_t RESY_UI = 120;
 
+static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","NE Corner","NW Corner","SE Corner","SW Corner","Floating"};
+
 bool windowResizingCode() {
 	#define RESX_Minimum 320
-	#define RESY_Minimum 200
+	#define RESY_Minimum 240
 	#define RESX_Maximum 8192
 	#define RESY_Maximum 4608
 	bool reVal = false;
@@ -84,18 +88,23 @@ void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characte
 	}
 }
 
-const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings","Abort"};
+const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds", "Abort"};
 int buttonSelection = -1;
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
 
-    
+    ImGui::Text("Button: %d",buttonSelection); ImGui::SameLine();
     size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
     for (size_t i = 0; i < buttonCount; i++) {
         if (i != 0) { ImGui::SameLine(); }
         if (ImGui::Button(buttonLabels[i])) {
-			buttonSelection = i;
+			if (buttonSelection == (int)i) {
+				buttonSelection = -1;
+			} else {
+				buttonSelection = i;
+			}
+			
         }
     }
 
@@ -130,10 +139,10 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	Param_Input_Box("Imag:","##input_imag",input_imag);
 	ImGui::SameLine();
 	static fp64 input_zoom = -0.302;
-	Param_Input_Double("Zoom: 10^","##input_zoom",&input_zoom,"%.6lf");
+	Param_Input_Double("Zoom: 10^","##input_zoom",&input_zoom,"%.6lf"); valueLimit(input_zoom,-10.0,40.0);
 	ImGui::SameLine();
 	static int32_t input_maxItr = 192;
-	Param_Input_Int("Max-Itr:","##input_maxItr",&input_maxItr);
+	Param_Input_Int("Max-Itr:","##input_maxItr",&input_maxItr); valueLimit(input_maxItr,4,16777216);
 
 	static char input_juliaReal[128] = "0.0";
 	Param_Input_Box("Julia-Real:","##input_juliaReal",input_juliaReal);
@@ -151,7 +160,92 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::End();
 }
 
+void Menu_Fractal() {
+	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
+	static int32_t input_power = 2;
+	static fp64 input_polar_power = 2.0; static fp32 temp_input_polar_power = (fp32)input_polar_power;
+	static bool juliaSet = false;
+	static bool startingZ = false;
+	static bool swapJuliaSplit = false;
+	static bool cursorZValue = false;
+	static bool relativeZValue = false;
+	static bool showFloatingJulia = true;
+	static bool adjustZoomToPower = false;
+	static bool lockToCardioid = false;
+	static bool flipCardioidSide = false;
+	static fp32 temp_input_breakoutValue = 16.0;
+	static fp64 input_breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
 
+	ImGui::Begin("Fractal Menu");
+
+	static int Combo_FractalType = 0;
+	ImGui::Text("Fractal Type:");
+    if (ImGui::Combo("##fractalType", &Combo_FractalType, FractalTypeText, ARRAY_LENGTH(FractalTypeText))) {
+
+    }
+	ImGui::Separator();
+	if (Combo_FractalType == 0 || Combo_FractalType == 1) { /* ABS and Polar */
+		if (Combo_FractalType == 0) {
+			ImGui::Text("Fractal Power: %s",getPowerText(input_power));
+			ImGui::InputInt("##input_power",&input_power,1,1); valueLimit(input_power,2,10);
+		} else {
+			ImGui::Text("Fractal Power: %s",getPowerText(round(input_polar_power)));
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
+			ImGui::Checkbox("Lock position to Cardioid",&lockToCardioid);
+			if (lockToCardioid) {
+				ImGui::Checkbox("Flip Cardioid position",&flipCardioidSide);
+			}
+			ImGui::Text("Cardioid Location: %lf",getABSFractalMinRadius(input_polar_power));
+		}
+		ImGui::Checkbox("Adjust zoom value to power",&adjustZoomToPower);
+		if (Combo_FractalType == 0) {
+			ImGui::Text("Cardioid Location: %.5lf",getABSFractalMaxRadius((uint32_t)input_power));
+		} else {
+			ImGui::Text("Cardioid Location: %.5lf",getABSFractalMaxRadius(input_polar_power));
+		}
+		if (input_breakoutValue < 100.0) {
+			ImGui::Text("Breakout Value: %.3lf",input_breakoutValue);
+		} else {
+			ImGui::Text("Breakout Value: %.1lf",input_breakoutValue);
+		}
+		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,24.0,""); input_breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
+		ImGui::Separator();
+		ImGui::Text("Julia Set Options:");
+		ImGui::Checkbox("Render Julia Set",&juliaSet);
+		ImGui::Checkbox("Toggle starting Z values",&startingZ);
+		ImGui::Checkbox("Use Cursor for Z values",&cursorZValue);
+		if (cursorZValue) { ImGui::Checkbox("Use relative Z values",&relativeZValue); }
+		ImGui::Separator();
+		static int Combo_JuliaSplit = 1;
+		ImGui::Text("Split Screen:");
+		if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, WindowDivider, ARRAY_LENGTH(WindowDivider))) {
+			if (Combo_JuliaSplit == 7) { /* Floating */
+				showFloatingJulia = true;
+			}
+		}
+		if (Combo_JuliaSplit == 7) { /* Floating */
+			ImGui::Checkbox("Show floating Julia Set window",&showFloatingJulia);
+		}
+		ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&swapJuliaSplit);
+		static int Combo_JuliaBehaviour = 0;
+		ImGui::Text("Julia Set behaviour:");
+		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, juliaBehaviour, ARRAY_LENGTH(juliaBehaviour))) {
+
+		}
+	} else if (Combo_FractalType == 2) { /* Sierpinski Carpet */
+		static bool wallisSieve = false;
+		static bool renderOutOfBounds = false;
+		static bool fixateOnCorner = false;
+		static fp64 squareSize = 1.0; fp32 temp_squareSize = (fp32)squareSize;
+		ImGui::Checkbox("Wallis Sieve",&wallisSieve);
+		ImGui::Checkbox("Render out of bounds",&renderOutOfBounds);
+		ImGui::Checkbox("Fixate on top-left corner",&fixateOnCorner);
+		ImGui::Text("Square Size Multiplier:");
+		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4,1.0,"%.4f"); squareSize = (fp64)temp_squareSize;
+	}
+
+	ImGui::End();
+}
 
 int render_IMGUI() {
 
@@ -166,6 +260,30 @@ int render_IMGUI() {
 	window_flags |= ImGuiWindowFlags_NoResize;
 	horizontal_buttons_IMGUI(window_flags);
 	
+	if (buttonSelection != -1) {
+		switch(buttonSelection) {
+			case 0:
+			Menu_Fractal();
+			break;
+			case 1:
+			//Export_FracExp();
+			break;
+			//Import_FracExp();
+			case 2:
+			break;
+			//Take_Screenshot();
+			case 3:
+			break;
+			//Menu_Rendering();
+			case 4:
+			break;
+			//Menu_Settings();
+			case 5:
+			break;
+			//Abort_Rendering();
+		}
+	}
+
 	ImGui::Render();
 	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 	SDL_RenderPresent(renderer);
@@ -264,9 +382,9 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	size_t z = 0;
 	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
 		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = x % 256; z++;
-			TestGraphic.vram[z] = y % 256; z++;
-			TestGraphic.vram[z] = (x - y + w) % 256; z++;
+			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= 3; z++;
+			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= 3; z++;
+			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= 3; z++;
 		}
 	}
 
@@ -283,7 +401,7 @@ void newFrame() {
 	SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
 	Master.vram = (uint8_t*)SDL_Master_VRAM;
 	
-	renderTestGraphic(0.15, 0.5, 3.0);
+	renderTestGraphic(0.1, 0.3, 1.0);
 	copyBuffer(TestGraphic,Master,0,RESY_UI,false);	
 	/*
 	if (buf == NULL && buf->vram == NULL) { 
