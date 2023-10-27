@@ -1,6 +1,6 @@
 /*
 **	Author: zerico2005 (2023)
-**	Project: Easy-GUI
+**	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
@@ -46,10 +46,12 @@ typedef double fp64;
 
 /* Version */
 
-#define EASY_GUI_DATE "2023/10/25" /* YYYY/MM/DD */
-#define EASY_GUI_V_MAJOR 0
-#define EASY_GUI_V_MINOR 1
-#define EASY_GUI_V_PATCH 0
+#define PROGRAM_NAME "ABS-Fractal-Explorer"
+#define PROGRAM_DATE "2023/10/27" /* YYYY/MM/DD */
+#define PROGRAM_V_MAJOR 1
+#define PROGRAM_V_MINOR 0
+#define PROGRAM_V_PATCH 10
+#define PROGRAM_V_TAG "debug pre-alpha"
 
 /* Constants */
 
@@ -72,7 +74,7 @@ typedef double fp64;
 #define printFlush(...) printf(__VA_ARGS__); fflush(stdout)
 #define printError(...) printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 
-#define EASY_GUI_VERSION STR_N(EASY_GUI_V_MAJOR) "." STR_N(EASY_GUI_V_MINOR) "." STR_N(EASY_GUI_V_PATCH)
+#define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 #define valueLimit(value,minimum,maximum) { if (value < minimum) { value = minimum; } else if (value > maximum) { value = maximum; } }
 #define valueMinimum(value,minimum) { if (value < minimum) { value = minimum; } }

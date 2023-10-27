@@ -1,3 +1,4 @@
-Easy-GUI v1.0.0 | zerico2005 | 2023/10/16
+ABS-Fractal-Explorer v1.0.10 debug pre-alpha
+zerico2005 | 2023/10/27
 
-Easy-GUI is more or less a template one can use to code a project that will have some menu windows and a rendering box.
+This version of ABS-Fractal-Explorer is a rewrite of the original. Currently, it does not render fractals, becuase the purpose of the rewrite is to fix flaws from ABS-Fractal-Explorer 1.0.9 and earlier

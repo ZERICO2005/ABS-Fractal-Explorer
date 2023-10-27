@@ -1,6 +1,6 @@
 /*
 **	Author: zerico2005 (2023)
-**	Project: Easy-GUI
+**	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
@@ -27,7 +27,7 @@ BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
 BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
 
-fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
+fp64 FRAME_RATE = 120.0; // Double the max screen refresh rate
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
@@ -55,7 +55,7 @@ bool windowResizingCode() {
 		if (y < RESY_Minimum) { y = RESY_Minimum; }
 		if (x > RESX_Maximum) { x = RESX_Maximum; }
 		if (y > RESY_Maximum) { y = RESY_Maximum; }
-		if (x & 0x3) { x &= 0xFFFFFFFC; }
+		if (x & 0x3) { x &= 0xFFFFFFFC; } // Sets resX to a multiple of 4 so I don't have to deal with padded and unpadded image buffers
 		
 		SDL_SetWindowSize(window,x,y);
 		SDL_RenderSetLogicalSize(renderer, x, y);
@@ -63,8 +63,7 @@ bool windowResizingCode() {
 		Master.resY = y;
 		TestGraphic.resX = x;
 		TestGraphic.resY = y - RESY_UI;
-		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&Master));
-		//Master.vram = (uint8_t*)realloc((void*)(Master.vram),getBufferBoxSize(&Master));
+		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
 		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram),getBufferBoxSize(&TestGraphic));
 		
 		reVal = true;
@@ -93,7 +92,7 @@ void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characte
 const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds", "Abort"};
 int buttonSelection = -1;
 
-bool yeildSwitch = true;
+//bool yeildSwitch = true;
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
@@ -189,19 +188,16 @@ void Menu_Fractal() {
     }
 	ImGui::Separator();
 	if (Combo_FractalType == 0 || Combo_FractalType == 1) { /* ABS and Polar */
-		if (Combo_FractalType == 0) {
-			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius((uint32_t)input_power));
-			ImGui::Text("Cardioid Location: %lf",getABSFractalMinRadius(input_polar_power));
-		} else {
-			ImGui::Text("Fractal Radius: %.5lf",getABSFractalMaxRadius(input_polar_power));
-			ImGui::Text("Cardioid Location: %lf",getABSFractalMinRadius((uint32_t)input_power));
-		}
+		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == 0) ? (fp64)input_power : input_polar_power);
+		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == 0) ? (fp64)input_power : input_polar_power);
+		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
+		ImGui::Text("Cardioid Location: %.6lg",minRadius);
 		if (Combo_FractalType == 0) {
 			ImGui::Text("Fractal Power: %s",getPowerText(input_power));
 			ImGui::InputInt("##input_power",&input_power,1,1); valueLimit(input_power,2,10);
 		} else {
 			ImGui::Text("Fractal Power: %s",getPowerText(round(input_polar_power)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.025,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0001,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
 			ImGui::Checkbox("Lock position to Cardioid",&lockToCardioid);
 			if (lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&flipCardioidSide);
@@ -255,8 +251,8 @@ void Menu_Fractal() {
 void Menu_Rendering() {
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^7.7","fp128 | 10^32.5"};
 	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
-	static int input_subSample = 0;
-	static int input_superSample = 0;
+	static int input_subSample = 1;
+	static int input_superSample = 1;
 	int CPU_ThreadCount = (int)std::thread::hardware_concurrency();
 	static int input_CPU_MaxThreads = CPU_ThreadCount;
 	static int input_CPU_ThreadMultiplier = 4;
@@ -270,7 +266,9 @@ void Menu_Rendering() {
 	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, CPU_RenderingModes, ARRAY_LENGTH(CPU_RenderingModes))) {
 
 	}
+	ImGui::Text("Maximum Threads:");
 	ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
+	ImGui::Text("Thread Multiplier:");
 	ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,32);
 	
 	ImGui::Text("GPU Rendering Mode:");
@@ -320,7 +318,10 @@ int render_IMGUI() {
 			//Menu_Settings();
 			break;
 			case 6:
-			yeildSwitch = (yeildSwitch == true) ? false : true;
+			//Menu_Keybinds();
+			break;
+			case 7:
+			//yeildSwitch = (yeildSwitch == true) ? false : true;
 			//Abort_Rendering();
 			break;
 		}
@@ -333,19 +334,18 @@ int render_IMGUI() {
 }
 
 int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
+	/*
 	static bool yeildPrint = false;
 	static uint64_t yeildCount = 0;
 	static uint64_t yeildSum = 0;
 	static uint64_t yeildTimer = getNanoTime();
 	static uint64_t yeildError = 0;
-	
-	uint64_t yeildTimeNano = 100000; /* 100 micro seconds */
-	if (SECONDS_TO_NANO(1.0 / FRAME_RATE) < 2 * yeildTimeNano) {
-		yeildTimeNano = 0;
-	} else {
-		yeildTimeNano = SECONDS_TO_NANO(1.0 / FRAME_RATE) - yeildTimeNano;
-	}
-	printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
+	static uint64_t yeildSave = 0;
+	*/
+
+	uint64_t yeildTimeNano = 80000; /* 80 micro seconds */
+	uint64_t FRAME_RATE_NANO = SECONDS_TO_NANO(1.0 / FRAME_RATE);
+	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
 	TimerBox frameTimer = TimerBox(1.0/FRAME_RATE);
 	TimerBox maxFrameReset = TimerBox(1.0/6.0); /* Keeps track of longest frame times */
 	TimerBox quitTimer = TimerBox(6.1);
@@ -360,13 +360,18 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 		if (frameTimer.timerReady() == false) {
 			uint64_t yeildLimit = frameTimer.timeElapsedNano();
 			if (yeildLimit < yeildTimeNano) {
+				//uint64_t yeildStart = getNanoTime();
 				std::this_thread::yield();
+				/*
+				uint64_t yeildEnd = getNanoTime() - yeildStart;
 				yeildCount++;
 				if (frameTimer.timerReady() == true) {
-					yeildError++;
-					yeildPrint = true;
-					printFlush("\n%.3lfus",(NANO_TO_SECONDS(yeildLimit) - (1.0/FRAME_RATE)) * 1.0e6);
+					yeildError++; yeildPrint = true;
+					printFlush("\n%.3lfus",(frameTimer.timeElapsed() - (1.0/FRAME_RATE)) * 1.0e6);
+				} else {
+					yeildSave += yeildEnd;
 				}
+				*/
 			}
 		}
 		
@@ -392,18 +397,26 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 					Frame_Time_Display = maxFrameTime;
 					maxFrameTime = 0.0;
 
+					/*
 					if (yeildPrint == true || yeildSwitch == true) {
 						yeildSwitch = false;
 						yeildPrint = false;
 						printFlush("\n\nYeild Count: %llu Errors: %llu",yeildCount, yeildError);
+						printFlush("\nTime Saved: %.3lfms",NANO_TO_SECONDS(yeildSave) * 1.0e3);
 						yeildSum += yeildCount;
 						printFlush("\nYeild Error: %.3lfms per error\n",((fp64)(getNanoTime() - yeildTimer) / (fp64)yeildError) / 1.0e6);
 						yeildCount = 0;
-					}					
+					}
+					*/				
 				}
 				if (DeltaTime > maxFrameTime) {
 					maxFrameTime = DeltaTime;
 				}
+			}
+			if (FRAME_RATE_NANO < 2 * yeildTimeNano) {
+				yeildTimeNano = 0;
+			} else {
+				yeildTimeNano = FRAME_RATE_NANO - yeildTimeNano;
 			}
 			windowResizingCode();
 			newFrame();
@@ -439,7 +452,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	ImGui_ImplSDLRenderer2_Init(renderer);
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	
-	printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
+	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	start_Render(QUIT_FLAG,Console_Mutex);
 	return 0;
 }
@@ -470,9 +483,9 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	size_t z = 0;
 	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
 		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= 5; z++;
-			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= 5; z++;
-			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= 5; z++;
+			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= 3; z++;
+			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= 3; z++;
+			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= 3; z++;
 		}
 	}
 
@@ -480,7 +493,7 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 
 void newFrame() {
 
-	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255);
+	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255); // Some shade of dark blue
     SDL_RenderClear(renderer);
 
 	int pitch;

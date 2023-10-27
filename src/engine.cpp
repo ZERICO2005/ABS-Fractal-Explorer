@@ -1,6 +1,6 @@
 /*
 **	Author: zerico2005 (2023)
-**	Project: Easy-GUI
+**	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
@@ -21,7 +21,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 }
 
 int init_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
-	printf("\nInit_Engine: %s", ((QUIT_FLAG == true) ? "True" : "False"));
+	// printf("\nInit_Engine: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initBufferBox(&Render,NULL,720,480,3,4);
 	Render.vram = (uint8_t*)malloc(getBufferBoxSize(&Render));
 	start_Engine(QUIT_FLAG,Console_Mutex);

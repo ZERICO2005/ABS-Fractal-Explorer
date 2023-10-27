@@ -1,6 +1,6 @@
 /*
 **	Author: zerico2005 (2023)
-**	Project: Easy-GUI
+**	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
@@ -29,7 +29,7 @@ int init_Easy_GUI() {
 }
 
 int main(int argc, char* argv[]) {
-	printFlush("\nEasy-GUI v%s | zerico2005 | %s\n",EASY_GUI_VERSION,EASY_GUI_DATE);
+	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
 	init_Easy_GUI();
 	terminate_Easy_GUI();
 	return 0;

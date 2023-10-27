@@ -8,7 +8,7 @@ set(LIB_PATH "${TOOLCHAIN_PATH}/lib")
 set(SRC_DIR "./src")
 set(IMGUI_DIR "./imgui")
 
-set(PROJECT_NAME "Easy-GUI")
+set(PROJECT_NAME "ABS-Fractal-Explorer")
 project(${PROJECT_NAME})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
@@ -30,5 +30,5 @@ add_executable(${PROJECT_NAME} ${SRC_FILES} ${IMGUI_FILES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${IMGUI_DIR})
 # Define compiler flags
-target_compile_options(${PROJECT_NAME} PUBLIC -g -Wall)
+target_compile_options(${PROJECT_NAME} PUBLIC -g -Wall -O0)
 target_link_libraries(${PROJECT_NAME} PUBLIC SDL2 SDL2main)
