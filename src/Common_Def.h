@@ -50,7 +50,7 @@ typedef double fp64;
 #define PROGRAM_DATE "2023/10/27" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 10
+#define PROGRAM_V_PATCH 11
 #define PROGRAM_V_TAG "debug pre-alpha"
 
 /* Constants */
@@ -80,10 +80,27 @@ typedef double fp64;
 #define valueMinimum(value,minimum) { if (value < minimum) { value = minimum; } }
 #define valueMaximum(value,maximum) { if (value > maximum) { value = maximum; } }
 
+/* Functions */
+
+fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
+uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio);
+
 /* Time */
 
 uint64_t getNanoTime(); // Returns the time in nanoseconds
 fp64 getDecimalTime(); // Returns the time in seconds
+
+// Print up to every (freq) seconds, also calls fflush(stdout);
+#define printfInterval(freq,...); \
+{ \
+	static uint64_t resetTime = getNanoTime(); \
+	if (getNanoTime() - resetTime > (uint64_t)(freq * 1.0e9)) { \
+		printf(__VA_ARGS__); \
+		fflush(stdout); \
+		resetTime = getNanoTime(); \
+	} \
+}
+
 
 #define SECONDS_TO_NANO(t) (uint64_t)((t) * 1.0e9)
 #define NANO_TO_SECONDS(t) ((fp64)(t) / 1.0e9)

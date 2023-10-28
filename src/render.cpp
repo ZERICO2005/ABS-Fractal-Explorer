@@ -28,6 +28,10 @@ BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
 
 fp64 FRAME_RATE = 120.0; // Double the max screen refresh rate
+const fp64 FRAME_RATE_OFFSET = 0.01;
+uint64_t FRAME_RATE_NANO;
+#define  Default_Frame_Rate_Multiplier 2.0
+const uint8_t color_square_divider = 3; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
@@ -38,11 +42,39 @@ fp64 i = 0.0;
 fp64 zoom = 0.0;
 uint32_t RESY_UI = 120;
 
+
+// Amount of displays detected
+uint32_t DISPLAY_COUNT = 0;
+struct _DisplayInfo {
+	uint32_t resX;
+	uint32_t resY;
+	uint32_t posX;
+	uint32_t posY;
+	uint32_t refreshRate;
+	uint8_t bbp;
+	const char* name;
+}; typedef struct _DisplayInfo DisplayInfo;
+DisplayInfo* DisplayList;
+
+// Counts from ONE
+uint32_t CURRENT_DISPLAY = 1;
+// Counts from ONE
+DisplayInfo* getDisplayInfo(size_t i = 1) {
+	if (i == 0 || i > DISPLAY_COUNT || DisplayList == NULL) {
+		return NULL;
+	}
+	return &DisplayList[i - 1];
+}
+// Counts from ONE
+DisplayInfo* getCurrentDisplayInfo() {
+	return getDisplayInfo((size_t)CURRENT_DISPLAY);
+}
+
 static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","NE Corner","NW Corner","SE Corner","SW Corner","Floating"};
 
 bool windowResizingCode() {
 	#define RESX_Minimum 320
-	#define RESY_Minimum 240
+	#define RESY_Minimum 320
 	#define RESX_Maximum 8192
 	#define RESY_Maximum 4608
 	bool reVal = false;
@@ -93,6 +125,17 @@ const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rende
 int buttonSelection = -1;
 
 //bool yeildSwitch = true;
+
+#define BufAndLen(x) x,ARRAY_LENGTH(x)
+/* Sets defualt window size and position along with size constraints */
+#define ImGui_DefaultWindowSize(valX,bufX,minX,maxX,ratioX,valY,bufY,minY,maxY,ratioY) \
+{ \
+	static uint32_t dimX = calcMinMaxRatio(valX-bufX,minX,maxX,ratioX); \
+	static uint32_t dimY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
+	ImGui::SetNextWindowPos({(fp32)((valX - dimX) / 2),(fp32)((valY - dimY) / 2)}, ImGuiCond_Once); \
+	ImGui::SetNextWindowSize({(fp32)dimX,(fp32)dimY}, ImGuiCond_Once); \
+	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
+}
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
@@ -164,6 +207,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 }
 
 void Menu_Fractal() {
+	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
 	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
 	static int32_t input_power = 2;
 	static fp64 input_polar_power = 2.0; static fp32 temp_input_polar_power = (fp32)input_polar_power;
@@ -183,7 +227,7 @@ void Menu_Fractal() {
 
 	static int Combo_FractalType = 0;
 	ImGui::Text("Fractal Type:");
-    if (ImGui::Combo("##fractalType", &Combo_FractalType, FractalTypeText, ARRAY_LENGTH(FractalTypeText))) {
+    if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
 
     }
 	ImGui::Separator();
@@ -219,7 +263,7 @@ void Menu_Fractal() {
 		ImGui::Separator();
 		static int Combo_JuliaSplit = 1;
 		ImGui::Text("Split Screen:");
-		if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, WindowDivider, ARRAY_LENGTH(WindowDivider))) {
+		if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, BufAndLen(WindowDivider))) {
 			if (Combo_JuliaSplit == 7) { /* Floating */
 				showFloatingJulia = true;
 			}
@@ -230,7 +274,7 @@ void Menu_Fractal() {
 		ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&swapJuliaSplit);
 		static int Combo_JuliaBehaviour = 0;
 		ImGui::Text("Julia Set behaviour:");
-		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, juliaBehaviour, ARRAY_LENGTH(juliaBehaviour))) {
+		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
 
 		}
 	} else if (Combo_FractalType == 2) { /* Sierpinski Carpet */
@@ -249,6 +293,7 @@ void Menu_Fractal() {
 }
 
 void Menu_Rendering() {
+	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^7.7","fp128 | 10^32.5"};
 	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
 	static int input_subSample = 1;
@@ -263,7 +308,7 @@ void Menu_Rendering() {
 	ImGui::Begin("Rendering Menu");
 	
 	ImGui::Text("CPU Rendering Mode:");
-	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, CPU_RenderingModes, ARRAY_LENGTH(CPU_RenderingModes))) {
+	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
 
 	}
 	ImGui::Text("Maximum Threads:");
@@ -272,7 +317,7 @@ void Menu_Rendering() {
 	ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,32);
 	
 	ImGui::Text("GPU Rendering Mode:");
-	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, GPU_RenderingModes, ARRAY_LENGTH(GPU_RenderingModes))) {
+	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, BufAndLen(GPU_RenderingModes))) {
 		
 	}
 	ImGui::Text("Sub Sample:");
@@ -281,6 +326,87 @@ void Menu_Rendering() {
 	ImGui::SliderInt("##input_superSample",&input_superSample,1,24);
 	ImGui::Separator();
 
+	ImGui::End();
+}
+
+void Menu_Settings() {
+	static const char* initFrameRate[] = {
+		"Current Monitor","Highest","Lowest","Constant Value"
+	};
+	static int Combo_initFrameRate = 0;
+	static const char* initMonitorLocations[] = {
+		"Previous Monitor","First Monitor","Last Monitor","Specific Monitor",
+		"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
+		"Highest Resolution","Highest Framerate","Lowest Resolution","Lowest Framerate"
+	};
+	static int Combo_initMonitorLocation = 0;
+	static int specificMonitor = 1;
+
+
+
+	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
+	ImGui::Begin("Settings Menu");
+
+	ImGui::Text("Maximum Framerate:");
+	if (ImGui::Combo("##initFrameRate", &Combo_initFrameRate, BufAndLen(initFrameRate))) {
+	
+	}
+	DisplayInfo* disp = getCurrentDisplayInfo();
+	static fp64 FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp64)(disp->refreshRate);
+	fp64 TEMP_FPS = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate); // Would normally be either the current, highest, or lowest refresh rate
+	if (Combo_initFrameRate != 3) {
+		static int temp_frameMultiplier = 2 - 1;
+		static fp64 frameMultiplier = 2.0;
+		if (temp_frameMultiplier >= 0) {
+			frameMultiplier = (fp64)(temp_frameMultiplier + 1);
+			ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
+		} else {
+			frameMultiplier = 1.0 / (fp64)(1 - temp_frameMultiplier);
+			ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
+		}
+		ImGui::Text("%.2lffps %.2lfms", frameMultiplier * TEMP_FPS, (1.0 / (frameMultiplier * TEMP_FPS)) * 1000.0);
+		ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,-6 + 1,6 - 1,"");
+	} else {
+		static fp32 temp_FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate);
+		ImGui::Text("%.3lfms",FPS_Constant_Value * 1000.0);
+		ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,6.0,1200.0);
+		FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
+	}
+
+	ImGui::Separator();
+
+	ImGui::Text("Which monitor should the application open to:");
+	if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation, BufAndLen(initMonitorLocations))) {
+		
+	}
+	if (Combo_initMonitorLocation == 3) {
+		static bool overrideDisplayCount = false;
+		int limitDisplayCount = (overrideDisplayCount == true) ? (DISPLAY_COUNT + 8) : DISPLAY_COUNT;
+		if (overrideDisplayCount == false && specificMonitor > (int)DISPLAY_COUNT) {
+			specificMonitor = DISPLAY_COUNT;
+		}
+		if (DISPLAY_COUNT != 1 || overrideDisplayCount == true) {
+			ImGui::InputInt("##specificMonitor",&specificMonitor,1,1); valueLimit(specificMonitor,1,limitDisplayCount);
+		} else {
+			ImGui::Text("Only 1 display detected");
+		}
+		DisplayInfo* disp = getDisplayInfo(specificMonitor);
+		if (disp == NULL) {
+			ImGui::Text("Display %d is not detected",specificMonitor);
+		} else {
+			ImGui::Text("Display[%d]: %ux%u at %uHz | %s",specificMonitor,disp->resX,disp->resY,disp->refreshRate,disp->name);
+		}
+		ImGui::Checkbox("Override Display Count",&overrideDisplayCount);
+		if (specificMonitor > (int)DISPLAY_COUNT) {
+			ImGui::Text("Note: Display %d will be used if Display %d is not detected",DISPLAY_COUNT,specificMonitor);
+		}
+	}
+	ImGui::End();
+}
+void Menu_Keybinds() {
+	ImGui_DefaultWindowSize(Master.resX,16,320,480,0.7,Master.resY,16,240,360,0.7);
+	ImGui::Begin("Keybinds Menu");
+	ImGui::Text("Keyboard:");
 	ImGui::End();
 }
 
@@ -315,7 +441,7 @@ int render_IMGUI() {
 			Menu_Rendering();
 			break;
 			case 5:
-			//Menu_Settings();
+			Menu_Settings();
 			break;
 			case 6:
 			//Menu_Keybinds();
@@ -429,12 +555,48 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	return 0;
 }
 
+void setupDisplayInfo() {
+	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
+	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
+	if (DISPLAY_COUNT == 0) {
+		printError("No Displays Detected");
+		return;
+	} else {
+		DisplayList = (DisplayInfo*)malloc(DISPLAY_COUNT * sizeof(DisplayInfo));
+		if (DisplayList == NULL) {
+			FREE(DisplayList);
+			printError("Unable to allocate memory for DisplayList");
+			return;
+		}
+
+		for (size_t i = 0; i < DISPLAY_COUNT; i++) {
+			SDL_DisplayMode mode;
+			SDL_GetDesktopDisplayMode(i,&mode);
+			DisplayList[i].resX = mode.w;
+			DisplayList[i].resY = mode.h;
+			DisplayList[i].refreshRate = mode.refresh_rate;
+			DisplayList[i].bbp = SDL_BITSPERPIXEL(mode.format);
+			DisplayList[i].name = SDL_GetDisplayName(i);
+			printf("\n\tDisplay[%zu]: %dx%d at %dHz | %s",i+1,mode.w,mode.h,mode.refresh_rate,SDL_GetDisplayName(i)); //SDL_GetPixelFormatName(mode.format)
+		}
+		fflush(stdout);
+	}
+}
+
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	initBufferBox(&Master,NULL,800,600,3);
 	initBufferBox(&TestGraphic,NULL,Master.resX,Master.resY - RESY_UI,3);
 	SDL_Init(SDL_INIT_VIDEO);
 	printf("\nSystem Information:");
-	printf("\n\tDisplay Count: %d",SDL_GetNumVideoDisplays());
+	setupDisplayInfo();
+	{
+		DisplayInfo* disp = getCurrentDisplayInfo();
+		if (disp != NULL) {
+			FRAME_RATE = disp->refreshRate * Default_Frame_Rate_Multiplier;
+		}
+		FRAME_RATE += FRAME_RATE_OFFSET;
+		valueLimit(FRAME_RATE,6.0,1200.0);
+	}
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %dMB",SDL_GetSystemRAM());
 	// Allocate Buffers
@@ -461,6 +623,7 @@ int terminate_Render() {
 	ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
+	FREE(DisplayList);
 	SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -483,9 +646,9 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	size_t z = 0;
 	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
 		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= 3; z++;
-			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= 3; z++;
-			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= 3; z++;
+			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 		}
 	}
 

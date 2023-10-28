@@ -14,6 +14,7 @@ const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sier
 const char* const PowerText[] = {"Constant","Linear","Quadratic","Cubic","Quartic","Quintic","Sextic","Septic","Octic","Nonic","Decic"};
  /* Safe Method of accessing PowerText */
 const char* getPowerText(int32_t p);
+const char* getPowerText(fp64 p);
 
 fp64 getABSFractalMinRadius(fp64 power);
 fp64 getABSFractalMinRadius(uint32_t power);
@@ -102,6 +103,7 @@ struct _Render_Data {
 	uint8_t bpp;
 	uint8_t channels;
 	uint8_t flip;
+	bool subPixelRendering;
 	/* Rendering Parameters */
 	uint32_t sample;
 	uint32_t subSample;

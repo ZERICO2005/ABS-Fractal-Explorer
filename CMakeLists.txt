@@ -29,6 +29,6 @@ file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
 add_executable(${PROJECT_NAME} ${SRC_FILES} ${IMGUI_FILES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${IMGUI_DIR})
-# Define compiler flags
-target_compile_options(${PROJECT_NAME} PUBLIC -g -Wall -O0)
+# Compiler Flags Debug(-g -O0) Release(-O3)
+target_compile_options(${PROJECT_NAME} PUBLIC -O3 -Wall)
 target_link_libraries(${PROJECT_NAME} PUBLIC SDL2 SDL2main)

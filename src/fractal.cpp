@@ -16,7 +16,9 @@ const char* getPowerText(int32_t p) {
     }
     return NULL;
 }
-
+const char* getPowerText(fp64 p) {
+    return getPowerText((int32_t)p);
+}
 
 fp64 getABSFractalMinRadius(fp64 power) {
 	return (power - 1.0) / (pow(power, power / (power - 1.0)));

@@ -8,6 +8,37 @@
 
 #include "Common_Def.h"
 
+/* Functions */
+
+fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {
+    if (val < min) {
+        val = min;
+    }
+    if (val <= max) {
+        return val;
+    }
+    val *= ratio;
+    if (val < max) {
+        val = max;
+    }
+    return val;
+}
+uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio) {
+    if (val < min) {
+        val = min;
+    }
+    if (val <= max) {
+        return val;
+    }
+    val = (uint32_t)((fp64)val * ratio);
+    if (val < max) {
+        val = max;
+    }
+    return val;
+}
+
+/* Time */
+
 uint64_t getNanoTime() { // Returns the time in nanoseconds
 	using nanoseconds = std::chrono::duration<std::uint64_t, std::nano>;
 	auto now = std::chrono::high_resolution_clock::now();
