@@ -12,6 +12,7 @@
 #include "copyBuffer.h"
 #include "fractal.h"
 #include "keybind.h"
+#include "engine.h"
 
 #include <SDL2/SDL.h>
 
@@ -33,7 +34,7 @@ fp64 TestGraphicSpeed = 0.4;
 fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 const fp64 FRAME_RATE_OFFSET = 0.01;
 uint64_t FRAME_RATE_NANO;
-#define  Default_Frame_Rate_Multiplier 2.0
+#define  Default_Frame_Rate_Multiplier 1.0
 const uint8_t color_square_divider = 3; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
@@ -44,6 +45,15 @@ fp64 r = 0.0;
 fp64 i = 0.0;
 fp64 zoom = 0.0;
 uint32_t RESY_UI = 120;
+
+#define RESX_Default 800
+#define RESY_Default 600
+#define RESX_Minimum 400
+#define RESY_Minimum 320
+#define RESX_Maximum 8192
+#define RESY_Maximum 4608
+#define RESX_Margin 16
+#define RESY_Margin 16
 
 const uint8_t* KEYS;
 
@@ -56,7 +66,6 @@ struct _Key_Status {
 
 Key_Status Key_List[SDL_NUM_SCANCODES];
 
-/* Key codes are broken :( */
 void updateKeys() {
 	KEYS = SDL_GetKeyboardState(NULL);
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
@@ -73,6 +82,33 @@ void updateKeys() {
 }
 
 void initKeys() {
+	{
+		using namespace Key_Function;
+		initKeyboardGraphics(0.0,0.0,0.5);
+		//size_t function_map[] = {NONE,COORDINATES,TRANSFORMATIONS,JULIA,PARAMETERS,POLAR,FORMULA,SCREEN_SPLIT,FUNCTIONS,RENDERING};
+		struct init_key_HSV {
+			enum Key_Function_Enum type;
+			fp64 h; fp64 s; fp64 v;
+		}; typedef init_key_HSV init_key_HSV;
+		init_key_HSV InitKeyHSV[] = {
+			{NONE,0.0,0.0,0.5},
+			{COORDINATES,0.0,0.6,1.0},{TRANSFORMATIONS,40.0,0.6,1.0},{JULIA,80.0,0.6,1.0},
+			{PARAMETERS,120.0,0.6,1.0},{POLAR,160.0,0.6,1.0},{FORMULA,200.0,0.6,1.0},
+			{SCREEN_SPLIT,240.0,0.6,1.0},{FUNCTIONS,280.0,0.6,1.0},{RENDERING,320.0,0.6,1.0},
+		};
+		struct init_key_RGB {
+			enum Key_Function_Enum type;
+			uint8_t r; uint8_t g; uint8_t b;
+		}; typedef init_key_RGB init_key_RGB;
+		init_key_RGB InitKeyRGB[ARRAY_LENGTH(InitKeyHSV)];
+		for (size_t i = 0; i < ARRAY_LENGTH(InitKeyHSV); i++) {
+			getRGBfromHSV(&(InitKeyRGB[i].r),&(InitKeyRGB[i].g),&(InitKeyRGB[i].b),InitKeyHSV[i].h,InitKeyHSV[i].s,InitKeyHSV[i].v);
+		}
+		for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
+			size_t r = s % ARRAY_LENGTH(InitKeyRGB);
+			setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
+		}
+	}
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
 		Key_List[i].timePressed = getNanoTime();
 		Key_List[i].key = (SDL_Scancode)i;
@@ -132,10 +168,6 @@ DisplayInfo* getCurrentDisplayInfo() {
 static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
 bool windowResizingCode() {
-	#define RESX_Minimum 400
-	#define RESY_Minimum 320
-	#define RESX_Maximum 8192
-	#define RESY_Maximum 4608
 	bool reVal = false;
 	int32_t x = 0, y = 0;
 	static int32_t rX = 0, rY = 0;
@@ -182,7 +214,7 @@ void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characte
 
 const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds", "Abort"};
 int buttonSelection = -1;
-
+bool ShowTheXButton = true;
 //bool yeildSwitch = true;
 
 #define BufAndLen(x) x,ARRAY_LENGTH(x)
@@ -281,9 +313,7 @@ void Menu_Fractal() {
 	static bool flipCardioidSide = false;
 	static fp32 temp_input_breakoutValue = 16.0;
 	static fp64 input_breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
-
-	ImGui::Begin("Fractal Menu");
-
+	ImGui::Begin("Fractal Menu",&ShowTheXButton);
 	static int Combo_FractalType = 0;
 	ImGui::Text("Fractal Type:");
     if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
@@ -367,7 +397,7 @@ void Menu_Rendering() {
 	static int Combo_GPU_RenderingMode = 1;
 
 
-	ImGui::Begin("Rendering Menu");
+	ImGui::Begin("Rendering Menu",&ShowTheXButton);
 	
 	ImGui::Text("CPU Rendering Mode:");
 	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
@@ -413,11 +443,8 @@ void Menu_Settings() {
 			ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name); \
 		} \
 	}
-
-
 	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
-	ImGui::Begin("Settings Menu");
-
+	ImGui::Begin("Settings Menu",&ShowTheXButton);
 	ImGui::Text("Base maximum frame-rate off of:");
 	if (ImGui::Combo("##initFrameRate", &Combo_initFrameRate, BufAndLen(initFrameRate))) {
 	
@@ -492,7 +519,7 @@ void Menu_Keybinds() {
 	};
 	static bool displayNumpad = true;
 	ImGui_DefaultWindowSize(Master.resX,16,320,480,0.7,Master.resY,16,240,360,0.7);
-	ImGui::Begin("Keybinds Menu");
+	ImGui::Begin("Keybinds Menu",&ShowTheXButton);
 	ImGui::Text("Keyboard:");
 	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
 		
@@ -502,13 +529,10 @@ void Menu_Keybinds() {
 		#define kMaxResX 1440
 		#define kMinResX 300
 		#define kMinResY 140
-		#define kMarginLeft 8
-		#define kMarginRight (8 + 12) // Scroll bar seems to be 12 pixels
 		
 		//static uint32_t kX = kMargin;
 		//static uint32_t kY = 0;
-		
-		uint32_t kResX = WINDOW_RESX - (kMarginLeft + kMarginRight);
+		uint32_t kResX = ImGui::GetWindowContentRegionWidth();
 		if (kResX < kMinResX) {
 			kResX = kMinResX;
 		} else if (kResX > kMaxResX) {
@@ -560,8 +584,8 @@ int render_IMGUI() {
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoTitleBar;
 	window_flags |= ImGuiWindowFlags_NoResize;
+	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 	horizontal_buttons_IMGUI(window_flags);
-	
 	if (buttonSelection != -1) {
 		switch(buttonSelection) {
 			case 0:
@@ -591,6 +615,11 @@ int render_IMGUI() {
 			break;
 		}
 	}
+	if (ShowTheXButton == false) {
+		buttonSelection = -1;
+		ShowTheXButton = true;
+	}
+
 
 	ImGui::Render();
 	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
@@ -699,63 +728,104 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 
 // Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 
-void setupDisplayInfo() {
+int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
+	if (initResX == NULL || initResY == NULL || initPosX == NULL || initPosY == NULL) {
+		printError("Unable to get Display Info, NULL parameters");
+		return -1;
+	}
 	using namespace Display_Bootup;
 	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
 	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
 	if (DISPLAY_COUNT == 0) {
 		printError("No Displays Detected");
-		return;
-	} else {
-		DisplayList = (DisplayInfo*)malloc(DISPLAY_COUNT * sizeof(DisplayInfo));
-		if (DisplayList == NULL) {
-			FREE(DisplayList);
-			printError("Unable to allocate memory for DisplayList");
-			return;
-		}
-		for (size_t d = 0; d < Display_Bootup::Length; d++) {
-			Display_Match[d] = 1; // Set to first monitor
-		}
-		Display_Match[Display_Bootup::Automatic] = 1;
-		Display_Match[Display_Bootup::First] = 1;
-		Display_Match[Display_Bootup::Last] = DISPLAY_COUNT;
-		Display_Match[Display_Bootup::Specific] = SPECIFIC_BOOTUP_DISPLAY;
-		for (size_t i = 0; i < DISPLAY_COUNT; i++) {
-			SDL_DisplayMode mode;
-			SDL_Rect rect;
-			SDL_GetDesktopDisplayMode(i,&mode);
-			SDL_GetDisplayBounds(i, &rect);
-			DisplayList[i].resX = mode.w;
-			DisplayList[i].resY = mode.h;
-			DisplayList[i].posX = rect.x;
-			DisplayList[i].posY = rect.y;
-			DisplayList[i].refreshRate = mode.refresh_rate;
-			DisplayList[i].bbp = SDL_BITSPERPIXEL(mode.format);
-			DisplayList[i].name = SDL_GetDisplayName(i);
-			printf("\n\tDisplay[%zu]: %dx%d at %dHz (%d,%d) | %s",i+1,mode.w,mode.h,mode.refresh_rate,rect.x,rect.y,SDL_GetDisplayName(i)); //SDL_GetPixelFormatName(mode.format)
-			#define Display(match) DisplayList[Display_Match[(match)] - 1]
-			/* Orthagonal */
-			if (DisplayList[i].posX < Display(Display_Bootup::Left).posX) { Display_Match[Display_Bootup::Left] = i + 1; }
-			if (DisplayList[i].posX + DisplayList[i].resX > Display(Display_Bootup::Right).posX + Display(Display_Bootup::Right).resX) { Display_Match[Display_Bootup::Right] = i + 1; }
-			if (DisplayList[i].posY < Display(Display_Bootup::Top).posY) { Display_Match[Display_Bootup::Top] = i + 1; }
-			if (DisplayList[i].posY + DisplayList[i].resY > Display(Display_Bootup::Bottom).posY + Display(Display_Bootup::Bottom).resY) { Display_Match[Display_Bootup::Bottom] = i + 1; }
-			/* Diagonal */
-			/* Resolution and Refresh-Rate */
-			if (DisplayList[i].resX * DisplayList[i].resY > Display(Display_Bootup::HighResolution).resX * Display(Display_Bootup::HighResolution).resY) { Display_Match[Display_Bootup::HighResolution] = i + 1; }
-			if (DisplayList[i].refreshRate > Display(Display_Bootup::HighFrameRate).refreshRate) { Display_Match[Display_Bootup::HighFrameRate] = i + 1; }
-			if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup::LowResolution).resX * Display(Display_Bootup::LowResolution).resY) { Display_Match[Display_Bootup::LowResolution] = i + 1; }
-			if (DisplayList[i].refreshRate < Display(Display_Bootup::LowFrameRate).refreshRate) { Display_Match[Display_Bootup::LowFrameRate] = i + 1; }
-		}
-		fflush(stdout);
+		return -1;
 	}
+	DisplayList = (DisplayInfo*)malloc(DISPLAY_COUNT * sizeof(DisplayInfo));
+	if (DisplayList == NULL) {
+		FREE(DisplayList);
+		printError("Unable to allocate memory for DisplayList");
+		return -1;
+	}
+	for (size_t d = 0; d < Display_Bootup::Length; d++) {
+		Display_Match[d] = 1; // Set to first monitor
+	}
+	Display_Match[Display_Bootup::Automatic] = 1;
+	Display_Match[Display_Bootup::First] = 1;
+	Display_Match[Display_Bootup::Last] = DISPLAY_COUNT;
+	Display_Match[Display_Bootup::Specific] = SPECIFIC_BOOTUP_DISPLAY;
+	#define Display(match) DisplayList[Display_Match[(match)] - 1]
+	for (size_t i = 0; i < DISPLAY_COUNT; i++) {
+		SDL_DisplayMode mode;
+		SDL_Rect rect;
+		SDL_GetDesktopDisplayMode(i,&mode);
+		SDL_GetDisplayBounds(i, &rect);
+		DisplayList[i].resX = mode.w;
+		DisplayList[i].resY = mode.h;
+		DisplayList[i].posX = rect.x;
+		DisplayList[i].posY = rect.y;
+		DisplayList[i].refreshRate = mode.refresh_rate;
+		DisplayList[i].bbp = SDL_BITSPERPIXEL(mode.format);
+		DisplayList[i].name = SDL_GetDisplayName(i);
+		printf("\n\tDisplay[%zu]: %dx%d at %dHz (%d,%d) | %s",i+1,mode.w,mode.h,mode.refresh_rate,rect.x,rect.y,SDL_GetDisplayName(i)); //SDL_GetPixelFormatName(mode.format)
+		/* Orthagonal */
+		if (DisplayList[i].posX < Display(Display_Bootup::Left).posX) { Display_Match[Display_Bootup::Left] = i + 1; }
+		if (DisplayList[i].posX + DisplayList[i].resX > Display(Display_Bootup::Right).posX + Display(Display_Bootup::Right).resX) { Display_Match[Display_Bootup::Right] = i + 1; }
+		if (DisplayList[i].posY < Display(Display_Bootup::Top).posY) { Display_Match[Display_Bootup::Top] = i + 1; }
+		if (DisplayList[i].posY + DisplayList[i].resY > Display(Display_Bootup::Bottom).posY + Display(Display_Bootup::Bottom).resY) { Display_Match[Display_Bootup::Bottom] = i + 1; }
+		/* Diagonal */
+		/* Resolution and Refresh-Rate */
+		if (DisplayList[i].resX * DisplayList[i].resY > Display(Display_Bootup::HighResolution).resX * Display(Display_Bootup::HighResolution).resY) { Display_Match[Display_Bootup::HighResolution] = i + 1; }
+		if (DisplayList[i].refreshRate > Display(Display_Bootup::HighFrameRate).refreshRate) { Display_Match[Display_Bootup::HighFrameRate] = i + 1; }
+		if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup::LowResolution).resX * Display(Display_Bootup::LowResolution).resY) { Display_Match[Display_Bootup::LowResolution] = i + 1; }
+		if (DisplayList[i].refreshRate < Display(Display_Bootup::LowFrameRate).refreshRate) { Display_Match[Display_Bootup::LowFrameRate] = i + 1; }
+	}
+	*initResX = Display(Display_Bootup_Type).resX;
+	*initResY = Display(Display_Bootup_Type).resY;
+	*initPosX = Display(Display_Bootup_Type).posX;
+	*initPosY = Display(Display_Bootup_Type).posY;
+	if (Display(Display_Bootup_Type).resX < RESX_Minimum || Display(Display_Bootup_Type).resY < RESY_Minimum) {
+		if (DISPLAY_COUNT == 1) {
+			printWarning("This display does not meet the minimum screen resolution");
+			return 0;
+		}
+		for (size_t i = 0; i < DISPLAY_COUNT; i++) {
+			if (Display(Display_Bootup_Type).resX >= RESX_Minimum && Display(Display_Bootup_Type).resY >= RESY_Minimum) {
+				*initResX = DisplayList[i].resX;
+				*initResY = DisplayList[i].resX;
+				*initPosX = DisplayList[i].resX;
+				*initPosY = DisplayList[Display_Bootup_Type].resX;
+				printWarning("Display %u does not meet the minimum screen resolution, switching to display %zu",Display_Match[Display_Bootup_Type],i + 1);
+				return 0;
+			}
+		}
+		printWarning("None of the available displays support the minimum screen resolution");
+		return 0;
+	}
+	fflush(stdout);
+	return 0;
 }
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
-	initBufferBox(&Master,NULL,800,600,3);
-	initBufferBox(&TestGraphic,NULL,Master.resX,Master.resY - RESY_UI,3);
 	SDL_Init(SDL_INIT_VIDEO);
 	printf("\nSystem Information:");
-	setupDisplayInfo();
+	int32_t initResX, initResY, initPosX, initPosY;
+	if (setupDisplayInfo(&initResX,&initResY,&initPosX,&initPosY) < 0) {
+		printCriticalError("init_Render failed to setup Display Info");
+	}
+
+	initResX -= RESX_Margin;
+	if (initResX > RESX_Default) {
+		initResX = RESX_Default;
+	} else if (initResX < RESX_Minimum) {
+		initResX = RESX_Minimum;
+	}
+	initResY -= RESY_Margin;
+	if (initResY > RESY_Default) {
+		initResY = RESY_Default;
+	} else if (initResY < RESY_Minimum) {
+		initResY = RESY_Minimum;
+	}
+
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
 			DisplayInfo* disp = getCurrentDisplayInfo();
@@ -769,6 +839,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %dMB",SDL_GetSystemRAM());
 	// Allocate Buffers
+	initBufferBox(&Master,NULL,initResX,initResY,3);
+	initBufferBox(&TestGraphic,NULL,Master.resX,Master.resY - RESY_UI,3);
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
 	window = SDL_CreateWindow("Easy_GUI", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -785,7 +857,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initKeys();
-	initKeyboardGraphics();
 	start_Render(QUIT_FLAG,Console_Mutex);
 	return 0;
 }

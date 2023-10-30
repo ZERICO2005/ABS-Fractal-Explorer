@@ -17,12 +17,13 @@ int terminate_Engine();
 /* Enum of Functions that can be activated by a KeyboardScancode */
 namespace Key_Function {
 	enum Key_Function_Enum {
-		none,
+		NONE,
 		/* Cordinates */
 			incRealPos,decRealPos,resetRealPos,
 			incImagPos,decImagPos,resetImagPos,
 			incZoom,decZoom,resetZoom,
 			resetCoordinates,
+			COORDINATES,
 		/* Transformations */
 			clockwiseRot,counterclockwiseRot,resetRotation,
 			clockwiseRot90,rotate180,counterclockwiseRot90,
@@ -31,6 +32,7 @@ namespace Key_Function {
 			clockwiseRotPower,counterclockwiseRotPower,
 			incStretch,decStretch,resetStretch,
 			resetTransformations,
+			TRANSFORMATIONS,
 		/* Julia */
 			toggleJulia,
 			toggleStartingZ,
@@ -38,28 +40,33 @@ namespace Key_Function {
 			toggleRelativeZValue,
 			incZReal,decZReal,resetZReal,
 			incZImag,decZImag,resetZImag,
+			JULIA,
 		/* Parameters */
 			incMaxItr,decMaxItr,resetMaxItr,
 			toggleAutoItr,
 			incBreakout,decBreakout,resetBreakout,
 			toggleAdjustZoomToPower,
+			PARAMETERS,
 		/* Polar */
 			toggleABSandPolarMandelbrot,
 			roundPower,floorPower,ceilingPower,
 			toggleIntegerPower,
 			lockToCardioid,
 			flipCardioidSide,
+			POLAR,
 		/* Formula */
 			inputFormula,resetFormula,
 			incFormula,decFormula,
 			incFamily,decFamily,
 			inputPower,resetPower,
 			incPower,decPower,
+			FORMULA,
 		/* Screen Split */
 			toggleScreenSplit,nextScreenSplit,prevScreenSplit,
 			clockwiseCornerSplit,counterClockwiseCornerSplit,
 			toggleFloatingWindow,
 			swapPrimaryAndSecondary,
+			SCREEN_SPLIT,
 		/* Functions */
 			openFractalMenu,
 			exportFractal,
@@ -72,12 +79,14 @@ namespace Key_Function {
 			abortRendering,
 			exitApplication,
 			toggleMenuBar,toggleCordinateBar,toggleButtonBar,
+			FUNCTIONS,
 		/* Rendering */
 			switchCPUandGPU,
 			fp16GpuRendering,fp32GpuRendering,fp64GpuRendering,
 			fp32CpuRendering,fp64CpuRendering,fp80CpuRendering,fp128CpuRendering,
 			incSuperSample,decSuperSample,resetSuperSample,
 			incSubSample,decSubSample,resetSubSample,
+			RENDERING,
 		Parameter_Function_Count
 	};
 };

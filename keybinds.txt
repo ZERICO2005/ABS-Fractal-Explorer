@@ -1,0 +1,160 @@
+# FracExp_KeyBind file
+# The only parts of this file you SHOULD modify are the Username and the Keybind_List.
+# It is RECOMMENDED that your text editor is set to ANSI encoding and that exclusively ASCII characters are used.
+# Modifying any other parts of the file can lead to file corruption or errors.
+
+FracExp_KeyBind_Header: 
+	FracExp_KeyBind:
+		Version:
+			Major:
+				1
+			Minor:
+				0
+			Patch:
+				0
+			Build:
+				0
+			Tags:
+				NULL
+	ABS_Fractal_Explorer:
+		Version:
+			Major:
+				1
+			Minor:
+				1
+			Patch:
+				0
+			Build:
+				0
+			Tags:
+				NULL
+	Hash:
+		All:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		Critical:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		File:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		Time:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		KeyBinds:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		
+			
+File_Information:
+	Platform:
+		"Unknown"
+	Created:
+		"2000/01/01 00:00:00.000"
+	Modified:
+		"2000/01/01 00:00:00.000"
+	Username: # The user must opt-in for this information to be saved
+		"Unknown"
+
+KeyBind_List: # https://wiki.libsdl.org/SDL2/SDL_Scancode
+	Preset:
+		Name:
+			"Default"
+		# Coordinates/Iterations/Zoom
+		incRealPos:
+			SDL_SCANNCODE_D
+		decRealPos:
+			SDL_SCANNCODE_A
+		incImagPos:
+			SDL_SCANNCODE_W
+		decImagPos:
+			SDL_SCANNCODE_S
+		incMaxItr:
+			SDL_SCANNCODE_T
+		decMaxItr:
+			SDL_SCANNCODE_G
+		incZoom:
+			SDL_SCANNCODE_E
+		decZoom:
+			SDL_SCANNCODE_Q
+		resetCoordinates:
+			SDL_SCANNCODE_R
+
+		# Functions
+		toggleSettingsWindow:
+			SDL_SCANNCODE_Y
+		saveFractalData:
+			SDL_SCANNCODE_H
+		saveImage:
+			SDL_SCANNCODE_P
+		saveSuperImage:
+			SDL_SCANNCODE_GRAVE
+
+		# Julia
+		incZReal:
+			SDL_SCANNCODE_L
+		decZReal:
+			SDL_SCANNCODE_J
+		incZImag:
+			SDL_SCANNCODE_I
+		decZImag:
+			SDL_SCANNCODE_K
+		resetZReal:
+			SDL_SCANNCODE_U
+		resetZImag:
+			SDL_SCANNCODE_O
+		toggleJulia:
+			SDL_SCANNCODE_C
+		toggleStartingZ:
+			SDL_SCANNCODE_V
+
+		# Transformations
+		resetTransformations:
+			SDL_SCANNCODE_F
+		clockwiseRot:
+			SDL_SCANNCODE_RIGHT
+		counterclockwiseRot:
+			SDL_SCANNCODE_LEFT
+		incStretch:
+			SDL_SCANNCODE_UP
+		decStretch:
+			SDL_SCANNCODE_DOWN
+
+		# Fractal Selection
+		inputFormula:
+			SDL_SCANNCODE_Z
+		inputPower:
+			SDL_SCANNCODE_X
+		inputType:
+			SDL_SCANNCODE_UNKNOWN
+		incFormula:
+			SDL_SCANNCODE_RIGHTBRACKET
+		decFormula:
+			SDL_SCANNCODE_LEFTBRACKET
+		incFamily:
+			SDL_SCANNCODE_EQUALS
+		decFamily:
+			SDL_SCANNCODE_MINUS
+		incPower:
+			SDL_SCANNCODE_UNKNOWN
+		decPower:
+			SDL_SCANNCODE_UNKNOWN
+
+		# Rendering Settings
+		incSuperSample:
+			SDL_SCANNCODE_APOSTROPHE
+		decSuperSample:
+			SDL_SCANNCODE_SEMICOLON
+		incSubSample:
+			SDL_SCANNCODE_PERIOD
+		decSubSample:
+			SDL_SCANNCODE_COMMA
+		fp16GpuRendering:
+			SDL_SCANNCODE_UNKNOWN
+		fp32GpuRendering:
+			SDL_SCANNCODE_M
+		fp64GpuRendering:
+			SDL_SCANNCODE_RALT
+		fp32CpuMultiThreadRendering:
+			SDL_SCANNCODE_UNKNOWN
+		fp64CpuMultiThreadRendering:
+			SDL_SCANNCODE_N
+		fp80CpuMultiThreadRendering:
+			SDL_SCANNCODE_B
+		fp128CpuMultiThreadRendering:
+			SDL_SCANNCODE_RCTRL
