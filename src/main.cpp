@@ -13,13 +13,13 @@
 std::atomic<bool> QUIT_FLAG(false);
 std::mutex Console_Mutex;
 
-int terminate_Easy_GUI() {
+int terminate_Fractal_Engine() {
 	terminate_Render();
 	terminate_Engine();
 	return 0;
 }
 
-int init_Easy_GUI() {
+int init_Fractal_Engine() {
 	std::thread Thread_Engine(init_Engine, std::ref(QUIT_FLAG), std::ref(Console_Mutex));
     std::thread Thread_Render(init_Render, std::ref(QUIT_FLAG), std::ref(Console_Mutex));
 	
@@ -30,7 +30,10 @@ int init_Easy_GUI() {
 
 int main(int argc, char* argv[]) {
 	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
-	init_Easy_GUI();
-	terminate_Easy_GUI();
+	if (argc >= 2) { /* Process .fracExp files */
+		
+	}
+	init_Fractal_Engine();
+	terminate_Fractal_Engine();
 	return 0;
 }

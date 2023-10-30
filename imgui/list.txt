@@ -1,5 +1,6 @@
 To compile, you may need a few to all of the following files in ./imgui
 The files can be obtained from the Dear Imgui github repository https://github.com/ocornut/imgui
+Additionally, changing <SDL.h> to <SDL2/SDL.h> could help if things are not working correctly.
 
 imconfig.h
 imgui.cpp

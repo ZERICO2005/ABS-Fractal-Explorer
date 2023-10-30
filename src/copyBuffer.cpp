@@ -100,7 +100,7 @@ void copyBuffer(
 	if (sx0 >= bufSrc.resX || sy0 >= bufSrc.resY) { return; } // Positive OOB
 	if (dx0 >= (int32_t)bufDst.resX || dy0 >= (int32_t)bufDst.resY) { return; } // Positive OOB
 	if (allowClipping) { /* Corrects clipping values */
-		if ((int32_t)(dx0 + sx0 + sx1) < 0 || (int32_t)(dy0 + sy0 + sy1) < 0) { return; } /* Negative OOB */
+		if ((dx0 + (int32_t)sx0 + (int32_t)sx1) < 0 || (dy0 + (int32_t)sy0 + (int32_t)sy1) < 0) { return; } /* Negative OOB */
 		/* Negative values */
 		if (dx0 < 0) { sx0 += abs(dx0); sx1 -= abs(dx0); dx0 = 0; }
 		if (dy0 < 0) { sy0 += abs(dy0); sy1 -= abs(dy0); dy0 = 0; }
@@ -111,7 +111,9 @@ void copyBuffer(
 		if (dx0 + dx1 > bufSrc.resX) { dx1 = bufDst.resX - dx0; }
 		if (dy0 + dy1 > bufSrc.resY) { dy1 = bufDst.resY - dy0; }
 		/* Copy size */
-		if (sx1 > dx1) { sx1 = dx1; }
+		if (sx1 > dx1) {
+			sx1 = dx1;
+		}
 		if (sy1 > dy1) { sy1 = dy1; }
 	} else { 
 		if (dx0 < 0 || dy0 < 0) { return; } /* Negative Dst OOB */

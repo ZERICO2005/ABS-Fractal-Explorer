@@ -7,6 +7,8 @@ Compiliation Setup used:
 	- Windows 10 64bit x86
 	- MSYS2 MinGW64
 	- GCC/G++ CMake Ninja
+	
+You may also need to copy some Dear ImGui files into ./imgui to compile the code. Additionally, changing #include<SDL.h> to #include<SDL2/SDL.h> could help if things are not working correctly.
 
 
 

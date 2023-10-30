@@ -47,10 +47,10 @@ typedef double fp64;
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2023/10/27" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2023/10/28" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 11
+#define PROGRAM_V_PATCH 12
 #define PROGRAM_V_TAG "debug pre-alpha"
 
 /* Constants */
@@ -72,7 +72,9 @@ typedef double fp64;
 #define FREE(x) free(x); x = NULL
 
 #define printFlush(...) printf(__VA_ARGS__); fflush(stdout)
+#define printCriticalError(...) printf("\nCritical Error: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 #define printError(...) printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
+#define printWarning(...) printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 

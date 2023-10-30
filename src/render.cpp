@@ -11,6 +11,7 @@
 
 #include "copyBuffer.h"
 #include "fractal.h"
+#include "keybind.h"
 
 #include <SDL2/SDL.h>
 
@@ -23,11 +24,13 @@ SDL_Window* window;
 ImGuiIO* io_IMGUI;
 
 SDL_Texture* texture;
+SDL_Texture* kTexture; // Keyboard graphic
 BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
 BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
 
-fp64 FRAME_RATE = 120.0; // Double the max screen refresh rate
+//#define MANUAL_FRAME_RATE_OVERRIDE
+fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 const fp64 FRAME_RATE_OFFSET = 0.01;
 uint64_t FRAME_RATE_NANO;
 #define  Default_Frame_Rate_Multiplier 2.0
@@ -42,14 +45,70 @@ fp64 i = 0.0;
 fp64 zoom = 0.0;
 uint32_t RESY_UI = 120;
 
+const uint8_t* KEYS;
+
+struct _Key_Status {
+	SDL_Scancode key;
+	bool pressed;
+	uint64_t timePressed;
+	uint64_t timeReleased;
+}; typedef struct _Key_Status Key_Status;
+
+Key_Status Key_List[SDL_NUM_SCANCODES];
+
+/* Key codes are broken :( */
+void updateKeys() {
+	KEYS = SDL_GetKeyboardState(NULL);
+	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
+		if (KEYS[i] != 0) { // Key Pressed
+			if (Key_List[i].pressed == false) {
+				Key_List[i].timePressed = getNanoTime();
+				Key_List[i].pressed = true;
+			}
+		} else {
+			Key_List[i].timeReleased = getNanoTime();
+			Key_List[i].pressed = false;
+		}
+	}
+}
+
+void initKeys() {
+	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
+		Key_List[i].timePressed = getNanoTime();
+		Key_List[i].key = (SDL_Scancode)i;
+		Key_List[i].pressed = false;
+		Key_List[i].timeReleased = getNanoTime();
+	}
+	updateKeys();
+}
+
+bool keyPressed(uint32_t key) {
+	if (key > SDL_NUM_SCANCODES) {
+		return false;
+	}
+	if (Key_List[key].pressed == true) {
+		return true;
+	}
+	return false;
+}
 
 // Amount of displays detected
 uint32_t DISPLAY_COUNT = 0;
+/* Display Bootup */
+	namespace Display_Bootup {
+		enum Display_Bootup_Enum {
+			Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
+		};
+	};
+	uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
+	uint32_t Display_Match[Display_Bootup::Length];
+	Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
+
 struct _DisplayInfo {
 	uint32_t resX;
 	uint32_t resY;
-	uint32_t posX;
-	uint32_t posY;
+	int32_t posX;
+	int32_t posY;
 	uint32_t refreshRate;
 	uint8_t bbp;
 	const char* name;
@@ -70,10 +129,10 @@ DisplayInfo* getCurrentDisplayInfo() {
 	return getDisplayInfo((size_t)CURRENT_DISPLAY);
 }
 
-static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","NE Corner","NW Corner","SE Corner","SW Corner","Floating"};
+static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
 bool windowResizingCode() {
-	#define RESX_Minimum 320
+	#define RESX_Minimum 400
 	#define RESY_Minimum 320
 	#define RESX_Maximum 8192
 	#define RESY_Maximum 4608
@@ -128,14 +187,14 @@ int buttonSelection = -1;
 
 #define BufAndLen(x) x,ARRAY_LENGTH(x)
 /* Sets defualt window size and position along with size constraints */
-#define ImGui_DefaultWindowSize(valX,bufX,minX,maxX,ratioX,valY,bufY,minY,maxY,ratioY) \
-{ \
-	static uint32_t dimX = calcMinMaxRatio(valX-bufX,minX,maxX,ratioX); \
-	static uint32_t dimY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
-	ImGui::SetNextWindowPos({(fp32)((valX - dimX) / 2),(fp32)((valY - dimY) / 2)}, ImGuiCond_Once); \
-	ImGui::SetNextWindowSize({(fp32)dimX,(fp32)dimY}, ImGuiCond_Once); \
+#define ImGui_DefaultWindowSize(valX,bufX,minX,maxX,ratioX,valY,bufY,minY,maxY,ratioY); \
+	uint32_t WINDOW_RESX = calcMinMaxRatio(valX-bufX,minX,maxX,ratioX); \
+	uint32_t WINDOW_RESY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
+	ImGui::SetNextWindowPos({(fp32)((valX - WINDOW_RESX) / 2),(fp32)((valY - WINDOW_RESY) / 2)}, ImGuiCond_Once); \
+	ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}, ImGuiCond_Once); \
 	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
-}
+	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX; \
+	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY;
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
@@ -234,6 +293,9 @@ void Menu_Fractal() {
 	if (Combo_FractalType == 0 || Combo_FractalType == 1) { /* ABS and Polar */
 		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == 0) ? (fp64)input_power : input_polar_power);
 		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == 0) ? (fp64)input_power : input_polar_power);
+		if (keyPressed(SDL_SCANCODE_A)) {
+			ImGui::Text("Pressed for: %lfms",(fp64)(getNanoTime() - Key_List[SDL_SCANCODE_A].timePressed) * 1e-6);
+		}
 		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
 		ImGui::Text("Cardioid Location: %.6lg",minRadius);
 		if (Combo_FractalType == 0) {
@@ -331,30 +393,57 @@ void Menu_Rendering() {
 
 void Menu_Settings() {
 	static const char* initFrameRate[] = {
-		"Current Monitor","Highest","Lowest","Constant Value"
+		"Current Monitor","Highest Refresh-Rate","Lowest Refresh-Rate","Constant Value"
 	};
 	static int Combo_initFrameRate = 0;
 	static const char* initMonitorLocations[] = {
-		"Previous Monitor","First Monitor","Last Monitor","Specific Monitor",
+		"Automatic","First Monitor","Last Monitor","Specific Monitor",
 		"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
 		"Highest Resolution","Highest Framerate","Lowest Resolution","Lowest Framerate"
 	};
 	static int Combo_initMonitorLocation = 0;
-	static int specificMonitor = 1;
+	static int specificMonitor = SPECIFIC_BOOTUP_DISPLAY;
 
+	#define printDisplayInfo(displayNumber); \
+	{ \
+		DisplayInfo* DispI = getDisplayInfo(displayNumber); \
+		if (DispI == NULL) { \
+			ImGui::Text("Display %d is not detected",displayNumber); \
+		} else { \
+			ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name); \
+		} \
+	}
 
 
 	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
 	ImGui::Begin("Settings Menu");
 
-	ImGui::Text("Maximum Framerate:");
+	ImGui::Text("Base maximum frame-rate off of:");
 	if (ImGui::Combo("##initFrameRate", &Combo_initFrameRate, BufAndLen(initFrameRate))) {
 	
 	}
+	switch(Combo_initFrameRate) {
+		case 0:
+			printDisplayInfo(CURRENT_DISPLAY);
+		break;
+		case 1:
+			printDisplayInfo(Display_Match[Display_Bootup::HighFrameRate]);
+		break;
+		case 2:
+			printDisplayInfo(Display_Match[Display_Bootup::LowFrameRate]);
+		break;
+	}
+
 	DisplayInfo* disp = getCurrentDisplayInfo();
 	static fp64 FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp64)(disp->refreshRate);
 	fp64 TEMP_FPS = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate); // Would normally be either the current, highest, or lowest refresh rate
-	if (Combo_initFrameRate != 3) {
+	if (Combo_initFrameRate == 3) {
+		static fp32 temp_FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate);
+		ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
+		ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,6.0,1200.0);
+		FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
+	} else {
+		ImGui::Text(" "); // Blank Line
 		static int temp_frameMultiplier = 2 - 1;
 		static fp64 frameMultiplier = 2.0;
 		if (temp_frameMultiplier >= 0) {
@@ -366,11 +455,6 @@ void Menu_Settings() {
 		}
 		ImGui::Text("%.2lffps %.2lfms", frameMultiplier * TEMP_FPS, (1.0 / (frameMultiplier * TEMP_FPS)) * 1000.0);
 		ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,-6 + 1,6 - 1,"");
-	} else {
-		static fp32 temp_FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate);
-		ImGui::Text("%.3lfms",FPS_Constant_Value * 1000.0);
-		ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,6.0,1200.0);
-		FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
 	}
 
 	ImGui::Separator();
@@ -390,23 +474,78 @@ void Menu_Settings() {
 		} else {
 			ImGui::Text("Only 1 display detected");
 		}
-		DisplayInfo* disp = getDisplayInfo(specificMonitor);
-		if (disp == NULL) {
-			ImGui::Text("Display %d is not detected",specificMonitor);
-		} else {
-			ImGui::Text("Display[%d]: %ux%u at %uHz | %s",specificMonitor,disp->resX,disp->resY,disp->refreshRate,disp->name);
-		}
+		printDisplayInfo(specificMonitor); 
 		ImGui::Checkbox("Override Display Count",&overrideDisplayCount);
 		if (specificMonitor > (int)DISPLAY_COUNT) {
 			ImGui::Text("Note: Display %d will be used if Display %d is not detected",DISPLAY_COUNT,specificMonitor);
 		}
+	} else {
+		printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
 	}
 	ImGui::End();
 }
+
 void Menu_Keybinds() {
+	static int Combo_keyboardSize = 0;
+	static const char* keyboardSizeText[] = {
+		"ANSI (Default)","Extended","Complete"
+	};
+	static bool displayNumpad = true;
 	ImGui_DefaultWindowSize(Master.resX,16,320,480,0.7,Master.resY,16,240,360,0.7);
 	ImGui::Begin("Keybinds Menu");
 	ImGui::Text("Keyboard:");
+	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
+		
+	}
+	ImGui::Checkbox("Display Numberpad",&displayNumpad);
+	{
+		#define kMaxResX 1440
+		#define kMinResX 300
+		#define kMinResY 140
+		#define kMarginLeft 8
+		#define kMarginRight (8 + 12) // Scroll bar seems to be 12 pixels
+		
+		//static uint32_t kX = kMargin;
+		//static uint32_t kY = 0;
+		
+		uint32_t kResX = WINDOW_RESX - (kMarginLeft + kMarginRight);
+		if (kResX < kMinResX) {
+			kResX = kMinResX;
+		} else if (kResX > kMaxResX) {
+			kResX = kMaxResX;
+		}
+		static int32_t kCurX = -1;
+		static int32_t kCurY = -1;
+		static uint32_t clickState = 0x0;
+		static BufferBox kBuf; // Gets set when the keyboard is rendered
+
+		ImVec2 CursorPos = {
+			ImGui::GetMousePos().x - ImGui::GetCursorScreenPos().x,
+			ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y - 17 // Magic Correction Amount
+		};
+		clickState = SDL_GetMouseState(NULL,NULL);
+
+		renderKeyboard(
+			&kBuf, kResX, 5.75, 12.0,
+			(uint8_t)Combo_keyboardSize, displayNumpad,
+			kCurX,kCurY,((clickState & 0x1) ? true : false)
+		);
+		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, kBuf.resX, kBuf.resY, 24, 3 * kBuf.resX, SDL_PIXELFORMAT_RGB24);
+		if (kSurface == nullptr) {
+			fprintf(stderr, "Failed to create SDL surface: %s\n", SDL_GetError());
+		}
+		kTexture = SDL_CreateTextureFromSurface(renderer, kSurface);
+		if (kTexture == nullptr) {
+			fprintf(stderr, "Failed to create SDL texture: %s\n", SDL_GetError());
+		}
+		SDL_FreeSurface(kSurface);
+		kCurX = CursorPos.x;
+		kCurY = CursorPos.y;
+		ImGui::Text("size = %d x %d", kBuf.resX, kBuf.resY);
+		ImGui::Image((void*)kTexture, ImVec2(kBuf.resX, kBuf.resY));
+		ImGui::Text("Cursor Position: %d,%d",kCurX,kCurY);
+	}
+
 	ImGui::End();
 }
 
@@ -444,7 +583,7 @@ int render_IMGUI() {
 			Menu_Settings();
 			break;
 			case 6:
-			//Menu_Keybinds();
+			Menu_Keybinds();
 			break;
 			case 7:
 			//yeildSwitch = (yeildSwitch == true) ? false : true;
@@ -456,6 +595,7 @@ int render_IMGUI() {
 	ImGui::Render();
 	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 	SDL_RenderPresent(renderer);
+	SDL_DestroyTexture(kTexture);
 	return 0;
 }
 
@@ -483,6 +623,8 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
                 QUIT_FLAG = true;
             }
         }
+		updateKeys();
+		/* Poorly implemented, please correct */
 		if (frameTimer.timerReady() == false) {
 			uint64_t yeildLimit = frameTimer.timeElapsedNano();
 			if (yeildLimit < yeildTimeNano) {
@@ -555,7 +697,10 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	return 0;
 }
 
+// Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
+
 void setupDisplayInfo() {
+	using namespace Display_Bootup;
 	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
 	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
 	if (DISPLAY_COUNT == 0) {
@@ -568,16 +713,38 @@ void setupDisplayInfo() {
 			printError("Unable to allocate memory for DisplayList");
 			return;
 		}
-
+		for (size_t d = 0; d < Display_Bootup::Length; d++) {
+			Display_Match[d] = 1; // Set to first monitor
+		}
+		Display_Match[Display_Bootup::Automatic] = 1;
+		Display_Match[Display_Bootup::First] = 1;
+		Display_Match[Display_Bootup::Last] = DISPLAY_COUNT;
+		Display_Match[Display_Bootup::Specific] = SPECIFIC_BOOTUP_DISPLAY;
 		for (size_t i = 0; i < DISPLAY_COUNT; i++) {
 			SDL_DisplayMode mode;
+			SDL_Rect rect;
 			SDL_GetDesktopDisplayMode(i,&mode);
+			SDL_GetDisplayBounds(i, &rect);
 			DisplayList[i].resX = mode.w;
 			DisplayList[i].resY = mode.h;
+			DisplayList[i].posX = rect.x;
+			DisplayList[i].posY = rect.y;
 			DisplayList[i].refreshRate = mode.refresh_rate;
 			DisplayList[i].bbp = SDL_BITSPERPIXEL(mode.format);
 			DisplayList[i].name = SDL_GetDisplayName(i);
-			printf("\n\tDisplay[%zu]: %dx%d at %dHz | %s",i+1,mode.w,mode.h,mode.refresh_rate,SDL_GetDisplayName(i)); //SDL_GetPixelFormatName(mode.format)
+			printf("\n\tDisplay[%zu]: %dx%d at %dHz (%d,%d) | %s",i+1,mode.w,mode.h,mode.refresh_rate,rect.x,rect.y,SDL_GetDisplayName(i)); //SDL_GetPixelFormatName(mode.format)
+			#define Display(match) DisplayList[Display_Match[(match)] - 1]
+			/* Orthagonal */
+			if (DisplayList[i].posX < Display(Display_Bootup::Left).posX) { Display_Match[Display_Bootup::Left] = i + 1; }
+			if (DisplayList[i].posX + DisplayList[i].resX > Display(Display_Bootup::Right).posX + Display(Display_Bootup::Right).resX) { Display_Match[Display_Bootup::Right] = i + 1; }
+			if (DisplayList[i].posY < Display(Display_Bootup::Top).posY) { Display_Match[Display_Bootup::Top] = i + 1; }
+			if (DisplayList[i].posY + DisplayList[i].resY > Display(Display_Bootup::Bottom).posY + Display(Display_Bootup::Bottom).resY) { Display_Match[Display_Bootup::Bottom] = i + 1; }
+			/* Diagonal */
+			/* Resolution and Refresh-Rate */
+			if (DisplayList[i].resX * DisplayList[i].resY > Display(Display_Bootup::HighResolution).resX * Display(Display_Bootup::HighResolution).resY) { Display_Match[Display_Bootup::HighResolution] = i + 1; }
+			if (DisplayList[i].refreshRate > Display(Display_Bootup::HighFrameRate).refreshRate) { Display_Match[Display_Bootup::HighFrameRate] = i + 1; }
+			if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup::LowResolution).resX * Display(Display_Bootup::LowResolution).resY) { Display_Match[Display_Bootup::LowResolution] = i + 1; }
+			if (DisplayList[i].refreshRate < Display(Display_Bootup::LowFrameRate).refreshRate) { Display_Match[Display_Bootup::LowFrameRate] = i + 1; }
 		}
 		fflush(stdout);
 	}
@@ -590,10 +757,12 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	printf("\nSystem Information:");
 	setupDisplayInfo();
 	{
-		DisplayInfo* disp = getCurrentDisplayInfo();
-		if (disp != NULL) {
-			FRAME_RATE = disp->refreshRate * Default_Frame_Rate_Multiplier;
-		}
+		#ifndef MANUAL_FRAME_RATE_OVERRIDE
+			DisplayInfo* disp = getCurrentDisplayInfo();
+			if (disp != NULL) {
+				FRAME_RATE = disp->refreshRate * Default_Frame_Rate_Multiplier;
+			}
+		#endif
 		FRAME_RATE += FRAME_RATE_OFFSET;
 		valueLimit(FRAME_RATE,6.0,1200.0);
 	}
@@ -615,11 +784,14 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
+	initKeys();
+	initKeyboardGraphics();
 	start_Render(QUIT_FLAG,Console_Mutex);
 	return 0;
 }
 
 int terminate_Render() {
+	terminateKeyboardGraphics();
 	ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();

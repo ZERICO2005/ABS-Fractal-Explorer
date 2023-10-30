@@ -16,4 +16,7 @@ int terminate_Render();
 
 void newFrame();
 
+/* SDL_Scancode */
+bool keyPressed(uint32_t key);
+
 #endif /* RENDER_H */
