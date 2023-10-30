@@ -7,6 +7,7 @@
 */
 
 #include "Common_Def.h"
+#include "fracExp_Internal.h"
 #include "fracExp.h"
 #include "fractal.h"
 

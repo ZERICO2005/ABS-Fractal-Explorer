@@ -136,37 +136,8 @@ void renderKeyText(char* text, uint8_t cR, uint8_t cG, uint8_t cB, uint32_t x0, 
 	copyBuffer(src,dst,0,0,x1,y1,(int32_t)x0,(int32_t)y0,x1,y1,true);
 }
 
-void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp64 h, fp64 s, fp64 v) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
-	uint8_t hi = (uint8_t)(h / 60.0) % 6;
-	fp64 f = (h / 60.0) - floor(h / 60.0);
-	v *= 255.0;
-	uint8_t vR = (uint8_t)v;
-	uint8_t pR = (uint8_t)(v * (1.0 - s));
-	uint8_t qR = (uint8_t)(v * (1.0 - f * s));
-	uint8_t tR = (uint8_t)(v * (1.0 - (1.0 - f) * s));
-	switch(hi) {
-		case 0:
-		*r = vR; *g = tR; *b = pR;
-		return;
-		case 1:
-		*r = pR; *g = vR; *b = pR;
-		return;
-		case 2:
-		*r = pR; *g = vR; *b = tR;
-		return;
-		case 3:
-		*r = pR; *g = qR; *b = vR;
-		return;
-		case 4:
-		*r = tR; *g = pR; *b = vR;
-		return;
-		case 5:
-		*r = vR; *g = pR; *b = qR;
-		return;
-	}
-}
-
-void initKeyboardGraphics() {
+// Default color
+void initKeyboardGraphics(fp64 hue, fp64 sat, fp64 val) {
 	if (Text_Graphic.isInitialized() == false) {
 		Text_Graphic = Bit_Graphics(rktX,rktY);
 		if (Text_Graphic.isInitialized() == false) {
@@ -178,10 +149,10 @@ void initKeyboardGraphics() {
 	uint8_t rH = 0, gH = 0, bH = 0;
 	uint8_t rP = 0, gP = 0, bP = 0;
 	uint8_t rC = 0, gC = 0, bC = 0;
-	getRGBfromHSV(&rK,&gK,&bK,180.0,1.0,1.0);
-	getRGBfromHSV(&rH,&gH,&bH,180.0,1.0,0.8333);
-	getRGBfromHSV(&rP,&gP,&bP,180.0,1.0,0.75);
-	getRGBfromHSV(&rC,&gC,&bC,180.0,1.0,0.6667);
+	getRGBfromHSV(&rK,&gK,&bK,hue,sat,val);
+	getRGBfromHSV(&rH,&gH,&bH,hue,sat,val * 0.8333);
+	getRGBfromHSV(&rP,&gP,&bP,hue,sat,val * 0.75);
+	getRGBfromHSV(&rC,&gC,&bC,hue,sat,val * 0.6667);
 	size_t z = 0;
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
 		Scancode_Color_Key[z] = rK;
@@ -347,24 +318,29 @@ SDL_Scancode getHover_Scancode(uint32_t x, uint32_t y) {
 	return SDL_SCANCODE_UNKNOWN;
 }
 
-void setColor_Keycode(uint32_t color, SDL_KeyCode code) {
-	return;
+void setRGB_Scancode(uint8_t r, uint8_t g, uint8_t b, SDL_Scancode code) {
+	size_t z = code * 3;
+	Scancode_Color_Key[z] = r;
+	Scancode_Color_Hover[z] = (uint8_t)((fp64)r * 0.8333);
+	Scancode_Color_Press[z] = (uint8_t)((fp64)r * 0.75);
+	Scancode_Color_Click[z] = (uint8_t)((fp64)r * 0.667);
+	z++;
+	Scancode_Color_Key[z] = g;
+	Scancode_Color_Hover[z] = (uint8_t)((fp64)g * 0.8333);
+	Scancode_Color_Press[z] = (uint8_t)((fp64)g * 0.75);
+	Scancode_Color_Click[z] = (uint8_t)((fp64)g * 0.667);
+	z++;
+	Scancode_Color_Key[z] = b;
+	Scancode_Color_Hover[z] = (uint8_t)((fp64)b * 0.8333);
+	Scancode_Color_Press[z] = (uint8_t)((fp64)b * 0.75);
+	Scancode_Color_Click[z] = (uint8_t)((fp64)b * 0.667);
 }
 void setColor_Scancode(uint32_t color, SDL_Scancode code) {
-	Scancode_Color_Key[3 * code] = color & 0xFF; color >>= 8;
-	Scancode_Color_Key[3 * code + 1] = color & 0xFF; color >>= 8;
-	Scancode_Color_Key[3 * code + 2] = color & 0xFF;
-}
-void setRGB_Keycode(uint8_t r, uint8_t g, uint8_t b, SDL_KeyCode code) {
-	return;
-}
-void setRGB_Scancode(uint8_t r, uint8_t g, uint8_t b, SDL_Scancode code) {
-	Scancode_Color_Key[3 * code] = r;
-	Scancode_Color_Key[3 * code + 1] = g;
-	Scancode_Color_Key[3 * code + 2] = b;
-}
-void setHSV_Keycode(fp64 h, fp64 s, fp64 v, SDL_KeyCode code) {
-	return;
+	uint8_t r,g,b;
+	r = color & 0xFF; color >>= 8;
+	g = color & 0xFF; color >>= 8;
+	b = color & 0xFF;
+	setRGB_Scancode(r,g,b,code);
 }
 void setHSV_Scancode(fp64 h, fp64 s, fp64 v, SDL_Scancode code) {
 	uint8_t rK = 0, gK = 0, bK = 0;
@@ -390,5 +366,4 @@ void setHSV_Scancode(fp64 h, fp64 s, fp64 v, SDL_Scancode code) {
 	Scancode_Color_Hover[z] = bH;
 	Scancode_Color_Press[z] = bP;
 	Scancode_Color_Click[z] = bC;
-	z++;
 }

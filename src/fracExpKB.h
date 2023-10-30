@@ -6,22 +6,23 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#ifndef FRACEXP_H
-#define FRACEXP_H
+#ifndef FRACEXPKB_H
+#define FRACEXPKB_H
 
 #include "Common_Def.h"
 #include "fractal.h"
+#include "engine.h"
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_scancode.h>
 
 /* Contains the fractals data along with its hash, name, and description */
-struct _Fractal_Header {
-	uint64_t hash[4];
-	char* name;
-	char* description;
-	Fractal_Data fractal;
-}; typedef struct _Fractal_Header Fractal_Header;
+struct FracExpKB_KeyBind {
+	Key_Function::Key_Function_Enum func;
+	Key_Function::Key_Function_Enum key;
+}; typedef struct FracExpKB_Keybind FracExpKB_Keybind;
 
 /* Contains lots of metadata */
-struct _FracExp_File {
+struct FracExpKB_File {
 	/* Header */
 		/* FracExp */
 			uint32_t FracExp_Version_Major;
@@ -41,26 +42,20 @@ struct _FracExp_File {
 			uint64_t hash_file[4];
 			uint64_t hash_time[4];
 			uint64_t hash_hardware[4];
-			uint64_t hash_fractal[4];
+			uint64_t hash_keybind[4];
 	/* File_Information */
 		char* File_Platform;
 		uint64_t File_Created;
 		uint64_t File_Modified;
 		uint64_t File_Opened;
 		char* File_Username; /* User MUST opt-in for this information to be saved */
-	/* Hardware_Information (User MUST opt-in for this information to be saved) */
-		uint32_t Hardware_CPU_Threads;
-		uint64_t Hardware_System_RAM;
-		char* Hardware_GPU_Name;
-		char* Hardware_OpenCL_Support;
-		char* Hardware_OpenCL_Profile;
-	/* Fractal_List */
-		uint32_t fractal_count;
-		Fractal_Header* fractal_list;
-}; typedef struct _FracExp_File FracExp_File;
+	/* Keybind_List */
+		uint32_t keybind_count;
+		FracExpKB_Keybind* keybind_list;
+}; typedef struct FracExpKB_File FracExpKB_File;
 
-int write_FracExp_File(FracExp_File* ptr, char* path);
-int read_FracExp_File(FracExp_File* ptr, char* path);
+int write_FracExp_File(FracExpKB_File* ptr, char* path);
+int read_FracExp_File(FracExpKB_File* ptr, char* path);
 
 
-#endif /* FRACEXP_H */
+#endif /* FRACEXPKB_H */

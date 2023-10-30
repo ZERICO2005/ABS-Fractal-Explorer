@@ -47,10 +47,10 @@ typedef double fp64;
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2023/10/28" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2023/10/30" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 12
+#define PROGRAM_V_PATCH 13
 #define PROGRAM_V_TAG "debug pre-alpha"
 
 /* Constants */
@@ -72,9 +72,23 @@ typedef double fp64;
 #define FREE(x) free(x); x = NULL
 
 #define printFlush(...) printf(__VA_ARGS__); fflush(stdout)
+#define printFatalError(...) printf("\n============\nFATAL ERROR: "); printf(__VA_ARGS__); printf("\n============\n"); fflush(stdout)
 #define printCriticalError(...) printf("\nCritical Error: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 #define printError(...) printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 #define printWarning(...) printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
+
+// Print change in value, also calls fflush(stdout);
+#define printfChange(type,value,...) \
+{ \
+	static type Detect_Change = (value); \
+	if (Detect_Change != (value)) { \
+		printf(__VA_ARGS__); \
+		fflush(stdout); \
+		Detect_Change = (value); \
+	} \
+}
+
+#define boolText(bool) ((bool) ? "True" : "False")
 
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
@@ -95,11 +109,25 @@ fp64 getDecimalTime(); // Returns the time in seconds
 // Print up to every (freq) seconds, also calls fflush(stdout);
 #define printfInterval(freq,...); \
 { \
-	static uint64_t resetTime = getNanoTime(); \
-	if (getNanoTime() - resetTime > (uint64_t)(freq * 1.0e9)) { \
+	static uint64_t ResetTime_PrintfInterval = getNanoTime(); \
+	if (getNanoTime() - ResetTime_PrintfInterval > (uint64_t)((freq) * 1.0e9)) { \
+		ResetTime_PrintfInterval = getNanoTime(); \
 		printf(__VA_ARGS__); \
 		fflush(stdout); \
-		resetTime = getNanoTime(); \
+	} \
+}
+// Print change in value up to every (freq) seconds, also calls fflush(stdout);
+#define printfChangeInterval(type,value,freq,...) \
+{ \
+	static uint64_t ResetTime_PrintfInterval = getNanoTime(); \
+	static type Detect_Change = (value); \
+	if (getNanoTime() - ResetTime_PrintfInterval > (uint64_t)((freq) * 1.0e9)) { \
+		if (Detect_Change != (value)) { \
+			ResetTime_PrintfInterval = getNanoTime(); \
+			printf(__VA_ARGS__); \
+			fflush(stdout); \
+			Detect_Change = (value); \
+		} \
 	} \
 }
 
@@ -145,5 +173,16 @@ class TimerBox {
 		uint64_t freqTime;
 		uint64_t deltaTime;
 };
+
+/* Color */
+
+// (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
+void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp64 hue, fp64 sat, fp64 val);
+// (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
+void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp32 hue, fp32 sat, fp32 val);
+// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
+uint32_t getRGBfromHSV(fp64 hue, fp64 sat, fp64 val);
+// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
+uint32_t getRGBfromHSV(fp32 hue, fp32 sat, fp32 val);
 
 #endif /* COMMON_DEF_H */
