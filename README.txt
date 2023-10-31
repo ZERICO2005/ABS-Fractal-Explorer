@@ -7,6 +7,8 @@ Description:
 	Software is available for Windows and Linux
 	More features, preformance improvements, and bug fixes will be released in later versions.
 
+	ABS-Fractal-Explorer is currently being rewriten to add new functionaility and to fix issues. The source code for it can be found under the "rewrite" branch.
+
 Controls:
 	Primary:
 		WASD/Arrows: Panning/Moving
