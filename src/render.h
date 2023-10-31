@@ -10,6 +10,8 @@
 #define RENDER_H
 #include "Common_Def.h"
 
+int setup_fracExpKB(int argc, char* argv[]);
+
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex);
 
 int terminate_Render();

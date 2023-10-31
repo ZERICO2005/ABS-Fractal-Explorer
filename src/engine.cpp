@@ -13,6 +13,20 @@
 
 BufferBox Render;
 
+int setup_fracExp(int argc, char* argv[]) {
+	if (argc >= 2) {
+		for (int a = 1; a < argc; a++) {
+			if (strstr(argv[a],".fracExpKB") != NULL) {
+				continue;
+			}
+			if (strstr(argv[a],".fracExp") != NULL) {
+				printFlush("\nFracExp File: %s",argv[a]);
+			}
+		}
+	}
+	return 0;
+}
+
 int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	while (QUIT_FLAG == false) {
 		

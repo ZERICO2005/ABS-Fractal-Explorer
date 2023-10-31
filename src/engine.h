@@ -10,6 +10,8 @@
 #define ENGINE_H
 #include "Common_Def.h"
 
+int setup_fracExp(int argc, char* argv[]);
+
 int init_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex);
 
 int terminate_Engine();

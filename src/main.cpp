@@ -19,7 +19,9 @@ int terminate_Fractal_Engine() {
 	return 0;
 }
 
-int init_Fractal_Engine() {
+int init_Fractal_Engine(int argc, char* argv[]) {
+	setup_fracExp(argc,argv);
+	setup_fracExpKB(argc,argv);
 	std::thread Thread_Engine(init_Engine, std::ref(QUIT_FLAG), std::ref(Console_Mutex));
     std::thread Thread_Render(init_Render, std::ref(QUIT_FLAG), std::ref(Console_Mutex));
 	
@@ -30,10 +32,11 @@ int init_Fractal_Engine() {
 
 int main(int argc, char* argv[]) {
 	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
-	if (argc >= 2) { /* Process .fracExp files */
-		
+	/* Process .fracExp files */
+	if (argc >= 2) {
+		printFlush("\nArgument Count: %d\n",argc - 1);
 	}
-	init_Fractal_Engine();
+	init_Fractal_Engine(argc, argv);
 	terminate_Fractal_Engine();
 	return 0;
 }

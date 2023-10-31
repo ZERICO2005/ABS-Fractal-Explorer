@@ -16,10 +16,15 @@
 #include <SDL2/SDL_scancode.h>
 
 /* Contains the fractals data along with its hash, name, and description */
-struct FracExpKB_KeyBind {
+struct KeyBind {
 	Key_Function::Key_Function_Enum func;
 	Key_Function::Key_Function_Enum key;
-}; typedef struct FracExpKB_Keybind FracExpKB_Keybind;
+}; typedef struct KeyBind KeyBind;
+
+struct KeyBind_Preset {
+	size_t count;
+	KeyBind* list;
+}; typedef struct KeyBind_Preset KeyBind_Preset;
 
 /* Contains lots of metadata */
 struct FracExpKB_File {
@@ -41,7 +46,6 @@ struct FracExpKB_File {
 			uint64_t hash_critical[4];
 			uint64_t hash_file[4];
 			uint64_t hash_time[4];
-			uint64_t hash_hardware[4];
 			uint64_t hash_keybind[4];
 	/* File_Information */
 		char* File_Platform;
@@ -50,12 +54,11 @@ struct FracExpKB_File {
 		uint64_t File_Opened;
 		char* File_Username; /* User MUST opt-in for this information to be saved */
 	/* Keybind_List */
-		uint32_t keybind_count;
-		FracExpKB_Keybind* keybind_list;
+		KeyBind_Preset* KeyBind_PresetList;
 }; typedef struct FracExpKB_File FracExpKB_File;
 
-int write_FracExp_File(FracExpKB_File* ptr, char* path);
-int read_FracExp_File(FracExpKB_File* ptr, char* path);
+int write_FracExpKB_File(KeyBind_Preset* ptr, char* path);
+int read_FracExpKB_File(KeyBind_Preset* ptr, char* path);
 
 
 #endif /* FRACEXPKB_H */

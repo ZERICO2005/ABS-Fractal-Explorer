@@ -13,6 +13,7 @@
 #include "fractal.h"
 #include "keybind.h"
 #include "engine.h"
+#include "fracExpKB.h"
 
 #include <SDL2/SDL.h>
 
@@ -126,6 +127,21 @@ bool keyPressed(uint32_t key) {
 		return true;
 	}
 	return false;
+}
+
+KeyBind_Preset* KeyBindList;
+KeyBind_Preset* currentKeyBind;
+
+int setup_fracExpKB(int argc, char* argv[]) {
+	if (argc >= 2) {
+		for (int a = 1; a < argc; a++) {
+			if (strstr(argv[a],".fracExpKB") != NULL) {
+				printFlush("\nFracExp_KeyBind File: %s",argv[a]);
+				read_FracExpKB_File(KeyBindList,argv[a]);
+			}
+		}
+	}
+	return 0;
 }
 
 // Amount of displays detected
@@ -842,7 +858,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	initBufferBox(&Master,NULL,initResX,initResY,3);
 	initBufferBox(&TestGraphic,NULL,Master.resX,Master.resY - RESY_UI,3);
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
-	window = SDL_CreateWindow("Easy_GUI", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
+	window = SDL_CreateWindow(PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	// IMGUI
@@ -894,7 +910,6 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 		}
 	}
-
 }
 
 void newFrame() {

@@ -40,7 +40,6 @@ void Bit_Graphics::init_Bit_Graphics(size_t resX, size_t resY) {
 	clearBuffer();
 }
 void Bit_Graphics::terminate_Bit_Graphics() {
-	printFlush("\nTerminated Bit_Graphics");
 	initialized = false;
 	buf = NULL;
 	FREE(buf0);
@@ -257,6 +256,45 @@ void Bit_Graphics::printText6x8(size_t xW, size_t yW, char* text) {
 			default: //Text
 				text6x8(x,y,*text);
 				x += 7;
+		}
+		text++;
+		t++;
+	}
+}
+void Bit_Graphics::printTextWarp6x8(size_t xW, size_t yW, char* text, size_t width = 0) {
+	if (initialized == false) { return; }
+	if (width == 0) { width = ResX; }
+	size_t x = xW;
+	size_t y = yW;
+	size_t t = 0; // For tabs
+	while (*text != '\0') {
+		switch(*text) {
+			case '\n': // New Line
+				x = xW;
+				y += 9;
+				t = 0;
+				break;
+			case '\t': // Horizontal Tab
+				x += (4 - ((t - 1) % 4)) * 7;
+				t = 0;
+				break;
+			case '\v': // Vertical Tab
+				y += 9;
+				break;
+			case '\b': // Backspace
+				x -= 7;
+				break;
+			case '\r': // Return
+				x = xW;
+				break;
+			default: //Text
+				text6x8(x,y,*text);
+				x += 7;
+			if (xW + 7 > width) { // New Line
+				x = xW;
+				y += 9;
+				t = 0;
+			}
 		}
 		text++;
 		t++;

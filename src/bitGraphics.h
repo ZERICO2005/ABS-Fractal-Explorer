@@ -44,6 +44,8 @@ class Bit_Graphics {
 		void drawRect(size_t x0, size_t y0, size_t x1, size_t y1); //x start, y start, x length, y length
 	/* Text */
 		void printText6x8(size_t xW, size_t yW, char* text);
+		// ResX is used if width is not set
+		void printTextWarp6x8(size_t xW, size_t yW, char* text, size_t width);
 		void text6x8(size_t xW, size_t yW, char lexicon);
 		// void debugPrintBuffer();
 	private:
