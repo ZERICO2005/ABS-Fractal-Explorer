@@ -10,8 +10,8 @@
 #include "fracExp_Internal.h"
 #include "fracExpKB.h"
 
-void create_FracExpKB_File(KeyBind_Preset* preset, char* path) {
-	if (preset == NULL || path == NULL) {
+void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
+	if (path == NULL) {
 		printError("Unable to create_FracExp_File due to NULL parameters");
 		return; 
 	}
@@ -42,14 +42,97 @@ void create_FracExpKB_File(KeyBind_Preset* preset, char* path) {
 	
 	Param_List* param_list; size_t param_len = 0;
 	generate_Param_List(fracExpKB_raw,len,&param_list,&param_len);
+	static char fileExtension[64];
 
 	printFlush("\n\nRetriving Data\n");
 	Param_List* item = NULL;
-	#define integerFromParam(base) ((item != NULL) ? getNumberFromText(&raw[item->pos], item->len,base) : 0)
-	//FracExp_Header
-	item = getParameter(fracExpKB_raw,(char*)"FracExp_Header/FracExp_Version_Major",&param_list,&param_len);
-	if (item == NULL) {
-		printf("\nnull item");
+	#define integerFromParam(base) ((item != NULL) ? getNumberFromText(&fracExpKB_raw[item->pos], item->len,(base)) : 0)
+	#define stringFromParam(buf) getTextFromParam(fracExpKB_raw, item, (buf), ARRAY_LENGTH(buf));
+	#define getParam(data) getParameter(fracExpKB_raw,(char*)(data),param_list,param_len)
+	#define getHash(data) copyHex(fracExpKB_raw,item,(data),4);
+	/* File_Extentsion */
+		item = getParam("File_Extension");
+		stringFromParam(fileExtension);
+	/* File_Header/FracExp_KeyBind/Version/ */
+		item = getParam("File_Header/FracExp_KeyBind/Version/Major");
+		integerFromParam(frac->FracExpKB_Version_Major);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Minor");
+		integerFromParam(frac->FracExpKB_Version_Minor);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Patch");
+		integerFromParam(frac->FracExpKB_Version_Patch);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Build");
+		integerFromParam(frac->FracExpKB_Version_Build);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Tags");
+		stringFromParam(frac->FracExpKB_Version_Tags);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Major");
+		integerFromParam(frac->FracExpKB_Version_Major);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Minor");
+		integerFromParam(frac->FracExpKB_Version_Minor);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Patch");
+		integerFromParam(frac->FracExpKB_Version_Patch);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Build");
+		integerFromParam(frac->FracExpKB_Version_Build);
+		item = getParam("File_Header/FracExp_KeyBind/Version/Tags");
+		stringFromParam(frac->FracExpKB_Version_Tags);
+	/* File_Header/ABS_Fractal_Explorer/Version/ */
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Major");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Major);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Minor");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Minor);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Patch");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Patch);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Build");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Build);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Tags");
+		stringFromParam(frac->ABS_Fractal_Explorer_Version_Tags);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Major");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Major);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Minor");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Minor);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Patch");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Patch);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Build");
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Build);
+		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Tags");
+		stringFromParam(frac->ABS_Fractal_Explorer_Version_Tags);
+	/* File_Header/Hash/ */
+		item = getParam("File_Header/Hash/All");
+		getHash(frac->hash_all);
+		item = getParam("File_Header/Hash/Critical");
+		getHash(frac->hash_all);
+		item = getParam("File_Header/Hash/File");
+		getHash(frac->hash_all);
+		item = getParam("File_Header/Hash/Time");
+		getHash(frac->hash_all);
+		item = getParam("File_Header/Hash/KeyBinds");
+		getHash(frac->hash_all);
+	/* File_Information*/
+		item = getParam("File_Information/Platform");
+		stringFromParam(frac->File_Platform);
+		// item = getParam("File_Information/Created");
+		// stringFromParam(frac->File_Created);
+		// item = getParam("File_Information/Modified");
+		// stringFromParam(frac->File_Modified);
+		// item = getParam("File_Information/Opened");
+		// stringFromParam(frac->File_Opened);
+		item = getParam("File_Information/Username");
+		stringFromParam(frac->File_Username);
+	/* KeyBind_List */
+	{
+		using namespace Key_Function;
+		item = getParam("KeyBind_List/Preset/Name");
+		stringFromParam(frac->KeyBind_PresetList.name);
+		
+		for (size_t i = 0; i < Parameter_Function_Count; i++) {
+			char CurDir[128] = "KeyBind_List/Preset/";
+			// 20 is a magic number for the end of CurDir
+			snprintf(&CurDir[20],ARRAY_LENGTH(CurDir)-4,"%s",Key_Function_Text[i]);
+			item = getParam(CurDir);
+			char temp[64];
+			for (size_t a = 0; a < ARRAY_LENGTH(temp); a++) { temp[a] = 0x0; }
+			stringFromParam(temp);
+			printFlush("\n%s",temp);
+		}
 	}
 	FREE(fracExpKB_raw);
 	//FREE(param_list);
@@ -58,17 +141,19 @@ void create_FracExpKB_File(KeyBind_Preset* preset, char* path) {
 	//size_t param_start;  size_t param_end;
 }
 
-int read_FracExpKB_File(KeyBind_Preset* ptr, char* path) {
-	if (ptr == NULL || path == NULL) {
-		printError("Unable to read_FracExp_File due to NULL parameters");
+int read_FracExpKB_File(KeyBind_Preset* preset, char* path) {
+	if (path == NULL) {
+		printError("Unable to read_FracExp_File due to NULL path");
 		return -1;
 	}
-	create_FracExpKB_File(ptr,path);
+	FracExpKB_File* frac = (FracExpKB_File*)malloc(sizeof(FracExpKB_File));
+	create_FracExpKB_File(frac,path);
+	FREE(frac);
 	return 0;
 }
 
-int write_FracExpKB_File(KeyBind_Preset* ptr, char* path) {
-	if (ptr == NULL || path == NULL) {
+int write_FracExpKB_File(KeyBind_Preset* preset, char* path) {
+	if (preset == NULL || path == NULL) {
 		printError("Unable to write_FracExp_File due to NULL parameters");
 		return -1;
 	}

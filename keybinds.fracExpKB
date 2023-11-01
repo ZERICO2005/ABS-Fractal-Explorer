@@ -3,7 +3,10 @@
 # It is RECOMMENDED that your text editor is set to ANSI encoding and that exclusively ASCII characters are used.
 # Modifying any other parts of the file can lead to file corruption or errors.
 
-FracExp_KeyBind_Header: 
+File_Extension:
+	".FracExpKB"
+
+File_Header:
 	FracExp_KeyBind:
 		Version:
 			Major:
@@ -47,6 +50,8 @@ File_Information:
 	Created:
 		"2000/01/01 00:00:00.000"
 	Modified:
+		"2000/01/01 00:00:00.000"
+	Opened:
 		"2000/01/01 00:00:00.000"
 	Username: # The user must opt-in for this information to be saved
 		"Unknown"

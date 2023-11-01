@@ -265,13 +265,11 @@ void getTextFromParam(char* raw, Param_List* item, char* buf, size_t len) {
 }
 
 
-Param_List* getParameter(char* raw, char* path,  Param_List** param_list_ptr, size_t* param_len_ptr) { /* For exporting a singular value */
-	if (param_len_ptr == NULL || param_list_ptr == NULL) {
-		printError("\nparam_len_ptr and/or param_list_ptr are/is NULL");
+Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t param_len) { /* For exporting a singular value */
+	if (param_len == 0 || param_list == NULL) {
+		printError("\nparam_len and/or param_list are/is 0/NULL");
 		return NULL;
 	}
-	Param_List* param_list = *param_list_ptr;
-	size_t param_len = *param_len_ptr;
 	if (raw == NULL) { return NULL; }
 	char prev = '\0';
 
@@ -354,13 +352,13 @@ Param_List* getParameter(char* raw, char* path,  Param_List** param_list_ptr, si
 }
 
 
-void copyHex(char* raw, Param_List* item, uint64_t* hex, uint64_t* hash, size_t len) {
-	if (raw == NULL || hash == NULL) {
+void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
+	if (raw == NULL || hex == NULL) {
 		return;
 	}
 	if (item == NULL) {
 		for (size_t i = 0; i < len; i++) {
-			hash[i] = 0x0;
+			hex[i] = 0x0;
 		}
 		return;
 	}
@@ -368,7 +366,7 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, uint64_t* hash, size_t 
 		printFlush("\nError: Hexdecimal code is not long enough (%llu < %llu)\n", item->len, 17 * len + 1);
 		printParamTextN(raw,item);
 		for (size_t i = 0; i < len; i++) {
-			hash[i] = 0x0;
+			hex[i] = 0x0;
 		}
 		return;
 	}
@@ -388,7 +386,7 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, uint64_t* hash, size_t 
 				printFlush("\nError: Invalid Hexadecimal Character\n");
 				printParamTextN(raw,item);
 				for (size_t i = 0; i < len; i++) {
-					hash[i] = 0x0;
+					hex[i] = 0x0;
 				}
 				return;
 			}
