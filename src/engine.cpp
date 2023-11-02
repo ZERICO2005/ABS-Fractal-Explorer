@@ -10,8 +10,14 @@
 #include "engine.h"
 #include "render.h"
 #include "copyBuffer.h"
+#include "programData.h"
 
-BufferBox Render;
+BufferBox PrimaryBuf[2];
+BufferBox SecondaryBuf[2];
+
+Function_Status func_stat[Key_Function::Parameter_Function_Count];
+
+void renderFractal(BufferBox* buf, fp64 r, fp64 i, fp64 zoom, uint32_t maxItr);
 
 int setup_fracExp(int argc, char* argv[]) {
 	if (argc >= 2) {
@@ -27,23 +33,110 @@ int setup_fracExp(int argc, char* argv[]) {
 	return 0;
 }
 
-int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
+int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
+	using namespace Key_Function;
+	BufferBox* currentBuf = &PrimaryBuf[0];
+	BufferBox* prevBuf = NULL;
+	static fp64 r = 0.0;
+	static fp64 i = 0.0;
+	static fp64 zoom = 0.0;
+	uint32_t maxItr = 192;
+	TimerBox fracTime(1.0/60.0);
+	fp64 deltaTime = 0.0;
 	while (QUIT_FLAG == false) {
-		
+		if (fracTime.timerReset()) {
+			deltaTime = fracTime.getDeltaTime();
+			setRenderDelta(deltaTime);
+			printf("\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u",r,i,zoom,maxItr);
+			read_Function_Status(func_stat);
+			if (func_stat[incRealPos].triggered == true) {
+				r += 0.6 * pow(10.0,-zoom) * deltaTime;
+			}
+			if (func_stat[decRealPos].triggered == true) {
+				r -= 0.6 * pow(10.0,-zoom) * deltaTime;
+			}
+			if (func_stat[incImagPos].triggered == true) {
+				i += 0.6 * pow(10.0,-zoom) * deltaTime;
+			}
+			if (func_stat[decImagPos].triggered == true) {
+				i -= 0.6 * pow(10.0,-zoom) * deltaTime;
+			}
+			if (func_stat[incZoom].triggered == true) {
+				zoom += 0.3 * deltaTime;
+			}
+			if (func_stat[decZoom].triggered == true) {
+				zoom -= 0.3 * deltaTime;
+			}
+			if (func_stat[resetCoordinates].triggered == true) {
+				r = 0.0; i = 0.0; zoom = 0.0;
+			}
+			if (func_stat[incMaxItr].triggered == true) {
+				maxItr += (uint32_t)(128.0 * deltaTime);
+			}
+			if (func_stat[decMaxItr].triggered == true) {
+				maxItr -= (uint32_t)(128.0 * deltaTime);
+			}
+			if (func_stat[resetMaxItr].triggered == true) {
+				maxItr = 192;
+			}
+			valueLimit(r,-10.0,10.0);
+			valueLimit(i,-10.0,10.0);
+			valueLimit(zoom,-20.0,40.0);
+			valueLimit(maxItr,16,262144);
+			if (currentBuf->vram != NULL) {
+				renderFractal(currentBuf,r,i,zoom,maxItr);
+			}
+			/*printFlush("\n\n");
+			for (size_t y = 0; y < currentBuf->resY; y += 6) {
+				for (size_t x = 0; x < currentBuf->resX; x += 4) {
+					printf("%X",currentBuf->vram[((y * currentBuf->resX) + x) * 3]/16);
+				}
+				printf("\n");
+			}
+			printFlush("\n");*/
+			/* Swap and output buffers */
+			//clear_Render_Buffers();
+			prevBuf = currentBuf;
+			currentBuf = (currentBuf == &PrimaryBuf[0]) ? &PrimaryBuf[1] : &PrimaryBuf[0];
+			write_Render_Buffers(prevBuf);
+			{
+				BufferBox sizeBuf = read_Buffer_Size();
+				if (sizeBuf.resX != currentBuf->resX || sizeBuf.resY != currentBuf->resY || sizeBuf.channels != currentBuf->channels || sizeBuf.padding != currentBuf->padding) {
+					clear_Render_Buffers();
+					for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
+						bool reallocateBuffers = (getBufferBoxSize(&sizeBuf) != getBufferBoxSize(currentBuf)) ? true : false;
+						PrimaryBuf[b].resX = sizeBuf.resX;
+						PrimaryBuf[b].resY = sizeBuf.resY;
+						PrimaryBuf[b].channels = sizeBuf.channels;
+						PrimaryBuf[b].padding = sizeBuf.padding;
+						if (reallocateBuffers == true) {
+							PrimaryBuf[b].vram = (uint8_t*)realloc(PrimaryBuf[b].vram, getBufferBoxSize(&PrimaryBuf[b]));
+						}
+					}
+				}
+			}
+		}
 	}
 	return 0;
 }
 
-int init_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
+int init_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	// printf("\nInit_Engine: %s", ((QUIT_FLAG == true) ? "True" : "False"));
-	initBufferBox(&Render,NULL,720,480,3,4);
-	Render.vram = (uint8_t*)malloc(getBufferBoxSize(&Render));
-	start_Engine(QUIT_FLAG,Console_Mutex);
+	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
+		initBufferBox(&PrimaryBuf[b],NULL,320,200,3,0);
+		PrimaryBuf[b].vram = (uint8_t*)malloc(getBufferBoxSize(&PrimaryBuf[b]));
+	}
+	while (read_Render_Ready() == false) {
+		std::this_thread::yield();
+		start_Engine(QUIT_FLAG,Key_Function_Mutex);
+	}
 	return 0;
 }
 
 int terminate_Engine() {
-	FREE(Render.vram);
+	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
+		FREE(PrimaryBuf[b].vram);
+	}
 	return 0;
 }
 

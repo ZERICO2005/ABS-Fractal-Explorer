@@ -11,7 +11,7 @@
 #include "render.h"
 
 std::atomic<bool> QUIT_FLAG(false);
-std::mutex Console_Mutex;
+std::mutex Key_Function_Mutex;
 
 int terminate_Fractal_Engine() {
 	terminate_Render();
@@ -22,8 +22,8 @@ int terminate_Fractal_Engine() {
 int init_Fractal_Engine(int argc, char* argv[]) {
 	setup_fracExp(argc,argv);
 	setup_fracExpKB(argc,argv);
-	std::thread Thread_Engine(init_Engine, std::ref(QUIT_FLAG), std::ref(Console_Mutex));
-    std::thread Thread_Render(init_Render, std::ref(QUIT_FLAG), std::ref(Console_Mutex));
+	std::thread Thread_Engine(init_Engine, std::ref(QUIT_FLAG), std::ref(Key_Function_Mutex));
+    std::thread Thread_Render(init_Render, std::ref(QUIT_FLAG), std::ref(Key_Function_Mutex));
 	
     Thread_Engine.join();
     Thread_Render.join();

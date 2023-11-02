@@ -20,6 +20,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
+#include "programData.h"
 
 SDL_Renderer* renderer;
 SDL_Window* window;
@@ -41,6 +42,7 @@ fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
 fp64 Frame_Time_Display = 0.0;
+fp64 Render_Time_Display = 0.0;
 
 fp64 r = 0.0;
 fp64 i = 0.0;
@@ -87,7 +89,12 @@ KeyBind_Preset* currentKeyBind = &defaultKeyBind;
 
 Key_Status Key_List[SDL_NUM_SCANCODES];
 
+Function_Status triggered_functions[Key_Function::Parameter_Function_Count];
+
 void updateKeys() {
+	for (size_t t = 0; t < ARRAY_LENGTH(triggered_functions); t++) {
+		triggered_functions[t].triggered = false;
+	}
 	KEYS = SDL_GetKeyboardState(NULL);
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
 		if (KEYS[i] != 0) { // Key Pressed
@@ -99,7 +106,16 @@ void updateKeys() {
 			Key_List[i].timeReleased = getNanoTime();
 			Key_List[i].pressed = false;
 		}
+
+		for (size_t f = 0; f < currentKeyBind->length; f++) {
+			if (currentKeyBind->list[f].key == (SDL_Scancode)i) {
+				if (Key_List[i].pressed == true) {
+					triggered_functions[currentKeyBind->list[f].func].triggered = true;
+				}
+			}
+		}
 	}
+	write_Function_Status(triggered_functions);
 }
 
 void recolorKeyboard() {
@@ -251,7 +267,7 @@ bool windowResizingCode() {
 		TestGraphic.resY = y - RESY_UI;
 		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
 		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram),getBufferBoxSize(&TestGraphic));
-		
+		write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
 		reVal = true;
 	}
 	rX = x;
@@ -296,6 +312,11 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::Text("%.2lfFPS",1.0 / Frame_Time_Display);
 	ImGui::SameLine();
 	ImGui::Text("%.2lfms",Frame_Time_Display * 1000.0);
+	ImGui::SameLine();
+	ImGui::Text("%.2lfFPS",1.0 / Render_Time_Display);
+	ImGui::SameLine();
+	ImGui::Text("%.2lfms",Render_Time_Display * 1000.0);
+
     ImGui::Text("Button: %d",buttonSelection); ImGui::SameLine();
     size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
     for (size_t i = 0; i < buttonCount; i++) {
@@ -772,7 +793,7 @@ int render_IMGUI() {
 	return 0;
 }
 
-int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
+int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	/*
 	static bool yeildPrint = false;
 	static uint64_t yeildCount = 0;
@@ -832,12 +853,15 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 		*/
 		if (frameTimer.timerReset()) {
 			DeltaTime = frameTimer.getDeltaTime();
+			fp64 RenderTime = getRenderDelta();
 			{
 				static fp64 maxFrameTime = 0.0;
+				static fp64 maxRenderTime = 0.0;
 				if (maxFrameReset.timerReset()) {
 					Frame_Time_Display = maxFrameTime;
+					Render_Time_Display = maxRenderTime;
 					maxFrameTime = 0.0;
-
+					maxRenderTime = 0.0;
 					/*
 					if (yeildPrint == true || yeildSwitch == true) {
 						yeildSwitch = false;
@@ -852,6 +876,9 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 				}
 				if (DeltaTime > maxFrameTime) {
 					maxFrameTime = DeltaTime;
+				}
+				if (RenderTime > maxRenderTime) {
+					maxRenderTime = RenderTime;
 				}
 			}
 			if (FRAME_RATE_NANO < 2 * yeildTimeNano) {
@@ -949,7 +976,7 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 	return 0;
 }
 
-int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
+int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	SDL_Init(SDL_INIT_VIDEO);
 	printf("\nSystem Information:");
 	int32_t initResX, initResY, initPosX, initPosY;
@@ -989,6 +1016,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	window = SDL_CreateWindow(PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
+	write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
 	// IMGUI
 	IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -1001,7 +1029,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 	
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initKeys();
-	start_Render(QUIT_FLAG,Console_Mutex);
+	start_Render(QUIT_FLAG,Key_Function_Mutex);
+	write_Render_Ready(true);
 	return 0;
 }
 
@@ -1040,7 +1069,6 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 		}
 	}
 }
-
 void newFrame() {
 
 	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255); // Some shade of dark blue
@@ -1051,9 +1079,15 @@ void newFrame() {
 	void* SDL_Master_VRAM = (void*)Master.vram;
 	SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
 	Master.vram = (uint8_t*)SDL_Master_VRAM;
-	
+	/*
 	renderTestGraphic(0.1, 0.3, 1.0);
-	copyBuffer(TestGraphic,Master,0,RESY_UI,false);	
+	copyBuffer(TestGraphic,Master,0,RESY_UI,false);
+	*/
+	static BufferBox temp_primary = {NULL,0,0,3,0};
+	read_Render_Buffers(&temp_primary);
+	if (temp_primary.vram != NULL) {
+		copyBuffer(temp_primary,Master,0,RESY_UI,false);
+	}
 	/*
 	if (buf == NULL && buf->vram == NULL) { 
 		
