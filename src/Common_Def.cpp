@@ -135,7 +135,7 @@ void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp64 hue, fp64 sat, fp64 
 		*r = vR; *g = tR; *b = pR;
 		return;
 		case 1:
-		*r = pR; *g = vR; *b = pR;
+		*r = qR; *g = vR; *b = pR;
 		return;
 		case 2:
 		*r = pR; *g = vR; *b = tR;
