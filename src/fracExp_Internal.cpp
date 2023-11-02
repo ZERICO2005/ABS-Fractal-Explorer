@@ -449,12 +449,12 @@ int correctWindowsFileName(char** ret, char* path) {
 		}
 		index++;
 	}
-	buf = (char*)malloc(bufPtr + 1);
-	*ret = buf;
+	buf = (char*)calloc(bufPtr + 1,sizeof(char));
 	if (buf == NULL) {
 		printError("Failed to allocate memory for file path");
 		return -1;
 	}
+	*ret = buf;
 	// Reset
 	index = 0;
 	bufPtr = 0;

@@ -35,35 +35,35 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		printError("Unable to format pathF, switching to path");
 		pathF = path;
 	}
+	//printFlush("\nPrevious: %s\nUpdated:  %s",path,pathF);
 	FILE *ptrF;
 	ptrF = fopen(path, "rb");
 	if (ptrF == NULL) {
-		printError("Unable to open %s",path);
+		printError("ptrF Null, unable to open \"%s\"",path);
 		return;
 	}
 	fseek(ptrF, 0, SEEK_END);
 	size_t len = ftell(ptrF);
 	fseek(ptrF, 0, SEEK_SET);
-	char* fracExpKB_raw = (char*)malloc(len + 1);
+	char* fracExpKB_raw = (char*)calloc(len + 1,sizeof(char));
 	if (fracExpKB_raw == NULL) {
-		printError("Unable to allocate memory for fracExpKB_raw");
 		FREE(pathF);
 		return;
 	}
-	fread(fracExpKB_raw, 1, len, ptrF); fracExpKB_raw[len] = '\0'; // Manual string termination
+	fread(fracExpKB_raw, sizeof(char), len, ptrF); fracExpKB_raw[len] = '\0'; // Manual string termination
 	fclose(ptrF);
 	FREE(pathF);
-	
 	Param_List* param_list; size_t param_len = 0;
 	generate_Param_List(fracExpKB_raw,len,&param_list,&param_len);
 	static char fileExtension[64];
 
-	//printFlush("\n\nRetriving Data\n");
+	printFlush("\n\nRetriving Data\n");
 	Param_List* item = NULL;
 	#define integerFromParam(base) ((item != NULL) ? getNumberFromText(&fracExpKB_raw[item->pos], item->len,(base)) : 0)
 	#define stringFromParam(buf) getTextFromParam(fracExpKB_raw, item, (buf), ARRAY_LENGTH(buf))
 	#define getParam(data) getParameter(fracExpKB_raw,(char*)(data),param_list,param_len)
 	#define getHash(data) copyHex(fracExpKB_raw,item,(data),4)
+	
 	/* File_Extentsion */
 		item = getParam("File_Extension");
 		stringFromParam(fileExtension);
@@ -113,13 +113,13 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		item = getParam("File_Header/Hash/All");
 		getHash(frac->hash_all);
 		item = getParam("File_Header/Hash/Critical");
-		getHash(frac->hash_all);
+		getHash(frac->hash_critical);
 		item = getParam("File_Header/Hash/File");
-		getHash(frac->hash_all);
+		getHash(frac->hash_file);
 		item = getParam("File_Header/Hash/Time");
-		getHash(frac->hash_all);
+		getHash(frac->hash_time);
 		item = getParam("File_Header/Hash/KeyBinds");
-		getHash(frac->hash_all);
+		getHash(frac->hash_keybind);
 	/* File_Information*/
 		item = getParam("File_Information/Platform");
 		stringFromParam(frac->File_Platform);
@@ -133,10 +133,12 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		stringFromParam(frac->File_Username);
 	/* KeyBind_List */
 	{
+		#define Key_Function_Skip 0
+		#define SDL_Scancode_Skip 0
 		//printFlush("\n\nKey-Function: Scancode\n");
 		using namespace Key_Function;
 		size_t totalSize = 0;
-		for (size_t i = Key_Function::NONE + 1; i < Parameter_Function_Count; i++) {
+		for (size_t i = Key_Function_Skip; i < Parameter_Function_Count; i++) {
 			size_t strSize = 0;
 			char CurDir[128] = "KeyBind_List/Preset/";
 			// 20 is a magic number for the end of CurDir
@@ -157,7 +159,7 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 			}
 		}
 		//printFlush("\n\nScancode: Key-Function\n");
-		for (size_t i = SDL_SCANCODE_UNKNOWN + 1; i < ARRAY_LENGTH(Scancode_Name); i++) {
+		for (size_t i = SDL_Scancode_Skip; i < ARRAY_LENGTH(Scancode_Name); i++) {
 			size_t strSize = 0;
 			char CurDir[128] = "KeyBind_List/Preset/";
 			// 20 is a magic number for the end of CurDir
@@ -188,7 +190,7 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		frac->KeyBind_Preset_Count = 1;
 		frac->KeyBind_Preset_List = (KeyBind_Preset*)malloc(sizeof(KeyBind_Preset) * frac->KeyBind_Preset_Count);
 		snprintf(frac->KeyBind_Preset_List[0].name,TEXT_LENGTH(frac->KeyBind_Preset_List[0].name),"Imported Key-bind");
-		getHash((uint64_t*)(frac->KeyBind_Hash) + (0 * 4));
+		//getHash((uint64_t*)(frac->KeyBind_Hash) + (0 * 4));
 		
 		frac->KeyBind_Preset_List[0].list = (KeyBind*)malloc(sizeof(KeyBind) * totalSize);
 		frac->KeyBind_Preset_List[0].length = totalSize;
@@ -196,7 +198,7 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		size_t bindPtr = 0;
 
 
-		for (size_t i = Key_Function::NONE + 1; i < Parameter_Function_Count; i++) {
+		for (size_t i = Key_Function_Skip; i < Parameter_Function_Count; i++) {
 			size_t strSize = 0;
 			char CurDir[128] = "KeyBind_List/Preset/";
 			// 20 is a magic number for the end of CurDir
@@ -211,7 +213,7 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 				for (size_t a = 0; a < ARRAY_LENGTH(temp); a++) { temp[a] = 0x0; }
 				strSize = getTextFromParam(fracExpKB_raw, item + p, temp, ARRAY_LENGTH(temp));
 				if (strSize > 0) {
-					for (size_t match = SDL_SCANCODE_UNKNOWN + 1; match < ARRAY_LENGTH(Scancode_Name); match++) {
+					for (size_t match = SDL_Scancode_Skip; match < ARRAY_LENGTH(Scancode_Name); match++) {
 						if (strictCompareText(temp,strlen(temp),(char*)Scancode_Name[match],strlen((char*)Scancode_Name[match])) == true) {
 							bindData(bindPtr).func = (Key_Function_Enum)i;
 							bindData(bindPtr).key = (SDL_Scancode)match;
@@ -222,7 +224,7 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 				}
 			}
 		}
-		for (size_t i = SDL_SCANCODE_UNKNOWN + 1; i < ARRAY_LENGTH(Scancode_Name); i++) {
+		for (size_t i = SDL_Scancode_Skip; i < ARRAY_LENGTH(Scancode_Name); i++) {
 			size_t strSize = 0;
 			char CurDir[128] = "KeyBind_List/Preset/";
 			// 20 is a magic number for the end of CurDir
@@ -237,7 +239,7 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 				for (size_t a = 0; a < ARRAY_LENGTH(temp); a++) { temp[a] = 0x0; }
 				strSize = getTextFromParam(fracExpKB_raw, item + p, temp, ARRAY_LENGTH(temp));
 				if (strSize > 0) {
-					for (size_t match = Key_Function::NONE + 1; match < ARRAY_LENGTH(Key_Function_Text); match++) {
+					for (size_t match = Key_Function_Skip; match < ARRAY_LENGTH(Key_Function_Text); match++) {
 						if (strictCompareText(temp,strlen(temp),(char*)Key_Function_Text[match],strlen((char*)Key_Function_Text[match])) == true) {
 							bindData(bindPtr).func = (Key_Function_Enum)match;
 							bindData(bindPtr).key = (SDL_Scancode)i;
@@ -248,10 +250,13 @@ void create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 				}
 			}
 		}
+		//printFlush("\nbindPtr = %zu",bindPtr);
+		frac->KeyBind_Preset_List[0].length = bindPtr; // DEBUG
 	}
 	FREE(fracExpKB_raw);
 	//FREE(param_list);
-	//printFlush("\n");
+	//printFlush("\nFinished\n");
+	
 		
 	//size_t param_start;  size_t param_end;
 }
@@ -273,8 +278,16 @@ int read_FracExpKB_File(KeyBind_Preset* preset, char* path) {
 	create_FracExpKB_File(frac,path);
 
 	if (frac->KeyBind_Preset_List == NULL) {
-		FREE(frac);
 		printError("FracExpKB_File* frac->KeyBind_Preset_List is NULL");
+		FREE(frac);
+		FREE(frac->KeyBind_Hash);
+		return -1;
+	}
+	if (frac->KeyBind_Preset_Count == 0) {
+		printError("FracExpKB_File* frac->KeyBind_Preset_Count is 0");
+		FREE(frac->KeyBind_Preset_List);
+		FREE(frac->KeyBind_Hash);
+		FREE(frac);
 		return -1;
 	}
 	// preset = (KeyBind_Preset*)malloc(sizeof(KeyBind_Preset));
@@ -285,19 +298,22 @@ int read_FracExpKB_File(KeyBind_Preset* preset, char* path) {
 	for (size_t i = 0; i < preset->length; i++) {
 		preset->list[i] = frac->KeyBind_Preset_List[0].list[i];
 	}
-	//printf("\nLength: %zu List: %p Name: %s",preset->length,preset->list,preset->name);
+	printf("\nLength: %zu List: %p Name: %s",preset->length,preset->list,preset->name);
 	for (size_t i = 0; i < frac->KeyBind_Preset_Count; i++) {
+		printFlush("\nFreeing: %zu",i);
 		FREE(frac->KeyBind_Preset_List[i].list);
 	}
 	FREE(frac->KeyBind_Preset_List);
-	FREE(frac->KeyBind_Hash);
+	//FREE(frac->KeyBind_Hash);
 	FREE(frac);
-	// printFlush("\nPrinting: ");
-	// printFlush("%s\n",preset->name);
-	// for (size_t i = 0; i < preset->length; i++) {
-	// 	printf("\nKeyBind:\n\t%s\n\t%s",Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
-	// }
-	// fflush(stdout);
+	/*
+	printFlush("\nPrinting: %zu",preset->length);
+	printFlush("%s\n",preset->name);
+	for (size_t i = 0; i < preset->length - 1; i++) {
+		printf("\nKeyBind[%zu]:\n\t%s\n\t%s",i,Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
+	}
+	fflush(stdout);
+	*/
 	return 0;
 }
 

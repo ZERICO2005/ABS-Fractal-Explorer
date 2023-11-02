@@ -82,7 +82,7 @@ KeyBind defaultKeyBindList[] = {
 size_t KeyBind_PresetCount;
 //KeyBind_Preset* KeyBind_List;
 KeyBind_Preset defaultKeyBind = {"Default Key-bind",ARRAY_LENGTH(defaultKeyBindList),defaultKeyBindList};
-KeyBind_Preset importedKeyBind;
+KeyBind_Preset importedKeyBind = {"Blank",0,NULL};
 KeyBind_Preset* currentKeyBind = &defaultKeyBind;
 
 Key_Status Key_List[SDL_NUM_SCANCODES];
