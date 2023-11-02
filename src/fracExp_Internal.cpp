@@ -12,18 +12,18 @@
 
 void printText(char* text, size_t len) {
 	if (text == NULL || len == 0) {
-		printf("\n");
-		fflush(stdout);
+		printfDebug("\n");
+		fflushDebug(stdout);
 		return;
 	}
 	if (text[0] != '\n') {
-		printf("\n");
+		printfDebug("\n");
 	}
 	for (size_t i = 0; i < len; i++) {
-		printf("%c",text[i]);
+		printfDebug("%c",text[i]);
 	}
-	printf("\n");
-	fflush(stdout);
+	printfDebug("\n");
+	fflushDebug(stdout);
 }
 
 // Param_List* param_list; size_t param_len = 0;
@@ -31,14 +31,14 @@ void printText(char* text, size_t len) {
 
 
 void printParamText(char* raw, Param_List* item) {
-	for (size_t p = 0; p < item->len; p++) { printf("%c",raw[p + item->pos]); }
-	fflush(stdout);
+	for (size_t p = 0; p < item->len; p++) { printfDebug("%c",raw[p + item->pos]); }
+	fflushDebug(stdout);
 }
 
 void printParamTextN(char* raw, Param_List* item) {
-	printf("\n");
-	for (size_t p = 0; p < item->len; p++) { printf("%c",raw[p + item->pos]); }
-	fflush(stdout);
+	printfDebug("\n");
+	for (size_t p = 0; p < item->len; p++) { printfDebug("%c",raw[p + item->pos]); }
+	fflushDebug(stdout);
 }
 
 
@@ -71,7 +71,7 @@ size_t clean_frac_raw(char* raw, size_t len) { // Removes comments and blank lin
 	prev = '\n';
 	posW = 0;
 	bool insideQuotes = false;
-	printf("%s",boolText(insideQuotes));
+	printfDebug("%s",boolText(insideQuotes));
 	for (size_t posR = 0; posR < len; posR++) {
 		if ((raw[posR] == '#' && prev != '\\')) {
 			while (posR < len) {
@@ -84,6 +84,9 @@ size_t clean_frac_raw(char* raw, size_t len) { // Removes comments and blank lin
 		} else {
 			raw[posW] = raw[posR];
 			posW++;
+			if (insideQuotes == true) {
+
+			}
 			/*
 			if ((frac_raw[posR] == ':' && prev != '\\')) {
 				while (posR < len) {
@@ -136,7 +139,7 @@ void generate_Param_List(char* raw, size_t len,Param_List** param_list_ptr,size_
 		}
 		prev = raw[pos];
 	}
-	printFlush("\nTotal Rows: %llu",rowCount);
+	printFlushDebug("\nTotal Rows: %llu",rowCount);
 	param_len = rowCount;
 	param_list = (Param_List*)malloc(param_len * sizeof(Param_List));
 	
@@ -176,8 +179,8 @@ void generate_Param_List(char* raw, size_t len,Param_List** param_list_ptr,size_
 			}
 		}
 		pos++;
-		printf("\nrow: %3llu pos: %4llu len: %2llu depth: %1llu %6s\n", row, param_list[row].pos, param_list[row].len, param_list[row].depth, param_list[row].isValue ? "value" : "header");
-		for (size_t p = 0; p < param_list[row].len; p++) { printf("%c",raw[p + param_list[row].pos]); }
+		printfDebug("\nrow: %3llu pos: %4llu len: %2llu depth: %1llu %6s\n", row, param_list[row].pos, param_list[row].len, param_list[row].depth, param_list[row].isValue ? "value" : "header");
+		for (size_t p = 0; p < param_list[row].len; p++) { printfDebug("%c",raw[p + param_list[row].pos]); }
 	}
 	*param_len_ptr = param_len;
 	*param_list_ptr = param_list;
@@ -238,23 +241,24 @@ char paramCharAt(char* raw, Param_List* item, size_t index) { // Returns '\0' fo
 	return raw[item->pos + index];
 }
 
-void getTextFromParam(char* raw, Param_List* item, char* buf, size_t len) {
+// Returns size of text
+size_t getTextFromParam(char* raw, Param_List* item, char* buf, size_t len) {
 	if (raw == NULL) {
-		return;
+		return 0;
 	}
 	if (item == NULL || buf == NULL || len == 0) {
-		return;
+		return 0;
 	}
 	if (len == 1 || item->len == 0 || strictCompareText(&raw[item->pos], item->len,(char*)"NULL",4)) {
 		buf[0] = '\0';
-		return;
+		return 1;
 	}
 	if (len == 2) {
 		buf[0] = paramCharAt(raw,item,0);
 		buf[1] = '\0';
-		return;
+		return 2;
 	}
-	if (paramCharAt(raw,item,0) )
+	//if (paramCharAt(raw,item,0) )
 	if (item->len == 1) {
 		buf[0] = paramCharAt(raw,item,0);
 	}
@@ -262,8 +266,8 @@ void getTextFromParam(char* raw, Param_List* item, char* buf, size_t len) {
 	for (size_t i = 0; i < len && i < item->len; i++) {
 		buf[i] = raw[item->pos + i];
 	}
+	return (len < item->len) ? len : item->len;
 }
-
 
 Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t param_len) { /* For exporting a singular value */
 	if (param_len == 0 || param_list == NULL) {
@@ -301,7 +305,7 @@ Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t 
 			if (param_list[row].depth == depth) {
 				if (strictCompareText(&path[pos0], pos1 - pos0, &raw[param_list[row].pos], param_list[row].len) == true) {
 					if (depth == maxDepth) {
-						printFlush("\nExporting %s\n\t",path);
+						printFlushDebug("\nExporting %s\n\t",path);
 						printParamText(raw,&param_list[row + 1]);
 						return &param_list[row + 1];
 					}
@@ -310,12 +314,12 @@ Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t 
 					break;
 				}
 			} else if (param_list[row].depth < depth) {
-				printFlush("\nDepth Error: Depth %llu, Row %llu, Row-Depth %llu, unable to find %s",depth,row,param_list[row].depth,path);
+				printFlushDebug("\nDepth Error: Depth %llu, Row %llu, Row-Depth %llu, unable to find %s",depth,row,param_list[row].depth,path);
 				return NULL;
 			}
 		}
 		if (row == param_len) {
-			printFlush("\nExhaust Error: Depth %llu, unable to find %s",depth,path);
+			printFlushDebug("\nExhaust Error: Depth %llu, unable to find %s",depth,path);
 			return NULL;
 		}
 		pos1++;
@@ -351,6 +355,33 @@ Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t 
 	return NULL;
 }
 
+/* */
+size_t getParameterArrayLength(char* raw, Param_List* item, Param_List* list, size_t len) {
+	if (len == 0) { printError("Param_List* list length is 0"); return 0; }
+	if (list == NULL) { printError("Param_List* list is NULL"); return 0; }
+	if (item == NULL) { printError("Param_List* item is NULL"); return 0; }
+	if (raw == NULL) { printError("char* raw is NULL"); return 0; }
+	size_t index = 0;
+	for (; index < len; index++) { // Find the index of item
+		if (list[index].pos == item->pos) {
+			break;
+		}
+	}
+	if (index == len) {
+		printError("Unable to find Param_List* item in Param_List* list");
+		return 0;
+	}
+	size_t count = 0;
+	for (; index < len; index++) { // Find the index of item
+		if (list[index].depth == item->depth) {
+			count++;
+		} else {
+			break;
+		}
+	}
+	return count;
+}
+
 
 void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
 	if (raw == NULL || hex == NULL) {
@@ -363,7 +394,7 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
 		return;
 	}
 	if (item->len < 17 * len + 1) { // 64 + 5
-		printFlush("\nError: Hexdecimal code is not long enough (%llu < %llu)\n", item->len, 17 * len + 1);
+		printFlushDebug("\nError: Hexdecimal code is not long enough (%llu < %llu)\n", item->len, 17 * len + 1);
 		printParamTextN(raw,item);
 		for (size_t i = 0; i < len; i++) {
 			hex[i] = 0x0;
@@ -383,7 +414,7 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
 				val = *p - 'a' + 10;
 			}
 			if (val == 0xFF) {
-				printFlush("\nError: Invalid Hexadecimal Character\n");
+				printFlushDebug("\nError: Invalid Hexadecimal Character\n");
 				printParamTextN(raw,item);
 				for (size_t i = 0; i < len; i++) {
 					hex[i] = 0x0;

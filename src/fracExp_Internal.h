@@ -11,6 +11,18 @@
 
 #include "Common_Def.h"
 
+//#define FracExp_Internal_Debug_Print
+
+#ifdef FracExp_Internal_Debug_Print
+	#define printfDebug(...) printf(__VA_ARGS__)
+	#define fflushDebug(buf) fflush(buf)
+	#define printFlushDebug(buf) printf(__VA_ARGS__); fflush(buf)
+#else
+	#define printfDebug(...)
+	#define fflushDebug(buf)
+	#define printFlushDebug(...)
+#endif
+
 struct _Param_List {
 	size_t pos;
 	size_t len;
@@ -35,9 +47,10 @@ bool strictCompareText(char* strA, size_t lenA, char* strB, size_t lenB);
 int64_t getNumberFromText(char* str, size_t len, uint8_t base);
 
 Param_List* getParameter(char* raw, char* path, Param_List* param_list,size_t param_len);
+size_t getParameterArrayLength(char* raw, Param_List* item, Param_List* list, size_t len);
 
 char paramCharAt(char* raw, Param_List* item, size_t index);
-void getTextFromParam(char* raw, Param_List* item, char* buf, size_t len);
+size_t getTextFromParam(char* raw, Param_List* item, char* buf, size_t len);
 void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len);
 
 int correctWindowsFileName(char** ret, char* path);

@@ -50,7 +50,7 @@ typedef double fp64;
 #define PROGRAM_DATE "2023/11/01" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 15
+#define PROGRAM_V_PATCH 16
 #define PROGRAM_V_TAG "debug pre-alpha"
 
 /* Constants */

@@ -1,0 +1,151 @@
+# FracExp_KeyBind file
+# The only parts of this file you SHOULD modify are the Username and the Keybind_List.
+# It is RECOMMENDED that your text editor is set to ANSI encoding and that exclusively ASCII characters are used.
+# Modifying any other parts of the file can lead to file corruption or errors.
+
+# This file was exported from ABS-Fractal-Explorer v1.0.16
+
+File_Extension:
+	".fracExpKB"
+
+File_Header:
+	FracExp_KeyBind:
+		Version:		
+			Major:
+				1
+			Minor:
+				0
+			Patch:
+				0
+			Build:
+				0
+			Tags:
+				"Debug"
+	FracExp_KeyBind:
+		Version:		
+			Major:
+				1
+			Minor:
+				0
+			Patch:
+				16
+			Build:
+				0
+			Tags:
+				"debug pre-alpha"
+	Hash:
+		All:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		Critical:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		File:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+		KeyBinds:
+			0x0000000000000000x0000000000000000x0000000000000000x0000000000000000
+
+File_Information:
+	Platform:
+		"Unknown"
+	Created:
+		"2000/01/01 00:00"
+	Modified
+		"2000/01/01 00:00"
+	Opened:
+		"2000/01/01 00:00"
+	Username: # The user must opt-in for this information to be saved
+		"Unknown"
+
+KeyBind_List: # https://wiki.libsdl.org/SDL2/SDL_Scancode
+	Preset:
+		Name:
+			"Default Key-bind"
+		incRealPos:
+			SDL_SCANCODE_D
+		decRealPos:
+			SDL_SCANCODE_A
+		incImagPos:
+			SDL_SCANCODE_W
+		decImagPos:
+			SDL_SCANCODE_S
+		incMaxItr:
+			SDL_SCANCODE_T
+		decMaxItr:
+			SDL_SCANCODE_G
+		incZoom:
+			SDL_SCANCODE_E
+		decZoom:
+			SDL_SCANCODE_Q
+		resetCoordinates:
+			SDL_SCANCODE_R
+		openSettingsMenu:
+			SDL_SCANCODE_Y
+		exportFractal:
+			SDL_SCANCODE_H
+		takeScreenshot:
+			SDL_SCANCODE_P
+		takeSuperScreenshot:
+			SDL_SCANCODE_GRAVE
+		incZReal:
+			SDL_SCANCODE_L
+		decZReal:
+			SDL_SCANCODE_J
+		incZImag:
+			SDL_SCANCODE_I
+		decZImag:
+			SDL_SCANCODE_K
+		resetZReal:
+			SDL_SCANCODE_U
+		resetZImag:
+			SDL_SCANCODE_O
+		toggleJulia:
+			SDL_SCANCODE_C
+		toggleStartingZ:
+			SDL_SCANCODE_V
+		resetTransformations:
+			SDL_SCANCODE_F
+		clockwiseRot:
+			SDL_SCANCODE_RIGHT
+		counterclockwiseRot:
+			SDL_SCANCODE_LEFT
+		incStretch:
+			SDL_SCANCODE_UP
+		decStretch:
+			SDL_SCANCODE_DOWN
+		inputFormula:
+			SDL_SCANCODE_Z
+		incFormula:
+			SDL_SCANCODE_RIGHTBRACKET
+		decFormula:
+			SDL_SCANCODE_LEFTBRACKET
+		incFamily:
+			SDL_SCANCODE_EQUALS
+		decFamily:
+			SDL_SCANCODE_MINUS
+		inputPower:
+			SDL_SCANCODE_X
+		incPower:
+			SDL_SCANCODE_UNKNOWN
+		decPower:
+			SDL_SCANCODE_UNKNOWN
+		incSuperSample:
+			SDL_SCANCODE_APOSTROPHE
+		decSuperSample:
+			SDL_SCANCODE_SEMICOLON
+		incSubSample:
+			SDL_SCANCODE_PERIOD
+		decSubSample:
+			SDL_SCANCODE_COMMA
+		fp16GpuRendering:
+			SDL_SCANCODE_UNKNOWN
+		fp32GpuRendering:
+			SDL_SCANCODE_M
+		fp64GpuRendering:
+			SDL_SCANCODE_RALT
+		fp32CpuRendering:
+			SDL_SCANCODE_UNKNOWN
+		fp64CpuRendering:
+			SDL_SCANCODE_N
+		fp80CpuRendering:
+			SDL_SCANCODE_B
+		fp128CpuRendering:
+			SDL_SCANCODE_RCTRL

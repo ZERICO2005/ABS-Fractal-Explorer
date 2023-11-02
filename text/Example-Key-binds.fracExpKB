@@ -3,6 +3,8 @@
 # It is RECOMMENDED that your text editor is set to ANSI encoding and that exclusively ASCII characters are used.
 # Modifying any other parts of the file can lead to file corruption or errors.
 
+# This file was made in a text editor
+
 File_Extension:
 	".FracExpKB"
 
@@ -62,104 +64,116 @@ KeyBind_List: # https://wiki.libsdl.org/SDL2/SDL_Scancode
 			"Default"
 		# Coordinates/Iterations/Zoom
 		incRealPos:
-			SDL_SCANNCODE_D
+			SDL_SCANCODE_D
+			SDL_SCANCODE_RIGHT
 		decRealPos:
-			SDL_SCANNCODE_A
+			SDL_SCANCODE_A
+			SDL_SCANCODE_LEFT
 		incImagPos:
-			SDL_SCANNCODE_W
+			SDL_SCANCODE_W
+			SDL_SCANCODE_UP
 		decImagPos:
-			SDL_SCANNCODE_S
+			SDL_SCANCODE_S
+			SDL_SCANCODE_DOWN
 		incMaxItr:
-			SDL_SCANNCODE_T
+			SDL_SCANCODE_T
 		decMaxItr:
-			SDL_SCANNCODE_G
+			SDL_SCANCODE_G
 		incZoom:
-			SDL_SCANNCODE_E
+			SDL_SCANCODE_E
 		decZoom:
-			SDL_SCANNCODE_Q
+			SDL_SCANCODE_Q
 		resetCoordinates:
-			SDL_SCANNCODE_R
+			SDL_SCANCODE_R
 
 		# Functions
-		toggleSettingsWindow:
-			SDL_SCANNCODE_Y
-		saveFractalData:
-			SDL_SCANNCODE_H
-		saveImage:
-			SDL_SCANNCODE_P
-		saveSuperImage:
-			SDL_SCANNCODE_GRAVE
+		openSettingsMenu:
+			SDL_SCANCODE_Y
+		exportFractal:
+			SDL_SCANCODE_H
+		takeScreenshot:
+			SDL_SCANCODE_P
+		takeSuperScreenshot:
+			SDL_SCANCODE_GRAVE
 
 		# Julia
 		incZReal:
-			SDL_SCANNCODE_L
+			SDL_SCANCODE_L
 		decZReal:
-			SDL_SCANNCODE_J
+			SDL_SCANCODE_J
 		incZImag:
-			SDL_SCANNCODE_I
+			SDL_SCANCODE_I
 		decZImag:
-			SDL_SCANNCODE_K
+			SDL_SCANCODE_K
 		resetZReal:
-			SDL_SCANNCODE_U
+			SDL_SCANCODE_U
 		resetZImag:
-			SDL_SCANNCODE_O
+			SDL_SCANCODE_O
 		toggleJulia:
-			SDL_SCANNCODE_C
+			SDL_SCANCODE_C
 		toggleStartingZ:
-			SDL_SCANNCODE_V
+			SDL_SCANCODE_V
 
 		# Transformations
 		resetTransformations:
-			SDL_SCANNCODE_F
+			SDL_SCANCODE_F
+		SDL_SCANCODE_F:
+			resetRotation
 		clockwiseRot:
-			SDL_SCANNCODE_RIGHT
+			SDL_SCANCODE_RIGHT
 		counterclockwiseRot:
-			SDL_SCANNCODE_LEFT
+			SDL_SCANCODE_LEFT
 		incStretch:
-			SDL_SCANNCODE_UP
+			SDL_SCANCODE_UP
 		decStretch:
-			SDL_SCANNCODE_DOWN
+			SDL_SCANCODE_DOWN
 
 		# Fractal Selection
 		inputFormula:
-			SDL_SCANNCODE_Z
+			SDL_SCANCODE_Z
 		inputPower:
-			SDL_SCANNCODE_X
-		inputType:
-			SDL_SCANNCODE_UNKNOWN
+			SDL_SCANCODE_X
 		incFormula:
-			SDL_SCANNCODE_RIGHTBRACKET
+			SDL_SCANCODE_RIGHTBRACKET
 		decFormula:
-			SDL_SCANNCODE_LEFTBRACKET
+			SDL_SCANCODE_LEFTBRACKET
 		incFamily:
-			SDL_SCANNCODE_EQUALS
+			SDL_SCANCODE_EQUALS
 		decFamily:
-			SDL_SCANNCODE_MINUS
+			SDL_SCANCODE_MINUS
 		incPower:
-			SDL_SCANNCODE_UNKNOWN
+			SDL_SCANCODE_UNKNOWN
 		decPower:
-			SDL_SCANNCODE_UNKNOWN
+			SDL_SCANCODE_UNKNOWN
 
 		# Rendering Settings
 		incSuperSample:
-			SDL_SCANNCODE_APOSTROPHE
+			SDL_SCANCODE_APOSTROPHE
 		decSuperSample:
-			SDL_SCANNCODE_SEMICOLON
+			SDL_SCANCODE_SEMICOLON
 		incSubSample:
-			SDL_SCANNCODE_PERIOD
+			SDL_SCANCODE_PERIOD
 		decSubSample:
-			SDL_SCANNCODE_COMMA
+			SDL_SCANCODE_COMMA
 		fp16GpuRendering:
-			SDL_SCANNCODE_UNKNOWN
+			SDL_SCANCODE_UNKNOWN
 		fp32GpuRendering:
-			SDL_SCANNCODE_M
+			SDL_SCANCODE_M
 		fp64GpuRendering:
-			SDL_SCANNCODE_RALT
-		fp32CpuMultiThreadRendering:
-			SDL_SCANNCODE_UNKNOWN
-		fp64CpuMultiThreadRendering:
-			SDL_SCANNCODE_N
-		fp80CpuMultiThreadRendering:
-			SDL_SCANNCODE_B
-		fp128CpuMultiThreadRendering:
-			SDL_SCANNCODE_RCTRL
+			SDL_SCANCODE_RALT
+		fp32CpuRendering:
+			SDL_SCANCODE_UNKNOWN
+		fp64CpuRendering:
+			SDL_SCANCODE_N
+		fp80CpuRendering:
+			SDL_SCANCODE_B
+		fp128CpuRendering:
+			SDL_SCANCODE_RCTRL
+		SDL_SCANCODE_5:
+			openFractalMenu
+			decRealPos
+		SDL_SCANCODE_7:
+			openKeyBindMenu
+		openFractalMenu:
+			SDL_SCANCODE_5
+			SDL_SCANCODE_7

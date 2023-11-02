@@ -1,0 +1,61 @@
+# FracExp_KeyBind file
+# The only parts of this file you SHOULD modify are the Username and the Keybind_List.
+# It is RECOMMENDED that your text editor is set to ANSI encoding and that exclusively ASCII characters are used.
+# Modifying any other parts of the file can lead to file corruption or errors.
+
+File_Extension:
+	%s
+
+File_Header:
+	FracExp_KeyBind:
+		Version:
+			Major:
+				%u
+			Minor:
+				%u
+			Patch:
+				%u
+			Build:
+				%u
+			Tags:
+				%s
+	ABS_Fractal_Explorer:
+		Version:
+			Major:
+				%u
+			Minor:
+				%u
+			Patch:
+				%u
+			Build:
+				%u
+			Tags:
+				%s
+	Hash:
+		All:
+			0x%016Xx%016Xx%016Xx%016X
+		Critical:
+			0x%016Xx%016Xx%016Xx%016X
+		File:
+			0x%016Xx%016Xx%016Xx%016X
+		Time:
+			0x%016Xx%016Xx%016Xx%016X
+		KeyBinds:
+			0x%016Xx%016Xx%016Xx%016X
+				
+File_Information:
+	Platform:
+		%s
+	Created:
+		%s
+	Modified:
+		%s
+	Opened:
+		%s
+	Username: # The user must opt-in for this information to be saved
+		%s
+
+KeyBind_List: # https://wiki.libsdl.org/SDL2/SDL_Scancode
+	Preset:
+		Name:
+			%s

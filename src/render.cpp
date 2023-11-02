@@ -65,6 +65,26 @@ struct _Key_Status {
 	uint64_t timeReleased;
 }; typedef struct _Key_Status Key_Status;
 
+KeyBind defaultKeyBindList[] = {
+	{Key_Function::incRealPos,SDL_SCANCODE_D},{Key_Function::decRealPos,SDL_SCANCODE_A},{Key_Function::incImagPos,SDL_SCANCODE_W},{Key_Function::decImagPos,SDL_SCANCODE_S},
+	{Key_Function::incMaxItr,SDL_SCANCODE_T},{Key_Function::decMaxItr,SDL_SCANCODE_G},{Key_Function::incZoom,SDL_SCANCODE_E},{Key_Function::decZoom,SDL_SCANCODE_Q},{Key_Function::resetCoordinates,SDL_SCANCODE_R},
+	{Key_Function::openSettingsMenu,SDL_SCANCODE_Y},{Key_Function::exportFractal,SDL_SCANCODE_H},{Key_Function::takeScreenshot,SDL_SCANCODE_P},{Key_Function::takeSuperScreenshot,SDL_SCANCODE_GRAVE},
+	{Key_Function::incZReal,SDL_SCANCODE_L},{Key_Function::decZReal,SDL_SCANCODE_J},{Key_Function::incZImag,SDL_SCANCODE_I},{Key_Function::decZImag,SDL_SCANCODE_K},
+	{Key_Function::resetZReal,SDL_SCANCODE_U},{Key_Function::resetZImag,SDL_SCANCODE_O},{Key_Function::toggleJulia,SDL_SCANCODE_C},{Key_Function::toggleStartingZ,SDL_SCANCODE_V},
+	{Key_Function::resetTransformations,SDL_SCANCODE_F},{Key_Function::clockwiseRot,SDL_SCANCODE_RIGHT},{Key_Function::counterclockwiseRot,SDL_SCANCODE_LEFT},{Key_Function::incStretch,SDL_SCANCODE_UP},{Key_Function::decStretch,SDL_SCANCODE_DOWN},
+	{Key_Function::inputFormula,SDL_SCANCODE_Z},{Key_Function::incFormula,SDL_SCANCODE_RIGHTBRACKET},{Key_Function::decFormula,SDL_SCANCODE_LEFTBRACKET},{Key_Function::incFamily,SDL_SCANCODE_EQUALS},{Key_Function::decFamily,SDL_SCANCODE_MINUS},
+	{Key_Function::inputPower,SDL_SCANCODE_X},{Key_Function::incPower,SDL_SCANCODE_UNKNOWN},{Key_Function::decPower,SDL_SCANCODE_UNKNOWN},
+	{Key_Function::incSuperSample,SDL_SCANCODE_APOSTROPHE},{Key_Function::decSuperSample,SDL_SCANCODE_SEMICOLON},{Key_Function::incSubSample,SDL_SCANCODE_PERIOD},{Key_Function::decSubSample,SDL_SCANCODE_COMMA},
+	{Key_Function::fp16GpuRendering,SDL_SCANCODE_UNKNOWN},{Key_Function::fp32GpuRendering,SDL_SCANCODE_M},{Key_Function::fp64GpuRendering,SDL_SCANCODE_RALT},
+	{Key_Function::fp32CpuRendering,SDL_SCANCODE_UNKNOWN},{Key_Function::fp64CpuRendering,SDL_SCANCODE_N},{Key_Function::fp80CpuRendering,SDL_SCANCODE_B},{Key_Function::fp128CpuRendering,SDL_SCANCODE_RCTRL}
+};
+
+size_t KeyBind_PresetCount;
+//KeyBind_Preset* KeyBind_List;
+KeyBind_Preset defaultKeyBind = {"Default Key-bind",ARRAY_LENGTH(defaultKeyBindList),defaultKeyBindList};
+KeyBind_Preset importedKeyBind;
+KeyBind_Preset* currentKeyBind = &defaultKeyBind;
+
 Key_Status Key_List[SDL_NUM_SCANCODES];
 
 void updateKeys() {
@@ -82,20 +102,19 @@ void updateKeys() {
 	}
 }
 
-void initKeys() {
+void recolorKeyboard() {
 	{
 		using namespace Key_Function;
 		initKeyboardGraphics(0.0,0.0,0.5);
-		//size_t function_map[] = {NONE,COORDINATES,TRANSFORMATIONS,JULIA,PARAMETERS,POLAR,FORMULA,SCREEN_SPLIT,FUNCTIONS,RENDERING};
 		struct init_key_HSV {
 			enum Key_Function_Enum type;
 			fp64 h; fp64 s; fp64 v;
 		}; typedef init_key_HSV init_key_HSV;
 		init_key_HSV InitKeyHSV[] = {
 			{NONE,0.0,0.0,0.5},
-			{COORDINATES,0.0,0.6,1.0},{TRANSFORMATIONS,40.0,0.6,1.0},{JULIA,80.0,0.6,1.0},
-			{PARAMETERS,120.0,0.6,1.0},{POLAR,160.0,0.6,1.0},{FORMULA,200.0,0.6,1.0},
-			{SCREEN_SPLIT,240.0,0.6,1.0},{FUNCTIONS,280.0,0.6,1.0},{RENDERING,320.0,0.6,1.0},
+			{COORDINATES,0.0,0.7,1.0},{TRANSFORMATIONS,180.0,0.7,1.0},{JULIA,300.0,0.6,1.0},
+			{PARAMETERS,59.9,1.0,1.0},{POLAR,240.0,0.7,0.7},{FORMULA,210.0,0.3,0.8},
+			{SCREEN_SPLIT,30.0,0.3,1.0},{FUNCTIONS,120.0,0.8,0.8},{RENDERING,180.0,0.4,0.6},
 		};
 		struct init_key_RGB {
 			enum Key_Function_Enum type;
@@ -105,11 +124,38 @@ void initKeys() {
 		for (size_t i = 0; i < ARRAY_LENGTH(InitKeyHSV); i++) {
 			getRGBfromHSV(&(InitKeyRGB[i].r),&(InitKeyRGB[i].g),&(InitKeyRGB[i].b),InitKeyHSV[i].h,InitKeyHSV[i].s,InitKeyHSV[i].v);
 		}
-		for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
-			size_t r = s % ARRAY_LENGTH(InitKeyRGB);
-			setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
+		if (currentKeyBind->length > 0) {
+			for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
+				size_t keyColorSet = 0;
+				for (size_t i = 0; i < currentKeyBind->length; i++) {
+					if (currentKeyBind->list[i].key == (SDL_Scancode)s) {
+						if (keyColorSet != 0) { // Detects if different function types are binded to a key
+							setRGB_Scancode(0xFF,0xFF,0xFF,(SDL_Scancode)s);
+							break; // Idempotent
+						} 
+						for (size_t r = SDL_SCANCODE_UNKNOWN + 1; r < ARRAY_LENGTH(Key_Function_Map); r++) {
+							if (currentKeyBind->list[i].func <= Key_Function_Map[r] && currentKeyBind->list[i].func != Key_Function::NONE) {
+								setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
+								keyColorSet = r;
+								break;
+							}
+						}
+					}
+				}
+			}
+		} else {
+			printWarning("currentKeyBind is empty");
+			for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
+				size_t r = s % ARRAY_LENGTH(InitKeyRGB);
+				setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
+			}
 		}
+
 	}
+}
+
+void initKeys() {
+	recolorKeyboard();
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
 		Key_List[i].timePressed = getNanoTime();
 		Key_List[i].key = (SDL_Scancode)i;
@@ -129,17 +175,18 @@ bool keyPressed(uint32_t key) {
 	return false;
 }
 
-KeyBind_Preset* KeyBindList;
-KeyBind_Preset* currentKeyBind;
-
 int setup_fracExpKB(int argc, char* argv[]) {
 	if (argc >= 2) {
 		for (int a = 1; a < argc; a++) {
 			if (strstr(argv[a],".fracExpKB") != NULL) {
 				printFlush("\nFracExp_KeyBind File: %s",argv[a]);
-				read_FracExpKB_File(KeyBindList,argv[a]);
+				read_FracExpKB_File(&importedKeyBind,argv[a]);
+				currentKeyBind = &importedKeyBind;
+				printf("\n\tKeyBinds: %zu Preset: %s",importedKeyBind.length,importedKeyBind.name);
+				break;
 			}
 		}
+		printFlush("\n");
 	}
 	return 0;
 }
@@ -506,7 +553,7 @@ void Menu_Settings() {
 	if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation, BufAndLen(initMonitorLocations))) {
 		
 	}
-	if (Combo_initMonitorLocation == 3) {
+	if (Combo_initMonitorLocation == 3) { // Specific Monitor
 		static bool overrideDisplayCount = false;
 		int limitDisplayCount = (overrideDisplayCount == true) ? (DISPLAY_COUNT + 8) : DISPLAY_COUNT;
 		if (overrideDisplayCount == false && specificMonitor > (int)DISPLAY_COUNT) {
@@ -540,6 +587,7 @@ void Menu_Keybinds() {
 	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
 		
 	}
+	ImGui::Text(" ");
 	ImGui::Checkbox("Display Numberpad",&displayNumpad);
 	{
 		#define kMaxResX 1440
@@ -561,14 +609,15 @@ void Menu_Keybinds() {
 
 		ImVec2 CursorPos = {
 			ImGui::GetMousePos().x - ImGui::GetCursorScreenPos().x,
-			ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y - 17 // Magic Correction Amount
+			ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y - 51 // Magic Correction Amount
 		};
 		clickState = SDL_GetMouseState(NULL,NULL);
-
+		static SDL_Scancode keyHover = SDL_SCANCODE_UNKNOWN;
+		static SDL_Scancode keyClick = SDL_SCANCODE_UNKNOWN;
 		renderKeyboard(
 			&kBuf, kResX, 5.75, 12.0,
 			(uint8_t)Combo_keyboardSize, displayNumpad,
-			kCurX,kCurY,((clickState & 0x1) ? true : false)
+			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover
 		);
 		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, kBuf.resX, kBuf.resY, 24, 3 * kBuf.resX, SDL_PIXELFORMAT_RGB24);
 		if (kSurface == nullptr) {
@@ -581,9 +630,88 @@ void Menu_Keybinds() {
 		SDL_FreeSurface(kSurface);
 		kCurX = CursorPos.x;
 		kCurY = CursorPos.y;
+
 		ImGui::Text("size = %d x %d", kBuf.resX, kBuf.resY);
-		ImGui::Image((void*)kTexture, ImVec2(kBuf.resX, kBuf.resY));
 		ImGui::Text("Cursor Position: %d,%d",kCurX,kCurY);
+
+		ImGui::Text("Hover: %s",Scancode_Name[keyHover]);
+		if (clickState & 0x1) {
+			keyClick = keyHover;
+		}
+		ImGui::Image((void*)kTexture, ImVec2(kBuf.resX, kBuf.resY));
+		
+		ImGui::Text("Clicked Key: %s",Scancode_Name[keyClick]);
+		if (keyClick != SDL_SCANCODE_UNKNOWN) {
+			using namespace Key_Function;
+			size_t funcCount = 0;
+			for (size_t i = 0; i < currentKeyBind->length; i++) {
+				if (currentKeyBind->list[i].key == keyClick) {
+					funcCount++;
+				}
+			}
+			if (funcCount > 0) {
+				ImGui::Text("Key Functions:");
+				for (size_t i = 0; i < currentKeyBind->length; i++) {
+					if (currentKeyBind->list[i].key == keyClick) {
+						ImGui::Text("- %s",Key_Function_Text[currentKeyBind->list[i].func]);
+					}
+				}
+			}
+		}
+
+
+
+		ImGui::Text(" ");
+		ImGui::Separator();
+		ImGui::Text("Current Key-bind: %s",currentKeyBind->name);
+		if (importedKeyBind.list != NULL) {
+			if (currentKeyBind == &defaultKeyBind) {
+ 				if (ImGui::Button("Switch to imported key-binds")) {
+					currentKeyBind = &importedKeyBind;
+					recolorKeyboard();
+				}
+			} else {
+				if (ImGui::Button("Switch to default key-binds")) {
+					currentKeyBind = &defaultKeyBind;
+					recolorKeyboard();
+				}
+			}
+		} else {
+			ImGui::Text("No imported key-binds available");
+		}
+		ImGui::Text(" ");
+		
+		//	Disabling the name field since it can cause confusion when typing "./folder" + "KeyBind.fracExpKB" = "./folderKeyBind.fracExpKB"
+		// static char exportFracExpKBName[324] = "KeyBind";
+		static char exportFracExpKBDir[324] = "./KeyBind"; // "./"
+		ImGui::Text("Export current key-bind to directory:");
+		ImGui::InputText("##exportFracExpKBDir",exportFracExpKBDir,TEXT_LENGTH(exportFracExpKBDir));
+		// ImGui::Text("File Name:");
+		// ImGui::InputText("##exportFracExpKBName",exportFracExpKBName,TEXT_LENGTH(exportFracExpKBName));
+		static TimerBox exportTimer(1.0);
+		if (ImGui::Button("Export .FracExpKB File") && exportTimer.timerReset()) {
+			/* Move this file path code into fracExpKB.cpp */
+			const char* const exportFracExpKBExtension = ".fracExpKB";
+			size_t sizeOfPath = 0;
+			sizeOfPath += strnlen(exportFracExpKBExtension,sizeof(exportFracExpKBExtension)) * sizeof(exportFracExpKBExtension[0]);
+			sizeOfPath += strnlen(exportFracExpKBDir,sizeof(exportFracExpKBDir)) * sizeof(exportFracExpKBDir[0]);
+			// sizeOfPath += strnlen(exportFracExpKBName,sizeof(exportFracExpKBName)) * sizeof(exportFracExpKBName[0]);
+			char* exportFracExpKBPath = (char*)malloc(sizeOfPath);
+			if (exportFracExpKBPath != NULL) {
+				memset(exportFracExpKBPath,'\0',sizeOfPath);
+				strncat(exportFracExpKBPath,exportFracExpKBDir,sizeOfPath);
+				// strncat(exportFracExpKBPath,exportFracExpKBName,sizeOfPath);
+				strncat(exportFracExpKBPath,exportFracExpKBExtension,sizeOfPath);
+				if (write_FracExpKB_File(currentKeyBind,exportFracExpKBPath) >= 0) {
+					printFlush("\n%s was exported successfully",exportFracExpKBPath);
+				} else {
+					printError("%s failed to export",exportFracExpKBPath);
+				}
+			} else {
+				printError("Unable to allocate memory to char* exportFracExpKBPath");
+			}
+			FREE(exportFracExpKBPath);
+		}
 	}
 
 	ImGui::End();
@@ -879,6 +1007,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Console_Mutex) {
 
 int terminate_Render() {
 	terminateKeyboardGraphics();
+	FREE(importedKeyBind.list);
 	ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();

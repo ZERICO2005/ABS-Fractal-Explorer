@@ -18,7 +18,7 @@ int terminate_Engine();
 
 /* Enum of Functions that can be activated by a KeyboardScancode */
 namespace Key_Function {
-	const char* const Key_Function_Text[] = {"NONE","incRealPos","decRealPos","resetRealPos","incImagPos","decImagPos","resetImagPos","incZoom","decZoom","resetZoom","resetCoordinates","COORDINATES","clockwiseRot","counterclockwiseRot","resetRotation","clockwiseRot90","rotate180","counterclockwiseRot90","flipHorizontal","flipVertical","resetFlip","clockwiseRotStep","counterclockwiseRotStep","clockwiseRotPower","counterclockwiseRotPower","incStretch","decStretch","resetStretch","resetTransformations","TRANSFORMATIONS","toggleJulia","toggleStartingZ","toggleCursorZValue","toggleRelativeZValue","incZReal","decZReal","resetZReal","incZImag","decZImag","resetZImag","JULIA","incMaxItr","decMaxItr","resetMaxItr","toggleAutoItr","incBreakout","decBreakout","resetBreakout","toggleAdjustZoomToPower","PARAMETERS","toggleABSandPolarMandelbrot","roundPower","floorPower","ceilingPower","toggleIntegerPower","lockToCardioid","flipCardioidSide","POLAR","inputFormula","resetFormula","incFormula","decFormula","incFamily","decFamily","inputPower","resetPower","incPower","decPower","FORMULA","toggleScreenSplit","nextScreenSplit","prevScreenSplit","clockwiseCornerSplit","counterClockwiseCornerSplit","toggleFloatingWindow","swapPrimaryAndSecondary","SCREEN_SPLIT","openFractalMenu","exportFractal","importFractal","takeScreenshot","takeSuperScreenshot","openRenderingMenu","openSettingsMenu","openKeybindsMenu","abortRendering","exitApplication","toggleMenuBar","toggleCordinateBar","toggleButtonBar","FUNCTIONS","switchCPUandGPU","fp16GpuRendering","fp32GpuRendering","fp64GpuRendering","fp32CpuRendering","fp64CpuRendering","fp80CpuRendering","fp128CpuRendering","incSuperSample","decSuperSample","resetSuperSample","incSubSample","decSubSample","resetSubSample","RENDERING","Parameter_Function_Count"};
+	const char* const Key_Function_Text[] = {"NONE","incRealPos","decRealPos","resetRealPos","incImagPos","decImagPos","resetImagPos","incZoom","decZoom","resetZoom","resetCoordinates","COORDINATES","clockwiseRot","counterclockwiseRot","resetRotation","clockwiseRot90","rotate180","counterclockwiseRot90","flipHorizontal","flipVertical","resetFlip","clockwiseRotStep","counterclockwiseRotStep","clockwiseRotPower","counterclockwiseRotPower","incStretch","decStretch","resetStretch","resetTransformations","TRANSFORMATIONS","toggleJulia","toggleStartingZ","toggleCursorZValue","toggleRelativeZValue","incZReal","decZReal","resetZReal","incZImag","decZImag","resetZImag","JULIA","incMaxItr","decMaxItr","resetMaxItr","toggleAutoItr","incBreakout","decBreakout","resetBreakout","toggleAdjustZoomToPower","PARAMETERS","toggleABSandPolarMandelbrot","roundPower","floorPower","ceilingPower","toggleIntegerPower","lockToCardioid","flipCardioidSide","POLAR","inputFormula","resetFormula","incFormula","decFormula","incFamily","decFamily","inputPower","resetPower","incPower","decPower","FORMULA","toggleScreenSplit","nextScreenSplit","prevScreenSplit","clockwiseCornerSplit","counterClockwiseCornerSplit","toggleFloatingWindow","swapPrimaryAndSecondary","SCREEN_SPLIT","openFractalMenu","exportFractal","importFractal","takeScreenshot","takeSuperScreenshot","openRenderingMenu","openSettingsMenu","openKeyBindsMenu","abortRendering","exitApplication","toggleMenuBar","toggleCordinateBar","toggleButtonBar","FUNCTIONS","switchCPUandGPU","fp16GpuRendering","fp32GpuRendering","fp64GpuRendering","fp32CpuRendering","fp64CpuRendering","fp80CpuRendering","fp128CpuRendering","incSuperSample","decSuperSample","resetSuperSample","incSubSample","decSubSample","resetSubSample","RENDERING","Parameter_Function_Count"};
 	enum Key_Function_Enum {
 		NONE,
 		/* Cordinates */
@@ -78,7 +78,7 @@ namespace Key_Function {
 			takeSuperScreenshot,
 			openRenderingMenu,
 			openSettingsMenu,
-			openKeybindsMenu,
+			openKeyBindsMenu,
 			abortRendering,
 			exitApplication,
 			toggleMenuBar,toggleCordinateBar,toggleButtonBar,
@@ -92,6 +92,7 @@ namespace Key_Function {
 			RENDERING,
 		Parameter_Function_Count
 	};
+	const size_t Key_Function_Map[] = {NONE,COORDINATES,TRANSFORMATIONS,JULIA,PARAMETERS,POLAR,FORMULA,SCREEN_SPLIT,FUNCTIONS,RENDERING};
 };
 /* String of Functions that can be activated by a KeyboardScancode */
 //const char*

@@ -17,7 +17,7 @@
 void renderKeyboard(
 	BufferBox* buf, int32_t ResX, fp64 minScaleX, fp64 maxScaleX,
 	uint8_t KeyboardSize, bool includeNumpad,
-	int32_t curX, int32_t curY, bool click
+	int32_t curX, int32_t curY, bool click, SDL_Scancode* code
 );
 
 // Default colors
