@@ -1054,6 +1054,8 @@ void setRenderedBufferBox(BufferBox* box) {
 	buf = box;
 }
 
+//#define fullColorTestGraphic
+
 void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	static fp64 f = 0.0;
 	fp64 halfDiff = (maxSpeed - minSpeed) / 2.0;
@@ -1063,8 +1065,13 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	size_t z = 0;
 	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
 		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
-			TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			#ifdef fullColorTestGraphic
+				TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+				TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			#else
+				TestGraphic.vram[z] = 0; z++;
+				TestGraphic.vram[z] = 0; z++;
+			#endif
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 		}
 	}
@@ -1079,15 +1086,15 @@ void newFrame() {
 	void* SDL_Master_VRAM = (void*)Master.vram;
 	SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
 	Master.vram = (uint8_t*)SDL_Master_VRAM;
-	/*
-	renderTestGraphic(0.1, 0.3, 1.0);
-	copyBuffer(TestGraphic,Master,0,RESY_UI,false);
-	*/
+	
 	static BufferBox temp_primary = {NULL,0,0,3,0};
-	read_Render_Buffers(&temp_primary);
-	if (temp_primary.vram != NULL) {
+	if (read_Render_Buffers(&temp_primary) == 1 || temp_primary.vram == NULL) {
+		renderTestGraphic(0.1, 0.3, 1.0); // Renders a loading screen if Fractal buffers are unavailable
+		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
+	} else {
 		copyBuffer(temp_primary,Master,0,RESY_UI,false);
 	}
+		
 	/*
 	if (buf == NULL && buf->vram == NULL) { 
 		

@@ -66,8 +66,8 @@ int read_Render_Buffers(BufferBox* primary) {
 	}
 	std::lock_guard<std::mutex> lock(pDat_Render_Buffers_Mutex);
 	if (pDat_Render_Buffer_Read == false) {
-		printfInterval(0.3,"\npDat_Render_Buffer_Read == false");
-		return 0;
+		//printfInterval(0.3,"\npDat_Render_Buffer_Read == false");
+		return 1;
 	}
 		primary->resX = pDat_primary.resX;
 		primary->resY = pDat_primary.resY;

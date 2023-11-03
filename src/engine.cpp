@@ -40,7 +40,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	static fp64 r = 0.0;
 	static fp64 i = 0.0;
 	static fp64 zoom = 0.0;
-	uint32_t maxItr = 192;
+	uint32_t maxItr = 64;
 	TimerBox fracTime(1.0/60.0);
 	fp64 deltaTime = 0.0;
 	while (QUIT_FLAG == false) {
@@ -104,7 +104,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 				if (sizeBuf.resX != currentBuf->resX || sizeBuf.resY != currentBuf->resY || sizeBuf.channels != currentBuf->channels || sizeBuf.padding != currentBuf->padding) {
 					clear_Render_Buffers();
 					for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-						bool reallocateBuffers = (getBufferBoxSize(&sizeBuf) != getBufferBoxSize(currentBuf)) ? true : false;
+						bool reallocateBuffers = (getBufferBoxSize(&sizeBuf) != getBufferBoxSize(&PrimaryBuf[b])) ? true : false;
 						PrimaryBuf[b].resX = sizeBuf.resX;
 						PrimaryBuf[b].resY = sizeBuf.resY;
 						PrimaryBuf[b].channels = sizeBuf.channels;
@@ -165,7 +165,7 @@ void renderFractal(BufferBox* buf, fp64 r, fp64 i, fp64 zoom, uint32_t maxItr) {
 			for (u32 itr = 0; itr < maxItr; itr++) {
 
 				temp = zr * zr - abs(zi) * zi + cr;
-				zi = zr * zi * 2 + ci;
+				zi = zr * zi * 2.0 + ci;
 				zr = temp;
 				zs = zr * zr + zi * zi;
 				

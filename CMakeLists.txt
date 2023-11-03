@@ -30,6 +30,6 @@ add_executable(${PROJECT_NAME} ${SRC_FILES} ${IMGUI_FILES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${IMGUI_DIR})
 # Compiler Flags Debug(-g -O0) Release(-O3)
-set(OPT_FLAG -g -O0)
+set(OPT_FLAG -O3)
 target_compile_options(${PROJECT_NAME} PUBLIC ${OPT_FLAG} -Wall)
 target_link_libraries(${PROJECT_NAME} PUBLIC SDL2 SDL2main)
