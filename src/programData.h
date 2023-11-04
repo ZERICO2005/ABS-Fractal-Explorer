@@ -28,11 +28,15 @@ void write_Render_Ready(bool f);
 
 struct Function_Status {
 	bool triggered;
+	uint64_t resetTime;
+	uint64_t freqTime;
 }; typedef struct Function_Status Function_Status;
 
 int read_Function_Status(Function_Status* list);
 int write_Function_Status(Function_Status* list);
 
+void read_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary);
+void write_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary);
 
 void write_Buffer_Size(BufferBox size);
 BufferBox read_Buffer_Size();

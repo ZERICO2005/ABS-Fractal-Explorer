@@ -44,9 +44,6 @@ uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 fp64 Frame_Time_Display = 0.0;
 fp64 Render_Time_Display = 0.0;
 
-fp64 r = 0.0;
-fp64 i = 0.0;
-fp64 zoom = 0.0;
 uint32_t RESY_UI = 120;
 
 #define RESX_Default 800
@@ -57,6 +54,43 @@ uint32_t RESY_UI = 120;
 #define RESY_Maximum 4608
 #define RESX_Margin 16
 #define RESY_Margin 16
+
+/* Fractal Data */
+
+Fractal_Data frac;
+Render_Data primaryRenderData;
+Render_Data secondaryRenderData;
+
+void updateRenderData(Render_Data* rDat) {
+	if (rDat == NULL) { return; }
+	rDat->resX = Master.resX;
+	rDat->resY = Master.resY - RESY_UI;
+	rDat->padding = Master.padding;
+	rDat->channels = Master.channels;
+}
+ 
+void initRenderData(Render_Data* rDat) {
+	if (rDat == NULL) { return; }
+	updateRenderData(rDat);
+	rDat->offsetX = 0;
+	rDat->offsetY = 0;
+	rDat->subResX = 0;
+	rDat->subResY = 0;
+	rDat->bpp = 8;
+	rDat->flip = 0;
+	rDat->subPixelRendering = false;
+	rDat->sample = 1;
+	rDat->subSample = 1;
+	rDat->previewRender = false;
+	rDat->areaMult = 1.0;
+	rDat->resDiv = 1;
+	rDat->rendering_method = 0;
+	rDat->CPU_Precision = 64;
+	rDat->CPU_Threads = (uint32_t)std::thread::hardware_concurrency() * 4;
+	rDat->GPU_Precision = 32;
+}
+
+/* Keyboard and Scancodes */
 
 const uint8_t* KEYS;
 
@@ -89,11 +123,11 @@ KeyBind_Preset* currentKeyBind = &defaultKeyBind;
 
 Key_Status Key_List[SDL_NUM_SCANCODES];
 
-Function_Status triggered_functions[Key_Function::Parameter_Function_Count];
+Function_Status func_stat[Key_Function::Parameter_Function_Count];
 
 void updateKeys() {
-	for (size_t t = 0; t < ARRAY_LENGTH(triggered_functions); t++) {
-		triggered_functions[t].triggered = false;
+	for (size_t t = 0; t < ARRAY_LENGTH(func_stat); t++) {
+		func_stat[t].triggered = false;
 	}
 	KEYS = SDL_GetKeyboardState(NULL);
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
@@ -109,13 +143,14 @@ void updateKeys() {
 
 		for (size_t f = 0; f < currentKeyBind->length; f++) {
 			if (currentKeyBind->list[f].key == (SDL_Scancode)i) {
+				Key_Function::Key_Function_Enum func = currentKeyBind->list[f].func;
 				if (Key_List[i].pressed == true) {
-					triggered_functions[currentKeyBind->list[f].func].triggered = true;
+					func_stat[func].triggered = true;
 				}
 			}
 		}
 	}
-	write_Function_Status(triggered_functions);
+	//write_Function_Status(func_stat);
 }
 
 void recolorKeyboard() {
@@ -246,12 +281,11 @@ DisplayInfo* getCurrentDisplayInfo() {
 
 static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
-bool windowResizingCode() {
+bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 	bool reVal = false;
 	int32_t x = 0, y = 0;
 	static int32_t rX = 0, rY = 0;
 	SDL_GetWindowSize(window,&x,&y);
-	
 	if ((rX != x || rY != y) && (rX != 0 && rY != 0)) {
 		if (x < RESX_Minimum) { x = RESX_Minimum; }
 		if (y < RESY_Minimum) { y = RESY_Minimum; }
@@ -267,6 +301,10 @@ bool windowResizingCode() {
 		TestGraphic.resY = y - RESY_UI;
 		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
 		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram),getBufferBoxSize(&TestGraphic));
+		if (resX != NULL) { *resX = x; }
+		if (resY != NULL) { *resY = y; }
+		updateRenderData(&primaryRenderData);
+		updateRenderData(&secondaryRenderData);
 		write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
 		reVal = true;
 	}
@@ -289,6 +327,242 @@ void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characte
 	for (;p < len; p++) {
 		buf[p] = '\0';
 	}
+}
+
+/*
+void initFunctionTimers() {
+	using namespace Key_Function;
+	for (size_t f = 0; f < Parameter_Function_Count; f++) {
+		func_stat[f].freqTime = 0;
+		func_stat[f].resetTime = getNanoTime();
+	}
+	func_stat[incFormula].freqTime = SECONDS_TO_NANO(1.0/6.0);
+	func_stat[decFormula].freqTime = SECONDS_TO_NANO(1.0/6.0);
+	func_stat[incFamily].freqTime = SECONDS_TO_NANO(1.0/10.0);
+	func_stat[decFamily].freqTime = SECONDS_TO_NANO(1.0/10.0);
+	func_stat[incPower].freqTime = SECONDS_TO_NANO(1.0/6.0);
+	func_stat[decPower].freqTime = SECONDS_TO_NANO(1.0/6.0);
+	func_stat[incSubSample].freqTime = SECONDS_TO_NANO(1.0/6.0);
+	func_stat[decSubSample].freqTime = SECONDS_TO_NANO(1.0/6.0);
+	func_stat[incSuperSample].freqTime = SECONDS_TO_NANO(1.0/6.0);
+	func_stat[decSuperSample].freqTime = SECONDS_TO_NANO(1.0/6.0);
+}
+*/
+
+#define stretchValue(s) pow(2.0,-abs(s))
+#define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
+
+void moveCord(fp64* x, fp64* y, fp64 angle, fp64 speed) {
+	*x += speed * cos(angle);
+	*y += speed * sin(angle);
+}
+
+bool funcTimeDelay(Key_Function::Key_Function_Enum func) {
+	if (getNanoTime() - func_stat[func].resetTime > func_stat[func].freqTime) {
+		if (func_stat[func].triggered == true) {
+			func_stat[func].resetTime = getNanoTime();
+			return true;
+		}
+	}
+	return false;
+}
+
+bool funcTimeDelay(Key_Function::Key_Function_Enum func, fp64 freq) {
+	if (getNanoTime() - func_stat[func].resetTime > SECONDS_TO_NANO(freq)) {
+		if (func_stat[func].triggered == true) {
+			func_stat[func].resetTime = getNanoTime();
+			return true;
+		}
+	}
+	return false;
+}
+
+void updateFractalParameters() {
+	using namespace Key_Function;
+	#define FRAC frac.type.abs_mandelbrot
+	static fp64 temp_maxItr = log2(FRAC.maxItr);
+	static fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
+	fp64 moveDelta = (DeltaTime < 0.2) ? DeltaTime : 0.2;
+	/* Boolean toggles */
+		#define paramToggle(func,toggle,freq) if (funcTimeDelay(func,freq)) { toggle = !toggle; }
+		paramToggle(toggleAdjustZoomToPower,FRAC.adjustZoomToPower,0.4);
+		paramToggle(toggleJulia,FRAC.juliaSet,0.4);
+		paramToggle(toggleABSandPolarMandelbrot,FRAC.polarMandelbrot,0.4);
+		paramToggle(toggleRelativeZValue,FRAC.relativeZValue,0.4);
+		paramToggle(toggleCursorZValue,FRAC.cursorZValue,0.4);
+		paramToggle(toggleStartingZ,FRAC.startingZ,0.4);
+		#undef paramToggle
+	/* Real and Imaginary Coordinates */
+		if (func_stat[incRealPos].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.0 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+		}
+		if (func_stat[decRealPos].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.5 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+		}
+		if (func_stat[incImagPos].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.25 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+		}
+		if (func_stat[decImagPos].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.75 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+		}
+		if (funcTimeDelay(resetRealPos,0.2)) {
+			FRAC.r = 0.0;
+		}
+		if (funcTimeDelay(resetImagPos,0.2)) {
+			FRAC.i = 0.0;
+		}
+		valueLimit(FRAC.r,-10.0,10.0);
+		valueLimit(FRAC.i,-10.0,10.0);
+	/* Real and Imaginary Julia Z Coordinates */
+		if (func_stat[incZReal].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.0 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+		}
+		if (func_stat[decZReal].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.5 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+		}
+		if (func_stat[incZImag].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.25 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+		}
+		if (func_stat[decZImag].triggered == true) {
+			moveCord(&FRAC.r, &FRAC.i, 0.75 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+		}
+		if (funcTimeDelay(resetZReal,0.2)) {
+			FRAC.zr = 0.0;
+		}
+		if (funcTimeDelay(resetZImag,0.2)) {
+			FRAC.zi = 0.0;
+		}
+		valueLimit(FRAC.zr,-4.0,4.0);
+		valueLimit(FRAC.zi,-4.0,4.0);
+	/* Zoom */
+		if (func_stat[incZoom].triggered == true) {
+			FRAC.zoom += 0.2 * moveDelta;
+		}
+		if (func_stat[decZoom].triggered == true) {
+			FRAC.zoom -= 0.2 * moveDelta;
+		}
+		if (funcTimeDelay(resetZoom,0.2)) {
+			FRAC.zoom = zoomDefault(FRAC.power);
+		}
+		valueLimit(FRAC.zoom,-20.0,40.0);
+		if (funcTimeDelay(resetCoordinates,0.2)) {
+			FRAC.r = 0.0; FRAC.i = 0.0; FRAC.zoom = 0.0;
+		}
+	/* maxItr */
+		if (func_stat[incMaxItr].triggered) {
+			temp_maxItr += 2.5 * moveDelta;
+		}
+		if (func_stat[decMaxItr].triggered) {
+			temp_maxItr -= 2.5 * moveDelta;
+		}
+		if (funcTimeDelay(resetMaxItr,0.2)) {
+			temp_maxItr = log2(192.0);
+			FRAC.maxItr = 192;
+		}
+	/* Formula*/
+		if (funcTimeDelay(incFormula,1.0/10.0)) {
+			FRAC.formula++;
+		}
+		if (funcTimeDelay(decFormula,1.0/10.0)) {
+			FRAC.formula--;
+		}
+		if (funcTimeDelay(resetFormula,0.2)) {
+			FRAC.formula = 0;
+		}
+		if (funcTimeDelay(incPower,1.0/6.0)) {
+			FRAC.power++;
+		}
+		if (funcTimeDelay(decPower,1.0/6.0)) {
+			FRAC.power--;
+		}
+		if (funcTimeDelay(resetPower,0.2)) {
+			FRAC.power = 2;
+		}
+	/* Rotations */
+		if (func_stat[counterclockwiseRot].triggered) {
+			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
+		}
+		if (func_stat[clockwiseRot].triggered) {
+			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
+		}
+		if (funcTimeDelay(clockwiseRot90,1.0/3.0)) {
+			FRAC.rot += (TAU * (90.0/360.0));
+		}
+		if (funcTimeDelay(counterclockwiseRot90,1.0/3.0)) {
+			FRAC.rot -= (TAU * (90.0/360.0));
+		}
+		if (funcTimeDelay(rotate180,1.0/3.0)) {
+			FRAC.rot += (TAU * (180.0/360.0));
+		}
+		if (funcTimeDelay(clockwiseRotStep,1.0/10.0)) {
+			FRAC.rot += (TAU * (15.0/360.0));
+		}
+		if (funcTimeDelay(counterclockwiseRotStep,1.0/10.0)) {
+			FRAC.rot += (TAU * (15.0/360.0));
+		}
+		if (funcTimeDelay(clockwiseRotPower,1.0/6.0)) {
+			FRAC.rot += (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
+		}
+		if (funcTimeDelay(counterclockwiseRotPower,1.0/6.0)) {
+			FRAC.rot -= (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
+		}
+		if (funcTimeDelay(resetRotation,0.2)) {
+			FRAC.rot = 0.0;
+		}
+		FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
+	/* Transformations */
+		if (func_stat[incStretch].triggered) {
+			FRAC.stretch += 1.0 * moveDelta;
+		}
+		if (func_stat[decStretch].triggered) {
+			FRAC.stretch -= 1.0 * moveDelta;
+		}
+		if (funcTimeDelay(resetStretch,0.2)) {
+			FRAC.stretch = 0.0;
+		}
+		if (funcTimeDelay(resetTransformations,0.2)) {
+			FRAC.rot = 0.0;
+			FRAC.stretch = 0.0;
+		}
+	/* Breakout Value */
+		if (func_stat[incBreakout].triggered) {
+			temp_breakoutValue += 2.0 * moveDelta;
+		}
+		if (func_stat[decBreakout].triggered) {
+			temp_breakoutValue -= 2.0 * moveDelta;
+		}
+		if (funcTimeDelay(resetBreakout,0.2)) {
+			temp_breakoutValue = log2(16777216.0);
+		}
+	/* Rendering */
+		if (funcTimeDelay(incSubSample,1.0/10.0)) {
+			primaryRenderData.subSample++;
+		}
+		if (funcTimeDelay(decSubSample,1.0/10.0)) {
+			primaryRenderData.subSample--;
+		}
+		if (funcTimeDelay(resetSubSample,0.2)) {
+			primaryRenderData.subSample = 1;
+		}
+		if (funcTimeDelay(incSuperSample,1.0/10.0)) {
+			primaryRenderData.sample++;
+		}
+		if (funcTimeDelay(decSuperSample,1.0/10.0)) {
+			primaryRenderData.sample--;
+		}
+		if (funcTimeDelay(resetSuperSample,0.2)) {
+			primaryRenderData.sample = 1;
+		}
+	
+	FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
+	valueLimit(temp_maxItr,log2(16.0),log2(262144.0));
+	FRAC.maxItr = pow(2.0,temp_maxItr);
+	valueLimit(FRAC.maxItr,16,262144);
+	valueLimit(temp_breakoutValue,log2(4.0),log2(4294967296.0));
+	FRAC.breakoutValue = pow(2.0,temp_breakoutValue);
+	valueLimit(FRAC.breakoutValue,4.0,4294967296.0);
+
+	#undef FRAC
 }
 
 const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds", "Abort"};
@@ -401,7 +675,19 @@ void Menu_Fractal() {
 	static int Combo_FractalType = 0;
 	ImGui::Text("Fractal Type:");
     if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
-
+		switch(Combo_FractalType) {
+			case Fractal_ABS_Mandelbrot:
+				setDefaultParameters(&frac,Fractal_ABS_Mandelbrot);
+			break;
+			case Fractal_Polar_Mandelbrot:
+				setDefaultParameters(&frac,Fractal_Polar_Mandelbrot);
+			break;
+			case Fractal_Sierpinski_Carpet:
+				setDefaultParameters(&frac,Fractal_Sierpinski_Carpet);
+			break;
+			default:
+			printError("Unknown Fractal Type: %d",Combo_FractalType);
+		}
     }
 	ImGui::Separator();
 	if (Combo_FractalType == 0 || Combo_FractalType == 1) { /* ABS and Polar */
@@ -886,6 +1172,8 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 			} else {
 				yeildTimeNano = FRAME_RATE_NANO - yeildTimeNano;
 			}
+			updateFractalParameters();
+			write_Parameters(&frac,&primaryRenderData,&secondaryRenderData);
 			windowResizingCode();
 			newFrame();
 		}
@@ -1027,6 +1315,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	ImGui_ImplSDLRenderer2_Init(renderer);
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	
+	setDefaultParameters(&frac,Fractal_ABS_Mandelbrot);
+	initRenderData(&primaryRenderData);
+	initRenderData(&secondaryRenderData);
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initKeys();
 	start_Render(QUIT_FLAG,Key_Function_Mutex);

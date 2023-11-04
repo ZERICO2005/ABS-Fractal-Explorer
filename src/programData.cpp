@@ -37,6 +37,28 @@ int write_Function_Status(Function_Status* list) {
 	return 0;
 }
 
+/* Parameters */
+
+std::mutex pDat_Parameter_Mutex;
+Fractal_Data pDat_Fractal_Data;
+Render_Data pDat_Primary_Render_Data;
+Render_Data pDat_Secondary_Render_Data;
+
+void read_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary) {
+	std::lock_guard<std::mutex> lock(pDat_Parameter_Mutex);
+	if (frac != NULL) { memcpy(frac,&pDat_Fractal_Data,sizeof(Fractal_Data)); }
+	if (primary != NULL) { memcpy(primary,&pDat_Primary_Render_Data,sizeof(Render_Data)); }
+	if (secondary != NULL) { memcpy(secondary,&pDat_Secondary_Render_Data,sizeof(Render_Data)); }
+}
+
+void write_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary) {
+	std::lock_guard<std::mutex> lock(pDat_Parameter_Mutex);
+	if (frac != NULL) { memcpy(&pDat_Fractal_Data,frac,sizeof(Fractal_Data)); }
+	if (primary != NULL) { memcpy(&pDat_Primary_Render_Data,primary,sizeof(Render_Data)); }
+	if (secondary != NULL) { memcpy(&pDat_Secondary_Render_Data,secondary,sizeof(Render_Data)); }
+}
+
+
 /* Render Buffers */
 
 std::mutex pDat_Buffer_Size_Mutex;

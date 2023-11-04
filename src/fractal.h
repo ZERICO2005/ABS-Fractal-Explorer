@@ -9,8 +9,10 @@
 #ifndef FRACTAL_H
 #define FRACTAL_H
 #include "Common_Def.h"
-
-const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sierpinski Carpet",};
+enum FractalTypeEnum {
+	Fractal_ABS_Mandelbrot,Fractal_Polar_Mandelbrot,Fractal_Sierpinski_Carpet
+};
+const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sierpinski Carpet"};
 const char* const PowerText[] = {"Constant","Linear","Quadratic","Cubic","Quartic","Quintic","Sextic","Septic","Octic","Nonic","Decic"};
  /* Safe Method of accessing PowerText */
 const char* getPowerText(int32_t p);
@@ -32,9 +34,9 @@ struct _ABS_Mandelbrot {
 	bool relativeZValue;
 	bool showFloatingJulia;
 	bool adjustZoomToPower;
+	bool polarMandelbrot;
 	bool lockToCardioid;
 	bool flipCardioidSide;
-	fp64 input_breakoutValue;
 	/* Coordinates */
 	fp64 r;
 	fp64 i;
@@ -51,7 +53,9 @@ struct _ABS_Mandelbrot {
 	uint32_t power;
 	fp64 polarPower;
 	uint64_t formula;
+	fp64 breakoutValue;
 	/* Coloring */
+	bool smoothColoring;
 	fp64 rA;
 	fp64 rF;
 	fp64 rP;
@@ -86,41 +90,17 @@ struct _Sierpinski_Carpet {
 
 union _Fractal_Type {
 	ABS_Mandelbrot abs_mandelbrot;
+	ABS_Mandelbrot polar_mandelbrot;
 	Sierpinski_Carpet sierpinski_carpet;
 }; typedef union _Fractal_Type Fractal_Type;
 
-/* Holds resolution, sampling, precision and rendering method */
-struct _Render_Data {
-	/* Dimensions */
-	uint32_t resX;
-	uint32_t resY;
-	uint32_t offsetX;
-	uint32_t offsetY;
-	uint32_t subResX;
-	uint32_t subResY;
-	/* Format */
-	uint32_t padding;
-	uint8_t bpp;
-	uint8_t channels;
-	uint8_t flip;
-	bool subPixelRendering;
-	/* Rendering Parameters */
-	uint32_t sample;
-	uint32_t subSample;
-	fp64 area;
-	/* Rendering Method */
-	uint32_t rendering_method;
-	uint32_t CPU_Precision;
-	uint32_t CPU_Threads;
-	uint32_t GPU_Precision;
-}; typedef struct _Render_Data Render_Data;
-
 /* Holds the fractal and rendering parameters */
 struct _Fractal_Data {
-	char* type_name;
+	const char* type_name;
 	uint32_t type_value;
-	Render_Data render_data;
 	Fractal_Type type;
 }; typedef struct _Fractal_Data Fractal_Data;
+
+void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type);
 
 #endif /* FRACTAL_H */
