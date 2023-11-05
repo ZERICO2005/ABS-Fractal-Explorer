@@ -24,6 +24,11 @@ uint32_t getBufferBoxPitch(BufferBox* box);
 
 size_t getBufferBoxSize(BufferBox* box);
 
+// Returns false in BufferBox should not be written to
+bool validateBufferBox(BufferBox* box);
+// Prints Errors and returns false in BufferBox should not be written to
+bool printValidateBufferBox(BufferBox* box);
+
 /* buf{src, dst}, src{cord, size}, dst{cord, size}, allowClipping | Copies a portion of Src buffer to a portion of Dst */
 void copyBuffer(
 	BufferBox bufSrc, BufferBox bufDst,
@@ -37,6 +42,5 @@ void copyBuffer(BufferBox bufSrc, BufferBox bufDst, int32_t x, int32_t y, bool a
 
 /* buf{src, dst}, allowClipping | Copies Src buffer to Dst */
 void copyBuffer(BufferBox bufSrc, BufferBox bufDst, bool allowClipping);
-
 
 #endif /* COPYBUFFER_H */

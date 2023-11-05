@@ -26,6 +26,9 @@
 bool read_Render_Ready();
 void write_Render_Ready(bool f);
 
+bool read_Abort_Render_Ongoing();
+void write_Abort_Render_Ongoing(bool s);
+
 struct Function_Status {
 	bool triggered;
 	uint64_t resetTime;

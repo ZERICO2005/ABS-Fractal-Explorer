@@ -11,7 +11,9 @@
 #include "render.h"
 #include "copyBuffer.h"
 #include "programData.h"
+
 #include "fracMulti.h"
+#include "fracCL.h"
 
 BufferBox PrimaryBuf[2];
 BufferBox SecondaryBuf[2];
@@ -38,7 +40,7 @@ int setup_fracExp(int argc, char* argv[]) {
 	return 0;
 }
 
-int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
+int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	using namespace Key_Function;
 	BufferBox* currentBuf = &PrimaryBuf[0];
 	BufferBox* prevBuf = NULL;
@@ -50,13 +52,28 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	fp64 deltaTime = 0.0;
 	while (QUIT_FLAG == false) {
 		if (fracTime.timerReset()) {
-			
 			deltaTime = fracTime.getDeltaTime();
 			setRenderDelta(deltaTime);
 			read_Parameters(&fracData,&primaryRender,&secondaryRender);
 
 			if (currentBuf->vram != NULL) {
-				render_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot);
+				//render_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot);
+				if (ABORT_RENDERING == false) {
+					switch(primaryRender.rendering_method) {
+						case 0:
+							renderCPU_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+							break;
+						case 1:
+							renderOpenCL_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING);
+							break;
+						default:
+						printfInterval(0.5,"Unknown rendering method %u",primaryRender.rendering_method);
+					}
+					
+				}
+				if (read_Abort_Render_Ongoing() == true) {
+					write_Abort_Render_Ongoing(false);
+				}
 			}
 			/*printFlush("\n\n");
 			for (size_t y = 0; y < currentBuf->resY; y += 6) {
@@ -92,20 +109,26 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	return 0;
 }
 
-int init_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
+int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	// printf("\nInit_Engine: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
 		initBufferBox(&PrimaryBuf[b],NULL,320,200,3,0);
 		PrimaryBuf[b].vram = (uint8_t*)malloc(getBufferBoxSize(&PrimaryBuf[b]));
 	}
+	int32_t init_OpenCL_ret = init_OpenCL();
+	if (init_OpenCL_ret != 0) {
+		printError("OpenCL failed to initialize, error code: %d",init_OpenCL_ret);
+	}
+	queryOpenCL_GPU();
 	while (read_Render_Ready() == false) {
 		std::this_thread::yield();
-		start_Engine(QUIT_FLAG,Key_Function_Mutex);
+		start_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	}
 	return 0;
 }
 
 int terminate_Engine() {
+	terminate_OpenCL();
 	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
 		FREE(PrimaryBuf[b].vram);
 	}

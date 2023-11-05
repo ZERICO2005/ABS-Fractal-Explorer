@@ -25,10 +25,13 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include <cstdarg>
 #include <stdarg.h>
 #include <stdexcept>
+#include <limits.h>
+#include <quadmath.h>
 
 /* Typedefs */
 
@@ -44,14 +47,44 @@ typedef int64_t i64;
 typedef float fp32;
 typedef double fp64;
 
+#define enableFP80andFP128
+
+#ifdef enableFP80andFP128
+	typedef __float128 fp128;
+
+	#ifdef __GNUC__
+		typedef __int128_t i128;
+		typedef __uint128_t u128;
+		typedef __float80 fp80;
+	#else
+		typedef int64_t i128;
+		typedef uint64_t u128;
+		typedef __float128 fp80;
+	#endif
+
+	fp128 sin(fp128 x);
+	fp128 cos(fp128 x);
+	fp128 log(fp128 x);
+	fp128 log2(fp128 x);
+	fp128 log10(fp128 x);
+	fp128 pow(fp128 x, fp128 y);
+	fp128 floor(fp128 x);
+	fp128 ceil(fp128 x);
+	fp128 fmax(fp128 x, fp128 y);
+	fp128 fmin(fp128 x, fp128 y);
+	fp128 fmod(fp128 x, fp128 y);
+	fp128 fabs(fp128 x);
+	fp128 copysign(fp128 x, fp128 y);
+#endif
+
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
 #define PROGRAM_DATE "2023/11/04" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 18
-#define PROGRAM_V_TAG "debug pre-alpha"
+#define PROGRAM_V_PATCH 19
+#define PROGRAM_V_TAG "debug alpha"
 
 /* Constants */
 
@@ -100,6 +133,10 @@ typedef double fp64;
 
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio);
+
+#define linearInterpolation(x,x0,x1,y0,y1) ( (y0) + ( (((y1) - (y0)) * ((x) - (x0))) / ((x1) - (x0)) ) )
+#define linearInterpolationLimit(x,x0,x1,y0,y1) ( ((x) <= (x0)) ? (y0) : ( ((x) >= (x1)) ? (y1) : linearInterpolation(x,x0,x1,y0,y1) ) )
+
 
 /* Time */
 

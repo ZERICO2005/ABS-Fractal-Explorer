@@ -12,7 +12,7 @@
 
 int setup_fracExp(int argc, char* argv[]);
 
-int init_Engine(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex);
+int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex);
 
 int terminate_Engine();
 

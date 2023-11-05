@@ -40,6 +40,22 @@ size_t getBufferBoxSize(BufferBox* box) {
 	return (size_t)(pitch * box->resY);
 }
 
+bool validateBufferBox(BufferBox* box) {
+	if (box == NULL) {  return false; }
+	if (box->vram == NULL) {  return false; }
+	if (box->resX == 0 || box->resY == 0) { return false; }
+	if (box->channels == 0) { return false; }
+	return true;
+}
+
+bool printValidateBufferBox(BufferBox* box) {
+	if (box == NULL) { printError("BufferBox is NULL"); return false; }
+	if (box->vram == NULL) { printError("BufferBox->vram is NULL"); return false; }
+	if (box->resX == 0 || box->resY == 0) { printError("Invalid BufferBox dimensions %ux%u == 0",box->resX,box->resY); return false; }
+	if (box->channels == 0) { printError("BufferBox has 0 channels"); return false; }
+	return true;
+}
+
 /* Internal use only, does not contain safety measures */
 void blitBuffer(
 	uint8_t* srcBuf, uint8_t* dstBuf,

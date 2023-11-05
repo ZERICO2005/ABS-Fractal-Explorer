@@ -43,9 +43,15 @@ struct _Render_Data {
 	uint32_t GPU_Precision;
 }; typedef struct _Render_Data Render_Data;
 
+namespace Rendering_Method {
+	enum Rendering_Method_Enum {
+		CPU_Rendering, GPU_Rendering, Rendering_Method_Count
+	};
+}
+
 int setup_fracExpKB(int argc, char* argv[]);
 
-int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex);
+int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex);
 
 int terminate_Render();
 

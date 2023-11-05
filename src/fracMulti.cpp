@@ -5,33 +5,29 @@
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
 */
-#include "gamma.h"
+#include "Common_Def.h"
 #include "fracMulti.h"
 #include "fractal.h"
-
-#include <thread>
-#include <vector>
-
+#include "render.h"
 /* BOILERPLATE */
 
 #define BREAKOUT 4096.0
 
-#define FractalParameters ABS_Fractal* param, ImageBuffer* buf, uint32_t p0, uint32_t p1
+#define FractalParameters BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, uint32_t p0, uint32_t p1, std::atomic<bool>& ABORT_RENDERING
 
 #define Block0(fpX) \
 uint8_t* data = buf->vram;\
-u32 subSample = buf->subSample;\
+u32 subSample = ren.subSample;\
 u32 resX = buf->resX;\
 u32 resY = buf->resY;\
 u32 dataPtr = p0 * 3;\
-u32 maxItr = param->itr;\
-fpX typeC = (fpX)param->type;\
-fpX r = param->r;\
-fpX i = param->i;\
-fpX zoom = param->zoom;\
+u32 maxItr = param.maxItr;\
+fpX r = param.r;\
+fpX i = param.i;\
+fpX zoom = param.zoom;\
 u32 y = p0 / resX;\
 u32 x = p0 % resX;\
-u32 sample = param->sample;\
+u32 sample = ren.sample;\
 fpX cr = (fpX)0.0;\
 fpX ci = (fpX)0.0;\
 fpX zr = (fpX)0.0;\
@@ -48,7 +44,7 @@ fpX numZ = (sResX >= sResY) ? numY * pow((fpX)10.0, zoom) : numX * pow((fpX)10.0
 
 #define Block1(fpX) for (; y < resY; y += sample) {\
 for (; x < resX; x += sample) {\
-		if (p0 == p1) {\
+		if (p0 == p1 || ABORT_RENDERING == true) {\
 			return;\
 		}\
 		uint32_t outR = 0;\
@@ -56,14 +52,14 @@ for (; x < resX; x += sample) {\
 		uint32_t outB = 0;\
 		for (u32 v = 0; v < sample; v++) {\
 			for (u32 u = 0; u < sample; u++) {\
-				if (param->julia & 0x1) {\
-					cpu_pixel_to_coordinate(x, y, &zr, &zi, param, resX, resY, subSample);\
-					cr = param->zr;\
-					ci = param->zi;\
+				if (param.juliaSet == true) {\
+					cpu_pixel_to_coordinate(x, y, &zr, &zi, &param, resX, resY, subSample);\
+					cr = param.zr;\
+					ci = param.zi;\
 				} else {\
-					cpu_pixel_to_coordinate(x, y, &cr, &ci, param, resX, resY, subSample);\
-					zr = (param->julia & 0x2) ? (fpX)0.0 : param->zr;\
-					zi = (param->julia & 0x2) ? (fpX)0.0 : param->zi;\
+					cpu_pixel_to_coordinate(x, y, &cr, &ci, &param, resX, resY, subSample);\
+					zr = (param.startingZ == false) ? (fpX)0.0 : param.zr;\
+					zi = (param.startingZ == false) ? (fpX)0.0 : param.zi;\
 				}\
 				fpX low = (fpX)4.0;\
 				fpX temp;\
@@ -73,18 +69,18 @@ for (; x < resX; x += sample) {\
 #define Block2(fpX,l) zs = zr * zr + zi * zi;\
 					if (zs < low) {\
 						low = zs;\
-					} else if (zs > BREAKOUT) {\
+					} else if (zs > param.breakoutValue) {\
 						fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
-						outR += (uint32_t)(0.9 * (511.5 - 511.5 * cos(TAU * (0.45 * smooth + 0.5))));\
-						outG += (uint32_t)(1.0 * (511.5 - 511.5 * cos(TAU * (0.45 * smooth + 0.9))));\
-						outB += (uint32_t)(1.0 * (511.5 - 511.5 * cos(TAU * (0.45 * smooth + 0.1))));\
+						outR += (uint32_t)(param.rA * (511.5 - 511.5 * cos(TAU * (param.rF * smooth + param.rP))));\
+						outG += (uint32_t)(param.gA * (511.5 - 511.5 * cos(TAU * (param.gF * smooth + param.gP))));\
+						outB += (uint32_t)(param.bA * (511.5 - 511.5 * cos(TAU * (param.bF * smooth + param.bP))));\
 						break;\
 					}\
 				}\
 				if (zs <= BREAKOUT) {\
 					outR += 0;\
 					outG += 0;\
-					outB += (uint32_t)(511.5 - 511.5 * cos((fp64)log(low) / 2.0));\
+					outB += (uint32_t)(511.5 - 511.5 * param.iA * cos(log(low) * param.iF + param.iP));\
 				}\
 				x++;\
 			}\
@@ -111,7 +107,7 @@ for (; x < resX; x += sample) {\
 	fpX zr1, zr2, zi1, zi2, s1, s2, s3;\
 	uint8_t f[8];\
 	for (uint8_t q = 0; q < 8; q++) {\
-		f[q] = ((param->formula >> q) & 1) ? 1 : 0;\
+		f[q] = ((param.formula >> q) & 1) ? 1 : 0;\
 	}\
 	\
 	s1 = (f[0]) ? (fpX)-1.0 : (fpX)1.0;\
@@ -139,8 +135,10 @@ for (; x < resX; x += sample) {\
 	
 void quadraticRenderFP32(FractalParameters) { quadraticRender(fp32) }
 void quadraticRenderFP64(FractalParameters) { quadraticRender(fp64) }
-void quadraticRenderFP80(FractalParameters) { quadraticRender(fp80) }
-void quadraticRenderFP128(FractalParameters) { quadraticRender(fp128) }
+#ifdef enableFP80andFP128
+	void quadraticRenderFP80(FractalParameters) { quadraticRender(fp80) }
+	void quadraticRenderFP128(FractalParameters) { quadraticRender(fp128) }
+#endif
 	
 #define cubicRender(fpX) \
 	\
@@ -148,7 +146,7 @@ void quadraticRenderFP128(FractalParameters) { quadraticRender(fp128) }
 	fpX zr1, zr2, zr3, zi1, zi2, zi3, s1, s2, s3, s4, s5, s6;\
 	uint8_t f[14];\
 	for (uint8_t q = 0; q < 14; q++) {\
-		f[q] = ((param->formula >> q) & 1) ? 1 : 0;\
+		f[q] = ((param.formula >> q) & 1) ? 1 : 0;\
 	}\
 	s1 = (f[0]) ? (fpX)-1.0 : (fpX)1.0;\
 	s2 = (f[1]) ? (fpX)-3.0 : (fpX)3.0;\
@@ -192,15 +190,17 @@ void quadraticRenderFP128(FractalParameters) { quadraticRender(fp128) }
 	
 void cubicRenderFP32(FractalParameters) { cubicRender(fp32) }
 void cubicRenderFP64(FractalParameters) { cubicRender(fp64) }
-void cubicRenderFP80(FractalParameters) { cubicRender(fp80) }
-void cubicRenderFP128(FractalParameters) { cubicRender(fp128) }
+#ifdef enableFP80andFP128
+	void cubicRenderFP80(FractalParameters) { cubicRender(fp80) }
+	void cubicRenderFP128(FractalParameters) { cubicRender(fp128) }
+#endif
 	
 #define quarticRender(fpX) \
 	Block0(fpX)\
 	fpX zr1, zr2, zr3, zr4, zi1, zi2, zi3, zi4, s1, s2, s3, s4, s5, s6, s7;\
 	uint8_t f[17];\
 	for (uint8_t q = 0; q < 17; q++) {\
-		f[q] = ((param->formula >> q) & 1) ? 1 : 0;\
+		f[q] = ((param.formula >> q) & 1) ? 1 : 0;\
 	}\
 	s1 = (f[0]) ? (fpX)-1.0 : (fpX)1.0;\
 	s2 = (f[1]) ? (fpX)-6.0 : (fpX)6.0;\
@@ -247,8 +247,10 @@ void cubicRenderFP128(FractalParameters) { cubicRender(fp128) }
 	
 void quarticRenderFP32(FractalParameters) { quarticRender(fp32) }
 void quarticRenderFP64(FractalParameters) { quarticRender(fp64) }
-void quarticRenderFP80(FractalParameters) { quarticRender(fp80) }
-void quarticRenderFP128(FractalParameters) { quarticRender(fp128) }
+#ifdef enableFP80andFP128
+	void quarticRenderFP80(FractalParameters) { quarticRender(fp80) }
+	void quarticRenderFP128(FractalParameters) { quarticRender(fp128) }
+#endif
 	
 #define quinticRender(fpX) \
 	Block0(fpX)\
@@ -257,16 +259,16 @@ void quarticRenderFP128(FractalParameters) { quarticRender(fp128) }
 	uint8_t fA[10];\
 	uint8_t fO[4];\
 	for (uint8_t q = 0; q < 6; q++) { /* 0-5 */ \
-		fS[q] = ((param->formula >> q) & 1) ? 1 : 0;\
+		fS[q] = ((param.formula >> q) & 1) ? 1 : 0;\
 	}\
 	for (uint8_t q = 6; q < 8; q++) { /* 6-7 */ \
-		fO[q - 6] = ((param->formula >> q) & 1) ? 1 : 0;\
+		fO[q - 6] = ((param.formula >> q) & 1) ? 1 : 0;\
 	}\
 	for (uint8_t q = 8; q < 18; q++) { /* 8-17 */ \
-		fA[q - 8] = ((param->formula >> q) & 1) ? 1 : 0;\
+		fA[q - 8] = ((param.formula >> q) & 1) ? 1 : 0;\
 	}\
 	for (uint8_t q = 18; q < 20; q++) { /* 18-19 */ \
-		fO[q - 16] = ((param->formula >> q) & 1) ? 1 : 0;\
+		fO[q - 16] = ((param.formula >> q) & 1) ? 1 : 0;\
 	}\
 	s1 = (fS[0]) ? (fpX)-1.0 : (fpX)1.0;\
 	s2 = (fS[1]) ? (fpX)-10.0 : (fpX)10.0;\
@@ -316,13 +318,15 @@ void quarticRenderFP128(FractalParameters) { quarticRender(fp128) }
 	
 void quinticRenderFP32(FractalParameters) { quinticRender(fp32) }
 void quinticRenderFP64(FractalParameters) { quinticRender(fp64) }
-void quinticRenderFP80(FractalParameters) { quinticRender(fp80) }
-void quinticRenderFP128(FractalParameters) { quinticRender(fp128) }
+#ifdef enableFP80andFP128
+	void quinticRenderFP80(FractalParameters) { quinticRender(fp80) }
+	void quinticRenderFP128(FractalParameters) { quinticRender(fp128) }
+#endif
 
-void renderRow(ABS_Fractal* param, uint8_t* data, uint32_t resX, uint32_t resY, uint8_t subSample, uint32_t p0, uint32_t p1) { // Deprecated
+void renderRow(ABS_Mandelbrot* param, uint8_t* data, uint32_t resX, uint32_t resY, uint8_t subSample, uint32_t p0, uint32_t p1) { // Deprecated
 	u32 dataPtr = p0 * 3; // RGB
-	u32 maxItr = param->itr;
-	fp64 typeC = (fp64)param->type;
+	u32 maxItr = param->maxItr;
+	fp64 typeC = (fp64)param->power;
 	
 	fp64 r = param->r;
 	fp64 i = param->i;
@@ -378,26 +382,17 @@ void renderRow(ABS_Fractal* param, uint8_t* data, uint32_t resX, uint32_t resY, 
 	//y = 0;
 }
 
-void renderFormula_MultiThread(ABS_Fractal* param, ImageBuffer* buf, uint32_t tc) {
-	if (buf == NULL) { printf("\nError | ImageBuffer is NULL"); fflush(stdout); return; }
-	if (buf->vram == NULL) { printf("\nError | ImageBuffer vram is NULL"); fflush(stdout); return; }
-	
+void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING, uint32_t tc) {
+	if (validateBufferBox(buf) == false) {
+		printError("BufferBox* buf is NULL or has invalid data in renderCPU_ABS_Mandelbrot()");
+		return;
+	}
+	uint32_t resX = buf->resX * ren.sample;
+	uint32_t resY =	buf->resY * ren.sample;
 	u32 dataPtr = 0;
-	u32 maxItr = param->itr;
-	fp64 r = param->r;
-	fp64 i = param->i;
-	fp64 zoom = param->zoom;
-	fp64 cr = 0.0;
-	fp64 ci = 0.0;
-
-	ABS_Fractal rParam = *param;
-	rParam.resX *= rParam.sample;
-	rParam.resY *= rParam.sample;
-		
 	std::vector<std::thread> renderThread;
-	
 	/* Thread Creation */
-		#define makeThread(k) renderThread.push_back(std::thread(k, &rParam, buf, p0, p1))
+		#define makeThread(k) renderThread.push_back(std::thread(k, buf, ren, param, p0, p1, std::ref(ABORT_RENDERING)))
 		#define generateThreads(k) \
 		for (u32 t = 0; t < tc; t++) { \
 			u32 p0 = ((buf->resX * buf->resY) * t) / tc;\
@@ -406,33 +401,46 @@ void renderFormula_MultiThread(ABS_Fractal* param, ImageBuffer* buf, uint32_t tc
 		}
 	/* Thread Creation */
 
+	printfInterval(0.3,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u",param.r,param.i,param.zoom,param.maxItr);
+
 	// Default is FP64
-	if (param->type == 2) {
-		if (param->fp == 32) { generateThreads(quadraticRenderFP32); } else
-		if (param->fp == 80) { generateThreads(quadraticRenderFP80); } else
-		if (param->fp == 128) { generateThreads(quadraticRenderFP128); } else
+	if (param.power == 2) {
+		if (ren.CPU_Precision == 32) { generateThreads(quadraticRenderFP32); } else
+		#ifdef enableFP80andFP128
+			if (ren.CPU_Precision == 80) { generateThreads(quadraticRenderFP80); } else
+			if (ren.CPU_Precision == 128) { generateThreads(quadraticRenderFP128); } else
+		#endif
 		{ generateThreads(quadraticRenderFP64); }
-	} else if (param->type == 3) {
-		if (param->fp == 32) { generateThreads(cubicRenderFP32); } else
-		if (param->fp == 80) { generateThreads(cubicRenderFP80); } else
-		if (param->fp == 128) { generateThreads(cubicRenderFP128); } else
+	} else if (param.power == 3) {
+		if (ren.CPU_Precision == 32) { generateThreads(cubicRenderFP32); } else
+		#ifdef enableFP80andFP128
+			if (ren.CPU_Precision == 80) { generateThreads(cubicRenderFP80); } else
+			if (ren.CPU_Precision == 128) { generateThreads(cubicRenderFP128); } else
+		#endif
 		{ generateThreads(cubicRenderFP64); }
-	} else if (param->type == 4) {
-		if (param->fp == 32) { generateThreads(quarticRenderFP32); } else
-		if (param->fp == 80) { generateThreads(quarticRenderFP80); } else
-		if (param->fp == 128) { generateThreads(quarticRenderFP128); } else
+	} else if (param.power == 4) {
+		if (ren.CPU_Precision == 32) { generateThreads(quarticRenderFP32); } else
+		#ifdef enableFP80andFP128
+			if (ren.CPU_Precision == 80) { generateThreads(quarticRenderFP80); } else
+			if (ren.CPU_Precision == 128) { generateThreads(quarticRenderFP128); } else
+		#endif
 		{ generateThreads(quarticRenderFP64); }
-	} else if (param->type == 5) {
-		if (param->fp == 32) { generateThreads(quinticRenderFP32); } else
-		if (param->fp == 80) { generateThreads(quinticRenderFP80); } else
-		if (param->fp == 128) { generateThreads(quinticRenderFP128); } else
+	} else if (param.power == 5) {
+		if (ren.CPU_Precision == 32) { generateThreads(quinticRenderFP32); } else
+		#ifdef enableFP80andFP128
+			if (ren.CPU_Precision == 80) { generateThreads(quinticRenderFP80); } else
+			if (ren.CPU_Precision == 128) { generateThreads(quinticRenderFP128); } else
+		#endif
 		{ generateThreads(quinticRenderFP64); }
 	} else {
-		printfInterval(0.5,"\nError: Unknown render parameters\nType: %u FP: %u",param->type,param->fp);
+		printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
+		return;
 		//generateThreads(renderRow); //Original Method
 	}
-
 	for (u32 t = 0; t < tc; t++) {
 		renderThread.at(t).join();
+	}
+	if (ABORT_RENDERING == true) {
+		printFlush("\nAborted %u threads",tc);
 	}
 }

@@ -8,11 +8,15 @@
 
 #ifndef FRACTAL_H
 #define FRACTAL_H
+
 #include "Common_Def.h"
+#include "render.h"
+
 enum FractalTypeEnum {
 	Fractal_ABS_Mandelbrot,Fractal_Polar_Mandelbrot,Fractal_Sierpinski_Carpet
 };
 const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sierpinski Carpet"};
+const char* const FractalTypeFileText[] = {"ABS-Mandelbrot","Polar-Mandelbrot","Sierpinski-Carpet"};
 const char* const PowerText[] = {"Constant","Linear","Quadratic","Cubic","Quartic","Quintic","Sextic","Septic","Octic","Nonic","Decic"};
  /* Safe Method of accessing PowerText */
 const char* getPowerText(int32_t p);
@@ -23,6 +27,9 @@ fp64 getABSFractalMinRadius(uint32_t power);
 
 fp64 getABSFractalMaxRadius(fp64 power);
 fp64 getABSFractalMaxRadius(uint32_t power);
+
+uint64_t limitFormulaID(uint32_t power, uint64_t formula);
+uint64_t getABSValue(uint32_t power);
 
 struct _ABS_Mandelbrot {
 	/* Parameters */
@@ -102,5 +109,29 @@ struct _Fractal_Data {
 }; typedef struct _Fractal_Data Fractal_Data;
 
 void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type);
+
+/* Cordinates */
+
+void coordinate_to_pixel(fp32 xI, fp32 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
+void coordinate_to_pixel(fp64 xI, fp64 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
+#ifdef enableFP80andFP128
+	void coordinate_to_pixel(fp80 xI, fp80 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
+	void coordinate_to_pixel(fp128 xI, fp128 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
+#endif
+
+void pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, ABS_Mandelbrot* param, Render_Data* ren);
+void pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+#ifdef enableFP80andFP128
+	void pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, ABS_Mandelbrot* param, Render_Data* ren);
+	void pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, ABS_Mandelbrot* param, Render_Data* ren);
+#endif
+
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+#ifdef enableFP80andFP128
+	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+#endif
+
 
 #endif /* FRACTAL_H */

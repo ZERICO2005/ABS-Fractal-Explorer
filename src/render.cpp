@@ -14,6 +14,7 @@
 #include "keybind.h"
 #include "engine.h"
 #include "fracExpKB.h"
+#include "fileManager.h"
 
 #include <SDL2/SDL.h>
 
@@ -26,6 +27,9 @@ SDL_Renderer* renderer;
 SDL_Window* window;
 ImGuiIO* io_IMGUI;
 
+bool Abort_Rendering_Flag = false;
+bool Waiting_To_Abort_Rendering = false;
+
 SDL_Texture* texture;
 SDL_Texture* kTexture; // Keyboard graphic
 BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
@@ -36,8 +40,8 @@ fp64 TestGraphicSpeed = 0.4;
 fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 const fp64 FRAME_RATE_OFFSET = 0.01;
 uint64_t FRAME_RATE_NANO;
-#define  Default_Frame_Rate_Multiplier 1.0
-const uint8_t color_square_divider = 3; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
+#define  Default_Frame_Rate_Multiplier 2.0
+const uint8_t color_square_divider = 2; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
@@ -45,6 +49,8 @@ fp64 Frame_Time_Display = 0.0;
 fp64 Render_Time_Display = 0.0;
 
 uint32_t RESY_UI = 120;
+
+uint64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
 
 #define RESX_Default 800
 #define RESY_Default 600
@@ -60,6 +66,19 @@ uint32_t RESY_UI = 120;
 Fractal_Data frac;
 Render_Data primaryRenderData;
 Render_Data secondaryRenderData;
+
+int exportScreenshot();
+int exportSuperScreenshot();
+
+namespace Image_File_Format {
+	enum Image_File_Format_Enum {
+		PNG,JPG,TGA,BMP,HDR,Image_File_Format_Count
+	};
+}
+
+Image_File_Format::Image_File_Format_Enum screenshotFileType = Image_File_Format::PNG;
+uint32_t User_PNG_Compression_Level = 8;
+uint32_t User_JPG_Quality_Level = 95;
 
 void updateRenderData(Render_Data* rDat) {
 	if (rDat == NULL) { return; }
@@ -86,7 +105,11 @@ void initRenderData(Render_Data* rDat) {
 	rDat->resDiv = 1;
 	rDat->rendering_method = 0;
 	rDat->CPU_Precision = 64;
-	rDat->CPU_Threads = (uint32_t)std::thread::hardware_concurrency() * 4;
+	if ((uint32_t)std::thread::hardware_concurrency() <= 1) {
+		rDat->CPU_Threads = 1;
+	} else {
+		rDat->CPU_Threads = (uint32_t)std::thread::hardware_concurrency() - 1;
+	}
 	rDat->GPU_Precision = 32;
 }
 
@@ -281,6 +304,11 @@ DisplayInfo* getCurrentDisplayInfo() {
 
 static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
+const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds"};
+int buttonSelection = -1;
+bool ShowTheXButton = true;
+//bool yeildSwitch = true;
+
 bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 	bool reVal = false;
 	int32_t x = 0, y = 0;
@@ -466,6 +494,12 @@ void updateFractalParameters() {
 		if (funcTimeDelay(decFormula,1.0/10.0)) {
 			FRAC.formula--;
 		}
+		if (funcTimeDelay(incFamily,1.0/10.0)) {
+			FRAC.formula += getABSValue(FRAC.power);
+		}
+		if (funcTimeDelay(decFamily,1.0/10.0)) {
+			FRAC.formula -= getABSValue(FRAC.power);
+		}
 		if (funcTimeDelay(resetFormula,0.2)) {
 			FRAC.formula = 0;
 		}
@@ -535,40 +569,94 @@ void updateFractalParameters() {
 			temp_breakoutValue = log2(16777216.0);
 		}
 	/* Rendering */
-		if (funcTimeDelay(incSubSample,1.0/10.0)) {
+		if (funcTimeDelay(incSubSample,1.0/6.0)) {
 			primaryRenderData.subSample++;
 		}
-		if (funcTimeDelay(decSubSample,1.0/10.0)) {
+		if (funcTimeDelay(decSubSample,1.0/6.0)) {
 			primaryRenderData.subSample--;
 		}
 		if (funcTimeDelay(resetSubSample,0.2)) {
 			primaryRenderData.subSample = 1;
 		}
-		if (funcTimeDelay(incSuperSample,1.0/10.0)) {
+		valueLimit(primaryRenderData.subSample,1,24);
+		if (funcTimeDelay(incSuperSample,1.0/6.0)) {
 			primaryRenderData.sample++;
 		}
-		if (funcTimeDelay(decSuperSample,1.0/10.0)) {
+		if (funcTimeDelay(decSuperSample,1.0/6.0)) {
 			primaryRenderData.sample--;
 		}
 		if (funcTimeDelay(resetSuperSample,0.2)) {
 			primaryRenderData.sample = 1;
 		}
-	
-	FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
-	valueLimit(temp_maxItr,log2(16.0),log2(262144.0));
-	FRAC.maxItr = pow(2.0,temp_maxItr);
-	valueLimit(FRAC.maxItr,16,262144);
-	valueLimit(temp_breakoutValue,log2(4.0),log2(4294967296.0));
-	FRAC.breakoutValue = pow(2.0,temp_breakoutValue);
-	valueLimit(FRAC.breakoutValue,4.0,4294967296.0);
-
+		valueLimit(primaryRenderData.sample,1,24);
+	/* Rendering Method */
+	{
+		using namespace Rendering_Method;
+		if (funcTimeDelay(fp32CpuRendering,0.2)) {
+			primaryRenderData.rendering_method = CPU_Rendering;
+			primaryRenderData.CPU_Precision = 32;
+		}
+		if (funcTimeDelay(fp64CpuRendering,0.2)) {
+			primaryRenderData.rendering_method = CPU_Rendering;
+			primaryRenderData.CPU_Precision = 64;
+		}
+		if (funcTimeDelay(fp80CpuRendering,0.2)) {
+			primaryRenderData.rendering_method = CPU_Rendering;
+			primaryRenderData.CPU_Precision = 80;
+		}
+		if (funcTimeDelay(fp128CpuRendering,0.2)) {
+			primaryRenderData.rendering_method = CPU_Rendering;
+			primaryRenderData.CPU_Precision = 128;
+		}
+		if (funcTimeDelay(fp16GpuRendering,0.2)) {
+			primaryRenderData.rendering_method = GPU_Rendering;
+			primaryRenderData.GPU_Precision = 16;
+		}
+		if (funcTimeDelay(fp32GpuRendering,0.2)) {
+			primaryRenderData.rendering_method = GPU_Rendering;
+			primaryRenderData.GPU_Precision = 32;
+		}
+		if (funcTimeDelay(fp64GpuRendering,0.2)) {
+			primaryRenderData.rendering_method = GPU_Rendering;
+			primaryRenderData.GPU_Precision = 64;
+		}
+	}
+	/* Other */
+		valueLimit(FRAC.stretch,-100.0,100.0);
+		if (FRAC.stretch >= 0.0) {
+			FRAC.sX = 1.0;
+			FRAC.sY = stretchValue(FRAC.stretch);
+		} else {
+			FRAC.sX = stretchValue(FRAC.stretch);
+			FRAC.sY = 1.0;
+		}
+		FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
+		valueLimit(temp_maxItr,log2(16.0),log2(16777216.0));
+		FRAC.maxItr = pow(2.0,temp_maxItr);
+		valueLimit(FRAC.maxItr,16,16777216);
+		valueLimit(temp_breakoutValue,log2(4.0),log2(4294967296.0));
+		FRAC.breakoutValue = pow(2.0,temp_breakoutValue);
+		valueLimit(FRAC.breakoutValue,4.0,4294967296.0);
+	/* ABS Mandelbrot */
+	/* Polar Mandelbrot */
+	if (frac.type_value == Fractal_Polar_Mandelbrot) {
+		if (FRAC.lockToCardioid == true) {
+			FRAC.r = getABSFractalMinRadius(FRAC.polarPower);
+			FRAC.r *= (FRAC.flipCardioidSide == true) ? -1.0 : 1.0;
+		}
+	}
+	/* Global Application Functions */
+		if (funcTimeDelay(openFractalMenu,0.2)) {
+			buttonSelection = 0;
+		}
+		if (funcTimeDelay(takeScreenshot,0.5)) {
+			exportScreenshot();
+		}
+		if (funcTimeDelay(takeSuperScreenshot,0.5)) {
+			exportSuperScreenshot();
+		}
 	#undef FRAC
 }
-
-const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds", "Abort"};
-int buttonSelection = -1;
-bool ShowTheXButton = true;
-//bool yeildSwitch = true;
 
 #define BufAndLen(x) x,ARRAY_LENGTH(x)
 /* Sets defualt window size and position along with size constraints */
@@ -583,27 +671,99 @@ bool ShowTheXButton = true;
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
-	ImGui::Text("%.2lfFPS",1.0 / Frame_Time_Display);
+	
+	/*
+	static fp64 fpsLevel[] = {
+		120.0,60.0,30.0,20.0,10.0,5.0
+	};
+ 	static ImVec4 colLevel[] = {
+		ImVec4(0.5,1.0,1.0,1.0),ImVec4(1.0,1.0,1.0,1.0),ImVec4(1.0,1.0,0.0,1.0),ImVec4(1.0,0.4,0.0,1.0),ImVec4(1.0,0.0,0.0,1.0),ImVec4(0.5,0.0,0.0,1.0)
+	};
+
+	static ImVec4 GUI_FrameRateColor = ImVec4(1.0,1.0,1.0,1.0);
+	static ImVec4 Render_FrameRateColor = ImVec4(1.0,1.0,1.0,1.0);
+
+	for (size_t i = 0; i < ARRAY_LENGTH(fpsLevel); i++) {
+		if (1.0 / Frame_Time_Display >= fpsLevel[i] - 0.01) {
+			GUI_FrameRateColor = colLevel[i];
+			break;
+		}
+	}
+	for (size_t i = 0; i < ARRAY_LENGTH(fpsLevel); i++) {
+		if (1.0 / Render_Time_Display >= fpsLevel[i] - 0.01) {
+			Render_FrameRateColor = colLevel[i];
+			break;
+		}
+	}
+	*/
+	// ImGui::Text("GUI: %.2lfFPS %.2lfms",1.0 / Frame_Time_Display,Frame_Time_Display * 1000.0);
+	// ImGui::SameLine();
+	// ImGui::Text("Render: %.2lfFPS %.2lfms",1.0 / Render_Time_Display,Render_Time_Display * 1000.0);
+
+	static ImVec4 GUI_FrameRateColor;
+	static ImVec4 Render_FrameRateColor;
+	fp64 Frame_FPS_Display = 1.0 / Frame_Time_Display;
+	fp64 Render_FPS_Display = 1.0 / Render_Time_Display;
+	GUI_FrameRateColor = {
+		(fp32)linearInterpolationLimit(Frame_FPS_Display,59.0,119.0,1.0,0.0),
+		(fp32)linearInterpolationLimit(Frame_FPS_Display,0.0,29.0,0.0,1.0),
+		(fp32)linearInterpolationLimit(Frame_FPS_Display,29.0,59.0,0.0,1.0),
+		1.0
+	};
+	Render_FrameRateColor = {
+		(fp32)linearInterpolationLimit(Render_FPS_Display,59.0,119.0,1.0,0.0),
+		(fp32)linearInterpolationLimit(Render_FPS_Display,0.0,29.0,0.0,1.0),
+		(fp32)linearInterpolationLimit(Render_FPS_Display,29.0,59.0,0.0,1.0),
+		1.0
+	};
+	
+	ImGui::Text("GUI:"); ImGui::SameLine();
+	ImGui::TextColored(GUI_FrameRateColor,"%.2lf",Frame_FPS_Display); ImGui::SameLine(0.0,1.0);
+	ImGui::Text("FPS"); ImGui::SameLine();
+	ImGui::TextColored(GUI_FrameRateColor,"%.2lf",Frame_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
+	ImGui::Text("ms");
 	ImGui::SameLine();
-	ImGui::Text("%.2lfms",Frame_Time_Display * 1000.0);
-	ImGui::SameLine();
-	ImGui::Text("%.2lfFPS",1.0 / Render_Time_Display);
-	ImGui::SameLine();
-	ImGui::Text("%.2lfms",Render_Time_Display * 1000.0);
+	ImGui::Text("GUI:"); ImGui::SameLine();
+	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_FPS_Display); ImGui::SameLine(0.0,1.0);
+	ImGui::Text("FPS"); ImGui::SameLine();
+	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
+	ImGui::Text("ms");
 
     ImGui::Text("Button: %d",buttonSelection); ImGui::SameLine();
     size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
     for (size_t i = 0; i < buttonCount; i++) {
         if (i != 0) { ImGui::SameLine(); }
         if (ImGui::Button(buttonLabels[i])) {
-			if (buttonSelection == (int)i) {
-				buttonSelection = -1;
+			if (buttonSelection == 3) {
+				exportScreenshot();
 			} else {
-				buttonSelection = i;
+				if (buttonSelection == (int)i) {
+					buttonSelection = -1;
+				} else {
+					buttonSelection = i;
+				}
 			}
-			
         }
     }
+	ImGui::SameLine();
+	if (Waiting_To_Abort_Rendering == true) {
+		ImGui::Text("Aborting...(%.1lfs)",NANO_TO_SECONDS(getNanoTime() - abortTimer));
+	} else {
+		if (Abort_Rendering_Flag == true) {
+			if (ImGui::Button("Resume Rendering")) {
+				Abort_Rendering_Flag = false;
+			}
+		} else {
+			if (ImGui::Button("Abort Rendering")) {
+				Abort_Rendering_Flag = true;
+				Waiting_To_Abort_Rendering = true;
+				write_Abort_Render_Ongoing(true);
+				abortTimer = getNanoTime();
+			}
+		}
+	}
+
+
 	ImGui::Separator();
 	uint32_t boxSpace = 8;
 	uint32_t boxCount = 8;
@@ -690,65 +850,68 @@ void Menu_Fractal() {
 		}
     }
 	ImGui::Separator();
-	if (Combo_FractalType == 0 || Combo_FractalType == 1) { /* ABS and Polar */
-		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == 0) ? (fp64)input_power : input_polar_power);
-		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == 0) ? (fp64)input_power : input_polar_power);
-		if (keyPressed(SDL_SCANCODE_A)) {
-			ImGui::Text("Pressed for: %lfms",(fp64)(getNanoTime() - Key_List[SDL_SCANCODE_A].timePressed) * 1e-6);
-		}
+	if (Combo_FractalType == Fractal_ABS_Mandelbrot || Combo_FractalType == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
+		#define FRAC frac.type.abs_mandelbrot
+		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
+		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
 		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
 		ImGui::Text("Cardioid Location: %.6lg",minRadius);
-		if (Combo_FractalType == 0) {
-			ImGui::Text("Fractal Power: %s",getPowerText(input_power));
-			ImGui::InputInt("##input_power",&input_power,1,1); valueLimit(input_power,2,10);
+		if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
+			ImGui::Text("Fractal Power: %s",getPowerText((int32_t)FRAC.power));
+			int temp_input_power = (int)FRAC.power;
+			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power; valueLimit(FRAC.power,2,10);
 		} else {
-			ImGui::Text("Fractal Power: %s",getPowerText(round(input_polar_power)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0001,10.0,"%.4f"); input_polar_power = (fp64)temp_input_polar_power;
-			ImGui::Checkbox("Lock position to Cardioid",&lockToCardioid);
-			if (lockToCardioid) {
-				ImGui::Checkbox("Flip Cardioid position",&flipCardioidSide);
+			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
+			static fp32 temp_input_polar_power = (fp64)FRAC.polarPower;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0001,10.0,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
+			if (FRAC.lockToCardioid) {
+				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
 			}
 		}
-		ImGui::Checkbox("Adjust zoom value to power",&adjustZoomToPower);
+		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
 		if (input_breakoutValue < 100.0) {
-			ImGui::Text("Breakout Value: %.3lf",input_breakoutValue);
+			ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
 		} else {
-			ImGui::Text("Breakout Value: %.1lf",input_breakoutValue);
+			ImGui::Text("Breakout Value: %.1lf",FRAC.breakoutValue);
 		}
-		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,24.0,""); input_breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
+		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,""); FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
 		ImGui::Separator();
 		ImGui::Text("Julia Set Options:");
-		ImGui::Checkbox("Render Julia Set",&juliaSet);
-		ImGui::Checkbox("Toggle starting Z values",&startingZ);
-		ImGui::Checkbox("Use Cursor for Z values",&cursorZValue);
-		if (cursorZValue) { ImGui::Checkbox("Use relative Z values",&relativeZValue); }
+		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
+		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
+		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
+		if (FRAC.cursorZValue) { ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue); }
 		ImGui::Separator();
 		static int Combo_JuliaSplit = 1;
 		ImGui::Text("Split Screen:");
 		if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, BufAndLen(WindowDivider))) {
 			if (Combo_JuliaSplit == 7) { /* Floating */
-				showFloatingJulia = true;
+				FRAC.showFloatingJulia = true;
 			}
 		}
 		if (Combo_JuliaSplit == 7) { /* Floating */
-			ImGui::Checkbox("Show floating Julia Set window",&showFloatingJulia);
+			ImGui::Checkbox("Show floating Julia Set window",&FRAC.showFloatingJulia);
 		}
-		ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&swapJuliaSplit);
+		ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&FRAC.swapJuliaSplit);
 		static int Combo_JuliaBehaviour = 0;
 		ImGui::Text("Julia Set behaviour:");
 		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
 
 		}
-	} else if (Combo_FractalType == 2) { /* Sierpinski Carpet */
+		#undef FRAC
+	} else if (Combo_FractalType == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
+		#define FRAC frac.type.sierpinski_carpet
 		static bool wallisSieve = false;
 		static bool renderOutOfBounds = false;
 		static bool fixateOnCorner = false;
-		static fp64 squareSize = 1.0; fp32 temp_squareSize = (fp32)squareSize;
-		ImGui::Checkbox("Wallis Sieve",&wallisSieve);
-		ImGui::Checkbox("Render out of bounds",&renderOutOfBounds);
-		ImGui::Checkbox("Fixate on top-left corner",&fixateOnCorner);
+		static fp64 squareSize = 1.0; fp32 temp_squareSize = (fp32)FRAC.squareSize;
+		ImGui::Checkbox("Wallis Sieve",&FRAC.wallisSieve);
+		ImGui::Checkbox("Render out of bounds",&FRAC.renderOutOfBounds);
+		ImGui::Checkbox("Fixate on top-left corner",&FRAC.fixateOnCorner);
 		ImGui::Text("Square Size Multiplier:");
-		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4,1.0,"%.4f"); squareSize = (fp64)temp_squareSize;
+		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4,1.0,"%.4f"); FRAC.squareSize = (fp64)temp_squareSize;
+		#undef FRAC
 	}
 
 	ImGui::End();
@@ -758,14 +921,13 @@ void Menu_Rendering() {
 	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^7.7","fp128 | 10^32.5"};
 	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
-	static int input_subSample = 1;
-	static int input_superSample = 1;
+	static int input_subSample = primaryRenderData.subSample;
+	static int input_superSample = primaryRenderData.sample;
 	int CPU_ThreadCount = (int)std::thread::hardware_concurrency();
-	static int input_CPU_MaxThreads = CPU_ThreadCount;
-	static int input_CPU_ThreadMultiplier = 4;
+	static int input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
+	static int input_CPU_ThreadMultiplier = 1;
 	static int Combo_CPU_RenderingMode = 1;
 	static int Combo_GPU_RenderingMode = 1;
-
 
 	ImGui::Begin("Rendering Menu",&ShowTheXButton);
 	
@@ -776,16 +938,22 @@ void Menu_Rendering() {
 	ImGui::Text("Maximum Threads:");
 	ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
 	ImGui::Text("Thread Multiplier:");
-	ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,32);
+	ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,16);
+	primaryRenderData.CPU_Threads = input_CPU_MaxThreads * input_CPU_ThreadMultiplier;
 	
 	ImGui::Text("GPU Rendering Mode:");
 	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, BufAndLen(GPU_RenderingModes))) {
 		
 	}
-	ImGui::Text("Sub Sample:");
-	ImGui::SliderInt("##input_subSample",&input_subSample,1,24);
-	ImGui::Text("Samples per pixel:");
-	ImGui::SliderInt("##input_superSample",&input_superSample,1,24);
+	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
+	ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"");
+	primaryRenderData.subSample = input_subSample;
+	ImGui::Text("Samples per pixel: %d",input_superSample * input_superSample);
+	ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"");
+	uint32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
+	uint32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
+	ImGui::Text("Total Pixels Rendered: %ux%u %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+	primaryRenderData.sample = input_superSample;
 	ImGui::Separator();
 
 	ImGui::End();
@@ -879,6 +1047,35 @@ void Menu_Settings() {
 	} else {
 		printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
 	}
+
+	ImGui::Separator();
+	static int Combo_ScreenshotFileType = screenshotFileType;
+	static const char* Text_ScreenshotFileType[] = {"PNG","JPG/JPEG","TGA","BMP"};
+	ImGui::Text("Screenshot File Type:");
+	if (ImGui::Combo("##Combo_ScreenshotFileType",&Combo_ScreenshotFileType,BufAndLen(Text_ScreenshotFileType))) {
+		screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
+	}
+	if (screenshotFileType == Image_File_Format::PNG) {
+		int temp_User_PNG_Compression_Level = User_PNG_Compression_Level;
+		ImGui::Text("PNG Compression Level (Default = 8)");
+		ImGui::SliderInt("##temp_User_PNG_Compression_Level",&temp_User_PNG_Compression_Level,1,9);
+		User_PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
+		if (User_PNG_Compression_Level < 3) { ImGui::Text("Fastest Saving (Large File Size)"); } else
+		if (User_PNG_Compression_Level < 5) { ImGui::Text("Faster Saving"); } else
+		if (User_PNG_Compression_Level < 7) { ImGui::Text("Balanced"); } else
+		if (User_PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
+		{ ImGui::Text("Smallest File Size"); }
+	} else if (screenshotFileType == Image_File_Format::JPG) {
+		int temp_User_JPG_Quality_Level = User_JPG_Quality_Level;
+		ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
+		ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
+		User_JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
+		if (User_JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
+		if (User_JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
+		if (User_JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
+		{ ImGui::Text("Very High Quality (Recommended)"); }
+	}
+
 	ImGui::End();
 }
 
@@ -1060,10 +1257,6 @@ int render_IMGUI() {
 			case 6:
 			Menu_Keybinds();
 			break;
-			case 7:
-			//yeildSwitch = (yeildSwitch == true) ? false : true;
-			//Abort_Rendering();
-			break;
 		}
 	}
 	if (ShowTheXButton == false) {
@@ -1079,7 +1272,7 @@ int render_IMGUI() {
 	return 0;
 }
 
-int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
+int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	/*
 	static bool yeildPrint = false;
 	static uint64_t yeildCount = 0;
@@ -1093,13 +1286,20 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	uint64_t FRAME_RATE_NANO = SECONDS_TO_NANO(1.0 / FRAME_RATE);
 	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
 	TimerBox frameTimer = TimerBox(1.0/FRAME_RATE);
-	TimerBox maxFrameReset = TimerBox(1.0/6.0); /* Keeps track of longest frame times */
-	TimerBox quitTimer = TimerBox(6.1);
+	TimerBox maxFrameReset = TimerBox(1.0/5.0); /* Keeps track of longest frame times */
 	while (QUIT_FLAG == false) {
+		{ // Accesses ABORT_RENDERING only when Abort_Rendering_Flag changes to reduce unnecessary accesses
+			static bool Abort_Rendering_Change = Abort_Rendering_Flag;
+			if (Abort_Rendering_Flag != Abort_Rendering_Change) {
+				ABORT_RENDERING = Abort_Rendering_Flag;
+				Abort_Rendering_Change = Abort_Rendering_Flag;
+			}
+		}
 		SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT) {
+				ABORT_RENDERING = true;
                 QUIT_FLAG = true;
             }
         }
@@ -1176,10 +1376,6 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 			write_Parameters(&frac,&primaryRenderData,&secondaryRenderData);
 			windowResizingCode();
 			newFrame();
-		}
-		
-		if (quitTimer.timerReset()) {
-			//QUIT_FLAG = true;
 		}
 	}
 	return 0;
@@ -1264,7 +1460,7 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 	return 0;
 }
 
-int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
+int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	SDL_Init(SDL_INIT_VIDEO);
 	printf("\nSystem Information:");
 	int32_t initResX, initResY, initPosX, initPosY;
@@ -1320,7 +1516,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::mutex& Key_Function_Mutex) {
 	initRenderData(&secondaryRenderData);
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initKeys();
-	start_Render(QUIT_FLAG,Key_Function_Mutex);
+	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	write_Render_Ready(true);
 	return 0;
 }
@@ -1367,6 +1563,52 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 		}
 	}
 }
+void renderAbortGraphic(fp64 speed) {
+	static fp64 f = 0.0;
+	f += DeltaTime * speed;
+	uint32_t w = (uint32_t)(f * (256.0));
+	size_t z = 0;
+	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
+		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
+			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = ((w + x + y) % 256) / 4; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = 0; z++;
+		}
+	}
+}
+void renderPauseGraphic(fp64 speed) {
+	static fp64 f = 0.0;
+	f += DeltaTime * speed;
+	uint32_t w = (uint32_t)(f * (256.0));
+	size_t z = 0;
+	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
+		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
+			TestGraphic.vram[z] = 0; z++;
+			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = 0; z++;
+		}
+	}
+}
+
+bool exportFractalBuffer = false;
+
+int exportScreenshot() {
+	static uint64_t resetTime = 0;
+	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5)) {
+		resetTime = getNanoTime();
+		exportFractalBuffer = true;
+	}
+	return 0;
+}
+int exportSuperScreenshot() {
+	static uint64_t resetTime = 0;
+	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5)) {
+		resetTime = getNanoTime();
+		exportFractalBuffer = true;
+	}
+	return 0;
+}
+
 void newFrame() {
 
 	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255); // Some shade of dark blue
@@ -1379,12 +1621,45 @@ void newFrame() {
 	Master.vram = (uint8_t*)SDL_Master_VRAM;
 	
 	static BufferBox temp_primary = {NULL,0,0,3,0};
-	if (read_Render_Buffers(&temp_primary) == 1 || temp_primary.vram == NULL) {
-		renderTestGraphic(0.1, 0.3, 1.0); // Renders a loading screen if Fractal buffers are unavailable
+	if (Abort_Rendering_Flag == true) {
+		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
+		if (Waiting_To_Abort_Rendering == true) {
+			renderAbortGraphic(0.3);
+		} else {
+			renderPauseGraphic(0.3);
+		}
+		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
+	} else if (read_Render_Buffers(&temp_primary) == 1 || temp_primary.vram == NULL) {
+		renderTestGraphic(0.1, 0.25, 1.0); // Renders a loading screen if Fractal buffers are unavailable
 		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
 	} else {
 		copyBuffer(temp_primary,Master,0,RESY_UI,false);
+		if (exportFractalBuffer == true) {
+			uint64_t curTime = getNanoTime();
+			size_t size = snprintf(NULL,0,"%s_%llu",frac.type_name,curTime);
+			char* name = (char*)calloc(size + 1,sizeof(char));
+			snprintf(name,size,"%s_%llu",FractalTypeFileText[frac.type_value],curTime);
+			char path[] = "./";
+			switch(screenshotFileType) {
+				case Image_File_Format::PNG:
+					writePNGImage(&temp_primary,path,name,User_PNG_Compression_Level);
+				break;
+				case Image_File_Format::JPG:
+					writeJPGImage(&temp_primary,path,name,User_JPG_Quality_Level);
+				break;
+				case Image_File_Format::TGA:
+					writeTGAImage(&temp_primary,path,name);
+				break;
+				case Image_File_Format::BMP:
+					writeBMPImage(&temp_primary,path,name);
+				break;
+				default:
+				printError("Unknown screenshot file type: %d",screenshotFileType);
+			}
+			FREE(name);
+		}
 	}
+	exportFractalBuffer = false;
 		
 	/*
 	if (buf == NULL && buf->vram == NULL) { 

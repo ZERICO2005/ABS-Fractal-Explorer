@@ -21,6 +21,18 @@ void write_Render_Ready(bool f) {
 	pDat_Render_Ready = f;
 }
 
+std::mutex pDat_Abort_Render_Ongoing_Mutex;
+bool pDat_Abort_Render_Ongoing = false;
+
+bool read_Abort_Render_Ongoing() {
+	std::lock_guard<std::mutex> lock(pDat_Abort_Render_Ongoing_Mutex);
+	return pDat_Abort_Render_Ongoing;
+}
+void write_Abort_Render_Ongoing(bool s) {
+	std::lock_guard<std::mutex> lock(pDat_Abort_Render_Ongoing_Mutex);
+	pDat_Abort_Render_Ongoing = s;
+}
+
 /* Key Function */
 std::mutex pDat_Function_Status_Mutex;
 Function_Status pDat_Function_Status[Key_Function::Parameter_Function_Count];
