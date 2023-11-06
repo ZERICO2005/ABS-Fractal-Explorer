@@ -12,6 +12,11 @@
 #ifdef enableFP80andFP128
 	fp128 sin(fp128 x) { return sinq(x); }
 	fp128 cos(fp128 x) { return cosq(x); }
+	fp128 tan(fp128 x) { return tanq(x); }
+	fp128 asin(fp128 x) { return asinq(x); }
+	fp128 acos(fp128 x) { return acosq(x); }
+	fp128 atan(fp128 x) { return atanq(x); }
+	fp128 atan2(fp128 y, fp128 x) { return atan2q(y,x); }
 	fp128 log(fp128 x) { return logq(x); }
 	fp128 log2(fp128 x) { return log2q(x); }
 	fp128 log10(fp128 x) { return log10q(x); }

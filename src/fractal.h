@@ -17,7 +17,11 @@ enum FractalTypeEnum {
 };
 const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sierpinski Carpet"};
 const char* const FractalTypeFileText[] = {"ABS-Mandelbrot","Polar-Mandelbrot","Sierpinski-Carpet"};
-const char* const PowerText[] = {"Constant","Linear","Quadratic","Cubic","Quartic","Quintic","Sextic","Septic","Octic","Nonic","Decic"};
+const char* const PowerText[] = {
+	"Constant","Linear","Quadratic","Cubic","Quartic","Quintic","Sextic","Septic","Octic","Nonic",
+	"Decic","Undecic","Dodecic","Tridecic","Tetradecic","Pentadecic","Hexadecic","Heptadecic","Octadecic","Nonadecic",
+    "Icosic", "Unicosic", "Duocosic", "Triacosic", "Tetraicosic","Pentacosic", "Hexacosic", "Heptacosic", "Octacosic", "Nonacosic"
+};
  /* Safe Method of accessing PowerText */
 const char* getPowerText(int32_t p);
 const char* getPowerText(fp64 p);

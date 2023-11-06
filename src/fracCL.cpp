@@ -208,9 +208,11 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	uint32_t maxItr = (uint32_t)param.maxItr;
 	fp32 zr0 = (param.startingZ == false) ? 0.0f : (fp32)param.zr;
 	fp32 zi0 = (param.startingZ == false) ? 0.0f : (fp32)param.zi;
+	uint32_t polarMandelbrotBool = (param.polarMandelbrot == true) ? 1 : 0;
 	uint32_t juliaSetBool = (param.juliaSet == true) ? 1 : 0;
 	uint32_t formula32 = (uint32_t)param.formula;
-	uint32_t formula = ((param.power - 2) << 30) | (juliaSetBool << 29) | formula32;
+	uint32_t formula = (polarMandelbrotBool << 30) | (juliaSetBool << 29) | formula32;
+	fp32 power = (param.polarMandelbrot == true) ? (fp32)param.polarPower : (fp32)param.power;
     uint32_t sample = (uint32_t)ren.sample;
     fp32 rot = (fp32)param.rot;
 	fp32 numZ;
@@ -233,11 +235,12 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, 5, sizeof(fp32), &zr0);
 	err |= clSetKernelArg(engine.kernel, 6, sizeof(fp32), &zi0);
 	err |= clSetKernelArg(engine.kernel, 7, sizeof(uint32_t), &formula);
-    err |= clSetKernelArg(engine.kernel, 8, sizeof(uint32_t), &sample);
-    err |= clSetKernelArg(engine.kernel, 9, sizeof(fp32), &rot);
-	err |= clSetKernelArg(engine.kernel, 10, sizeof(fp32), &numZ);
-	err |= clSetKernelArg(engine.kernel, 11, sizeof(fp32), &numW);
-	err |= clSetKernelArg(engine.kernel, 12, sizeof(cl_mem), &deviceResultBuf);
+	err |= clSetKernelArg(engine.kernel, 8, sizeof(fp32), &power);
+    err |= clSetKernelArg(engine.kernel, 9, sizeof(uint32_t), &sample);
+    err |= clSetKernelArg(engine.kernel, 10, sizeof(fp32), &rot);
+	err |= clSetKernelArg(engine.kernel, 11, sizeof(fp32), &numZ);
+	err |= clSetKernelArg(engine.kernel, 12, sizeof(fp32), &numW);
+	err |= clSetKernelArg(engine.kernel, 13, sizeof(cl_mem), &deviceResultBuf);
 	printErrorChange("\nKernelArgs: %d",err);
 
 	uint32_t cor = (resX * resY) % KernelWorkGroupSize; // Calculates the correction factor to ensure divisibility

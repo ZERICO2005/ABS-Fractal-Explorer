@@ -14,5 +14,6 @@
 
 //void renderFormula_MultiThread(ABS_Fractal* parameter, ImageBuffer* buf, u32 threadCount);
 void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING, uint32_t tc = 1);
+void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING, uint32_t tc = 1);
 
 #endif /* FRAC_MULTI_H */

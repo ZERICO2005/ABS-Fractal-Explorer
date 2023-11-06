@@ -64,6 +64,11 @@ typedef double fp64;
 
 	fp128 sin(fp128 x);
 	fp128 cos(fp128 x);
+	fp128 tan(fp128 x);
+	fp128 asin(fp128 x);
+	fp128 acos(fp128 x);
+	fp128 atan(fp128 x);
+	fp128 atan2(fp128 y, fp128 x);
 	fp128 log(fp128 x);
 	fp128 log2(fp128 x);
 	fp128 log10(fp128 x);
@@ -75,15 +80,16 @@ typedef double fp64;
 	fp128 fmod(fp128 x, fp128 y);
 	fp128 fabs(fp128 x);
 	fp128 copysign(fp128 x, fp128 y);
+
 #endif
 
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2023/11/04" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2023/11/06" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 19
+#define PROGRAM_V_PATCH 20
 #define PROGRAM_V_TAG "debug alpha"
 
 /* Constants */

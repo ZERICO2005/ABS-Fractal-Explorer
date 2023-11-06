@@ -59,9 +59,16 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			if (currentBuf->vram != NULL) {
 				//render_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot);
 				if (ABORT_RENDERING == false) {
+					#define FRAC fracData.type.abs_mandelbrot
+					printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %llu",FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
+					#undef FRAC
 					switch(primaryRender.rendering_method) {
 						case 0:
-							renderCPU_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+							if (fracData.type.abs_mandelbrot.polarMandelbrot == true) {
+								renderCPU_Polar_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+							} else {
+								renderCPU_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+							}
 							break;
 						case 1:
 							renderOpenCL_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING);
@@ -69,7 +76,6 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 						default:
 						printfInterval(0.5,"Unknown rendering method %u",primaryRender.rendering_method);
 					}
-					
 				}
 				if (read_Abort_Render_Ongoing() == true) {
 					write_Abort_Render_Ongoing(false);

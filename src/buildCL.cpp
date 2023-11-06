@@ -47,7 +47,7 @@ const char* FractalOpenCL_SRC = "\
 			u32 maxItr,\n\
 			u32 resX, u32 resY,\n\
 			fp32 zr0, fp32 zi0,\n\
-			uint32_t formula, uint32_t sample,\n\
+			uint32_t formula, fp32 power, uint32_t sample,\n\
 			fp32 rot,\n\
 			fp32 numZ,fp32 numW,\n\
 			__global uint8_t* resultBuf\n\
@@ -57,7 +57,7 @@ const char* FractalOpenCL_SRC = "\
 	uint32_t outG = 0;\n\
 	uint32_t outB = 0;\n\
 	fp32 smooth = 0.0;\n\
-	u8 type = ((formula & 0xC0000000) >> 30) + 2;\n\
+	u8 type = (formula & 0x40000000) ? 1 : (uint8_t)power;\n\
 	fp32 y = (fp32)(id / resX);\n\
 	fp32 x = (fp32)(id % resX);\n\
 	\n\
@@ -95,7 +95,23 @@ const char* FractalOpenCL_SRC = "\
 				zi = zi0; // Default 0.0f\n\
 			}\n\
 			//formula &= 0x1FFFFFFF;\n\
-			if (type == 2) {\n\
+			if (type == 1) {\n\
+				zs = (zr * zr + zi * zi); // Otherwise Julia Sets don't work\n\
+				fp32 za = 0.0f;\n\
+				fp32 powerHalf = power / 2.0f;\n\
+				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
+					za = atan2(zi, zr) * power;\n\
+					zr = pow(zs, powerHalf) * cos(za) + cr;\n\
+					zi = pow(zs, powerHalf) * sin(za) + ci;\n\
+					zs = zr * zr + zi * zi;\n\
+					if (zs < low) {\n\
+						low = zs;\n\
+					} else if (zs > BREAKOUT) {\n\
+						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(power)));\n\
+						break;\n\
+					}\n\
+				}\n\
+			} else if (type == 2) {\n\
 				fp32 zr1, zr2, zi1, zi2, s1, s2, s3;\n\
 				uint8_t f[8];\n\
 				for (uint8_t q = 0; q < 8; q++) {\n\
@@ -132,12 +148,12 @@ const char* FractalOpenCL_SRC = "\
 				for (uint8_t q = 0; q < 14; q++) {\n\
 					f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
 				}\n\
-				s1 = (f[0]) ? -1.0f: 1.0;\n\
-				s2 = (f[1]) ? -3.0f: 3.0;\n\
-				s3 = (f[2]) ? -3.0f: 3.0;\n\
-				s4 = (f[3]) ? -1.0f: 1.0;\n\
-				s5 = (f[4]) ? -1.0f: 1.0;\n\
-				s6 = (f[5]) ? -1.0f: 1.0;\n\
+				s1 = (f[0]) ? -1.0f: 1.0f;\n\
+				s2 = (f[1]) ? -3.0f: 3.0f;\n\
+				s3 = (f[2]) ? -3.0f: 3.0f;\n\
+				s4 = (f[3]) ? -1.0f: 1.0f;\n\
+				s5 = (f[4]) ? -1.0f: 1.0f;\n\
+				s6 = (f[5]) ? -1.0f: 1.0f;\n\
 				for (u32 itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (f[6]) ? fabs(zr) : zr;\n\
 					zi1 = (f[7]) ? fabs(zi) : zi;\n\
@@ -180,13 +196,13 @@ const char* FractalOpenCL_SRC = "\
 				for (uint8_t q = 0; q < 17; q++) {\n\
 					f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
 				}\n\
-				s1 = (f[0]) ? -1.0f: 1.0;\n\
-				s2 = (f[1]) ? -6.0f: 6.0;\n\
-				s3 = (f[2]) ? -1.0f: 1.0;\n\
-				s4 = (f[3]) ? -4.0f: 4.0;\n\
-				s5 = (f[4]) ? -4.0f: 4.0;\n\
-				s6 = (f[5]) ? -1.0f: 1.0;\n\
-				s7 = (f[6]) ? -1.0f: 1.0;\n\
+				s1 = (f[0]) ? -1.0f: 1.0f;\n\
+				s2 = (f[1]) ? -6.0f: 6.0f;\n\
+				s3 = (f[2]) ? -1.0f: 1.0f;\n\
+				s4 = (f[3]) ? -4.0f: 4.0f;\n\
+				s5 = (f[4]) ? -4.0f: 4.0f;\n\
+				s6 = (f[5]) ? -1.0f: 1.0f;\n\
+				s7 = (f[6]) ? -1.0f: 1.0f;\n\
 				for (u32 itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (f[7]) ? fabs(zr) : zr;\n\
 					zi1 = (f[8]) ? fabs(zi) : zi;\n\
@@ -243,14 +259,14 @@ const char* FractalOpenCL_SRC = "\
 				for (uint8_t q = 18; q < 20; q++) { //18-19\n\
 					fO[q - 16] = ((formula >> q) & 1) ? 1 : 0;\n\
 				}\n\
-				s1 = (fS[0]) ? -1.0f: 1.0;\n\
-				s2 = (fS[1]) ? -10.0f: 10.0;\n\
-				s3 = (fS[2]) ? -5.0f: 5.0;\n\
-				s4 = (fS[3]) ? -5.0f: 5.0;\n\
-				s5 = (fS[4]) ? -10.0f: 10.0;\n\
-				s6 = (fS[5]) ? -1.0f: 1.0;\n\
-				s7 = (fO[0]) ? -1.0f: 1.0;\n\
-				s8 = (fO[1]) ? -1.0f: 1.0;\n\
+				s1 = (fS[0]) ? -1.0f: 1.0f;\n\
+				s2 = (fS[1]) ? -10.0f: 10.0f;\n\
+				s3 = (fS[2]) ? -5.0f: 5.0f;\n\
+				s4 = (fS[3]) ? -5.0f: 5.0f;\n\
+				s5 = (fS[4]) ? -10.0f: 10.0f;\n\
+				s6 = (fS[5]) ? -1.0f: 1.0f;\n\
+				s7 = (fO[0]) ? -1.0f: 1.0f;\n\
+				s8 = (fO[1]) ? -1.0f: 1.0f;\n\
 				for (u32 itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (fA[0]) ? fabs(zr) : zr;\n\
 					zi1 = (fA[1]) ? fabs(zi) : zi;\n\
@@ -289,6 +305,75 @@ const char* FractalOpenCL_SRC = "\
 						low = zs;\n\
 					} else if (zs > BREAKOUT) {\n\
 						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(5.0f)));\n\
+						break;\n\
+					}\n\
+				}\n\
+			} else if (type == 6) {\n\
+				fp32 zr1, zr2, zr3, zr4, zr5, zr6, zi1, zi2, zi3, zi4, zi5, zi6, s1, s2, s3, s4, s5, s6, s7, s8, s9;\n\
+				uint8_t fS[7];\n\
+				uint8_t fA[12];\n\
+				uint8_t fO[4];\n\
+				for (uint8_t q = 0; q <= 6; q++) { /* 0-6 */ \n\
+					fS[q] = ((formula >> q) & 1) ? 1 : 0;\n\
+				}\n\
+				for (uint8_t q = 7; q <= 8; q++) { /* 7-8 */ \n\
+					fO[q - 7] = ((formula >> q) & 1) ? 1 : 0;\n\
+				}\n\
+				for (uint8_t q = 9; q <= 20; q++) { /* 9-20 */ \n\
+					fA[q - 9] = ((formula >> q) & 1) ? 1 : 0;\n\
+				}\n\
+				for (uint8_t q = 21; q <= 22; q++) { /* 21-22 */ \n\
+					fO[q - 19] = ((formula >> q) & 1) ? 1 : 0;\n\
+				}\n\
+				s1 = (fS[0]) ? -1.0f : 1.0f;\n\
+				s2 = (fS[1]) ? -15.0f : 15.0f;\n\
+				s3 = (fS[2]) ? -15.0f : 15.0f;\n\
+				s4 = (fS[3]) ? -1.0f : 1.0f;\n\
+				s5 = (fS[4]) ? -6.0f : 6.0f;\n\
+				s6 = (fS[5]) ? -20.0f : 20.0f;\n\
+				s7 = (fS[6]) ? -6.0f : 6.0f;\n\
+				s8 = (fO[0]) ? -1.0f : 1.0f;\n\
+				s9 = (fO[1]) ? -1.0f : 1.0f;\n\
+				for (u32 itr = 0; itr < maxItr; itr++) {\n\
+					zr1 = (fA[0]) ? fabs(zr) : zr;\n\
+					zi1 = (fA[1]) ? fabs(zi) : zi;\n\
+					zr2 = (fA[2]) ? fabs(zr) : zr;\n\
+					zi2 = (fA[3]) ? fabs(zi) : zi;\n\
+					zr3 = (fA[4]) ? fabs(zr) : zr;\n\
+					zi3 = (fA[5]) ? fabs(zi) : zi;\n\
+					zr4 = (fA[6]) ? fabs(zr) : zr;\n\
+					zi4 = (fA[7]) ? fabs(zi) : zi;\n\
+					zr5 = (fA[8]) ? fabs(zr) : zr;\n\
+					zi5 = (fA[9]) ? fabs(zi) : zi;\n\
+					zr6 = (fA[10]) ? fabs(zr) : zr;\n\
+					zi6 = (fA[11]) ? fabs(zi) : zi;\n\
+\n\
+					if (fO[2] == 0) {\n\
+						if (fO[3] == 0) {\n\
+							temp = s8 * (s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+							zi = s9 * (s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+							zr = temp;\n\
+						} else {\n\
+							temp = s8 * (s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+							zi = s9 * fabs(s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+							zr = temp;\n\
+						}\n\
+					} else {\n\
+						if (fO[3] == 0) {\n\
+							temp = s8 * fabs(s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+							zi = s9 * (s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+							zr = temp;\n\
+						} else {\n\
+							temp = s8 * fabs(s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+							zi = s9 * fabs(s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+							zr = temp;\n\
+						}\n\
+					}\n\
+					zs = zr * zr + zi * zi;\n\
+					if (zs < low) {\n\
+						low = zs;\n\
+					} else if (zs > BREAKOUT) {\n\
+						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(6.0f)));\n\
 						break;\n\
 					}\n\
 				}\n\

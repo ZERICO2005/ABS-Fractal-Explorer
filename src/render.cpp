@@ -103,7 +103,7 @@ void initRenderData(Render_Data* rDat) {
 	rDat->previewRender = false;
 	rDat->areaMult = 1.0;
 	rDat->resDiv = 1;
-	rDat->rendering_method = 0;
+	rDat->rendering_method = Rendering_Method::GPU_Rendering;
 	rDat->CPU_Precision = 64;
 	if ((uint32_t)std::thread::hardware_concurrency() <= 1) {
 		rDat->CPU_Threads = 1;
@@ -135,7 +135,7 @@ KeyBind defaultKeyBindList[] = {
 	{Key_Function::inputPower,SDL_SCANCODE_X},{Key_Function::incPower,SDL_SCANCODE_UNKNOWN},{Key_Function::decPower,SDL_SCANCODE_UNKNOWN},
 	{Key_Function::incSuperSample,SDL_SCANCODE_APOSTROPHE},{Key_Function::decSuperSample,SDL_SCANCODE_SEMICOLON},{Key_Function::incSubSample,SDL_SCANCODE_PERIOD},{Key_Function::decSubSample,SDL_SCANCODE_COMMA},
 	{Key_Function::fp16GpuRendering,SDL_SCANCODE_UNKNOWN},{Key_Function::fp32GpuRendering,SDL_SCANCODE_M},{Key_Function::fp64GpuRendering,SDL_SCANCODE_RALT},
-	{Key_Function::fp32CpuRendering,SDL_SCANCODE_UNKNOWN},{Key_Function::fp64CpuRendering,SDL_SCANCODE_N},{Key_Function::fp80CpuRendering,SDL_SCANCODE_B},{Key_Function::fp128CpuRendering,SDL_SCANCODE_RCTRL}
+	{Key_Function::fp32CpuRendering,SDL_SCANCODE_APPLICATION},{Key_Function::fp64CpuRendering,SDL_SCANCODE_N},{Key_Function::fp80CpuRendering,SDL_SCANCODE_B},{Key_Function::fp128CpuRendering,SDL_SCANCODE_RCTRL}
 };
 
 size_t KeyBind_PresetCount;
@@ -304,7 +304,7 @@ DisplayInfo* getCurrentDisplayInfo() {
 
 static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
-const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "Keybinds"};
+const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "KeyBinds"};
 int buttonSelection = -1;
 bool ShowTheXButton = true;
 //bool yeildSwitch = true;
@@ -409,7 +409,7 @@ void updateFractalParameters() {
 	using namespace Key_Function;
 	#define FRAC frac.type.abs_mandelbrot
 	static fp64 temp_maxItr = log2(FRAC.maxItr);
-	static fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
+	fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
 	fp64 moveDelta = (DeltaTime < 0.2) ? DeltaTime : 0.2;
 	/* Boolean toggles */
 		#define paramToggle(func,toggle,freq) if (funcTimeDelay(func,freq)) { toggle = !toggle; }
@@ -443,16 +443,16 @@ void updateFractalParameters() {
 		valueLimit(FRAC.i,-10.0,10.0);
 	/* Real and Imaginary Julia Z Coordinates */
 		if (func_stat[incZReal].triggered == true) {
-			moveCord(&FRAC.r, &FRAC.i, 0.0 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+			moveCord(&FRAC.zr, &FRAC.zi, 0.0 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
 		}
 		if (func_stat[decZReal].triggered == true) {
-			moveCord(&FRAC.r, &FRAC.i, 0.5 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+			moveCord(&FRAC.zr, &FRAC.zi, 0.5 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
 		}
 		if (func_stat[incZImag].triggered == true) {
-			moveCord(&FRAC.r, &FRAC.i, 0.25 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+			moveCord(&FRAC.zr, &FRAC.zi, 0.25 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
 		}
 		if (func_stat[decZImag].triggered == true) {
-			moveCord(&FRAC.r, &FRAC.i, 0.75 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+			moveCord(&FRAC.zr, &FRAC.zi, 0.75 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
 		}
 		if (funcTimeDelay(resetZReal,0.2)) {
 			FRAC.zr = 0.0;
@@ -474,14 +474,14 @@ void updateFractalParameters() {
 		}
 		valueLimit(FRAC.zoom,-20.0,40.0);
 		if (funcTimeDelay(resetCoordinates,0.2)) {
-			FRAC.r = 0.0; FRAC.i = 0.0; FRAC.zoom = 0.0;
+			FRAC.r = 0.0; FRAC.i = 0.0; FRAC.zoom = zoomDefault(FRAC.power);
 		}
 	/* maxItr */
 		if (func_stat[incMaxItr].triggered) {
-			temp_maxItr += 2.5 * moveDelta;
+			temp_maxItr += 2.0 * moveDelta;
 		}
 		if (func_stat[decMaxItr].triggered) {
-			temp_maxItr -= 2.5 * moveDelta;
+			temp_maxItr -= 2.0 * moveDelta;
 		}
 		if (funcTimeDelay(resetMaxItr,0.2)) {
 			temp_maxItr = log2(192.0);
@@ -512,6 +512,7 @@ void updateFractalParameters() {
 		if (funcTimeDelay(resetPower,0.2)) {
 			FRAC.power = 2;
 		}
+		FRAC.formula = limitFormulaID(FRAC.power,FRAC.formula);
 	/* Rotations */
 		if (func_stat[counterclockwiseRot].triggered) {
 			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
@@ -634,9 +635,10 @@ void updateFractalParameters() {
 		valueLimit(temp_maxItr,log2(16.0),log2(16777216.0));
 		FRAC.maxItr = pow(2.0,temp_maxItr);
 		valueLimit(FRAC.maxItr,16,16777216);
-		valueLimit(temp_breakoutValue,log2(4.0),log2(4294967296.0));
+		valueLimit(temp_breakoutValue,log2(0.25),log2(4294967296.0));
 		FRAC.breakoutValue = pow(2.0,temp_breakoutValue);
-		valueLimit(FRAC.breakoutValue,4.0,4294967296.0);
+		valueLimit(FRAC.breakoutValue,0.25,4294967296.0);
+		valueLimit(FRAC.power,2,6); // Support up to Sextic
 	/* ABS Mandelbrot */
 	/* Polar Mandelbrot */
 	if (frac.type_value == Fractal_Polar_Mandelbrot) {
@@ -668,6 +670,8 @@ void updateFractalParameters() {
 	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
 	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX; \
 	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY;
+
+enum Menu_Enum {GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds};
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
@@ -723,7 +727,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::TextColored(GUI_FrameRateColor,"%.2lf",Frame_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("ms");
 	ImGui::SameLine();
-	ImGui::Text("GUI:"); ImGui::SameLine();
+	ImGui::Text("Render:"); ImGui::SameLine();
 	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_FPS_Display); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("FPS"); ImGui::SameLine();
 	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
@@ -731,21 +735,27 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 
     ImGui::Text("Button: %d",buttonSelection); ImGui::SameLine();
     size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
-    for (size_t i = 0; i < buttonCount; i++) {
-        if (i != 0) { ImGui::SameLine(); }
-        if (ImGui::Button(buttonLabels[i])) {
-			if (buttonSelection == 3) {
-				exportScreenshot();
-			} else {
-				if (buttonSelection == (int)i) {
-					buttonSelection = -1;
-				} else {
-					buttonSelection = i;
-				}
-			}
-        }
-    }
-	ImGui::SameLine();
+	if (ImGui::Button("Fractal")) {
+		buttonSelection = (buttonSelection == GUI_Menu_Fractal) ? -1 : GUI_Menu_Fractal;
+	} ImGui::SameLine();
+	if (ImGui::Button("Export")) {
+
+	} ImGui::SameLine();
+	if (ImGui::Button("Import")) {
+		buttonSelection = (buttonSelection == GUI_Menu_Import) ? -1 : GUI_Menu_Import;
+	} ImGui::SameLine();
+	if (ImGui::Button("Screenshot")) {
+		exportScreenshot();
+	} ImGui::SameLine();
+	if (ImGui::Button("Rendering")) {
+		buttonSelection = (buttonSelection == GUI_Menu_Rendering) ? -1 : GUI_Menu_Rendering;
+	} ImGui::SameLine();
+	if (ImGui::Button("Settings")) {
+		buttonSelection = (buttonSelection == GUI_Menu_Settings) ? -1 : GUI_Menu_Settings;
+	} ImGui::SameLine();
+	if (ImGui::Button("Key-binds")) {
+		buttonSelection = (buttonSelection == GUI_Menu_KeyBinds) ? -1 : GUI_Menu_KeyBinds;
+	} ImGui::SameLine();
 	if (Waiting_To_Abort_Rendering == true) {
 		ImGui::Text("Aborting...(%.1lfs)",NANO_TO_SECONDS(getNanoTime() - abortTimer));
 	} else {
@@ -829,8 +839,6 @@ void Menu_Fractal() {
 	static bool adjustZoomToPower = false;
 	static bool lockToCardioid = false;
 	static bool flipCardioidSide = false;
-	static fp32 temp_input_breakoutValue = 16.0;
-	static fp64 input_breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
 	ImGui::Begin("Fractal Menu",&ShowTheXButton);
 	static int Combo_FractalType = 0;
 	ImGui::Text("Fractal Type:");
@@ -859,23 +867,26 @@ void Menu_Fractal() {
 		if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
 			ImGui::Text("Fractal Power: %s",getPowerText((int32_t)FRAC.power));
 			int temp_input_power = (int)FRAC.power;
-			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power; valueLimit(FRAC.power,2,10);
+			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
+			valueLimit(FRAC.power,2,6); // Support up to Sextic
 		} else {
 			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
 			static fp32 temp_input_polar_power = (fp64)FRAC.polarPower;
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0001,10.0,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0100,20.0,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
 			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
 			if (FRAC.lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
 			}
 		}
 		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
-		if (input_breakoutValue < 100.0) {
+		static fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
+		if (FRAC.breakoutValue < 100.0) {
 			ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
 		} else {
 			ImGui::Text("Breakout Value: %.1lf",FRAC.breakoutValue);
 		}
-		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,""); FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
+		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,"");
+		FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
 		ImGui::Separator();
 		ImGui::Text("Julia Set Options:");
 		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
@@ -899,6 +910,31 @@ void Menu_Fractal() {
 		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
 
 		}
+		ImGui::Separator();
+		/*
+		fp32 temp_col = 0.0f;
+		temp_col = (fp32)FRAC.rA;
+		ImGui::SliderFloat("R",&temp_col,0.0,1.0); FRAC.rA = (fp64)temp_col;
+		temp_col = (fp32)FRAC.gA;
+		ImGui::SliderFloat("G",&temp_col,0.0,1.0); FRAC.gA = (fp64)temp_col;
+		temp_col = (fp32)FRAC.bA;
+		ImGui::SliderFloat("B",&temp_col,0.0,1.0); FRAC.bA = (fp64)temp_col;
+		temp_col = (fp32)FRAC.iA;
+		ImGui::SliderFloat("I",&temp_col,0.0,1.0); FRAC.iA = (fp64)temp_col;
+		*/
+		ImGui::Text("Color: Red, Green, Blue, Interior");
+		ImGui::Text("Phase:");
+		float colP[4] = {(fp32)FRAC.rP,(fp32)FRAC.gP,(fp32)FRAC.bP,(fp32)FRAC.iP};
+		ImGui::ColorEdit4("##colP",colP);
+		FRAC.rP = (fp64)colP[0]; FRAC.gP = (fp64)colP[1]; FRAC.bP = (fp64)colP[2]; FRAC.iP = (fp64)colP[3];
+		ImGui::Text("Amplitude:");
+		float colA[4] = {(fp32)FRAC.rA,(fp32)FRAC.gA,(fp32)FRAC.bA,(fp32)FRAC.iA};
+		ImGui::ColorEdit4("##colA",colA);
+		FRAC.rA = (fp64)colA[0]; FRAC.gA = (fp64)colA[1]; FRAC.bA = (fp64)colA[2]; FRAC.iA = (fp64)colA[3];
+		ImGui::Text("Frequency:");
+		float colF[4] = {(fp32)FRAC.rF,(fp32)FRAC.gF,(fp32)FRAC.bF,(fp32)FRAC.iF};
+		ImGui::ColorEdit4("##colF",colF);
+		FRAC.rF = (fp64)colF[0]; FRAC.gF = (fp64)colF[1]; FRAC.bF = (fp64)colF[2]; FRAC.iF = (fp64)colF[3];
 		#undef FRAC
 	} else if (Combo_FractalType == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
 		#define FRAC frac.type.sierpinski_carpet
@@ -1236,26 +1272,20 @@ int render_IMGUI() {
 	horizontal_buttons_IMGUI(window_flags);
 	if (buttonSelection != -1) {
 		switch(buttonSelection) {
-			case 0:
-			Menu_Fractal();
+			case GUI_Menu_Fractal:
+				Menu_Fractal();
 			break;
-			case 1:
-			//Export_FracExp();
+			case GUI_Menu_Import:
+				//Menu_Import();
 			break;
-			case 2:
-			//Import_FracExp();
+			case GUI_Menu_Rendering:
+				Menu_Rendering();
 			break;
-			case 3:
-			//Take_Screenshot();
+			case GUI_Menu_Settings:
+				Menu_Settings();
 			break;
-			case 4:
-			Menu_Rendering();
-			break;
-			case 5:
-			Menu_Settings();
-			break;
-			case 6:
-			Menu_Keybinds();
+			case GUI_Menu_KeyBinds:
+				Menu_Keybinds();
 			break;
 		}
 	}

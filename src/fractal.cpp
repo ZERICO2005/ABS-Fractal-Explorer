@@ -11,7 +11,7 @@
 
 /* Safe Method of accessing PowerText */
 const char* getPowerText(int32_t p) {
-    if (p >= 0 && p <= 10) {
+    if (p >= 0 && p <= (int32_t)ARRAY_LENGTH(PowerText)) {
         return PowerText[p];
     }
     return NULL;
@@ -31,18 +31,36 @@ fp64 getABSFractalMaxRadius(fp64 power) {
 fp64 getABSFractalMaxRadius(uint32_t power) { return getABSFractalMaxRadius((fp64)power); }
 
 uint64_t limitFormulaID(uint32_t power, uint64_t formula) {
-	if (power == 2) { formula %= 256; } else
-	if (power == 3) { formula %= 16384; } else
-	if (power == 4) { formula %= 131072; } else
-	if (power == 5) { formula %= 1048576; }
+	switch(power) {
+		case 2:
+		formula %= 256; break;
+		case 3:
+		formula %= 16384; break;
+		case 4:
+		formula %= 131072; break;
+		case 5:
+		formula %= 1048576; break;
+		case 6:
+		formula %= 8388608; break;
+	};
 	return formula;
 }
 
 uint64_t getABSValue(uint32_t power) {
-	if (power == 2) { return 8; } // Bit 3
-	if (power == 3) { return 64; } // Bit 6
-	if (power == 4) { return 128; } // Bit 7
-	if (power == 5) { return 256; } // Bit 8
+	switch(power) {
+		case 2:
+		return 8; // Bit 3
+		case 3:
+		return 64; // Bit 6
+		case 4:
+		return 128; // Bit 7
+		case 5:
+		return 256; // Bit 8
+		case 6:
+		return 512; // Bit 9
+		default:
+		return 1;
+	};
 	return 1; // Unknown
 }
 
