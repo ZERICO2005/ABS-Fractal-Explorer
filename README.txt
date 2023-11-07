@@ -3,6 +3,9 @@ zerico2005 | 2023/11/01
 
 This version of ABS-Fractal-Explorer is a rewrite, which has fixed several flaws present in v1.0.9 and earlier versions. Some features have not been reimplemented yet, and will be added one at a time to prevent future issues from arising.
 
+The 6x8 pixel font used on the keyboard graphic is a slightly modified version of font "even" by Christian Munk (CMunk) from https://fontstruct.com/fontstructions/show/275268/even_2
+The "even" font is lincesed under Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)
+
 Compiliation Setup used:
 	- Windows 10 64bit x86
 	- MSYS2 MinGW64

@@ -653,7 +653,7 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 		}
 	/* Thread Creation */
 
-	printfInterval(0.3,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u",param.r,param.i,param.zoom,param.maxItr);
+	//printfInterval(0.3,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u",param.r,param.i,param.zoom,param.maxItr);
 
 	// Default is FP64
 	if (param.power == 2) {

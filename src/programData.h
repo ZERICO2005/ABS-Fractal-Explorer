@@ -18,6 +18,7 @@
 #include "render.h"
 #include "fractal.h"
 #include "copyBuffer.h"
+#include "imageBuffer.h"
 
 /*
 ** Handling shared data between threads
@@ -47,6 +48,10 @@ BufferBox read_Buffer_Size();
 int clear_Render_Buffers();
 int read_Render_Buffers(BufferBox* primary);
 int write_Render_Buffers(BufferBox* primary);
+
+int clear_Image_Buffers();
+int read_Image_Buffers(ImageBuffer* primary);
+int write_Image_Buffers(ImageBuffer* primary);
 
 void setRenderDelta(fp64 t);
 fp64 getRenderDelta();

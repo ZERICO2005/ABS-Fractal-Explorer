@@ -11,12 +11,13 @@
 #include "render.h"
 #include "copyBuffer.h"
 #include "programData.h"
+#include "imageBuffer.h"
 
 #include "fracMulti.h"
 #include "fracCL.h"
 
-BufferBox PrimaryBuf[2];
-BufferBox SecondaryBuf[2];
+ImageBuffer PrimaryBuf[2];
+ImageBuffer SecondaryBuf[2];
 
 Fractal_Data fracData;
 Render_Data primaryRender;
@@ -42,8 +43,8 @@ int setup_fracExp(int argc, char* argv[]) {
 
 int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	using namespace Key_Function;
-	BufferBox* currentBuf = &PrimaryBuf[0];
-	BufferBox* prevBuf = NULL;
+	ImageBuffer* currentBuf = &PrimaryBuf[0];
+	ImageBuffer* prevBuf = NULL;
 	// static fp64 r = 0.0;
 	// static fp64 i = 0.0;
 	// static fp64 zoom = 0.0;
@@ -55,26 +56,40 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			deltaTime = fracTime.getDeltaTime();
 			setRenderDelta(deltaTime);
 			read_Parameters(&fracData,&primaryRender,&secondaryRender);
-
+			static BufferBox renderBox;
+			currentBuf->getBufferBox(&renderBox);
 			if (currentBuf->vram != NULL) {
 				//render_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot);
 				if (ABORT_RENDERING == false) {
 					#define FRAC fracData.type.abs_mandelbrot
-					printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %llu",FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
+					//printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %llu",FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
 					#undef FRAC
 					switch(primaryRender.rendering_method) {
 						case 0:
 							if (fracData.type.abs_mandelbrot.polarMandelbrot == true) {
-								renderCPU_Polar_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+								renderCPU_Polar_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
 							} else {
-								renderCPU_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+								renderCPU_ABS_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
 							}
 							break;
 						case 1:
-							renderOpenCL_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING);
+							renderOpenCL_ABS_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING);
 							break;
 						default:
 						printfInterval(0.5,"Unknown rendering method %u",primaryRender.rendering_method);
+					}
+					if (fracData.type_value == Fractal_ABS_Mandelbrot || fracData.type_value == Fractal_Polar_Mandelbrot) {
+						#define FRAC fracData.type.abs_mandelbrot
+						fp64 cx0; fp64 cy0;
+						fp64 cx1; fp64 cy1;
+						i32 offX = (i32)(currentBuf->resX * primaryRender.subSample);
+						i32 offY = (i32)(currentBuf->resY * primaryRender.subSample);
+						fp64 extraPadding = 0.0;
+						pixel_to_coordinate((i32)((fp64)offX * -extraPadding),(i32)((fp64)offY * -extraPadding),&cx0,&cy0,&FRAC,&primaryRender);
+						pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * (extraPadding + 1.0)),&cx1,&cy1,&FRAC,&primaryRender);
+						currentBuf->setTransformationData(cx0,cy0,cx1,cy1);
+						currentBuf->rot = FRAC.rot;
+						#undef FRAC
 					}
 				}
 				if (read_Abort_Render_Ongoing() == true) {
@@ -93,21 +108,12 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			//clear_Render_Buffers();
 			prevBuf = currentBuf;
 			currentBuf = (currentBuf == &PrimaryBuf[0]) ? &PrimaryBuf[1] : &PrimaryBuf[0];
-			write_Render_Buffers(prevBuf);
+			write_Image_Buffers(prevBuf);
 			{
 				BufferBox sizeBuf = read_Buffer_Size();
-				if (sizeBuf.resX != currentBuf->resX || sizeBuf.resY != currentBuf->resY || sizeBuf.channels != currentBuf->channels || sizeBuf.padding != currentBuf->padding) {
-					clear_Render_Buffers();
-					for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-						bool reallocateBuffers = (getBufferBoxSize(&sizeBuf) != getBufferBoxSize(&PrimaryBuf[b])) ? true : false;
-						PrimaryBuf[b].resX = sizeBuf.resX;
-						PrimaryBuf[b].resY = sizeBuf.resY;
-						PrimaryBuf[b].channels = sizeBuf.channels;
-						PrimaryBuf[b].padding = sizeBuf.padding;
-						if (reallocateBuffers == true) {
-							PrimaryBuf[b].vram = (uint8_t*)realloc(PrimaryBuf[b].vram, getBufferBoxSize(&PrimaryBuf[b]));
-						}
-					}
+				clear_Render_Buffers();
+				for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
+					PrimaryBuf[b].resizeBuffer(sizeBuf.resX,sizeBuf.resY,sizeBuf.channels);
 				}
 			}
 		}
@@ -118,8 +124,9 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	// printf("\nInit_Engine: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-		initBufferBox(&PrimaryBuf[b],NULL,320,200,3,0);
-		PrimaryBuf[b].vram = (uint8_t*)malloc(getBufferBoxSize(&PrimaryBuf[b]));
+		// initBufferBox(&PrimaryBuf[b],NULL,320,200,3,0);
+		// PrimaryBuf[b].vram = (uint8_t*)malloc(getBufferBoxSize(&PrimaryBuf[b]));
+		PrimaryBuf[b] = ImageBuffer(3);
 	}
 	int32_t init_OpenCL_ret = init_OpenCL();
 	if (init_OpenCL_ret != 0) {
@@ -135,8 +142,11 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 int terminate_Engine() {
 	terminate_OpenCL();
+	// for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
+	// 	FREE(PrimaryBuf[b].vram);
+	// }
 	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-		FREE(PrimaryBuf[b].vram);
+		PrimaryBuf[b].deleteBuffer();
 	}
 	return 0;
 }
@@ -144,7 +154,7 @@ int terminate_Engine() {
 void render_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param) {
 	if (buf == NULL) { return; }
 	if (buf->vram == NULL) { return; }
-	printfInterval(0.3,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u",param.r,param.i,param.zoom,param.maxItr);
+	//printfInterval(0.3,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u",param.r,param.i,param.zoom,param.maxItr);
 	size_t dataPtr = 0;
 	fp64 BREAKOUT = param.breakoutValue;
 	fp64 cr = 0.0;

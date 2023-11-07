@@ -15,6 +15,7 @@
 #include "engine.h"
 #include "fracExpKB.h"
 #include "fileManager.h"
+#include "imageBuffer.h"
 
 #include <SDL2/SDL.h>
 
@@ -66,6 +67,9 @@ uint64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
 Fractal_Data frac;
 Render_Data primaryRenderData;
 Render_Data secondaryRenderData;
+
+ImageBuffer primaryFracImage;
+ImageBuffer secondaryFracImage;
 
 int exportScreenshot();
 int exportSuperScreenshot();
@@ -798,6 +802,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::SameLine(); \
 	ImGui::InputInt(id,ptr,16,256);
 
+	/*
 	static char input_real[128] = "-1.0";
 	Param_Input_Box("Real:","##input_real",input_real);
 	ImGui::SameLine();
@@ -821,6 +826,24 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::SameLine();
 	static char input_zImag[128] = "0.0";
 	Param_Input_Box("Z-Imag:","##input_zImag",input_zImag);
+	*/
+	#define FRAC frac.type.abs_mandelbrot
+	uint32_t renderFP = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
+	const char* const renderMethod = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
+	ImGui::Text(
+		"Formula: %llu Power: %6.4lf Super-Sample: %u Rendering: %s fp%u",
+		FRAC.formula,(FRAC.polarMandelbrot ? FRAC.polarPower : (fp64)FRAC.power),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
+	);
+	ImGui::Text(
+		"Zreal: %10.8lf Zimag: %10.8lf Rotation: 10^%5.1lf Stetch: %6.4lf",
+		FRAC.zr,FRAC.zi,FRAC.rot,FRAC.stretch * 360.0 / TAU
+	);
+	ImGui::Text(" ");
+	ImGui::Text(
+		"Real: %10.8lf Imag: %10.8lf Zoom: 10^%6.4lf Itr: %u",
+		FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr
+	);
+	#undef FRAC
     // End the ImGui window
     ImGui::End();
 }
@@ -1127,8 +1150,8 @@ void Menu_Keybinds() {
 	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
 		
 	}
-	ImGui::Text(" ");
 	ImGui::Checkbox("Display Numberpad",&displayNumpad);
+	ImGui::Text(" ");
 	{
 		#define kMaxResX 1440
 		#define kMinResX 300
@@ -1531,6 +1554,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
+	primaryFracImage = ImageBuffer(3);
+	secondaryFracImage = ImageBuffer(3);
 	// IMGUI
 	IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -1558,6 +1583,8 @@ int terminate_Render() {
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 	FREE(DisplayList);
+	primaryFracImage.deleteBuffer();
+	secondaryFracImage.deleteBuffer();
 	SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -1639,6 +1666,50 @@ int exportSuperScreenshot() {
 	return 0;
 }
 
+SDL_Texture* scale_tex = NULL;
+SDL_Surface* scale_surface = NULL;
+
+int displayFracImage(ImageBuffer* image, Render_Data* ren) {
+	if (image == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
+	if (image->vram == NULL ) { printError("ImageBuffer* image->vram is NULL"); return -1; }
+	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
+	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
+	#define FRAC frac.type.abs_mandelbrot
+	static const uint32_t minimumImageResolution = 2;
+	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
+		printWarning("ImageBuffer* image is below minimum resolution: %ux%u",image->resX,image->resY);
+		return 1;
+	}
+	i32 fx0; i32 fy0;
+	i32 fx1; i32 fy1;
+	
+	coordinate_to_pixel(image->x00 - FRAC.r,image->y00 - FRAC.i,&fx0,&fy0,&FRAC,ren);
+	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&fx1,&fy1,&FRAC,ren);
+	
+	if (fx0 > fx1) { i32 temp = fx0; fx0 = fx1; fx1 = temp; }
+	if (fy0 > fy1) { i32 temp = fy0; fy0 = fy1; fy1 = temp; }
+	i32 fxA = (fx0 + fx1) / 2;
+	i32 fyA = (fy0 + fy1) / 2;
+	if ((fx1 < (i32)minimumImageResolution || fy1 < (i32)minimumImageResolution)) {
+		return 1;
+	}
+	if ((image->rot != FRAC.rot) || ((fx0 < (i32)Master.resX) && (fy0 < (i32)(Master.resY - RESY_UI)))) {
+		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(image->vram, image->resX, image->resY, image->channels * 8, image->channels * image->resX, SDL_PIXELFORMAT_RGB24);
+		fx1 -= fx0;
+		fy1 -= fy0;
+		SDL_Rect srcRect = {0,0,(i32)image->resX,(i32)image->resY};
+		SDL_Rect dstRect = {fx0,fy0 + (i32)RESY_UI,fx1,fy1};
+		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
+		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
+			printf("\nrenderCopy: %s",SDL_GetError()); fflush(stdout);
+		}
+		SDL_DestroyTexture(scale_tex);
+		SDL_FreeSurface(scale_surface);
+	}
+	#undef FRAC
+	return 0;
+}
+
 void newFrame() {
 
 	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255); // Some shade of dark blue
@@ -1650,7 +1721,8 @@ void newFrame() {
 	SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
 	Master.vram = (uint8_t*)SDL_Master_VRAM;
 	
-	static BufferBox temp_primary = {NULL,0,0,3,0};
+	int primaryBufState = read_Image_Buffers(&primaryFracImage);
+
 	if (Abort_Rendering_Flag == true) {
 		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
 		if (Waiting_To_Abort_Rendering == true) {
@@ -1659,11 +1731,27 @@ void newFrame() {
 			renderPauseGraphic(0.3);
 		}
 		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
-	} else if (read_Render_Buffers(&temp_primary) == 1 || temp_primary.vram == NULL) {
+	} else if (primaryBufState == 1 || primaryFracImage.vram == NULL) {
 		renderTestGraphic(0.1, 0.25, 1.0); // Renders a loading screen if Fractal buffers are unavailable
 		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
-	} else {
-		copyBuffer(temp_primary,Master,0,RESY_UI,false);
+	}
+
+	exportFractalBuffer = false;
+
+	SDL_UnlockTexture(texture);
+	{
+		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
+		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};
+		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
+	}
+
+	if (primaryBufState == 0 && primaryFracImage.vram != NULL) {
+		BufferBox temp_primaryBox;
+		primaryFracImage.getBufferBox(&temp_primaryBox);
+		//primaryFracImage.printTransformationData();
+		//copyBuffer(temp_primaryBox,Master,0,RESY_UI,false);
+		int dispRet = displayFracImage(&primaryFracImage,&primaryRenderData);
+		printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
 		if (exportFractalBuffer == true) {
 			uint64_t curTime = getNanoTime();
 			size_t size = snprintf(NULL,0,"%s_%llu",frac.type_name,curTime);
@@ -1672,38 +1760,22 @@ void newFrame() {
 			char path[] = "./";
 			switch(screenshotFileType) {
 				case Image_File_Format::PNG:
-					writePNGImage(&temp_primary,path,name,User_PNG_Compression_Level);
+					writePNGImage(&temp_primaryBox,path,name,User_PNG_Compression_Level);
 				break;
 				case Image_File_Format::JPG:
-					writeJPGImage(&temp_primary,path,name,User_JPG_Quality_Level);
+					writeJPGImage(&temp_primaryBox,path,name,User_JPG_Quality_Level);
 				break;
 				case Image_File_Format::TGA:
-					writeTGAImage(&temp_primary,path,name);
+					writeTGAImage(&temp_primaryBox,path,name);
 				break;
 				case Image_File_Format::BMP:
-					writeBMPImage(&temp_primary,path,name);
+					writeBMPImage(&temp_primaryBox,path,name);
 				break;
 				default:
 				printError("Unknown screenshot file type: %d",screenshotFileType);
 			}
 			FREE(name);
 		}
-	}
-	exportFractalBuffer = false;
-		
-	/*
-	if (buf == NULL && buf->vram == NULL) { 
-		
-	} else {
-		copyBuffer(buf,Master,false);	
-	}
-	*/
-
-	SDL_UnlockTexture(texture);
-	{
-		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
-		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};
-		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
 	}
 
 	SDL_DestroyTexture(texture);

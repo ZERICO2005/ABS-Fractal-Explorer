@@ -87,7 +87,6 @@ BufferBox read_Buffer_Size() {
 	return pDat_BufSize;
 }
 
-
 std::mutex pDat_Render_Buffers_Mutex;
 BufferBox pDat_primary = {NULL,0,0,3,0};
 BufferBox pDat_secondary = {NULL,0,0,3,0};
@@ -138,6 +137,45 @@ int write_Render_Buffers(BufferBox* primary) {
 		pDat_Render_Buffer_Read = true;
 	return 0;
 }
+
+/* Image Buffer */
+
+std::mutex pDat_Image_Buffers_Mutex;
+ImageBuffer pDat_primaryImage = ImageBuffer(3);
+bool pDat_Image_Buffers_Read = false;
+
+int clearImage_Buffers() {
+	std::lock_guard<std::mutex> lock(pDat_Image_Buffers_Mutex);
+	pDat_Image_Buffers_Read = false;
+	return 0;
+}
+
+int read_Image_Buffers(ImageBuffer* primary) {
+	if (primary == NULL) { // Nothing to do
+		printError("ImageBuffer* primary is NULL in read_Render_Buffers");
+		return -1;	
+	}
+	std::lock_guard<std::mutex> lock(pDat_Image_Buffers_Mutex);
+	if (pDat_Image_Buffers_Read == false) {
+		return 1;
+	}
+	primary->vramCopy(&pDat_primaryImage);
+	primary->setTransformationData(&pDat_primaryImage);
+	return 0;
+}
+
+int write_Image_Buffers(ImageBuffer* primary) {
+	if (primary == NULL) { // Nothing to do
+		printError("ImageBuffer* primary is NULL in write_Render_Buffers()");
+		return -1;	
+	}
+	std::lock_guard<std::mutex> lock(pDat_Image_Buffers_Mutex);
+	pDat_primaryImage.vramCopy(primary);
+	pDat_primaryImage.setTransformationData(primary);
+	pDat_Image_Buffers_Read = true;
+	return 0;
+}
+
 
 /* Request */
 /*
