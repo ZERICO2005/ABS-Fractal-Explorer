@@ -835,7 +835,7 @@ void polarRenderFP64(FractalParameters) { polarRender(fp64) }
 
 void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING, uint32_t tc) {
 	if (validateBufferBox(buf) == false) {
-		printError("BufferBox* buf is NULL or has invalid data in renderCPU_ABS_Mandelbrot()");
+		printError("BufferBox* buf is NULL or has invalid data in renderCPU_Polar_Mandelbrot()");
 		return;
 	}
 	uint32_t resX = buf->resX * ren.sample;
@@ -866,3 +866,129 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 		printFlush("\nAborted %u threads",tc);
 	}
 }
+
+// #define CarpetParameters BufferBox* buf, Render_Data ren, Sierpinski_Carpet param, uint32_t p0, uint32_t p1, std::atomic<bool>& ABORT_RENDERING
+
+// #define carpetRender(fpX) \
+// 	uint8_t* data = buf->vram;\
+// 	u32 subSample = ren.subSample;\
+// 	u32 resX = buf->resX;\
+// 	u32 resY = buf->resY;\
+// 	u32 dataPtr = p0 * 3;\
+// 	u32 maxItr = param.maxItr;\
+// 	fpX r = param.x;\
+// 	fpX i = param.y;\
+// 	fpX zoom = param.zoom;\
+// 	u32 y = p0 / resX;\
+// 	u32 x = p0 % resX;\
+// 	u32 sample = ren.sample;\
+// 	fpX cr = (fpX)0.0;\
+// 	fpX ci = (fpX)0.0;\
+// 	fpX zr = (fpX)0.0;\
+// 	fpX zi = (fpX)0.0;\
+// 	resX *= sample;\
+// 	resY *= sample;\
+// 	x *= sample;\
+// 	y *= sample;\
+// 	uint32_t sResX = resX - 1;\
+// 	uint32_t sResY = resY - 1;\
+// 	fpX numY = ((fpX)sResY / (fpX)2.0);\
+// 	fpX numX = ((fpX)sResX / (fpX)2.0);\
+// 	fpX numZ = (sResX >= sResY) ? numY * pow((fpX)10.0, zoom) : numX * pow((fpX)10.0, zoom);\
+// 	for (; y < resY; y += sample) {\
+// 		for (; x < resX; x += sample) {\
+// 			if (p0 == p1 || ABORT_RENDERING == true) {\
+// 				return;\
+// 			}\
+// 			uint32_t outR = 0;\
+// 			uint32_t outG = 0;\
+// 			uint32_t outB = 0;\
+// 			for (uint32_t v = 0; v < sample; v++) {\
+// 				for (uint32_t u = 0; u < sample; u++) {\
+// 					bool escape = false;\
+// 					if (param.renderOutOfBounds == true || (cr >= (fpX)0.0 && cr <= (fpX)1.0 && ci >= (fpX)0.0 && ci <= (fpX)1.0)) { /* Boundry for rendering */\
+// 						for (uint32_t itr = 0; itr <= maxItr; itr++) {\
+// 							zr = cr * pow((fpX)3.0, (fpX)itr);\
+// 							zi = ci * pow((fpX)3.0, (fpX)itr);\
+// 							if (fmod(floor(zr),(fpX)3.0) == (fpX)1.0 && fmod(floor(zi),(fpX)3.0) == (fpX)1.0) {\
+// 								escape = true;\
+// 								if (itr != maxItr) {\
+// 									data[3 * ((y * resX) + x)] = 0;\
+// 									data[3 * ((y * resX) + x) + 1] = 0;\
+// 									data[3 * ((y * resX) + x) + 2] = 0;\
+// 								} else {\
+// 									data[3 * ((y * resX) + x)] = 71; /* Colors the smallest holes a little bit lighter */\
+// 									data[3 * ((y * resX) + x) + 1] = 0;\
+// 									data[3 * ((y * resX) + x) + 2] = 0;\
+// 								}\
+// 								break;\
+// 							}\
+// 						}\
+// 						if (escape == false) {\
+// 							data[3 * ((y * resX) + x)] = 255;\
+// 							data[3 * ((y * resX) + x) + 1] = 0;\
+// 							data[3 * ((y * resX) + x) + 2] = 0;\
+// 						}\
+// 					} else { /* Colors out of bounds a dark red */\
+// 						data[3 * ((y * resX) + x)] = 63;\
+// 						data[3 * ((y * resX) + x) + 1] = 0;\
+// 						data[3 * ((y * resX) + x) + 2] = 0;\
+// 					}\
+// 					x++;\
+// 				}\
+// 				x -= sample;\
+// 				y++;\
+// 			}\
+// 			y-= sample;\
+// 			uint32_t div = sample * sample * 4;\
+// 			outR /= div;\
+// 			outG /= div;\
+// 			outB /= div;\
+// 			data[dataPtr] = outR; dataPtr++;\
+// 			data[dataPtr] = outG; dataPtr++;\
+// 			data[dataPtr] = outB; dataPtr++;\
+// 			p0++;\
+// 		}\
+// 		x = 0;\
+// 	}
+
+// void carpetRenderFP32(CarpetParameters) { carpetRender(fp32) }
+// void carpetRenderFP64(CarpetParameters) { carpetRender(fp64) }
+// #ifdef enableFP80andFP128
+// 	void carpetRenderFP80(CarpetParameters) { carpetRender(fp80) }
+// 	void carpetRenderFP128(CarpetParameters) { carpetRender(fp128) }
+// #endif
+
+// void renderCPU_Sierpinski_Carpet(BufferBox* buf, Render_Data ren, Sierpinski_Carpet param, std::atomic<bool>& ABORT_RENDERING, uint32_t tc) {
+// 	if (validateBufferBox(buf) == false) {
+// 		printError("BufferBox* buf is NULL or has invalid data in renderCPU_Sierpinski_Carpet()");
+// 		return;
+// 	}
+// 	uint32_t resX = buf->resX * ren.sample;
+// 	uint32_t resY =	buf->resY * ren.sample;
+// 	u32 dataPtr = 0;
+// 	std::vector<std::thread> renderThread;
+// 	/* Thread Creation */
+// 		#define makeThread(k) renderThread.push_back(std::thread(k, buf, ren, param, p0, p1, std::ref(ABORT_RENDERING)))
+// 		#define generateThreads(k) \
+// 		for (u32 t = 0; t < tc; t++) { \
+// 			u32 p0 = ((buf->resX * buf->resY) * t) / tc;\
+// 			u32 p1 = ((buf->resX * buf->resY) * (t + 1)) / tc; \
+// 			makeThread(k); \
+// 		}
+// 	/* Thread Creation */
+	
+// 	// Default is FP64
+// 		if (ren.CPU_Precision == 32) { generateThreads(carpetRenderFP32); } else
+// 		#ifdef enableFP80andFP128
+// 			if (ren.CPU_Precision == 80) { generateThreads(carpetRenderFP80); } else
+// 			if (ren.CPU_Precision == 128) { generateThreads(carpetRenderFP128); } else
+// 		#endif
+// 		{ generateThreads(carpetRenderFP64); }
+// 	for (u32 t = 0; t < tc; t++) {
+// 		renderThread.at(t).join();
+// 	}
+// 	if (ABORT_RENDERING == true) {
+// 		printFlush("\nAborted %u threads",tc);
+// 	}
+// }

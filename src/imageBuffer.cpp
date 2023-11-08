@@ -67,6 +67,32 @@
 		vramAllocated = true;
 	}
 
+	// Clears the buffer of data
+	void ImageBuffer::clearBuffer() {
+		if (vram == NULL || vramAllocated == false) {
+			return;
+		}
+		memset(vram,0,bytesAllocated);
+	}
+	void ImageBuffer::clearBuffer(uint8_t r, uint8_t g, uint8_t b) {
+		if (vram == NULL || vramAllocated == false || bytesAllocated < 3) {
+			return;
+		}
+		vram[0] = r; vram[1] = g; vram[2] = b;
+		for (size_t i = 3; i < bytesAllocated; i++) {
+			vram[i] = vram[i - 3];
+		}
+	}
+	void ImageBuffer::clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+		if (vram == NULL || vramAllocated == false || bytesAllocated < 4) {
+			return;
+		}
+		vram[0] = r; vram[1] = g; vram[2] = b; vram[3] = a;
+		for (size_t i = 4; i < bytesAllocated; i++) {
+			vram[i] = vram[i - 4];
+		}
+	}
+
 	// Frees buffer if allocated
 	void ImageBuffer::deleteBuffer() {
 		if (vramAllocated == true) {

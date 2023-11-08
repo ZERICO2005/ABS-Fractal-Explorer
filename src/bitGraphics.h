@@ -42,6 +42,7 @@ class Bit_Graphics {
 		void horiz(size_t x0, size_t y, size_t x1); //x start, y postion, x length
 		void vert(size_t x, size_t y0, size_t y1); //x postion, y start, y length
 		void drawRect(size_t x0, size_t y0, size_t x1, size_t y1); //x start, y start, x length, y length
+		void drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1); // start cord, end cord
 	/* Text */
 		void printText6x8(size_t xW, size_t yW, char* text);
 		// ResX is used if width is not set
@@ -51,6 +52,8 @@ class Bit_Graphics {
 	private:
 		void internal_plot(size_t x, size_t y);
 		void internal_plotFast(size_t z);
+		void drawLine0(int32_t x0, int32_t y0, int32_t x1, int32_t y1);
+		void drawLine1(int32_t x0, int32_t y0, int32_t x1, int32_t y1);
 		uint8_t* buf; // Current buffer
 		uint8_t* buf0;
 		uint8_t* buf1;

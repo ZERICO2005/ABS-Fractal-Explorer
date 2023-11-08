@@ -86,10 +86,10 @@ typedef double fp64;
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2023/11/06" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2023/11/07" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 21
+#define PROGRAM_V_PATCH 22
 #define PROGRAM_V_TAG "debug alpha"
 
 /* Constants */

@@ -135,6 +135,7 @@ void Bit_Graphics::gColor_HSV(fp64 h, fp64 s, fp64 v) { // 0.0-360.0, 0.0-1.0, 0
 void Bit_Graphics::gColor_HSV(fp32 h, fp32 s, fp32 v) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
 
 }
+
 /* Internal Routines | No safety checks */
 void Bit_Graphics::internal_plot(size_t x, size_t y) {
 	size_t z = (y * ResX + x) * 3;
@@ -148,6 +149,7 @@ void Bit_Graphics::internal_plotFast(size_t z) { //z position
 	buf[z] = gColor[1]; z++;
 	buf[z] = gColor[2];
 }
+
 /* Primatives */
 void Bit_Graphics::plot(size_t x, size_t y) { //x position, y position
 	if (x > ResX || y > ResY) { return; }
@@ -207,6 +209,65 @@ void Bit_Graphics::drawRect(size_t x0, size_t y0, size_t x1, size_t y1) { //x st
 	horiz(x0,y0+y1-1,x1);
 	vert(x0,y0,y1);
 	vert(x0+x1-1,y0,y1);
+}
+
+void Bit_Graphics::drawLine0(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
+	int32_t dX = x1 - x0;
+	int32_t dY = y1 - y0;
+	int32_t yI = 1;
+	if (dY < 0) {
+		yI = -1;
+		dY = -dY;
+	}
+	int32_t dD = 2 * dY - dX;
+	int32_t y = y0;
+	for (int32_t x = x0; x < x1; x++) {
+		plot(x,y);
+		if (dD > 0) {
+			y += yI;
+			dD += 2 * (dY - dX);
+		} else {	
+			dD += 2 * dY;
+		}
+	}
+}
+
+void Bit_Graphics::drawLine1(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
+	int32_t dX = x1 - x0;
+	int32_t dY = y1 - y0;
+    int32_t xI = 1;
+    if (dX < 0) {
+		xI = -1;
+		dX = -dX;
+	}
+    int32_t dD = (2 * dX) - dY;
+    int32_t x = x0;
+
+    for (int32_t y = y0; y < y1; y++) {
+        plot(x, y);
+        if (dD > 0) {
+            x = x + xI;
+            dD = dD + (2 * (dX - dY));
+        } else {
+            dD = dD + 2 * dX;
+        }
+	}
+}
+
+void Bit_Graphics::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
+    if (abs(y1 - y0) < abs(x1 - x0)) {
+        if (x0 > x1) {
+            drawLine0(x1, y1, x0, y0);
+		} else {
+            drawLine0(x0, y0, x1, y1);
+		}
+    } else {
+        if (y0 > y1) {
+            drawLine1(x1, y1, x0, y0);
+        } else {
+            drawLine1(x0, y0, x1, y1);
+		}
+    }
 }
 /* Text */
 void Bit_Graphics::text6x8(size_t xW, size_t yW, char lexicon) {

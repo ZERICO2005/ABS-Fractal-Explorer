@@ -53,9 +53,17 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	fp64 deltaTime = 0.0;
 	while (QUIT_FLAG == false) {
 		if (fracTime.timerReset()) {
+			/* Update things */
 			deltaTime = fracTime.getDeltaTime();
 			setRenderDelta(deltaTime);
 			read_Parameters(&fracData,&primaryRender,&secondaryRender);
+			{
+				BufferBox sizeBuf = read_Buffer_Size();
+				clear_Render_Buffers();
+				for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
+					PrimaryBuf[b].resizeBuffer(sizeBuf.resX / primaryRender.subSample,sizeBuf.resY / primaryRender.subSample,sizeBuf.channels);
+				}
+			}
 			static BufferBox renderBox;
 			currentBuf->getBufferBox(&renderBox);
 			if (currentBuf->vram != NULL) {
@@ -90,6 +98,9 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 						currentBuf->setTransformationData(cx0,cy0,cx1,cy1);
 						currentBuf->rot = FRAC.rot;
 						#undef FRAC
+					} else if (fracData.type_value == Fractal_Sierpinski_Carpet) {
+						#define CARPET fracData.type.sierpinski_carpet
+						#undef CARPET
 					}
 				}
 				if (read_Abort_Render_Ongoing() == true) {
@@ -109,13 +120,6 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			prevBuf = currentBuf;
 			currentBuf = (currentBuf == &PrimaryBuf[0]) ? &PrimaryBuf[1] : &PrimaryBuf[0];
 			write_Image_Buffers(prevBuf);
-			{
-				BufferBox sizeBuf = read_Buffer_Size();
-				clear_Render_Buffers();
-				for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-					PrimaryBuf[b].resizeBuffer(sizeBuf.resX,sizeBuf.resY,sizeBuf.channels);
-				}
-			}
 		}
 	}
 	return 0;

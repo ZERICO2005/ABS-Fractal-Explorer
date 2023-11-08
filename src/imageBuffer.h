@@ -34,6 +34,9 @@ class ImageBuffer {
 		void trimBuffer(); // Reallocates buffer to current image size
 		void getBufferBox(BufferBox* buf);
 		void vramCopy(ImageBuffer* buf, bool reallocBuf = false);
+		void clearBuffer();
+		void clearBuffer(uint8_t r, uint8_t g, uint8_t b);
+		void clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 		size_t getBufferSize();
 		size_t getAllocatedSize();
 		// Transformation

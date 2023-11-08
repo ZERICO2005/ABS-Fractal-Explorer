@@ -59,22 +59,15 @@ bool printValidateBufferBox(BufferBox* box) {
 /* Internal use only, does not contain safety measures */
 void blitBuffer(
 	uint8_t* srcBuf, uint8_t* dstBuf,
-	uint32_t srcResX, uint32_t dstResX, uint32_t channels,
+	uint32_t srcPitch, uint32_t dstPitch, uint32_t channels,
 	uint32_t sizeX, uint32_t sizeY,
 	uint32_t srcX, uint32_t srcY,
-	uint32_t dstX, uint32_t dstY,
-	uint32_t srcPad, uint32_t dstPad
+	uint32_t dstX, uint32_t dstY
 ) {
-	if (srcPad != 0) {
-		srcPad = ( ((srcResX * channels) % srcPad == 0) ? 0 : (srcPad - ((srcResX * channels) % srcPad)) );
-	}
-	if (dstPad != 0) {
-		dstPad = ( ((dstResX * channels) % dstPad == 0) ? 0 : (dstPad - ((dstResX * channels) % dstPad)) );
-	}
-	uint32_t sz = (srcY * srcResX + srcX) * channels + (srcY * srcPad);
-	uint32_t dz = (dstY * dstResX + dstX) * channels + (dstY * dstPad);
-	uint32_t srcJump = (srcResX - sizeX) * channels + srcPad;
-	uint32_t dstJump = (dstResX - sizeX) * channels + dstPad;
+	uint32_t sz = (srcY * srcPitch) + (srcX * channels);
+	uint32_t dz = (dstY * dstPitch) + (dstX * channels);
+	uint32_t srcJump = srcPitch - (sizeX * channels);
+	uint32_t dstJump = dstPitch - (sizeX * channels);
 	for (uint32_t y = 0; y < sizeY; y++) {
 		for (uint32_t x = 0; x < sizeX * channels; x++) {
 			dstBuf[dz] = srcBuf[sz]; dz++; sz++;
@@ -139,11 +132,10 @@ void copyBuffer(
 	}
 	blitBuffer(
 		bufSrc.vram,bufDst.vram,
-		bufSrc.resX,bufDst.resX,(uint32_t)bufDst.channels,
+		getBufferBoxPitch(&bufSrc),getBufferBoxPitch(&bufDst),(uint32_t)bufDst.channels,
 		sx1,sy1,
 		sx0,sy0,
-		dx0,dy0,
-		(uint32_t)bufSrc.padding,(uint32_t)bufDst.padding
+		dx0,dy0
 	);
 }
 

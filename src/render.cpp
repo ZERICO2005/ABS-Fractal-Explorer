@@ -33,7 +33,8 @@ bool Waiting_To_Abort_Rendering = false;
 
 SDL_Texture* texture;
 SDL_Texture* kTexture; // Keyboard graphic
-BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
+//BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
+ImageBuffer Master;
 BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
 
@@ -88,7 +89,7 @@ void updateRenderData(Render_Data* rDat) {
 	if (rDat == NULL) { return; }
 	rDat->resX = Master.resX;
 	rDat->resY = Master.resY - RESY_UI;
-	rDat->padding = Master.padding;
+	rDat->padding = 0;
 	rDat->channels = Master.channels;
 }
  
@@ -337,6 +338,11 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		if (resY != NULL) { *resY = y; }
 		updateRenderData(&primaryRenderData);
 		updateRenderData(&secondaryRenderData);
+		Master.resizeBuffer(x,y,3);
+		if (texture != NULL) {
+			SDL_DestroyTexture(texture);
+		}
+		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
 		write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
 		reVal = true;
 	}
@@ -978,7 +984,7 @@ void Menu_Fractal() {
 
 void Menu_Rendering() {
 	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
-	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^7.7","fp128 | 10^32.5"};
+	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
 	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
 	static int input_subSample = primaryRenderData.subSample;
 	static int input_superSample = primaryRenderData.sample;
@@ -1334,7 +1340,6 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	static uint64_t yeildError = 0;
 	static uint64_t yeildSave = 0;
 	*/
-
 	uint64_t yeildTimeNano = 80000; /* 80 micro seconds */
 	uint64_t FRAME_RATE_NANO = SECONDS_TO_NANO(1.0 / FRAME_RATE);
 	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
@@ -1547,12 +1552,14 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %dMB",SDL_GetSystemRAM());
 	// Allocate Buffers
-	initBufferBox(&Master,NULL,initResX,initResY,3);
+	//initBufferBox(&Master,NULL,initResX,initResY,3);
+	Master = ImageBuffer(initResX,initResY,3);
 	initBufferBox(&TestGraphic,NULL,Master.resX,Master.resY - RESY_UI,3);
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
 	window = SDL_CreateWindow(PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
+	printFlush("\nERROR:%s\n",SDL_GetError());
 	write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
 	primaryFracImage = ImageBuffer(3);
 	secondaryFracImage = ImageBuffer(3);
@@ -1569,6 +1576,10 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	setDefaultParameters(&frac,Fractal_ABS_Mandelbrot);
 	initRenderData(&primaryRenderData);
 	initRenderData(&secondaryRenderData);
+	if (texture != NULL) {
+		SDL_DestroyTexture(texture);
+	}
+	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initKeys();
 	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
@@ -1585,6 +1596,7 @@ int terminate_Render() {
 	FREE(DisplayList);
 	primaryFracImage.deleteBuffer();
 	secondaryFracImage.deleteBuffer();
+	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -1620,6 +1632,7 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 		}
 	}
 }
+
 void renderAbortGraphic(fp64 speed) {
 	static fp64 f = 0.0;
 	f += DeltaTime * speed;
@@ -1654,6 +1667,7 @@ int exportScreenshot() {
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5)) {
 		resetTime = getNanoTime();
 		exportFractalBuffer = true;
+		printFlush("\nTaking Screenshot");
 	}
 	return 0;
 }
@@ -1711,18 +1725,20 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 }
 
 void newFrame() {
+	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) {
+		#define FRAC frac.type.abs_mandelbrot
+		Master.clearBuffer(
+			(uint8_t)(FRAC.rA * (127.5 - 127.5 * cos(TAU * FRAC.rP))),
+			(uint8_t)(FRAC.gA * (127.5 - 127.5 * cos(TAU * FRAC.gP))),
+			(uint8_t)(FRAC.bA * (127.5 - 127.5 * cos(TAU * FRAC.bP)))
+		);
+		#undef FRAC
+	} else {
+		Master.clearBuffer();
+	}
 
-	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255); // Some shade of dark blue
-    SDL_RenderClear(renderer);
-
-	int pitch;
-	texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
-	void* SDL_Master_VRAM = (void*)Master.vram;
-	SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
-	Master.vram = (uint8_t*)SDL_Master_VRAM;
-	
 	int primaryBufState = read_Image_Buffers(&primaryFracImage);
-
+	printfChange(int,primaryBufState,"\nprimaryBufState: %d",primaryBufState);
 	if (Abort_Rendering_Flag == true) {
 		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
 		if (Waiting_To_Abort_Rendering == true) {
@@ -1730,22 +1746,32 @@ void newFrame() {
 		} else {
 			renderPauseGraphic(0.3);
 		}
-		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
+		BufferBox temp_MASTER;
+		Master.getBufferBox(&temp_MASTER);
+		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
+		exportFractalBuffer = false;
 	} else if (primaryBufState == 1 || primaryFracImage.vram == NULL) {
 		renderTestGraphic(0.1, 0.25, 1.0); // Renders a loading screen if Fractal buffers are unavailable
-		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
+		BufferBox temp_MASTER;
+		Master.getBufferBox(&temp_MASTER);
+		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
+		exportFractalBuffer = false;
 	}
 
-	exportFractalBuffer = false;
+		//void* SDL_Master_VRAM = (void*)Master.vram;
+		//int pitch = getBufferBoxSize(&temp_MASTER);
+		//SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
+		//copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
+		//SDL_UnlockTexture(texture);
 
-	SDL_UnlockTexture(texture);
+	SDL_UpdateTexture(texture, NULL, Master.vram, Master.resX * Master.channels);
 	{
 		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
 		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};
 		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
 	}
-
-	if (primaryBufState == 0 && primaryFracImage.vram != NULL) {
+	
+	if (Abort_Rendering_Flag == false && primaryBufState == 0 && primaryFracImage.vram != NULL) {
 		BufferBox temp_primaryBox;
 		primaryFracImage.getBufferBox(&temp_primaryBox);
 		//primaryFracImage.printTransformationData();
@@ -1776,9 +1802,95 @@ void newFrame() {
 			}
 			FREE(name);
 		}
+		exportFractalBuffer = false;
 	}
-
-	SDL_DestroyTexture(texture);
 	render_IMGUI();
 	SDL_RenderPresent(renderer);
 }
+
+/*
+void newFrame() {
+	// uint64_t startTime = getNanoTime();
+	// uint64_t lastTime = startTime;
+	// fp64 resultTime;
+	// fp64 sumTime = 0.0;
+	// #define TIMECALC ((fp64)(getNanoTime() - lastTime) / 1.0e6)
+
+	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255); // Some shade of dark blue
+    SDL_RenderClear(renderer);
+
+	int pitch;
+	texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
+	void* SDL_Master_VRAM = (void*)Master.vram;
+//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nSDL Setup: %.3lf",resultTime); lastTime = getNanoTime();
+	SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
+//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nLock: %.3lf",resultTime); lastTime = getNanoTime();
+	Master.vram = (uint8_t*)SDL_Master_VRAM;
+	
+	
+	int primaryBufState = read_Image_Buffers(&primaryFracImage);
+
+	if (Abort_Rendering_Flag == true) {
+		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
+		if (Waiting_To_Abort_Rendering == true) {
+			renderAbortGraphic(0.3);
+		} else {
+			renderPauseGraphic(0.3);
+		}
+		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
+		exportFractalBuffer = false;
+	} else if (primaryBufState == 1 || primaryFracImage.vram == NULL) {
+		renderTestGraphic(0.1, 0.25, 1.0); // Renders a loading screen if Fractal buffers are unavailable
+		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
+		exportFractalBuffer = false;
+	}
+//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nBlit: %.3lf",resultTime); lastTime = getNanoTime();
+	SDL_UnlockTexture(texture);
+//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nUnlock: %.3lf",resultTime); lastTime = getNanoTime();
+	{
+		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
+		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};
+		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
+	}
+//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nRender Copy: %.3lf",resultTime); lastTime = getNanoTime();
+	if (Abort_Rendering_Flag == false && primaryBufState == 0 && primaryFracImage.vram != NULL) {
+		BufferBox temp_primaryBox;
+		primaryFracImage.getBufferBox(&temp_primaryBox);
+		//primaryFracImage.printTransformationData();
+		//copyBuffer(temp_primaryBox,Master,0,RESY_UI,false);
+		int dispRet = displayFracImage(&primaryFracImage,&primaryRenderData);
+		printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
+		if (exportFractalBuffer == true) {
+			uint64_t curTime = getNanoTime();
+			size_t size = snprintf(NULL,0,"%s_%llu",frac.type_name,curTime);
+			char* name = (char*)calloc(size + 1,sizeof(char));
+			snprintf(name,size,"%s_%llu",FractalTypeFileText[frac.type_value],curTime);
+			char path[] = "./";
+			switch(screenshotFileType) {
+				case Image_File_Format::PNG:
+					writePNGImage(&temp_primaryBox,path,name,User_PNG_Compression_Level);
+				break;
+				case Image_File_Format::JPG:
+					writeJPGImage(&temp_primaryBox,path,name,User_JPG_Quality_Level);
+				break;
+				case Image_File_Format::TGA:
+					writeTGAImage(&temp_primaryBox,path,name);
+				break;
+				case Image_File_Format::BMP:
+					writeBMPImage(&temp_primaryBox,path,name);
+				break;
+				default:
+				printError("Unknown screenshot file type: %d",screenshotFileType);
+			}
+			FREE(name);
+		}
+		exportFractalBuffer = false;
+	}
+//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nScreen: %.3lf",resultTime); lastTime = getNanoTime();
+	SDL_DestroyTexture(texture);
+	render_IMGUI();
+	SDL_RenderPresent(renderer);
+//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nRenderPresent: %.3lf",resultTime); lastTime = startTime;
+//	resultTime = TIMECALC; printFlush("\nTotal-Time: %.3lf Real-Time: %.3lf Difference: %.3lf\n",sumTime,resultTime,resultTime-sumTime);
+}
+*/
