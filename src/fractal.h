@@ -46,6 +46,7 @@ struct _ABS_Mandelbrot {
 	bool showFloatingJulia;
 	bool adjustZoomToPower;
 	bool polarMandelbrot;
+	bool integerPolarPower;
 	bool lockToCardioid;
 	bool flipCardioidSide;
 	/* Coordinates */
@@ -137,5 +138,7 @@ void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, ABS_Man
 	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
 #endif
 
+#define POLAR_POWER_MINIMUM 1.0100
+#define POLAR_POWER_MAXIMUM 20.0
 
 #endif /* FRACTAL_H */

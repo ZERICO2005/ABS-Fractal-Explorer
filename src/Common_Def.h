@@ -26,6 +26,8 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <list>
+#include <algorithm>
 
 #include <cstdarg>
 #include <stdarg.h>
@@ -86,10 +88,10 @@ typedef double fp64;
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2023/11/07" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2023/11/08" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 22
+#define PROGRAM_V_PATCH 23
 #define PROGRAM_V_TAG "debug alpha"
 
 /* Constants */
@@ -131,9 +133,9 @@ typedef double fp64;
 
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
-#define valueLimit(value,minimum,maximum) { if (value < minimum) { value = minimum; } else if (value > maximum) { value = maximum; } }
-#define valueMinimum(value,minimum) { if (value < minimum) { value = minimum; } }
-#define valueMaximum(value,maximum) { if (value > maximum) { value = maximum; } }
+#define valueLimit(value,minimum,maximum) { if ((value) < (minimum)) { (value) = (minimum); } else if ((value) > (maximum)) { (value) = (maximum); } }
+#define valueMinimum(value,minimum) { if ((value) < (minimum)) { (value) = (minimum); } }
+#define valueMaximum(value,maximum) { if ((value) > (maximum)) { (value) = (maximum); } }
 
 /* Functions */
 

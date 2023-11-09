@@ -18,6 +18,6 @@ int32_t init_OpenCL();
 int32_t terminate_OpenCL();
 void queryOpenCL_GPU();
 
-#define writefToLog(...) printFlush(__VA_ARGS__)
+#define writefToLog(...) //printFlush(__VA_ARGS__)
 
 #endif /* FRAC_CL_H */

@@ -139,8 +139,8 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	queryOpenCL_GPU();
 	while (read_Render_Ready() == false) {
 		std::this_thread::yield();
-		start_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	}
+	start_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	return 0;
 }
 

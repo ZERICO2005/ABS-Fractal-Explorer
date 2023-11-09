@@ -33,7 +33,6 @@ bool Waiting_To_Abort_Rendering = false;
 
 SDL_Texture* texture;
 SDL_Texture* kTexture; // Keyboard graphic
-//BufferBox Master; /* Do NOT manually malloc/realloc Master.vram */
 ImageBuffer Master;
 BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
@@ -129,25 +128,15 @@ struct _Key_Status {
 	uint64_t timeReleased;
 }; typedef struct _Key_Status Key_Status;
 
-KeyBind defaultKeyBindList[] = {
-	{Key_Function::incRealPos,SDL_SCANCODE_D},{Key_Function::decRealPos,SDL_SCANCODE_A},{Key_Function::incImagPos,SDL_SCANCODE_W},{Key_Function::decImagPos,SDL_SCANCODE_S},
-	{Key_Function::incMaxItr,SDL_SCANCODE_T},{Key_Function::decMaxItr,SDL_SCANCODE_G},{Key_Function::incZoom,SDL_SCANCODE_E},{Key_Function::decZoom,SDL_SCANCODE_Q},{Key_Function::resetCoordinates,SDL_SCANCODE_R},
-	{Key_Function::openSettingsMenu,SDL_SCANCODE_Y},{Key_Function::exportFractal,SDL_SCANCODE_H},{Key_Function::takeScreenshot,SDL_SCANCODE_P},{Key_Function::takeSuperScreenshot,SDL_SCANCODE_GRAVE},
-	{Key_Function::incZReal,SDL_SCANCODE_L},{Key_Function::decZReal,SDL_SCANCODE_J},{Key_Function::incZImag,SDL_SCANCODE_I},{Key_Function::decZImag,SDL_SCANCODE_K},
-	{Key_Function::resetZReal,SDL_SCANCODE_U},{Key_Function::resetZImag,SDL_SCANCODE_O},{Key_Function::toggleJulia,SDL_SCANCODE_C},{Key_Function::toggleStartingZ,SDL_SCANCODE_V},
-	{Key_Function::resetTransformations,SDL_SCANCODE_F},{Key_Function::clockwiseRot,SDL_SCANCODE_RIGHT},{Key_Function::counterclockwiseRot,SDL_SCANCODE_LEFT},{Key_Function::incStretch,SDL_SCANCODE_UP},{Key_Function::decStretch,SDL_SCANCODE_DOWN},
-	{Key_Function::inputFormula,SDL_SCANCODE_Z},{Key_Function::incFormula,SDL_SCANCODE_RIGHTBRACKET},{Key_Function::decFormula,SDL_SCANCODE_LEFTBRACKET},{Key_Function::incFamily,SDL_SCANCODE_EQUALS},{Key_Function::decFamily,SDL_SCANCODE_MINUS},
-	{Key_Function::inputPower,SDL_SCANCODE_X},{Key_Function::incPower,SDL_SCANCODE_UNKNOWN},{Key_Function::decPower,SDL_SCANCODE_UNKNOWN},
-	{Key_Function::incSuperSample,SDL_SCANCODE_APOSTROPHE},{Key_Function::decSuperSample,SDL_SCANCODE_SEMICOLON},{Key_Function::incSubSample,SDL_SCANCODE_PERIOD},{Key_Function::decSubSample,SDL_SCANCODE_COMMA},
-	{Key_Function::fp16GpuRendering,SDL_SCANCODE_UNKNOWN},{Key_Function::fp32GpuRendering,SDL_SCANCODE_M},{Key_Function::fp64GpuRendering,SDL_SCANCODE_RALT},
-	{Key_Function::fp32CpuRendering,SDL_SCANCODE_APPLICATION},{Key_Function::fp64CpuRendering,SDL_SCANCODE_N},{Key_Function::fp80CpuRendering,SDL_SCANCODE_B},{Key_Function::fp128CpuRendering,SDL_SCANCODE_RCTRL}
-};
-
 size_t KeyBind_PresetCount;
 //KeyBind_Preset* KeyBind_List;
-KeyBind_Preset defaultKeyBind = {"Default Key-bind",ARRAY_LENGTH(defaultKeyBindList),defaultKeyBindList};
-KeyBind_Preset importedKeyBind = {"Blank",0,NULL};
-KeyBind_Preset* currentKeyBind = &defaultKeyBind;
+// KeyBind_Preset defaultKeyBind = {"Default Key-bind",ARRAY_LENGTH(defaultKeyBind),defaultKeyBind};
+// KeyBind_Preset importedKeyBind = {"Blank",0,NULL};
+// KeyBind_Preset* currentKeyBind = &defaultKeyBind;
+
+std::list<KeyBind> currentKeyBind = defaultKeyBind;
+std::list<KeyBind> importedKeyBind;
+
 
 Key_Status Key_List[SDL_NUM_SCANCODES];
 
@@ -169,9 +158,9 @@ void updateKeys() {
 			Key_List[i].pressed = false;
 		}
 
-		for (size_t f = 0; f < currentKeyBind->length; f++) {
-			if (currentKeyBind->list[f].key == (SDL_Scancode)i) {
-				Key_Function::Key_Function_Enum func = currentKeyBind->list[f].func;
+		for (const auto& bind : currentKeyBind) {
+			if (bind.key == (SDL_Scancode)i) {
+				Key_Function::Key_Function_Enum func = bind.func;
 				if (Key_List[i].pressed == true) {
 					func_stat[func].triggered = true;
 				}
@@ -203,33 +192,27 @@ void recolorKeyboard() {
 		for (size_t i = 0; i < ARRAY_LENGTH(InitKeyHSV); i++) {
 			getRGBfromHSV(&(InitKeyRGB[i].r),&(InitKeyRGB[i].g),&(InitKeyRGB[i].b),InitKeyHSV[i].h,InitKeyHSV[i].s,InitKeyHSV[i].v);
 		}
-		if (currentKeyBind->length > 0) {
-			for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
-				size_t keyColorSet = 0;
-				for (size_t i = 0; i < currentKeyBind->length; i++) {
-					if (currentKeyBind->list[i].key == (SDL_Scancode)s) {
-						if (keyColorSet != 0) { // Detects if different function types are binded to a key
-							setRGB_Scancode(0xFF,0xFF,0xFF,(SDL_Scancode)s);
-							break; // Idempotent
-						} 
-						for (size_t r = SDL_SCANCODE_UNKNOWN + 1; r < ARRAY_LENGTH(Key_Function_Map); r++) {
-							if (currentKeyBind->list[i].func <= Key_Function_Map[r] && currentKeyBind->list[i].func != Key_Function::NONE) {
-								setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
-								keyColorSet = r;
-								break;
-							}
+		if (currentKeyBind.size() <= 0) {
+			currentKeyBind = defaultKeyBind;
+		}
+		for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
+			size_t keyColorSet = 0;
+			for (const auto& bind : currentKeyBind) {
+				if (bind.key == (SDL_Scancode)s) {
+					if (keyColorSet != 0) { // Detects if different function types are binded to a key
+						setRGB_Scancode(0xFF,0xFF,0xFF,(SDL_Scancode)s);
+						break; // Idempotent
+					} 
+					for (size_t r = SDL_SCANCODE_UNKNOWN + 1; r < ARRAY_LENGTH(Key_Function_Map); r++) {
+						if (bind.func <= Key_Function_Map[r] && bind.func != Key_Function::NONE) {
+							setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
+							keyColorSet = r;
+							break;
 						}
 					}
 				}
 			}
-		} else {
-			printWarning("currentKeyBind is empty");
-			for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
-				size_t r = s % ARRAY_LENGTH(InitKeyRGB);
-				setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
-			}
 		}
-
 	}
 }
 
@@ -260,8 +243,9 @@ int setup_fracExpKB(int argc, char* argv[]) {
 			if (strstr(argv[a],".fracExpKB") != NULL) {
 				printFlush("\nFracExp_KeyBind File: %s",argv[a]);
 				read_FracExpKB_File(&importedKeyBind,argv[a]);
-				currentKeyBind = &importedKeyBind;
-				printf("\n\tKeyBinds: %zu Preset: %s",importedKeyBind.length,importedKeyBind.name);
+				currentKeyBind = importedKeyBind;
+				cleanKeyBind(&currentKeyBind);
+				printf("\n\tKeyBinds: %zu Preset: %s",importedKeyBind.size(),"<Unimplemented>");
 				break;
 			}
 		}
@@ -281,6 +265,7 @@ uint32_t DISPLAY_COUNT = 0;
 	uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
 	uint32_t Display_Match[Display_Bootup::Length];
 	Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
+	bool useDefaultWindowSize = false;
 
 struct _DisplayInfo {
 	uint32_t resX;
@@ -429,6 +414,7 @@ void updateFractalParameters() {
 		paramToggle(toggleRelativeZValue,FRAC.relativeZValue,0.4);
 		paramToggle(toggleCursorZValue,FRAC.cursorZValue,0.4);
 		paramToggle(toggleStartingZ,FRAC.startingZ,0.4);
+		paramToggle(toggleIntegerPower,FRAC.integerPolarPower,0.4);
 		#undef paramToggle
 	/* Real and Imaginary Coordinates */
 		if (func_stat[incRealPos].triggered == true) {
@@ -470,6 +456,15 @@ void updateFractalParameters() {
 		if (funcTimeDelay(resetZImag,0.2)) {
 			FRAC.zi = 0.0;
 		}
+		if (FRAC.cursorZValue == true) {
+			if (FRAC.relativeZValue == true) {
+				fp64 resZ = (fp64)((Master.resX > Master.resY) ? Master.resY : Master.resX);
+				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
+				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
+			} else {
+				pixel_to_coordinate(ImGui::GetMousePos().x,ImGui::GetMousePos().y - RESY_UI,&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData);
+			}
+		}
 		valueLimit(FRAC.zr,-4.0,4.0);
 		valueLimit(FRAC.zi,-4.0,4.0);
 	/* Zoom */
@@ -484,7 +479,13 @@ void updateFractalParameters() {
 		}
 		valueLimit(FRAC.zoom,-20.0,40.0);
 		if (funcTimeDelay(resetCoordinates,0.2)) {
-			FRAC.r = 0.0; FRAC.i = 0.0; FRAC.zoom = zoomDefault(FRAC.power);
+			FRAC.r = 0.0; FRAC.i = 0.0;
+			if (FRAC.polarMandelbrot == true) {
+				FRAC.zoom = zoomDefault(FRAC.polarPower);
+			} else {
+				FRAC.zoom = zoomDefault((fp64)FRAC.power);
+			}
+			valueLimit(FRAC.zoom,-0.4,0.4);
 		}
 	/* maxItr */
 		if (func_stat[incMaxItr].triggered) {
@@ -513,16 +514,48 @@ void updateFractalParameters() {
 		if (funcTimeDelay(resetFormula,0.2)) {
 			FRAC.formula = 0;
 		}
-		if (funcTimeDelay(incPower,1.0/6.0)) {
-			FRAC.power++;
+	/* Power */
+		if (FRAC.polarMandelbrot == true) {
+			if (FRAC.integerPolarPower == true) {
+				if (funcTimeDelay(incPower,1.0/6.0)) {
+					FRAC.polarPower++;
+				}
+				if (funcTimeDelay(decPower,1.0/6.0)) {
+					FRAC.polarPower--;
+				}
+			} else {
+				if (func_stat[incPower].triggered) {
+					FRAC.polarPower += moveDelta * 1.0;
+				}
+				if (func_stat[decPower].triggered) {
+					FRAC.polarPower -= moveDelta * 1.0;
+				}
+			}
+			
+			if (funcTimeDelay(resetPower,0.2)) {
+				FRAC.polarPower = 3.0;
+			}
+			if (funcTimeDelay(roundPower,0.2)) {
+				FRAC.polarPower = round(FRAC.polarPower);
+			}
+			if (funcTimeDelay(floorPower,0.2)) {
+				FRAC.polarPower = floor(FRAC.polarPower);
+			}
+			if (funcTimeDelay(ceilingPower,0.2)) {
+				FRAC.polarPower = ceil(FRAC.polarPower);
+			}
+		} else {
+			if (funcTimeDelay(incPower,1.0/6.0)) {
+				FRAC.power++;
+			}
+			if (funcTimeDelay(decPower,1.0/6.0)) {
+				FRAC.power--;
+			}
+			if (funcTimeDelay(resetPower,0.2)) {
+				FRAC.power = 2;
+			}
+			FRAC.formula = limitFormulaID(FRAC.power,FRAC.formula);
 		}
-		if (funcTimeDelay(decPower,1.0/6.0)) {
-			FRAC.power--;
-		}
-		if (funcTimeDelay(resetPower,0.2)) {
-			FRAC.power = 2;
-		}
-		FRAC.formula = limitFormulaID(FRAC.power,FRAC.formula);
 	/* Rotations */
 		if (func_stat[counterclockwiseRot].triggered) {
 			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
@@ -530,13 +563,13 @@ void updateFractalParameters() {
 		if (func_stat[clockwiseRot].triggered) {
 			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
 		}
-		if (funcTimeDelay(clockwiseRot90,1.0/3.0)) {
+		if (funcTimeDelay(clockwiseRot90,0.3)) {
 			FRAC.rot += (TAU * (90.0/360.0));
 		}
-		if (funcTimeDelay(counterclockwiseRot90,1.0/3.0)) {
+		if (funcTimeDelay(counterclockwiseRot90,0.3)) {
 			FRAC.rot -= (TAU * (90.0/360.0));
 		}
-		if (funcTimeDelay(rotate180,1.0/3.0)) {
+		if (funcTimeDelay(rotate180,0.3)) {
 			FRAC.rot += (TAU * (180.0/360.0));
 		}
 		if (funcTimeDelay(clockwiseRotStep,1.0/10.0)) {
@@ -651,12 +684,18 @@ void updateFractalParameters() {
 		valueLimit(FRAC.power,2,6); // Support up to Sextic
 	/* ABS Mandelbrot */
 	/* Polar Mandelbrot */
-	if (frac.type_value == Fractal_Polar_Mandelbrot) {
-		if (FRAC.lockToCardioid == true) {
-			FRAC.r = getABSFractalMinRadius(FRAC.polarPower);
-			FRAC.r *= (FRAC.flipCardioidSide == true) ? -1.0 : 1.0;
+		if (frac.type_value == Fractal_Polar_Mandelbrot) {
+			if (FRAC.lockToCardioid == true) {
+				FRAC.r = getABSFractalMinRadius(FRAC.polarPower);
+				FRAC.r *= (FRAC.flipCardioidSide == true) ? -1.0 : 1.0;
+			}
 		}
-	}
+		if (FRAC.integerPolarPower == true) {
+			FRAC.polarPower = round(FRAC.polarPower);
+			valueLimit(FRAC.polarPower,ceil(POLAR_POWER_MINIMUM),floor(POLAR_POWER_MAXIMUM));
+		} else {
+			valueLimit(FRAC.polarPower,POLAR_POWER_MINIMUM,POLAR_POWER_MAXIMUM);
+		}
 	/* Global Application Functions */
 		if (funcTimeDelay(openFractalMenu,0.2)) {
 			buttonSelection = 0;
@@ -841,13 +880,23 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 		FRAC.formula,(FRAC.polarMandelbrot ? FRAC.polarPower : (fp64)FRAC.power),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
 	);
 	ImGui::Text(
-		"Zreal: %10.8lf Zimag: %10.8lf Rotation: 10^%5.1lf Stetch: %6.4lf",
-		FRAC.zr,FRAC.zi,FRAC.rot,FRAC.stretch * 360.0 / TAU
+		"Zreal: %10.8lf Zimag: %10.8lf Rotation: %3.1lf Stetch: %6.4lf",
+		FRAC.zr,FRAC.zi,FRAC.rot * 360.0 / TAU,FRAC.stretch
 	);
 	ImGui::Text(" ");
+	fp64 adjustedZoomValue = FRAC.zoom;
+	if (FRAC.adjustZoomToPower == true) {
+		if (FRAC.polarMandelbrot == true) {
+			adjustedZoomValue += log10(getABSFractalMaxRadius(FRAC.polarPower));
+		} else {
+			adjustedZoomValue += log10(getABSFractalMaxRadius((fp64)FRAC.power));
+		}
+		valueLimit(adjustedZoomValue,FRAC.zoom - 0.4, FRAC.zoom + 0.4);
+	}
+	
 	ImGui::Text(
 		"Real: %10.8lf Imag: %10.8lf Zoom: 10^%6.4lf Itr: %u",
-		FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr
+		FRAC.r,FRAC.i,adjustedZoomValue,FRAC.maxItr
 	);
 	#undef FRAC
     // End the ImGui window
@@ -857,8 +906,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 void Menu_Fractal() {
 	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
 	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
-	static int32_t input_power = 2;
-	static fp64 input_polar_power = 2.0; static fp32 temp_input_polar_power = (fp32)input_polar_power;
 	static bool juliaSet = false;
 	static bool startingZ = false;
 	static bool swapJuliaSplit = false;
@@ -899,13 +946,14 @@ void Menu_Fractal() {
 			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
 			valueLimit(FRAC.power,2,6); // Support up to Sextic
 		} else {
+			fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
 			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
-			static fp32 temp_input_polar_power = (fp64)FRAC.polarPower;
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,1.0100,20.0,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,POLAR_POWER_MINIMUM,POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
 			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
 			if (FRAC.lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
 			}
+			ImGui::Checkbox("Integer Powers",&FRAC.integerPolarPower);
 		}
 		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
 		static fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
@@ -998,7 +1046,20 @@ void Menu_Rendering() {
 	
 	ImGui::Text("CPU Rendering Mode:");
 	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
-
+		switch (Combo_CPU_RenderingMode) {
+			case 0:
+				primaryRenderData.CPU_Precision = 32;
+			break;
+			case 1:
+				primaryRenderData.CPU_Precision = 64;
+			break;
+			case 2:
+				primaryRenderData.CPU_Precision = 80;
+			break;
+			case 3:
+				primaryRenderData.CPU_Precision = 128;
+			break;
+		};
 	}
 	ImGui::Text("Maximum Threads:");
 	ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
@@ -1008,7 +1069,17 @@ void Menu_Rendering() {
 	
 	ImGui::Text("GPU Rendering Mode:");
 	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, BufAndLen(GPU_RenderingModes))) {
-		
+		switch (Combo_GPU_RenderingMode) {
+			case 0:
+				primaryRenderData.GPU_Precision = 16;
+			break;
+			case 1:
+				primaryRenderData.GPU_Precision = 32;
+			break;
+			case 2:
+				primaryRenderData.GPU_Precision = 64;
+			break;
+		};
 	}
 	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
 	ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"");
@@ -1147,16 +1218,19 @@ void Menu_Settings() {
 void Menu_Keybinds() {
 	static int Combo_keyboardSize = 0;
 	static const char* keyboardSizeText[] = {
-		"ANSI (Default)","Extended","Complete"
+		"ANSI (Default)","Extended (Contains some FN keys)","Complete (All 242 SDL Scancodes)"
 	};
 	static bool displayNumpad = true;
 	ImGui_DefaultWindowSize(Master.resX,16,320,480,0.7,Master.resY,16,240,360,0.7);
 	ImGui::Begin("Keybinds Menu",&ShowTheXButton);
-	ImGui::Text("Keyboard:");
+	ImGui::Text("Keyboard Type:");
 	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
 		
 	}
 	ImGui::Checkbox("Display Numberpad",&displayNumpad);
+	if (Combo_keyboardSize != 0) {
+		ImGui::Text("Note: Some Scancodes may or may not trigger on modern Keyboards");
+	}
 	ImGui::Text(" ");
 	{
 		#define kMaxResX 1440
@@ -1178,15 +1252,16 @@ void Menu_Keybinds() {
 
 		ImVec2 CursorPos = {
 			ImGui::GetMousePos().x - ImGui::GetCursorScreenPos().x,
-			ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y - 51 // Magic Correction Amount
+			ImGui::GetMousePos().y - ImGui::GetCursorScreenPos().y - 17 // Magic Correction Amount
 		};
 		clickState = SDL_GetMouseState(NULL,NULL);
 		static SDL_Scancode keyHover = SDL_SCANCODE_UNKNOWN;
 		static SDL_Scancode keyClick = SDL_SCANCODE_UNKNOWN;
+		bool hoverInBounds = false;
 		renderKeyboard(
 			&kBuf, kResX, 5.75, 12.0,
 			(uint8_t)Combo_keyboardSize, displayNumpad,
-			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover
+			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover, &hoverInBounds
 		);
 		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, kBuf.resX, kBuf.resY, 24, 3 * kBuf.resX, SDL_PIXELFORMAT_RGB24);
 		if (kSurface == nullptr) {
@@ -1200,53 +1275,127 @@ void Menu_Keybinds() {
 		kCurX = CursorPos.x;
 		kCurY = CursorPos.y;
 
-		ImGui::Text("size = %d x %d", kBuf.resX, kBuf.resY);
-		ImGui::Text("Cursor Position: %d,%d",kCurX,kCurY);
-
 		ImGui::Text("Hover: %s",Scancode_Name[keyHover]);
-		if (clickState & 0x1) {
+		if (clickState & 0x1 && hoverInBounds == true) {
 			keyClick = keyHover;
 		}
 		ImGui::Image((void*)kTexture, ImVec2(kBuf.resX, kBuf.resY));
-		
+		// ImGui::Text("size = %d x %d", kBuf.resX, kBuf.resY);
+		// ImGui::Text("Cursor Position: %d,%d",kCurX,kCurY);
 		ImGui::Text("Clicked Key: %s",Scancode_Name[keyClick]);
 		if (keyClick != SDL_SCANCODE_UNKNOWN) {
 			using namespace Key_Function;
 			size_t funcCount = 0;
-			for (size_t i = 0; i < currentKeyBind->length; i++) {
-				if (currentKeyBind->list[i].key == keyClick) {
+			for (const auto& bind : currentKeyBind) {
+				if (bind.key == keyClick) {
 					funcCount++;
 				}
 			}
 			if (funcCount > 0) {
-				ImGui::Text("Key Functions:");
-				for (size_t i = 0; i < currentKeyBind->length; i++) {
-					if (currentKeyBind->list[i].key == keyClick) {
-						ImGui::Text("- %s",Key_Function_Text[currentKeyBind->list[i].func]);
+				//ImGui::Text("Key Functions:");
+				for (const auto& bind : currentKeyBind) {
+					if (bind.key == keyClick) {
+						ImGui::Text("- %s",Key_Function_Text[bind.func]);
+					}
+				}
+			} else {
+				ImGui::Text("- Key not bound to any functions");
+			}
+		} else {
+			ImGui::Text(" ");
+		}
+
+		ImGui::Separator();
+
+		static int Combo_functionSelect;
+		ImGui::Text("Select Function to bind:");
+		if (ImGui::Combo("##Combo_functionSelect",&Combo_functionSelect,BufAndLen(Key_Function::Key_Function_Text))) {
+			if (Combo_functionSelect == Key_Function::Parameter_Function_Count) {
+				Combo_functionSelect = Key_Function::NONE;
+			} else {
+				for (size_t i = 0; i < ARRAY_LENGTH(Key_Function::Key_Function_Map); i++) {
+					if (Combo_functionSelect == (int)Key_Function::Key_Function_Map[i]) {
+						Combo_functionSelect = Key_Function::NONE;
 					}
 				}
 			}
 		}
+		
+		if (Combo_functionSelect != Key_Function::NONE && keyClick != SDL_SCANCODE_UNKNOWN) {
+			//ImGui::Text("Bind key %s to function %s",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
 
+			ImGui::Text("Bind key "); ImGui::SameLine(0.0,1.0);
+			ImGui::TextColored({0.0,1.0,1.0,1.0},"%s",Scancode_Name[keyClick]); ImGui::SameLine(0.0,1.0);
+			ImGui::Text(" to function "); ImGui::SameLine(0.0,1.0);
+			ImGui::TextColored({0.0,1.0,1.0,1.0},"%s",Key_Function::Key_Function_Text[Combo_functionSelect]);
 
-
-		ImGui::Text(" ");
-		ImGui::Separator();
-		ImGui::Text("Current Key-bind: %s",currentKeyBind->name);
-		if (importedKeyBind.list != NULL) {
-			if (currentKeyBind == &defaultKeyBind) {
- 				if (ImGui::Button("Switch to imported key-binds")) {
-					currentKeyBind = &importedKeyBind;
+			if(ImGui::Button("Set Key-Bind")) {
+				if (addKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
 					recolorKeyboard();
+					Combo_functionSelect = Key_Function::NONE;
+					keyClick = SDL_SCANCODE_UNKNOWN;
+				} else {
+					printError("addKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
 				}
-			} else {
-				if (ImGui::Button("Switch to default key-binds")) {
-					currentKeyBind = &defaultKeyBind;
+			}
+			ImGui::SameLine(); 
+			if(ImGui::Button("Clear Key-bind")) {
+				if (removeKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
 					recolorKeyboard();
+					Combo_functionSelect = Key_Function::NONE;
+				} else {
+					printError("removeKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
 				}
 			}
 		} else {
+			ImGui::Text("Click on a Key and Select a Function");
+			ImGui::Text(" ");
+		}
+		if (Combo_functionSelect != Key_Function::NONE) {
+			if(ImGui::Button("Clear Function bindings")) {
+				if (removeKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect) >= 0) {
+					recolorKeyboard();
+				} else {
+					printError("removeKeyBind(%s) failed",Key_Function::Key_Function_Text[Combo_functionSelect]);
+				}
+			}
+			ImGui::SameLine();
+			ImGui::Text("%s",Key_Function::Key_Function_Text[Combo_functionSelect]);
+		} else {
+			ImGui::Button("Select a Function");
+		}
+		if (keyClick != SDL_SCANCODE_UNKNOWN) {
+			if(ImGui::Button("Clear Key bindings")) {
+				if (removeKeyBind(&currentKeyBind,keyClick) >= 0) {
+					recolorKeyboard();
+					keyClick = SDL_SCANCODE_UNKNOWN;
+				} else {
+					printError("removeKeyBind(%s) failed",Scancode_Name[keyClick]);
+				}
+			}
+			ImGui::SameLine();
+			ImGui::Text("%s",Scancode_Name[keyClick]);
+		} else {
+			ImGui::Button("Click on a Key");
+		}
+		ImGui::Text(" ");
+		ImGui::Separator();
+		ImGui::Text("Current Key-bind: %s","<Unimplemented>"/*currentKeyBind->name*/);
+		if (importedKeyBind.size() > 0) {
+			if (ImGui::Button("Switch to imported key-binds")) {
+				Combo_functionSelect = Key_Function::NONE;
+				keyClick = SDL_SCANCODE_UNKNOWN;
+				currentKeyBind = importedKeyBind;
+				recolorKeyboard();
+			}
+		} else {
 			ImGui::Text("No imported key-binds available");
+		}
+		if (ImGui::Button("Reset to default key-binds")) {
+			Combo_functionSelect = Key_Function::NONE;
+			keyClick = SDL_SCANCODE_UNKNOWN;
+			currentKeyBind = defaultKeyBind;
+			recolorKeyboard();
 		}
 		ImGui::Text(" ");
 		
@@ -1271,7 +1420,7 @@ void Menu_Keybinds() {
 				strncat(exportFracExpKBPath,exportFracExpKBDir,sizeOfPath);
 				// strncat(exportFracExpKBPath,exportFracExpKBName,sizeOfPath);
 				strncat(exportFracExpKBPath,exportFracExpKBExtension,sizeOfPath);
-				if (write_FracExpKB_File(currentKeyBind,exportFracExpKBPath) >= 0) {
+				if (write_FracExpKB_File(&currentKeyBind,exportFracExpKBPath) >= 0) {
 					printFlush("\n%s was exported successfully",exportFracExpKBPath);
 				} else {
 					printError("%s failed to export",exportFracExpKBPath);
@@ -1527,17 +1676,29 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 
 	initResX -= RESX_Margin;
-	if (initResX > RESX_Default) {
-		initResX = RESX_Default;
-	} else if (initResX < RESX_Minimum) {
-		initResX = RESX_Minimum;
-	}
 	initResY -= RESY_Margin;
-	if (initResY > RESY_Default) {
-		initResY = RESY_Default;
-	} else if (initResY < RESY_Minimum) {
-		initResY = RESY_Minimum;
+	if (useDefaultWindowSize == true) {
+		if (initResX > RESX_Default) {
+			initResX = RESX_Default;
+		} else if (initResX < RESX_Minimum) {
+			initResX = RESX_Minimum;
+		}
+		if (initResY > RESY_Default) {
+			initResY = RESY_Default;
+		} else if (initResY < RESY_Minimum) {
+			initResY = RESY_Minimum;
+		}
+	} else {
+		initResX = calcMinMaxRatio((uint32_t)initResX,RESX_Minimum,RESX_Default,0.6);
+		if (initResX > RESX_Maximum) {
+			initResX = RESX_Maximum;
+		}
+		initResY = calcMinMaxRatio((uint32_t)initResY,RESY_Minimum,RESY_Default,0.6);
+		if (initResY > RESX_Maximum) {
+			initResY = RESX_Maximum;
+		}
 	}
+
 
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
@@ -1559,7 +1720,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	window = SDL_CreateWindow(PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
-	printFlush("\nERROR:%s\n",SDL_GetError());
 	write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
 	primaryFracImage = ImageBuffer(3);
 	secondaryFracImage = ImageBuffer(3);
@@ -1582,14 +1742,16 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initKeys();
-	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
+	cleanKeyBind(&currentKeyBind);
 	write_Render_Ready(true);
+	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	return 0;
 }
 
 int terminate_Render() {
 	terminateKeyboardGraphics();
-	FREE(importedKeyBind.list);
+	currentKeyBind.clear();
+	importedKeyBind.clear();
 	ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
@@ -1807,90 +1969,3 @@ void newFrame() {
 	render_IMGUI();
 	SDL_RenderPresent(renderer);
 }
-
-/*
-void newFrame() {
-	// uint64_t startTime = getNanoTime();
-	// uint64_t lastTime = startTime;
-	// fp64 resultTime;
-	// fp64 sumTime = 0.0;
-	// #define TIMECALC ((fp64)(getNanoTime() - lastTime) / 1.0e6)
-
-	SDL_SetRenderDrawColor(renderer, 6, 24, 96, 255); // Some shade of dark blue
-    SDL_RenderClear(renderer);
-
-	int pitch;
-	texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
-	void* SDL_Master_VRAM = (void*)Master.vram;
-//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nSDL Setup: %.3lf",resultTime); lastTime = getNanoTime();
-	SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
-//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nLock: %.3lf",resultTime); lastTime = getNanoTime();
-	Master.vram = (uint8_t*)SDL_Master_VRAM;
-	
-	
-	int primaryBufState = read_Image_Buffers(&primaryFracImage);
-
-	if (Abort_Rendering_Flag == true) {
-		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
-		if (Waiting_To_Abort_Rendering == true) {
-			renderAbortGraphic(0.3);
-		} else {
-			renderPauseGraphic(0.3);
-		}
-		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
-		exportFractalBuffer = false;
-	} else if (primaryBufState == 1 || primaryFracImage.vram == NULL) {
-		renderTestGraphic(0.1, 0.25, 1.0); // Renders a loading screen if Fractal buffers are unavailable
-		copyBuffer(TestGraphic,Master,0,RESY_UI,false);
-		exportFractalBuffer = false;
-	}
-//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nBlit: %.3lf",resultTime); lastTime = getNanoTime();
-	SDL_UnlockTexture(texture);
-//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nUnlock: %.3lf",resultTime); lastTime = getNanoTime();
-	{
-		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
-		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};
-		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
-	}
-//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nRender Copy: %.3lf",resultTime); lastTime = getNanoTime();
-	if (Abort_Rendering_Flag == false && primaryBufState == 0 && primaryFracImage.vram != NULL) {
-		BufferBox temp_primaryBox;
-		primaryFracImage.getBufferBox(&temp_primaryBox);
-		//primaryFracImage.printTransformationData();
-		//copyBuffer(temp_primaryBox,Master,0,RESY_UI,false);
-		int dispRet = displayFracImage(&primaryFracImage,&primaryRenderData);
-		printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
-		if (exportFractalBuffer == true) {
-			uint64_t curTime = getNanoTime();
-			size_t size = snprintf(NULL,0,"%s_%llu",frac.type_name,curTime);
-			char* name = (char*)calloc(size + 1,sizeof(char));
-			snprintf(name,size,"%s_%llu",FractalTypeFileText[frac.type_value],curTime);
-			char path[] = "./";
-			switch(screenshotFileType) {
-				case Image_File_Format::PNG:
-					writePNGImage(&temp_primaryBox,path,name,User_PNG_Compression_Level);
-				break;
-				case Image_File_Format::JPG:
-					writeJPGImage(&temp_primaryBox,path,name,User_JPG_Quality_Level);
-				break;
-				case Image_File_Format::TGA:
-					writeTGAImage(&temp_primaryBox,path,name);
-				break;
-				case Image_File_Format::BMP:
-					writeBMPImage(&temp_primaryBox,path,name);
-				break;
-				default:
-				printError("Unknown screenshot file type: %d",screenshotFileType);
-			}
-			FREE(name);
-		}
-		exportFractalBuffer = false;
-	}
-//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nScreen: %.3lf",resultTime); lastTime = getNanoTime();
-	SDL_DestroyTexture(texture);
-	render_IMGUI();
-	SDL_RenderPresent(renderer);
-//	resultTime = TIMECALC; sumTime += resultTime; printFlush("\nRenderPresent: %.3lf",resultTime); lastTime = startTime;
-//	resultTime = TIMECALC; printFlush("\nTotal-Time: %.3lf Real-Time: %.3lf Difference: %.3lf\n",sumTime,resultTime,resultTime-sumTime);
-}
-*/

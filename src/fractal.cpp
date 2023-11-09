@@ -93,6 +93,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.maxItr = 192;
 		FRAC.power = 2;
 		FRAC.polarPower = 2.0;
+		FRAC.integerPolarPower = false;
 		FRAC.formula = 0;
 		FRAC.breakoutValue = 16777216.0;
 		FRAC.smoothColoring = true;
@@ -119,6 +120,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.showFloatingJulia = false;
 		FRAC.adjustZoomToPower = true;
 		FRAC.polarMandelbrot = true;
+		FRAC.integerPolarPower = false;
 		FRAC.lockToCardioid = false;
 		FRAC.flipCardioidSide = false;
 		FRAC.r = 0.0;

@@ -34,6 +34,36 @@ struct KeyBind_Preset {
 	KeyBind* list;
 }; typedef struct KeyBind_Preset KeyBind_Preset;
 
+/* Key-bind List Functions */
+	// Default Key-binds for ABS-Fractal-Explorer
+	const std::list<KeyBind> defaultKeyBind = {
+		{Key_Function::incRealPos,SDL_SCANCODE_D},{Key_Function::decRealPos,SDL_SCANCODE_A},{Key_Function::incImagPos,SDL_SCANCODE_W},{Key_Function::decImagPos,SDL_SCANCODE_S},
+		{Key_Function::incMaxItr,SDL_SCANCODE_T},{Key_Function::decMaxItr,SDL_SCANCODE_G},{Key_Function::incZoom,SDL_SCANCODE_E},{Key_Function::decZoom,SDL_SCANCODE_Q},{Key_Function::resetCoordinates,SDL_SCANCODE_R},
+		{Key_Function::openSettingsMenu,SDL_SCANCODE_Y},{Key_Function::exportFractal,SDL_SCANCODE_H},{Key_Function::takeScreenshot,SDL_SCANCODE_P},{Key_Function::takeSuperScreenshot,SDL_SCANCODE_GRAVE},
+		{Key_Function::incZReal,SDL_SCANCODE_L},{Key_Function::decZReal,SDL_SCANCODE_J},{Key_Function::incZImag,SDL_SCANCODE_I},{Key_Function::decZImag,SDL_SCANCODE_K},
+		{Key_Function::resetZReal,SDL_SCANCODE_U},{Key_Function::resetZImag,SDL_SCANCODE_O},{Key_Function::toggleJulia,SDL_SCANCODE_C},{Key_Function::toggleStartingZ,SDL_SCANCODE_V},
+		{Key_Function::resetTransformations,SDL_SCANCODE_F},{Key_Function::clockwiseRot,SDL_SCANCODE_RIGHT},{Key_Function::counterclockwiseRot,SDL_SCANCODE_LEFT},{Key_Function::incStretch,SDL_SCANCODE_UP},{Key_Function::decStretch,SDL_SCANCODE_DOWN},
+		{Key_Function::inputFormula,SDL_SCANCODE_Z},{Key_Function::incFormula,SDL_SCANCODE_RIGHTBRACKET},{Key_Function::decFormula,SDL_SCANCODE_LEFTBRACKET},{Key_Function::incFamily,SDL_SCANCODE_EQUALS},{Key_Function::decFamily,SDL_SCANCODE_MINUS},
+		{Key_Function::inputPower,SDL_SCANCODE_X},{Key_Function::incPower,SDL_SCANCODE_0},{Key_Function::decPower,SDL_SCANCODE_9},
+		{Key_Function::incSuperSample,SDL_SCANCODE_APOSTROPHE},{Key_Function::decSuperSample,SDL_SCANCODE_SEMICOLON},{Key_Function::incSubSample,SDL_SCANCODE_PERIOD},{Key_Function::decSubSample,SDL_SCANCODE_COMMA},
+		{Key_Function::fp16GpuRendering,SDL_SCANCODE_UNKNOWN},{Key_Function::fp32GpuRendering,SDL_SCANCODE_M},{Key_Function::fp64GpuRendering,SDL_SCANCODE_RALT},
+		{Key_Function::fp32CpuRendering,SDL_SCANCODE_APPLICATION},{Key_Function::fp64CpuRendering,SDL_SCANCODE_N},{Key_Function::fp80CpuRendering,SDL_SCANCODE_B},{Key_Function::fp128CpuRendering,SDL_SCANCODE_RCTRL}
+	};
+	// Resets a Key-bind to defaults
+	int initDefaultKeyBind(std::list<KeyBind>* keyBindList);
+	// Clears a Key-bind
+	int clearKeyBind(std::list<KeyBind>* keyBindList);
+	// Add a Key-bind
+	int addKeyBind(std::list<KeyBind>* keyBindList, Key_Function::Key_Function_Enum func, SDL_Scancode key);
+	// Removes a specific Key-bind
+	int removeKeyBind(std::list<KeyBind>* keyBindList, Key_Function::Key_Function_Enum func, SDL_Scancode key);
+	// Removes any Key-bind matching a Function
+	int removeKeyBind(std::list<KeyBind>* keyBindList, Key_Function::Key_Function_Enum func);
+	// Removes any Key-bind matching a SDL_Scancode
+	int removeKeyBind(std::list<KeyBind>* keyBindList, SDL_Scancode key);
+	// Removes duplicated Key-binds and any Key-binds with nothing set
+	int cleanKeyBind(std::list<KeyBind>* keyBindList);
+
 /* Contains lots of metadata */
 struct FracExpKB_File {
 	/* File_Header */
@@ -69,6 +99,9 @@ struct FracExpKB_File {
 
 int write_FracExpKB_File(KeyBind_Preset* ptr, char* path);
 int read_FracExpKB_File(KeyBind_Preset* ptr, char* path);
+
+int write_FracExpKB_File(std::list<KeyBind>* ptr, char* path);
+int read_FracExpKB_File(std::list<KeyBind>* ptr, char* path);
 
 const char* const Scancode_Name[] = {
 	"SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_A","SDL_SCANCODE_B","SDL_SCANCODE_C","SDL_SCANCODE_D","SDL_SCANCODE_E","SDL_SCANCODE_F","SDL_SCANCODE_G","SDL_SCANCODE_H","SDL_SCANCODE_I","SDL_SCANCODE_J","SDL_SCANCODE_K","SDL_SCANCODE_L",

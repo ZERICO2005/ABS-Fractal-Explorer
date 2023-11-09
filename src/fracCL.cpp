@@ -206,8 +206,8 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	fp32 r = (fp32)param.r;
 	fp32 i = (fp32)param.i;
 	uint32_t maxItr = (uint32_t)param.maxItr;
-	fp32 zr0 = (param.startingZ == false) ? 0.0f : (fp32)param.zr;
-	fp32 zi0 = (param.startingZ == false) ? 0.0f : (fp32)param.zi;
+	fp32 zr0 = (param.startingZ == false && param.juliaSet == false) ? 0.0f : (fp32)param.zr;
+	fp32 zi0 = (param.startingZ == false && param.juliaSet == false) ? 0.0f : (fp32)param.zi;
 	uint32_t polarMandelbrotBool = (param.polarMandelbrot == true) ? 1 : 0;
 	uint32_t juliaSetBool = (param.juliaSet == true) ? 1 : 0;
 	uint32_t formula32 = (uint32_t)param.formula;
