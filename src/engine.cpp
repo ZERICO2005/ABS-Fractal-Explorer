@@ -7,6 +7,7 @@
 */
 
 #include "Common_Def.h"
+#include "Program_Def.h"
 #include "engine.h"
 #include "render.h"
 #include "copyBuffer.h"
@@ -15,9 +16,6 @@
 
 #include "fracMulti.h"
 #include "fracCL.h"
-
-ImageBuffer PrimaryBuf[2];
-ImageBuffer SecondaryBuf[2];
 
 Fractal_Data fracData;
 Render_Data primaryRender;
@@ -43,12 +41,7 @@ int setup_fracExp(int argc, char* argv[]) {
 
 int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	using namespace Key_Function;
-	ImageBuffer* currentBuf = &PrimaryBuf[0];
-	ImageBuffer* prevBuf = NULL;
-	// static fp64 r = 0.0;
-	// static fp64 i = 0.0;
-	// static fp64 zoom = 0.0;
-	// uint32_t maxItr = 64;
+	ImageBuffer* currentBuf = nullptr;
 	TimerBox fracTime(1.0/60.0);
 	fp64 deltaTime = 0.0;
 	while (QUIT_FLAG == false) {
@@ -57,16 +50,15 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			deltaTime = fracTime.getDeltaTime();
 			setRenderDelta(deltaTime);
 			read_Parameters(&fracData,&primaryRender,&secondaryRender);
-			{
+
+			next_Write_Cycle_Pos(&currentBuf,Primary_Full);
+			if (currentBuf != nullptr) {
 				BufferBox sizeBuf = read_Buffer_Size();
-				clear_Render_Buffers();
-				for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-					PrimaryBuf[b].resizeBuffer(sizeBuf.resX / primaryRender.subSample,sizeBuf.resY / primaryRender.subSample,sizeBuf.channels);
-				}
+				currentBuf->resizeBuffer(sizeBuf.resX / primaryRender.subSample,sizeBuf.resY / primaryRender.subSample,sizeBuf.channels);
 			}
-			static BufferBox renderBox;
-			currentBuf->getBufferBox(&renderBox);
-			if (currentBuf->vram != NULL) {
+			if (currentBuf != nullptr && currentBuf->vram != nullptr && currentBuf->allocated() == true) {
+				static BufferBox renderBox;
+				currentBuf->getBufferBox(&renderBox);
 				//render_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot);
 				if (ABORT_RENDERING == false) {
 					#define FRAC fracData.type.abs_mandelbrot
@@ -107,36 +99,18 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 					write_Abort_Render_Ongoing(false);
 				}
 			}
-			/*printFlush("\n\n");
-			for (size_t y = 0; y < currentBuf->resY; y += 6) {
-				for (size_t x = 0; x < currentBuf->resX; x += 4) {
-					printf("%X",currentBuf->vram[((y * currentBuf->resX) + x) * 3]/16);
-				}
-				printf("\n");
-			}
-			printFlush("\n");*/
-			/* Swap and output buffers */
-			//clear_Render_Buffers();
-			prevBuf = currentBuf;
-			currentBuf = (currentBuf == &PrimaryBuf[0]) ? &PrimaryBuf[1] : &PrimaryBuf[0];
-			write_Image_Buffers(prevBuf);
 		}
 	}
 	return 0;
 }
 
 int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
-	// printf("\nInit_Engine: %s", ((QUIT_FLAG == true) ? "True" : "False"));
-	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-		// initBufferBox(&PrimaryBuf[b],NULL,320,200,3,0);
-		// PrimaryBuf[b].vram = (uint8_t*)malloc(getBufferBoxSize(&PrimaryBuf[b]));
-		PrimaryBuf[b] = ImageBuffer(3);
-	}
 	int32_t init_OpenCL_ret = init_OpenCL();
 	if (init_OpenCL_ret != 0) {
 		printError("OpenCL failed to initialize, error code: %d",init_OpenCL_ret);
 	}
 	queryOpenCL_GPU();
+	clear_Cycle_Buffers();
 	while (read_Render_Ready() == false) {
 		std::this_thread::yield();
 	}
@@ -146,12 +120,7 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 int terminate_Engine() {
 	terminate_OpenCL();
-	// for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-	// 	FREE(PrimaryBuf[b].vram);
-	// }
-	for (size_t b = 0; b < ARRAY_LENGTH(PrimaryBuf); b++) {
-		PrimaryBuf[b].deleteBuffer();
-	}
+	delete_Cycle_Buffers();
 	return 0;
 }
 

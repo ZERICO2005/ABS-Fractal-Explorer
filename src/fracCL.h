@@ -9,6 +9,7 @@
 #define FRAC_CL_H
 
 #include "Common_Def.h"
+#include "Program_Def.h"
 #include "fractal.h"
 #include "copyBuffer.h"
 

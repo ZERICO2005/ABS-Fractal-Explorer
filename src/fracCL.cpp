@@ -7,6 +7,7 @@
 */
 
 #include "Common_Def.h"
+#include "Program_Def.h"
 #include "fracCL.h"
 #include "buildCL.h"
 #include "fractal.h"

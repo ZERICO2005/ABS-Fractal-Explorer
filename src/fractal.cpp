@@ -7,6 +7,8 @@
 */
 
 #include "Common_Def.h"
+#include "Program_Def.h"
+
 #include "fractal.h"
 
 /* Safe Method of accessing PowerText */

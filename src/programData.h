@@ -10,6 +10,7 @@
 #define PROGRAMDATA_H
 
 #include "Common_Def.h"
+#include "Program_Def.h"
 
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_scancode.h>
@@ -23,6 +24,35 @@
 /*
 ** Handling shared data between threads
 */
+
+struct Render_Item {
+	int priority;
+	int group;
+	uint64_t time_sent;
+	Render_Data render_data;
+	Fractal_Data fractal_data;
+}; typedef Render_Item Render_Item;
+
+enum Render_Queue_Enum { Queue_Primary, Queue_Secondary, Queue_Count};
+
+struct Render_Task {
+	int priority;
+	int group;
+	uint64_t time_sent;
+	Render_Data render_data;
+	Fractal_Data fractal_data;
+}; typedef Render_Task Render_Task;
+
+/* Cycle Buffer */
+	enum Cycle_Buffer_Enum {Primary_Full, Primary_Preview, Secondary_Full, Secondary_Preview, Cycle_Buffer_Count};
+	bool next_Read_Cycle_Pos(ImageBuffer** ptr, int buf);
+	bool next_Write_Cycle_Pos(ImageBuffer** ptr, int buf);
+	void delete_Cycle_Buffers();
+	void trim_Cycle_Buffers();
+	void clear_Cycle_Buffers();
+
+	void write_Buffer_Size(BufferBox size);
+	BufferBox read_Buffer_Size();
 
 bool read_Render_Ready();
 void write_Render_Ready(bool f);
@@ -42,8 +72,6 @@ int write_Function_Status(Function_Status* list);
 void read_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary);
 void write_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary);
 
-void write_Buffer_Size(BufferBox size);
-BufferBox read_Buffer_Size();
 /* Used to ensure buffers are not read during a swap */
 int clear_Render_Buffers();
 int read_Render_Buffers(BufferBox* primary);

@@ -7,6 +7,7 @@
 */
 
 #include "Common_Def.h"
+#include "Program_Def.h"
 #include "render.h"
 
 #include "copyBuffer.h"
@@ -37,6 +38,11 @@ ImageBuffer Master;
 BufferBox TestGraphic;
 fp64 TestGraphicSpeed = 0.4;
 
+ImageBuffer* Primary_Image = nullptr;
+ImageBuffer* Primary_Image_Preview = nullptr;
+ImageBuffer* Secondary_Image = nullptr;
+ImageBuffer* Secondary_Image_Preview = nullptr;
+
 //#define MANUAL_FRAME_RATE_OVERRIDE
 fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 const fp64 FRAME_RATE_OFFSET = 0.01;
@@ -49,7 +55,7 @@ uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 fp64 Frame_Time_Display = 0.0;
 fp64 Render_Time_Display = 0.0;
 
-uint32_t RESY_UI = 120;
+uint32_t RESY_UI = 128;
 
 uint64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
 
@@ -68,8 +74,8 @@ Fractal_Data frac;
 Render_Data primaryRenderData;
 Render_Data secondaryRenderData;
 
-ImageBuffer primaryFracImage;
-ImageBuffer secondaryFracImage;
+// ImageBuffer primaryFracImage;
+// ImageBuffer secondaryFracImage;
 
 int exportScreenshot();
 int exportSuperScreenshot();
@@ -328,7 +334,7 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 			SDL_DestroyTexture(texture);
 		}
 		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
-		write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
+		write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,3,0});
 		reVal = true;
 	}
 	rX = x;
@@ -724,34 +730,6 @@ enum Menu_Enum {GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
-	
-	/*
-	static fp64 fpsLevel[] = {
-		120.0,60.0,30.0,20.0,10.0,5.0
-	};
- 	static ImVec4 colLevel[] = {
-		ImVec4(0.5,1.0,1.0,1.0),ImVec4(1.0,1.0,1.0,1.0),ImVec4(1.0,1.0,0.0,1.0),ImVec4(1.0,0.4,0.0,1.0),ImVec4(1.0,0.0,0.0,1.0),ImVec4(0.5,0.0,0.0,1.0)
-	};
-
-	static ImVec4 GUI_FrameRateColor = ImVec4(1.0,1.0,1.0,1.0);
-	static ImVec4 Render_FrameRateColor = ImVec4(1.0,1.0,1.0,1.0);
-
-	for (size_t i = 0; i < ARRAY_LENGTH(fpsLevel); i++) {
-		if (1.0 / Frame_Time_Display >= fpsLevel[i] - 0.01) {
-			GUI_FrameRateColor = colLevel[i];
-			break;
-		}
-	}
-	for (size_t i = 0; i < ARRAY_LENGTH(fpsLevel); i++) {
-		if (1.0 / Render_Time_Display >= fpsLevel[i] - 0.01) {
-			Render_FrameRateColor = colLevel[i];
-			break;
-		}
-	}
-	*/
-	// ImGui::Text("GUI: %.2lfFPS %.2lfms",1.0 / Frame_Time_Display,Frame_Time_Display * 1000.0);
-	// ImGui::SameLine();
-	// ImGui::Text("Render: %.2lfFPS %.2lfms",1.0 / Render_Time_Display,Render_Time_Display * 1000.0);
 
 	static ImVec4 GUI_FrameRateColor;
 	static ImVec4 Render_FrameRateColor;
@@ -1699,7 +1677,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 	}
 
-
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
 			DisplayInfo* disp = getCurrentDisplayInfo();
@@ -1721,8 +1698,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
-	primaryFracImage = ImageBuffer(3);
-	secondaryFracImage = ImageBuffer(3);
 	// IMGUI
 	IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -1756,8 +1731,6 @@ int terminate_Render() {
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 	FREE(DisplayList);
-	primaryFracImage.deleteBuffer();
-	secondaryFracImage.deleteBuffer();
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -1772,7 +1745,7 @@ void setRenderedBufferBox(BufferBox* box) {
 	buf = box;
 }
 
-//#define fullColorTestGraphic
+#define fullColorTestGraphic
 
 void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	static fp64 f = 0.0;
@@ -1808,6 +1781,7 @@ void renderAbortGraphic(fp64 speed) {
 		}
 	}
 }
+
 void renderPauseGraphic(fp64 speed) {
 	static fp64 f = 0.0;
 	f += DeltaTime * speed;
@@ -1818,6 +1792,20 @@ void renderPauseGraphic(fp64 speed) {
 			TestGraphic.vram[z] = 0; z++;
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 			TestGraphic.vram[z] = 0; z++;
+		}
+	}
+}
+
+void renderLoadingGraphic(fp64 speed) {
+	static fp64 f = 0.0;
+	f += DeltaTime * speed;
+	uint32_t w = (uint32_t)(f * (256.0));
+	size_t z = 0;
+	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
+		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
+			TestGraphic.vram[z] = 0; z++;
+			TestGraphic.vram[z] = 0; z++;
+			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 		}
 	}
 }
@@ -1898,33 +1886,29 @@ void newFrame() {
 	} else {
 		Master.clearBuffer();
 	}
-
-	int primaryBufState = read_Image_Buffers(&primaryFracImage);
-	printfChange(int,primaryBufState,"\nprimaryBufState: %d",primaryBufState);
+	bool primaryBufferChange = next_Read_Cycle_Pos(&Primary_Image,Primary_Full);
+	bool primaryBufferValid = (Primary_Image == nullptr || Primary_Image->vram == nullptr || Primary_Image->allocated() == false) ? false : true;
+	//int primaryBufState = read_Image_Buffers(&primaryFracImage);
+	//printfChange(int,primaryBufState,"\nprimaryBufState: %d",primaryBufState);
 	if (Abort_Rendering_Flag == true) {
+		primaryBufferValid = false;
 		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
 		if (Waiting_To_Abort_Rendering == true) {
 			renderAbortGraphic(0.3);
 		} else {
-			renderPauseGraphic(0.3);
+			renderPauseGraphic(0.4);
 		}
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
 		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
 		exportFractalBuffer = false;
-	} else if (primaryBufState == 1 || primaryFracImage.vram == NULL) {
-		renderTestGraphic(0.1, 0.25, 1.0); // Renders a loading screen if Fractal buffers are unavailable
+	} else if (primaryBufferValid == false) {
+		renderLoadingGraphic(1.0); // Renders a loading screen if Fractal buffers are unavailable
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
 		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
 		exportFractalBuffer = false;
 	}
-
-		//void* SDL_Master_VRAM = (void*)Master.vram;
-		//int pitch = getBufferBoxSize(&temp_MASTER);
-		//SDL_LockTexture(texture, NULL, &SDL_Master_VRAM,&pitch);
-		//copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
-		//SDL_UnlockTexture(texture);
 
 	SDL_UpdateTexture(texture, NULL, Master.vram, Master.resX * Master.channels);
 	{
@@ -1933,12 +1917,12 @@ void newFrame() {
 		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
 	}
 	
-	if (Abort_Rendering_Flag == false && primaryBufState == 0 && primaryFracImage.vram != NULL) {
+	if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
 		BufferBox temp_primaryBox;
-		primaryFracImage.getBufferBox(&temp_primaryBox);
+		Primary_Image->getBufferBox(&temp_primaryBox);
 		//primaryFracImage.printTransformationData();
 		//copyBuffer(temp_primaryBox,Master,0,RESY_UI,false);
-		int dispRet = displayFracImage(&primaryFracImage,&primaryRenderData);
+		int dispRet = displayFracImage(Primary_Image,&primaryRenderData);
 		printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
 		if (exportFractalBuffer == true) {
 			uint64_t curTime = getNanoTime();

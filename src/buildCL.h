@@ -8,6 +8,7 @@
 #define BUILD_CL_H
 
 #include "Common_Def.h"
+#include "Program_Def.h"
 
 #define PROGRAM_FILE "src/fracCL.cl"
 #define KERNEL_FUNC "renderFracCLPoint"

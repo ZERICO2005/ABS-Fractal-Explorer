@@ -10,6 +10,8 @@
 #define FRACTAL_H
 
 #include "Common_Def.h"
+#include "Program_Def.h"
+
 #include "render.h"
 
 enum FractalTypeEnum {

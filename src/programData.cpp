@@ -7,7 +7,87 @@
 */
 
 #include "Common_Def.h"
+#include "Program_Def.h"
 #include "programData.h"
+
+/* Cycle Buffer */
+	std::mutex pDat_Cycle_Mutex;
+
+	#define Cycle_Buffer_Amount 3
+	struct Cycle_Image_Buffer {
+		ImageBuffer image_buf[Cycle_Buffer_Amount];
+		int read_pos;
+		int write_pos;
+	}; typedef struct Cycle_Image_Buffer Cycle_Image_Buffer;
+	Cycle_Image_Buffer Cycle_Buffer[Cycle_Buffer_Count];
+
+	#define Cycle_Buf Cycle_Buffer[buf]
+	// Gets the next frame to read from, returns false if there are no frames to grab
+	bool next_Read_Cycle_Pos(ImageBuffer** ptr, int buf) {
+		if (ptr == nullptr) { return false; }
+		if (buf >= Cycle_Buffer_Count) { return false; }
+		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		if ((Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount == Cycle_Buf.write_pos) {
+			return false;
+		}
+		Cycle_Buf.read_pos = (Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount;
+		*ptr = &Cycle_Buf.image_buf[Cycle_Buf.read_pos];
+		return true;
+	}
+	// Gets the next buffer to write to, returns false if there are no buffers to grab
+	bool next_Write_Cycle_Pos(ImageBuffer** ptr, int buf) {
+		if (ptr == nullptr) { return false; }
+		if (buf >= Cycle_Buffer_Count) { return false; }
+		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		if ((Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount == Cycle_Buf.read_pos) {
+			return false;
+		}
+		Cycle_Buf.write_pos = (Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount;
+		*ptr = &Cycle_Buf.image_buf[Cycle_Buf.write_pos];
+		return true;
+	}
+	// Frees allocated memory | ImageBuffer.deleteBuffer()
+	void delete_Cycle_Buffers() {
+		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		for (size_t i = 0; i < Cycle_Buffer_Count; i++) {
+			for (size_t b = 0; b < Cycle_Buffer_Amount; b++) {
+				Cycle_Buffer[i].image_buf[b].deleteBuffer();
+			}
+		}
+	}
+	// Frees unused portions of allocated memory | ImageBuffer.trimBuffer()
+	void trim_Cycle_Buffers() {
+		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		for (size_t i = 0; i < Cycle_Buffer_Count; i++) {
+			for (size_t b = 0; b < Cycle_Buffer_Amount; b++) {
+				Cycle_Buffer[i].image_buf[b].trimBuffer();
+			}
+		}
+	}
+	// Clears buffer image to 0 | ImageBuffer.clearBuffer()
+	void clear_Cycle_Buffers() {
+		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		for (size_t i = 0; i < Cycle_Buffer_Count; i++) {
+			for (size_t b = 0; b < Cycle_Buffer_Amount; b++) {
+				Cycle_Buffer[i].image_buf[b].clearBuffer();
+			}
+		}
+	}
+	
+
+	std::mutex pDat_Buffer_Size_Mutex;
+	BufferBox pDat_BufSize = {NULL,0,0,3,0};
+	void write_Buffer_Size(BufferBox size) {
+		std::lock_guard<std::mutex> lock(pDat_Buffer_Size_Mutex);
+		pDat_BufSize.resX = size.resX;
+		pDat_BufSize.resY = size.resY;
+		pDat_BufSize.channels = size.channels;
+		pDat_BufSize.padding = size.padding;
+	}
+	BufferBox read_Buffer_Size() {
+		std::lock_guard<std::mutex> lock(pDat_Buffer_Size_Mutex);
+		return pDat_BufSize;
+	}
 
 std::mutex pDat_Render_Ready_Mutex;
 bool pDat_Render_Ready = false;
@@ -73,20 +153,6 @@ void write_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* sec
 
 /* Render Buffers */
 
-std::mutex pDat_Buffer_Size_Mutex;
-BufferBox pDat_BufSize = {NULL,0,0,3,0};
-void write_Buffer_Size(BufferBox size) {
-	std::lock_guard<std::mutex> lock(pDat_Buffer_Size_Mutex);
-	pDat_BufSize.resX = size.resX;
-	pDat_BufSize.resY = size.resY;
-	pDat_BufSize.channels = size.channels;
-	pDat_BufSize.padding = size.padding;
-}
-BufferBox read_Buffer_Size() {
-	std::lock_guard<std::mutex> lock(pDat_Buffer_Size_Mutex);
-	return pDat_BufSize;
-}
-
 std::mutex pDat_Render_Buffers_Mutex;
 BufferBox pDat_primary = {NULL,0,0,3,0};
 BufferBox pDat_secondary = {NULL,0,0,3,0};
@@ -144,8 +210,9 @@ std::mutex pDat_Image_Buffers_Mutex;
 ImageBuffer pDat_primaryImage = ImageBuffer(3);
 bool pDat_Image_Buffers_Read = false;
 
-int clearImage_Buffers() {
+int clear_Image_Buffers() {
 	std::lock_guard<std::mutex> lock(pDat_Image_Buffers_Mutex);
+	pDat_primaryImage.clearBuffer();
 	pDat_Image_Buffers_Read = false;
 	return 0;
 }
@@ -175,7 +242,6 @@ int write_Image_Buffers(ImageBuffer* primary) {
 	pDat_Image_Buffers_Read = true;
 	return 0;
 }
-
 
 /* Request */
 /*
@@ -230,4 +296,55 @@ void setRenderDelta(fp64 t) {
 fp64 getRenderDelta() {
 	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
 	return renderDelta;
+}
+
+/* Render Queue */
+
+std::mutex pDat_Render_Queue_Mutex;
+
+std::queue<Render_Item> Primary_Queue;
+std::queue<Render_Item> Secondary_Queue;
+
+std::queue<Render_Item>* getQueue(int group) {
+	switch (group) {
+		case Queue_Primary:
+		return &Primary_Queue;
+		case Queue_Secondary:
+		return &Secondary_Queue;
+		default:
+		return nullptr;
+	}
+}
+
+int Render_Queue_Length(int group) {
+	if (group >= Queue_Count) { return -1; }
+	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
+	return getQueue(group)->size();
+}
+
+int Render_Queue_Add(Render_Item item) {
+	if (item.group >= Queue_Count) { return -1; }
+	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
+	getQueue(item.group)->push(item);
+	return 0;
+}
+
+// Removes any item with a lower priority
+int Render_Queue_Flush(int group, int priority) {
+	if (group >= Queue_Count) { return -1; }
+	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
+	return 0;
+}
+
+// Take the next item in the queue
+int Render_Queue_Pop(int group, Render_Item* item) {
+	if (item == NULL) { return -1; }
+	if (group >= Queue_Count) { return -1; }
+	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
+	std::queue<Render_Item>* que = getQueue(group);
+	if (que->empty()) {
+		item = NULL;
+		return 1;
+	}
+	return 0;
 }

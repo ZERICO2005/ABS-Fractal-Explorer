@@ -6,6 +6,8 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 #include "Common_Def.h"
+#include "Program_Def.h"
+
 #include "buildCL.h"
 
 // Code below is version 1.0.2

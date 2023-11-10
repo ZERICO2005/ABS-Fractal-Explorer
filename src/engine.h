@@ -8,7 +8,9 @@
 
 #ifndef ENGINE_H
 #define ENGINE_H
+
 #include "Common_Def.h"
+#include "Program_Def.h"
 
 int setup_fracExp(int argc, char* argv[]);
 
