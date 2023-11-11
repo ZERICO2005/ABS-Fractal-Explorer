@@ -10,6 +10,36 @@
 #include "Program_Def.h"
 #include "programData.h"
 
+/* Update_Level */
+	std::mutex pDat_Update_Level_Mutex;
+	int pDat_Update_Level = Change_Level::Full_Reset;
+	uint64_t pDat_Update_Timecode = 0;
+
+	// Used to deterimine if rendering should pause, continue, or reset
+	int read_Update_Level() {
+		std::lock_guard<std::mutex> lock(pDat_Update_Level_Mutex);
+		return pDat_Update_Level;
+	}
+	uint64_t read_Update_Timecode() {
+		std::lock_guard<std::mutex> lock(pDat_Update_Level_Mutex);
+		return pDat_Update_Timecode;
+	}
+	// Stores the highest update level
+	void write_Update_Level(int level) {
+		std::lock_guard<std::mutex> lock(pDat_Update_Level_Mutex);
+		if (level == 0) {
+			return;
+		}
+		pDat_Update_Level = (level > pDat_Update_Level) ? level : pDat_Update_Level;
+		pDat_Update_Timecode = getNanoTime();
+		//printFlush("\nUpdate: %07llu",(pDat_Update_Timecode/1000) % 10000000);
+	}
+	// Used when render is complete
+	void clear_Update_Level() {
+		std::lock_guard<std::mutex> lock(pDat_Update_Level_Mutex);
+		pDat_Update_Level = 0;
+	}
+
 /* Cycle Buffer */
 	std::mutex pDat_Cycle_Mutex;
 
@@ -73,7 +103,6 @@
 			}
 		}
 	}
-	
 
 	std::mutex pDat_Buffer_Size_Mutex;
 	BufferBox pDat_BufSize = {NULL,0,0,3,0};
@@ -243,46 +272,6 @@ int write_Image_Buffers(ImageBuffer* primary) {
 	return 0;
 }
 
-/* Request */
-/*
-std::mutex pDat_Request_Mutex;
-
-bool pDat_Buffer_Ready = false;
-
-BufferBox pDat_BufCurrent;
-BufferBox pDat_Buf0;
-
-int receive_Buffer(BufferBox* prev, BufferBox* next) {
-	if (next == NULL) {
-		printError("BufferBox* next is NULL in receive_buffer()");
-		return -1;
-	}
-	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
-	if (pDat_Buffer_Ready == false) {
-		FREE(prev->vram);
-		next->vram = (uint8_t*)malloc(getBufferBoxSize(next));
-		return 0;
-	}
-	pDat_Buffer_Ready = false;
-	return 0;
-}
-
-int send_Buffer(BufferBox* buf) {
-	if (buf == NULL) {
-		printError("BufferBox* buf is NULL in send_buffer()");
-		return -1;
-	}
-	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
-
-	pDat_Buffer_Ready = true;
-}
-
-bool next_Buffer() {
-	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
-	pDat_Buffer_Ready = true;
-}
-*/
-
 /* Render Delta Time */
 
 std::mutex pDat_Request_Mutex;
@@ -296,55 +285,4 @@ void setRenderDelta(fp64 t) {
 fp64 getRenderDelta() {
 	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
 	return renderDelta;
-}
-
-/* Render Queue */
-
-std::mutex pDat_Render_Queue_Mutex;
-
-std::queue<Render_Item> Primary_Queue;
-std::queue<Render_Item> Secondary_Queue;
-
-std::queue<Render_Item>* getQueue(int group) {
-	switch (group) {
-		case Queue_Primary:
-		return &Primary_Queue;
-		case Queue_Secondary:
-		return &Secondary_Queue;
-		default:
-		return nullptr;
-	}
-}
-
-int Render_Queue_Length(int group) {
-	if (group >= Queue_Count) { return -1; }
-	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
-	return getQueue(group)->size();
-}
-
-int Render_Queue_Add(Render_Item item) {
-	if (item.group >= Queue_Count) { return -1; }
-	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
-	getQueue(item.group)->push(item);
-	return 0;
-}
-
-// Removes any item with a lower priority
-int Render_Queue_Flush(int group, int priority) {
-	if (group >= Queue_Count) { return -1; }
-	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
-	return 0;
-}
-
-// Take the next item in the queue
-int Render_Queue_Pop(int group, Render_Item* item) {
-	if (item == NULL) { return -1; }
-	if (group >= Queue_Count) { return -1; }
-	std::lock_guard<std::mutex> lock(pDat_Render_Queue_Mutex);
-	std::queue<Render_Item>* que = getQueue(group);
-	if (que->empty()) {
-		item = NULL;
-		return 1;
-	}
-	return 0;
 }

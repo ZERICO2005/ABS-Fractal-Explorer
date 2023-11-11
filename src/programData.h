@@ -43,6 +43,18 @@ struct Render_Task {
 	Fractal_Data fractal_data;
 }; typedef Render_Task Render_Task;
 
+/* Update Level */
+	namespace Change_Level {
+		enum Change_Level_Enum {Nothing,Refresh,Translation,Zoom,Jump,Minor_Reset,Major_Reset,Full_Reset,Change_Level_Count};
+	};
+	// Used to deterimine if rendering should pause, continue, or reset
+	int read_Update_Level();
+	uint64_t read_Update_Timecode();
+	// Stores the highest update level
+	void write_Update_Level(int level);
+	// Used when render is complete
+	void clear_Update_Level();
+
 /* Cycle Buffer */
 	enum Cycle_Buffer_Enum {Primary_Full, Primary_Preview, Secondary_Full, Secondary_Preview, Cycle_Buffer_Count};
 	bool next_Read_Cycle_Pos(ImageBuffer** ptr, int buf);

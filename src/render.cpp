@@ -329,6 +329,7 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		if (resY != NULL) { *resY = y; }
 		updateRenderData(&primaryRenderData);
 		updateRenderData(&secondaryRenderData);
+		write_Update_Level(Change_Level::Full_Reset);
 		Master.resizeBuffer(x,y,3);
 		if (texture != NULL) {
 			SDL_DestroyTexture(texture);
@@ -406,69 +407,89 @@ bool funcTimeDelay(Key_Function::Key_Function_Enum func, fp64 freq) {
 	return false;
 }
 
-void updateFractalParameters() {
+int updateFractalParameters() {
 	using namespace Key_Function;
+	using namespace Change_Level;
 	#define FRAC frac.type.abs_mandelbrot
 	static fp64 temp_maxItr = log2(FRAC.maxItr);
 	fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
 	fp64 moveDelta = (DeltaTime < 0.2) ? DeltaTime : 0.2;
+	
+	int update_level = Change_Level::Nothing;
+	#define Update_Level(level) update_level = ((level) > update_level) ? (level) : update_level
+
 	/* Boolean toggles */
 		#define paramToggle(func,toggle,freq) if (funcTimeDelay(func,freq)) { toggle = !toggle; }
+		#define paramToggleUpdate(func,toggle,freq,level) if (funcTimeDelay(func,freq)) { toggle = !toggle; Update_Level(level); }
 		paramToggle(toggleAdjustZoomToPower,FRAC.adjustZoomToPower,0.4);
-		paramToggle(toggleJulia,FRAC.juliaSet,0.4);
-		paramToggle(toggleABSandPolarMandelbrot,FRAC.polarMandelbrot,0.4);
+		paramToggleUpdate(toggleJulia,FRAC.juliaSet,0.4,Major_Reset);
+		paramToggleUpdate(toggleABSandPolarMandelbrot,FRAC.polarMandelbrot,0.4,Major_Reset);
 		paramToggle(toggleRelativeZValue,FRAC.relativeZValue,0.4);
 		paramToggle(toggleCursorZValue,FRAC.cursorZValue,0.4);
-		paramToggle(toggleStartingZ,FRAC.startingZ,0.4);
-		paramToggle(toggleIntegerPower,FRAC.integerPolarPower,0.4);
+		paramToggleUpdate(toggleStartingZ,FRAC.startingZ,0.4,Minor_Reset);
+		paramToggleUpdate(toggleIntegerPower,FRAC.integerPolarPower,0.4,Minor_Reset);
 		#undef paramToggle
 	/* Real and Imaginary Coordinates */
 		if (func_stat[incRealPos].triggered == true) {
 			moveCord(&FRAC.r, &FRAC.i, 0.0 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+			Update_Level(Translation);
 		}
 		if (func_stat[decRealPos].triggered == true) {
 			moveCord(&FRAC.r, &FRAC.i, 0.5 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+			Update_Level(Translation);
 		}
 		if (func_stat[incImagPos].triggered == true) {
 			moveCord(&FRAC.r, &FRAC.i, 0.25 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+			Update_Level(Translation);
 		}
 		if (func_stat[decImagPos].triggered == true) {
 			moveCord(&FRAC.r, &FRAC.i, 0.75 * TAU + FRAC.rot, 0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+			Update_Level(Translation);
 		}
 		if (funcTimeDelay(resetRealPos,0.2)) {
 			FRAC.r = 0.0;
+			Update_Level(Jump);
 		}
 		if (funcTimeDelay(resetImagPos,0.2)) {
 			FRAC.i = 0.0;
+			Update_Level(Jump);
 		}
 		valueLimit(FRAC.r,-10.0,10.0);
 		valueLimit(FRAC.i,-10.0,10.0);
 	/* Real and Imaginary Julia Z Coordinates */
 		if (func_stat[incZReal].triggered == true) {
 			moveCord(&FRAC.zr, &FRAC.zi, 0.0 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+			Update_Level(Translation);
 		}
 		if (func_stat[decZReal].triggered == true) {
 			moveCord(&FRAC.zr, &FRAC.zi, 0.5 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
+			Update_Level(Translation);
 		}
 		if (func_stat[incZImag].triggered == true) {
 			moveCord(&FRAC.zr, &FRAC.zi, 0.25 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+			Update_Level(Translation);
 		}
 		if (func_stat[decZImag].triggered == true) {
 			moveCord(&FRAC.zr, &FRAC.zi, 0.75 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY);
+			Update_Level(Translation);
 		}
 		if (funcTimeDelay(resetZReal,0.2)) {
 			FRAC.zr = 0.0;
+			Update_Level(Translation);
 		}
 		if (funcTimeDelay(resetZImag,0.2)) {
 			FRAC.zi = 0.0;
+			Update_Level(Translation);
 		}
 		if (FRAC.cursorZValue == true) {
 			if (FRAC.relativeZValue == true) {
 				fp64 resZ = (fp64)((Master.resX > Master.resY) ? Master.resY : Master.resX);
 				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
 				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
+				Update_Level(Minor_Reset);
 			} else {
 				pixel_to_coordinate(ImGui::GetMousePos().x,ImGui::GetMousePos().y - RESY_UI,&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData);
+				Update_Level(Minor_Reset);
 			}
 		}
 		valueLimit(FRAC.zr,-4.0,4.0);
@@ -476,12 +497,15 @@ void updateFractalParameters() {
 	/* Zoom */
 		if (func_stat[incZoom].triggered == true) {
 			FRAC.zoom += 0.2 * moveDelta;
+			Update_Level(Zoom);
 		}
 		if (func_stat[decZoom].triggered == true) {
 			FRAC.zoom -= 0.2 * moveDelta;
+			Update_Level(Zoom);
 		}
 		if (funcTimeDelay(resetZoom,0.2)) {
 			FRAC.zoom = zoomDefault(FRAC.power);
+			Update_Level(Jump);
 		}
 		valueLimit(FRAC.zoom,-20.0,40.0);
 		if (funcTimeDelay(resetCoordinates,0.2)) {
@@ -492,151 +516,194 @@ void updateFractalParameters() {
 				FRAC.zoom = zoomDefault((fp64)FRAC.power);
 			}
 			valueLimit(FRAC.zoom,-0.4,0.4);
+			Update_Level(Zoom);
 		}
 	/* maxItr */
 		if (func_stat[incMaxItr].triggered) {
 			temp_maxItr += 2.0 * moveDelta;
+			Update_Level(Minor_Reset);
 		}
 		if (func_stat[decMaxItr].triggered) {
 			temp_maxItr -= 2.0 * moveDelta;
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(resetMaxItr,0.2)) {
 			temp_maxItr = log2(192.0);
 			FRAC.maxItr = 192;
+			Update_Level(Minor_Reset);
 		}
 	/* Formula*/
 		if (funcTimeDelay(incFormula,1.0/10.0)) {
 			FRAC.formula++;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(decFormula,1.0/10.0)) {
 			FRAC.formula--;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(incFamily,1.0/10.0)) {
 			FRAC.formula += getABSValue(FRAC.power);
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(decFamily,1.0/10.0)) {
 			FRAC.formula -= getABSValue(FRAC.power);
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(resetFormula,0.2)) {
 			FRAC.formula = 0;
+			Update_Level(Major_Reset);
 		}
 	/* Power */
 		if (FRAC.polarMandelbrot == true) {
 			if (FRAC.integerPolarPower == true) {
 				if (funcTimeDelay(incPower,1.0/6.0)) {
 					FRAC.polarPower++;
+					Update_Level(Minor_Reset);
 				}
 				if (funcTimeDelay(decPower,1.0/6.0)) {
 					FRAC.polarPower--;
+					Update_Level(Minor_Reset);
 				}
 			} else {
 				if (func_stat[incPower].triggered) {
 					FRAC.polarPower += moveDelta * 1.0;
+					Update_Level(Minor_Reset);
 				}
 				if (func_stat[decPower].triggered) {
 					FRAC.polarPower -= moveDelta * 1.0;
+					Update_Level(Minor_Reset);
 				}
 			}
 			
 			if (funcTimeDelay(resetPower,0.2)) {
 				FRAC.polarPower = 3.0;
+				Update_Level(Minor_Reset);
 			}
 			if (funcTimeDelay(roundPower,0.2)) {
 				FRAC.polarPower = round(FRAC.polarPower);
+				Update_Level(Minor_Reset);
 			}
 			if (funcTimeDelay(floorPower,0.2)) {
 				FRAC.polarPower = floor(FRAC.polarPower);
+				Update_Level(Minor_Reset);
 			}
 			if (funcTimeDelay(ceilingPower,0.2)) {
 				FRAC.polarPower = ceil(FRAC.polarPower);
+				Update_Level(Minor_Reset);
 			}
 		} else {
 			if (funcTimeDelay(incPower,1.0/6.0)) {
 				FRAC.power++;
+				Update_Level(Minor_Reset);
 			}
 			if (funcTimeDelay(decPower,1.0/6.0)) {
 				FRAC.power--;
+				Update_Level(Minor_Reset);
 			}
 			if (funcTimeDelay(resetPower,0.2)) {
 				FRAC.power = 2;
+				Update_Level(Minor_Reset);
 			}
 			FRAC.formula = limitFormulaID(FRAC.power,FRAC.formula);
 		}
 	/* Rotations */
 		if (func_stat[counterclockwiseRot].triggered) {
 			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
+			Update_Level(Minor_Reset);
 		}
 		if (func_stat[clockwiseRot].triggered) {
 			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(clockwiseRot90,0.3)) {
 			FRAC.rot += (TAU * (90.0/360.0));
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(counterclockwiseRot90,0.3)) {
 			FRAC.rot -= (TAU * (90.0/360.0));
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(rotate180,0.3)) {
 			FRAC.rot += (TAU * (180.0/360.0));
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(clockwiseRotStep,1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(counterclockwiseRotStep,1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(clockwiseRotPower,1.0/6.0)) {
 			FRAC.rot += (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(counterclockwiseRotPower,1.0/6.0)) {
 			FRAC.rot -= (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(resetRotation,0.2)) {
 			FRAC.rot = 0.0;
+			Update_Level(Minor_Reset);
 		}
 		FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
 	/* Transformations */
 		if (func_stat[incStretch].triggered) {
 			FRAC.stretch += 1.0 * moveDelta;
+			Update_Level(Zoom);
 		}
 		if (func_stat[decStretch].triggered) {
 			FRAC.stretch -= 1.0 * moveDelta;
+			Update_Level(Zoom);
 		}
 		if (funcTimeDelay(resetStretch,0.2)) {
 			FRAC.stretch = 0.0;
+			Update_Level(Jump);
 		}
 		if (funcTimeDelay(resetTransformations,0.2)) {
 			FRAC.rot = 0.0;
 			FRAC.stretch = 0.0;
+			Update_Level(Minor_Reset);
 		}
 	/* Breakout Value */
 		if (func_stat[incBreakout].triggered) {
 			temp_breakoutValue += 2.0 * moveDelta;
+			Update_Level(Minor_Reset);
 		}
 		if (func_stat[decBreakout].triggered) {
 			temp_breakoutValue -= 2.0 * moveDelta;
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(resetBreakout,0.2)) {
 			temp_breakoutValue = log2(16777216.0);
+			Update_Level(Minor_Reset);
 		}
 	/* Rendering */
 		if (funcTimeDelay(incSubSample,1.0/6.0)) {
 			primaryRenderData.subSample++;
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(decSubSample,1.0/6.0)) {
 			primaryRenderData.subSample--;
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(resetSubSample,0.2)) {
 			primaryRenderData.subSample = 1;
+			Update_Level(Minor_Reset);
 		}
 		valueLimit(primaryRenderData.subSample,1,24);
 		if (funcTimeDelay(incSuperSample,1.0/6.0)) {
 			primaryRenderData.sample++;
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(decSuperSample,1.0/6.0)) {
 			primaryRenderData.sample--;
+			Update_Level(Minor_Reset);
 		}
 		if (funcTimeDelay(resetSuperSample,0.2)) {
 			primaryRenderData.sample = 1;
+			Update_Level(Minor_Reset);
 		}
 		valueLimit(primaryRenderData.sample,1,24);
 	/* Rendering Method */
@@ -645,30 +712,37 @@ void updateFractalParameters() {
 		if (funcTimeDelay(fp32CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 32;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(fp64CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 64;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(fp80CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 80;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(fp128CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 128;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(fp16GpuRendering,0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 16;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(fp32GpuRendering,0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 32;
+			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(fp64GpuRendering,0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 64;
+			Update_Level(Major_Reset);
 		}
 	}
 	/* Other */
@@ -713,6 +787,8 @@ void updateFractalParameters() {
 			exportSuperScreenshot();
 		}
 	#undef FRAC
+	write_Update_Level(update_level);
+	return update_level;
 }
 
 #define BufAndLen(x) x,ARRAY_LENGTH(x)
@@ -799,7 +875,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 			}
 		}
 	}
-
 
 	ImGui::Separator();
 	uint32_t boxSpace = 8;
@@ -1472,6 +1547,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
 	TimerBox frameTimer = TimerBox(1.0/FRAME_RATE);
 	TimerBox maxFrameReset = TimerBox(1.0/5.0); /* Keeps track of longest frame times */
+	write_Update_Level(Change_Level::Full_Reset);
 	while (QUIT_FLAG == false) {
 		{ // Accesses ABORT_RENDERING only when Abort_Rendering_Flag changes to reduce unnecessary accesses
 			static bool Abort_Rendering_Change = Abort_Rendering_Flag;
@@ -1557,9 +1633,9 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			} else {
 				yeildTimeNano = FRAME_RATE_NANO - yeildTimeNano;
 			}
+			windowResizingCode();
 			updateFractalParameters();
 			write_Parameters(&frac,&primaryRenderData,&secondaryRenderData);
-			windowResizingCode();
 			newFrame();
 		}
 	}
