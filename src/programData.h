@@ -45,7 +45,7 @@ struct Render_Task {
 
 /* Update Level */
 	namespace Change_Level {
-		enum Change_Level_Enum {Nothing,Refresh,Translation,Zoom,Jump,Minor_Reset,Major_Reset,Full_Reset,Change_Level_Count};
+		enum Change_Level_Enum {Nothing,Refresh,Translation,Zoom,Jump,Minor_Reset,Method_of_Rendering,Rotation,Major_Reset,Full_Reset,Change_Level_Count};
 	};
 	// Used to deterimine if rendering should pause, continue, or reset
 	int read_Update_Level();

@@ -418,6 +418,9 @@ int updateFractalParameters() {
 	int update_level = Change_Level::Nothing;
 	#define Update_Level(level) update_level = ((level) > update_level) ? (level) : update_level
 
+	/* Magic Constants */
+		#define ABS_Mandelbrot_Default_Power 2
+		#define Polar_Mandelbrot_Default_Power 3.0
 	/* Boolean toggles */
 		#define paramToggle(func,toggle,freq) if (funcTimeDelay(func,freq)) { toggle = !toggle; }
 		#define paramToggleUpdate(func,toggle,freq,level) if (funcTimeDelay(func,freq)) { toggle = !toggle; Update_Level(level); }
@@ -550,8 +553,10 @@ int updateFractalParameters() {
 			Update_Level(Major_Reset);
 		}
 		if (funcTimeDelay(resetFormula,0.2)) {
+			if (FRAC.formula == 0) {
+				Update_Level(Major_Reset);
+			}
 			FRAC.formula = 0;
-			Update_Level(Major_Reset);
 		}
 	/* Power */
 		if (FRAC.polarMandelbrot == true) {
@@ -576,76 +581,86 @@ int updateFractalParameters() {
 			}
 			
 			if (funcTimeDelay(resetPower,0.2)) {
-				FRAC.polarPower = 3.0;
-				Update_Level(Minor_Reset);
+				if (FRAC.polarPower != Polar_Mandelbrot_Default_Power) {
+					Update_Level(Minor_Reset);
+				}
+				FRAC.polarPower = Polar_Mandelbrot_Default_Power;
 			}
 			if (funcTimeDelay(roundPower,0.2)) {
+				if (FRAC.polarPower != round(FRAC.polarPower)) {
+					Update_Level(Minor_Reset);
+				}
 				FRAC.polarPower = round(FRAC.polarPower);
-				Update_Level(Minor_Reset);
 			}
 			if (funcTimeDelay(floorPower,0.2)) {
+				if (FRAC.polarPower != floor(FRAC.polarPower)) {
+					Update_Level(Minor_Reset);
+				}
 				FRAC.polarPower = floor(FRAC.polarPower);
-				Update_Level(Minor_Reset);
 			}
 			if (funcTimeDelay(ceilingPower,0.2)) {
+				if (FRAC.polarPower != ceil(FRAC.polarPower)) {
+					Update_Level(Minor_Reset);
+				}
 				FRAC.polarPower = ceil(FRAC.polarPower);
-				Update_Level(Minor_Reset);
 			}
 		} else {
 			if (funcTimeDelay(incPower,1.0/6.0)) {
 				FRAC.power++;
-				Update_Level(Minor_Reset);
+				Update_Level(Major_Reset);
 			}
 			if (funcTimeDelay(decPower,1.0/6.0)) {
 				FRAC.power--;
-				Update_Level(Minor_Reset);
+				Update_Level(Major_Reset);
 			}
 			if (funcTimeDelay(resetPower,0.2)) {
-				FRAC.power = 2;
-				Update_Level(Minor_Reset);
+				if (FRAC.power != ABS_Mandelbrot_Default_Power) {
+					Update_Level(Major_Reset);
+				}
+				FRAC.power = ABS_Mandelbrot_Default_Power;
 			}
 			FRAC.formula = limitFormulaID(FRAC.power,FRAC.formula);
 		}
 	/* Rotations */
 		if (func_stat[counterclockwiseRot].triggered) {
 			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (func_stat[clockwiseRot].triggered) {
 			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch);
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(clockwiseRot90,0.3)) {
 			FRAC.rot += (TAU * (90.0/360.0));
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(counterclockwiseRot90,0.3)) {
 			FRAC.rot -= (TAU * (90.0/360.0));
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(rotate180,0.3)) {
 			FRAC.rot += (TAU * (180.0/360.0));
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(clockwiseRotStep,1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(counterclockwiseRotStep,1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(clockwiseRotPower,1.0/6.0)) {
 			FRAC.rot += (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(counterclockwiseRotPower,1.0/6.0)) {
 			FRAC.rot -= (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		if (funcTimeDelay(resetRotation,0.2)) {
 			FRAC.rot = 0.0;
-			Update_Level(Minor_Reset);
+			Update_Level(Rotation);
 		}
 		FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
 	/* Transformations */
@@ -712,37 +727,37 @@ int updateFractalParameters() {
 		if (funcTimeDelay(fp32CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 32;
-			Update_Level(Major_Reset);
+			Update_Level(Method_of_Rendering);
 		}
 		if (funcTimeDelay(fp64CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 64;
-			Update_Level(Major_Reset);
+			Update_Level(Method_of_Rendering);
 		}
 		if (funcTimeDelay(fp80CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 80;
-			Update_Level(Major_Reset);
+			Update_Level(Method_of_Rendering);
 		}
 		if (funcTimeDelay(fp128CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 128;
-			Update_Level(Major_Reset);
+			Update_Level(Method_of_Rendering);
 		}
 		if (funcTimeDelay(fp16GpuRendering,0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 16;
-			Update_Level(Major_Reset);
+			Update_Level(Method_of_Rendering);
 		}
 		if (funcTimeDelay(fp32GpuRendering,0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 32;
-			Update_Level(Major_Reset);
+			Update_Level(Method_of_Rendering);
 		}
 		if (funcTimeDelay(fp64GpuRendering,0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 64;
-			Update_Level(Major_Reset);
+			Update_Level(Method_of_Rendering);
 		}
 	}
 	/* Other */
@@ -1920,12 +1935,10 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 		printWarning("ImageBuffer* image is below minimum resolution: %ux%u",image->resX,image->resY);
 		return 1;
 	}
-	i32 fx0; i32 fy0;
-	i32 fx1; i32 fy1;
-	
+	i32 fx0 = 0; i32 fy0 = 0;
+	i32 fx1 = 0; i32 fy1 = 0;
 	coordinate_to_pixel(image->x00 - FRAC.r,image->y00 - FRAC.i,&fx0,&fy0,&FRAC,ren);
 	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&fx1,&fy1,&FRAC,ren);
-	
 	if (fx0 > fx1) { i32 temp = fx0; fx0 = fx1; fx1 = temp; }
 	if (fy0 > fy1) { i32 temp = fy0; fy0 = fy1; fy1 = temp; }
 	i32 fxA = (fx0 + fx1) / 2;

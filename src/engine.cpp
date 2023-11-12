@@ -113,6 +113,9 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 				deltaTime = fracTime.getDeltaTime();
 				setRenderDelta(deltaTime);
 			}
+			if (render_update_timecode == read_Update_Timecode() && ABORT_RENDERING == false) {
+				clear_Update_Level();
+			}
 			if (read_Abort_Render_Ongoing() == true) {
 				write_Abort_Render_Ongoing(false);
 			}
