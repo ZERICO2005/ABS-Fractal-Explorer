@@ -18,7 +18,6 @@ class ImageBuffer {
 		uint32_t resX;
 		uint32_t resY;
 		uint8_t channels;
-		uint32_t subSample;
 		// No Initialization
 		ImageBuffer();
 		// Minimal Initialization
@@ -29,6 +28,7 @@ class ImageBuffer {
 		ImageBuffer(uint8_t* Vram, uint32_t ResX, uint32_t ResY, uint8_t Channels);
 		void deleteBuffer();
 		bool allocated(); // Returns if buffer is allocated
+		bool bufferSafe(); // Returns if the buffer is safe to write to
 		void reallocateBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels);
 		void resizeBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels); // Reallocates buffer only if more memory is needed
 		void trimBuffer(); // Reallocates buffer to current image size

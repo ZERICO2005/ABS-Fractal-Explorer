@@ -64,17 +64,24 @@ void blitBuffer(
 	uint32_t srcX, uint32_t srcY,
 	uint32_t dstX, uint32_t dstY
 ) {
-	uint32_t sz = (srcY * srcPitch) + (srcX * channels);
-	uint32_t dz = (dstY * dstPitch) + (dstX * channels);
+	//uint64_t stopWatch = getNanoTime();
+	uint32_t srcPtr = (srcY * srcPitch) + (srcX * channels);
+	uint32_t dstPtr = (dstY * dstPitch) + (dstX * channels);
 	uint32_t srcJump = srcPitch - (sizeX * channels);
 	uint32_t dstJump = dstPitch - (sizeX * channels);
+	uint32_t copySize = (sizeX * channels);
 	for (uint32_t y = 0; y < sizeY; y++) {
-		for (uint32_t x = 0; x < sizeX * channels; x++) {
-			dstBuf[dz] = srcBuf[sz]; dz++; sz++;
+		/*for (uint32_t x = 0; x < sizeX * channels; x++) {
+			dstBuf[dstPtr] = srcBuf[srcPtr]; dstPtr++; srcPtr++;
 		}
-		sz += srcJump;
-		dz += dstJump;
+		srcPtr += srcJump;
+		dstPtr += dstJump;*/
+		memcpy(&dstBuf[dstPtr],&srcBuf[srcPtr],copySize);
+		srcPtr += srcPitch;
+		dstPtr += dstPitch;
 	}
+	//uint64_t endTime = getNanoTime() - stopWatch;
+	//printfInterval(0.6,"\nFunc: %.3lfms\n",NANO_TO_SECONDS(endTime) * 1000.0);
 }
 
 /* buf{src, dst}, src{cord, size}, dst{cord, size}, allowClipping | Copies a portion of Src buffer to a portion of Dst */
@@ -130,6 +137,7 @@ void copyBuffer(
 		if (dx0 + dx1 > bufDst.resX || dy0 + dy1 > bufDst.resY) { return; } /* Positive Dst OOB */
 		if (sx1 > dx1 || sy1 > dy1) { return; } /* Src is larger than Dst */
 	}
+	
 	blitBuffer(
 		bufSrc.vram,bufDst.vram,
 		getBufferBoxPitch(&bufSrc),getBufferBoxPitch(&bufDst),(uint32_t)bufDst.channels,

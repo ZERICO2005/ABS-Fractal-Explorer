@@ -17,6 +17,7 @@
 #include "fracExpKB.h"
 #include "fileManager.h"
 #include "imageBuffer.h"
+#include "imageTransform.h"
 
 #include <SDL2/SDL.h>
 
@@ -47,7 +48,7 @@ ImageBuffer* Secondary_Image_Preview = nullptr;
 fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 const fp64 FRAME_RATE_OFFSET = 0.01;
 uint64_t FRAME_RATE_NANO;
-#define  Default_Frame_Rate_Multiplier 2.0
+#define  Default_Frame_Rate_Multiplier 1.0
 const uint8_t color_square_divider = 2; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
@@ -73,6 +74,12 @@ uint64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
 Fractal_Data frac;
 Render_Data primaryRenderData;
 Render_Data secondaryRenderData;
+#define default_Super_Screenshot_ResX 3840
+#define default_Super_Screenshot_ResY 2160
+#define default_Super_Screenshot_Sample 4
+#define default_Super_Screenshot_MaxItr 65536
+Render_Data primarySuperRenderData;
+Render_Data secondarySuperRenderData;
 
 // ImageBuffer primaryFracImage;
 // ImageBuffer secondaryFracImage;
@@ -121,6 +128,19 @@ void initRenderData(Render_Data* rDat) {
 		rDat->CPU_Threads = (uint32_t)std::thread::hardware_concurrency() - 1;
 	}
 	rDat->GPU_Precision = 32;
+}
+
+void Bootup_initRenderData() {
+	initRenderData(&primaryRenderData);
+	initRenderData(&secondaryRenderData);
+	initRenderData(&primarySuperRenderData);
+	initRenderData(&secondarySuperRenderData);
+	primarySuperRenderData.resX = default_Super_Screenshot_ResX;
+	primarySuperRenderData.resY = default_Super_Screenshot_ResY;
+	primarySuperRenderData.sample = default_Super_Screenshot_ResY;
+	secondarySuperRenderData.resX = default_Super_Screenshot_ResX;
+	secondarySuperRenderData.resY = default_Super_Screenshot_ResY;
+	secondarySuperRenderData.sample = default_Super_Screenshot_ResY;
 }
 
 /* Keyboard and Scancodes */
@@ -457,8 +477,8 @@ int updateFractalParameters() {
 			FRAC.i = 0.0;
 			Update_Level(Jump);
 		}
-		valueLimit(FRAC.r,-10.0,10.0);
-		valueLimit(FRAC.i,-10.0,10.0);
+		valueLimit(FRAC.r,-100000.0,100000.0);
+		valueLimit(FRAC.i,-100000.0,100000.0);
 	/* Real and Imaginary Julia Z Coordinates */
 		if (func_stat[incZReal].triggered == true) {
 			moveCord(&FRAC.zr, &FRAC.zi, 0.0 * TAU + FRAC.rot, 0.3 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX);
@@ -1024,7 +1044,15 @@ void Menu_Fractal() {
 			ImGui::Checkbox("Integer Powers",&FRAC.integerPolarPower);
 		}
 		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
-		static fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
+		// fp32 temp_input_maxItr = (fp32)log2(FRAC.maxItr);
+		// ImGui::Text("Maximum Iterations: %u",FRAC.maxItr);
+		// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
+		// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
+		// valueLimit(FRAC.maxItr,16,16777216); valueLimit(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
+		
+		ImGui::Text(" ");
+		
+		fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
 		if (FRAC.breakoutValue < 100.0) {
 			ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
 		} else {
@@ -1280,6 +1308,39 @@ void Menu_Settings() {
 		{ ImGui::Text("Very High Quality (Recommended)"); }
 	}
 
+	ImGui::Separator();
+	ImGui::Text("Note: Super Screenshots are not implemented yet, and will only trigger the regular screenshot function. The following settings will be ignored");
+	ImGui::Text(" ");
+	ImGui::Text("Super Screenshot Settings:");
+	static int32_t super_screenshot_resX = default_Super_Screenshot_ResX;
+	static int32_t super_screenshot_resY = default_Super_Screenshot_ResY;
+	static int32_t super_screenshot_super_sample = default_Super_Screenshot_Sample;
+	static int32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
+	static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
+
+	ImGui::Text("Maximum Iterations: %d",super_screenshot_maxItr);
+	ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
+	super_screenshot_maxItr = (int32_t)(pow(2.0f,temp_super_screenshot_maxItr));
+	valueLimit(super_screenshot_maxItr,16,16777216); valueLimit(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
+
+	ImGui::Text("Resolution X:");
+	ImGui::InputInt("##super_screenshot_resX",&super_screenshot_resX,16,64);
+	super_screenshot_resX &= 0x7FFFFFFC; // Multiple of 4
+	valueLimit(super_screenshot_resX,64,65536); valueMaximum(super_screenshot_resX,INT_MAX / super_screenshot_resY / 3);
+	ImGui::Text("Resolution Y:");
+	ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
+	valueLimit(super_screenshot_resY,64,65536); valueMaximum(super_screenshot_resY,INT_MAX / super_screenshot_resX / 3);
+
+	ImGui::Text("Samples per pixel: %d",super_screenshot_super_sample * super_screenshot_super_sample);
+	ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
+	size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
+	size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
+	ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+	
+	if (ImGui::Button("Take Super Screenshot")) {
+		//exportSuperScreenshot();
+		exportScreenshot();
+	}
 	ImGui::End();
 }
 
@@ -1351,9 +1412,9 @@ void Menu_Keybinds() {
 		// ImGui::Text("size = %d x %d", kBuf.resX, kBuf.resY);
 		// ImGui::Text("Cursor Position: %d,%d",kCurX,kCurY);
 		ImGui::Text("Clicked Key: %s",Scancode_Name[keyClick]);
+		size_t funcCount = 0;
 		if (keyClick != SDL_SCANCODE_UNKNOWN) {
 			using namespace Key_Function;
-			size_t funcCount = 0;
 			for (const auto& bind : currentKeyBind) {
 				if (bind.key == keyClick) {
 					funcCount++;
@@ -1406,13 +1467,15 @@ void Menu_Keybinds() {
 					printError("addKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
 				}
 			}
-			ImGui::SameLine(); 
-			if(ImGui::Button("Clear Key-bind")) {
-				if (removeKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
-					recolorKeyboard();
-					Combo_functionSelect = Key_Function::NONE;
-				} else {
-					printError("removeKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
+			if (funcCount != 0) {
+				ImGui::SameLine();
+				if(ImGui::Button("Clear Key-bind")) {
+					if (removeKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
+						recolorKeyboard();
+						Combo_functionSelect = Key_Function::NONE;
+					} else {
+						printError("removeKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
+					}
 				}
 			}
 		} else {
@@ -1504,13 +1567,14 @@ void Menu_Keybinds() {
 }
 
 int render_IMGUI() {
-
+	if (window == nullptr) {
+		printError("render_IMGUI(): window == nullptr");
+	}
 	ImGui_ImplSDLRenderer2_NewFrame();
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos({0,0});
 	ImGui::SetNextWindowSize({(fp32)Master.resX,(fp32)RESY_UI});
-	
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoTitleBar;
 	window_flags |= ImGuiWindowFlags_NoResize;
@@ -1540,13 +1604,15 @@ int render_IMGUI() {
 		ShowTheXButton = true;
 	}
 
-
+	
 	ImGui::Render();
 	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
-	SDL_RenderPresent(renderer);
-	SDL_DestroyTexture(kTexture);
+	
+	//SDL_RenderPresent(renderer); // Redundant
 	return 0;
 }
+
+bool bootup_Fractal_Frame_Rendered = false;
 
 int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
 	/*
@@ -1660,7 +1726,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 
 int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
-	if (initResX == NULL || initResY == NULL || initPosX == NULL || initPosY == NULL) {
+	if (initResX == nullptr || initResY == nullptr || initPosX == nullptr || initPosY == nullptr) {
 		printError("Unable to get Display Info, NULL parameters");
 		return -1;
 	}
@@ -1672,7 +1738,7 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 		return -1;
 	}
 	DisplayList = (DisplayInfo*)malloc(DISPLAY_COUNT * sizeof(DisplayInfo));
-	if (DisplayList == NULL) {
+	if (DisplayList == nullptr) {
 		FREE(DisplayList);
 		printError("Unable to allocate memory for DisplayList");
 		return -1;
@@ -1737,7 +1803,11 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 }
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
-	SDL_Init(SDL_INIT_VIDEO);
+	//SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
+		return -1;
+	}
 	printf("\nSystem Information:");
 	int32_t initResX, initResY, initPosX, initPosY;
 	if (setupDisplayInfo(&initResX,&initResY,&initPosX,&initPosY) < 0) {
@@ -1771,7 +1841,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
 			DisplayInfo* disp = getCurrentDisplayInfo();
-			if (disp != NULL) {
+			if (disp != nullptr) {
 				FRAME_RATE = disp->refreshRate * Default_Frame_Rate_Multiplier;
 			}
 		#endif
@@ -1783,12 +1853,12 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	// Allocate Buffers
 	//initBufferBox(&Master,NULL,initResX,initResY,3);
 	Master = ImageBuffer(initResX,initResY,3);
-	initBufferBox(&TestGraphic,NULL,Master.resX,Master.resY - RESY_UI,3);
+	initBufferBox(&TestGraphic,nullptr,Master.resX,Master.resY - RESY_UI,3);
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
 	window = SDL_CreateWindow(PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
-	write_Buffer_Size({NULL,Master.resX,Master.resY - RESY_UI,3,0});
+	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,3,0});
 	// IMGUI
 	IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -1800,16 +1870,23 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	
 	setDefaultParameters(&frac,Fractal_ABS_Mandelbrot);
-	initRenderData(&primaryRenderData);
-	initRenderData(&secondaryRenderData);
-	if (texture != NULL) {
+	Bootup_initRenderData();
+	if (texture != nullptr) {
 		SDL_DestroyTexture(texture);
 	}
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	initKeys();
 	cleanKeyBind(&currentKeyBind);
+	bootup_Fractal_Frame_Rendered = false;
 	write_Render_Ready(true);
+	while (read_Engine_Ready() == false) {
+		if (QUIT_FLAG == true) {
+			printWarning("Render thread exiting initialization: QUIT_FLAG == true");
+			return -1;
+		}
+		std::this_thread::yield();
+	}
 	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	return 0;
 }
@@ -1860,6 +1937,10 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 }
 
 void renderAbortGraphic(fp64 speed) {
+	if (printValidateBufferBox(&TestGraphic) == false) {
+		printError("renderAbortGraphic() failed");
+		return;
+	}
 	static fp64 f = 0.0;
 	f += DeltaTime * speed;
 	uint32_t w = (uint32_t)(f * (256.0));
@@ -1874,6 +1955,10 @@ void renderAbortGraphic(fp64 speed) {
 }
 
 void renderPauseGraphic(fp64 speed) {
+	if (printValidateBufferBox(&TestGraphic) == false) {
+		printError("renderPauseGraphic() failed");
+		return;
+	}
 	static fp64 f = 0.0;
 	f += DeltaTime * speed;
 	uint32_t w = (uint32_t)(f * (256.0));
@@ -1888,6 +1973,10 @@ void renderPauseGraphic(fp64 speed) {
 }
 
 void renderLoadingGraphic(fp64 speed) {
+	if (printValidateBufferBox(&TestGraphic) == false) {
+		printError("renderLoadingGraphic() failed");
+		return;
+	}
 	static fp64 f = 0.0;
 	f += DeltaTime * speed;
 	uint32_t w = (uint32_t)(f * (256.0));
@@ -1902,10 +1991,11 @@ void renderLoadingGraphic(fp64 speed) {
 }
 
 bool exportFractalBuffer = false;
+bool exportSuperFractalBuffer = false;
 
 int exportScreenshot() {
 	static uint64_t resetTime = 0;
-	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5)) {
+	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportFractalBuffer == false) {
 		resetTime = getNanoTime();
 		exportFractalBuffer = true;
 		printFlush("\nTaking Screenshot");
@@ -1914,21 +2004,23 @@ int exportScreenshot() {
 }
 int exportSuperScreenshot() {
 	static uint64_t resetTime = 0;
-	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5)) {
+	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportSuperFractalBuffer == false) {
 		resetTime = getNanoTime();
-		exportFractalBuffer = true;
+		exportSuperFractalBuffer = true;
 	}
 	return 0;
 }
 
-SDL_Texture* scale_tex = NULL;
-SDL_Surface* scale_surface = NULL;
+#define Use_OpenCV_Scaler
+
+SDL_Texture* scale_tex = nullptr;
+SDL_Surface* scale_surface = nullptr;
 
 int displayFracImage(ImageBuffer* image, Render_Data* ren) {
-	if (image == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
-	if (image->vram == NULL ) { printError("ImageBuffer* image->vram is NULL"); return -1; }
+	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
+	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
-	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
+	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	#define FRAC frac.type.abs_mandelbrot
 	static const uint32_t minimumImageResolution = 2;
 	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
@@ -1963,7 +2055,74 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	return 0;
 }
 
+int transformFracImage(ImageBuffer* image, Render_Data* ren) {
+	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
+	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
+	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
+	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
+	#define FRAC frac.type.abs_mandelbrot
+	static const uint32_t minimumImageResolution = 2;
+	BufferBox blit;
+	BufferBox temp_MASTER;
+	Master.getBufferBox(&temp_MASTER);
+	if (validateBufferBox(&temp_MASTER) == false) {
+		printError("Invalid temp_MASTER BufferBox");
+		return -1;
+	}
+
+	i32 dx00 = 0; i32 dy00 = 0; i32 dx11 = 0; i32 dy11 = 0;
+	i32 dx01 = 0; i32 dy01 = 0; i32 dx10 = 0; i32 dy10 = 0;
+	coordinate_to_pixel(image->x00 - FRAC.r,image->y00 - FRAC.i,&dx00,&dy00,&FRAC,ren);
+	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&dx11,&dy11,&FRAC,ren);
+	coordinate_to_pixel(image->x01 - FRAC.r,image->y01 - FRAC.i,&dx01,&dy01,&FRAC,ren);
+	coordinate_to_pixel(image->x10 - FRAC.r,image->y10 - FRAC.i,&dx10,&dy10,&FRAC,ren);
+	int32_t resX = (i32)(image->resX);
+	int32_t resY = (i32)(image->resY);
+	i32 sx00 = 0; i32 sy00 = 0;
+	i32 sx11 = resX; i32 sy11 = resY;
+	i32 sx01 = 0; i32 sy01 = resY;
+	i32 sx10 = resX; i32 sy10 = 0;
+	// image->printTransformationData(0.6);
+	// printfInterval(0.6,"\nsrc: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
+	// printfInterval(0.6,"\ndst: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
+	if (
+		Image_Scaler_Parallelogram(
+			&blit, image, ren,
+			sx00, sy00,
+			sx01, sy01, sx10, sy10,
+			dx00, dy00,
+			dx01, dy01, dx10, dy10
+		) == -1
+	) {
+		printError("\nscaleImage failed");
+		return -1;
+	}
+	// if (
+	// 	Image_Scaler_Quadrilateral(
+	// 		&blit, image,
+	// 		sx00, sy00, sx11, sy11,
+	// 		sx01, sy01, sx10, sy10,
+	// 		dx00, dy00, dx11, dy11,
+	// 		dx01, dy01, dx10, dy10
+	// 	) == -1
+	// ) {
+	// 	printError("\nscaleImage failed");
+	// 	return -1;
+	// }
+	//printfInterval(0.6,"\n%p: %ux%u %uC %uP",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
+	//uint64_t stopWatch = getNanoTime();
+	copyBuffer(blit,temp_MASTER,0,RESY_UI,true);
+	//printfInterval(0.6,"\nFunc: %.3lfms\n",NANO_TO_SECONDS(getNanoTime() - stopWatch) * 1000.0);
+	FREE(blit.vram);
+	#undef FRAC
+	return 0;
+}
+
 void newFrame() {
+	if (Master.bufferSafe() == false) {
+		printError("Master ImageBuffer is invalid");
+		return;
+	}
 	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) {
 		#define FRAC frac.type.abs_mandelbrot
 		Master.clearBuffer(
@@ -1975,10 +2134,21 @@ void newFrame() {
 	} else {
 		Master.clearBuffer();
 	}
-	bool primaryBufferChange = next_Read_Cycle_Pos(&Primary_Image,Primary_Full);
-	bool primaryBufferValid = (Primary_Image == nullptr || Primary_Image->vram == nullptr || Primary_Image->allocated() == false) ? false : true;
-	//int primaryBufState = read_Image_Buffers(&primaryFracImage);
-	//printfChange(int,primaryBufState,"\nprimaryBufState: %d",primaryBufState);
+
+	if (exportSuperFractalBuffer == true) {
+		exportSuperFractalBuffer = false;
+	}
+
+	int primaryBufferChange = next_Read_Cycle_Pos(&Primary_Image,Primary_Full);
+	bool primaryBufferValid = (primaryBufferChange < 0 || Primary_Image == nullptr || Primary_Image->bufferSafe() == false) ? false : true;
+	
+	/* Temporary code that will force the rendering Engine to Update at bootup */
+	if (primaryBufferValid == true) {
+		bootup_Fractal_Frame_Rendered = true;
+	} else if (bootup_Fractal_Frame_Rendered == false) {
+		write_Update_Level(Change_Level::Full_Reset);
+	}
+
 	if (Abort_Rendering_Flag == true) {
 		primaryBufferValid = false;
 		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
@@ -1998,21 +2168,26 @@ void newFrame() {
 		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
 		exportFractalBuffer = false;
 	}
-
-	SDL_UpdateTexture(texture, NULL, Master.vram, Master.resX * Master.channels);
+	#ifdef Use_OpenCV_Scaler
+		if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
+			int scaleRet = transformFracImage(Primary_Image,&primaryRenderData);
+			printfChange(int,scaleRet,"\ntransformFracImage: %d",scaleRet);
+		}
+	#endif
+	SDL_UpdateTexture(texture, nullptr, Master.vram, Master.resX * Master.channels);
 	{
 		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
 		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};
 		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
 	}
-	
 	if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
 		BufferBox temp_primaryBox;
 		Primary_Image->getBufferBox(&temp_primaryBox);
-		//primaryFracImage.printTransformationData();
-		//copyBuffer(temp_primaryBox,Master,0,RESY_UI,false);
-		int dispRet = displayFracImage(Primary_Image,&primaryRenderData);
-		printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
+
+		#ifndef Use_OpenCV_Scaler
+			int dispRet = displayFracImage(Primary_Image,&primaryRenderData);
+			printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
+		#endif
 		if (exportFractalBuffer == true) {
 			uint64_t curTime = getNanoTime();
 			size_t size = snprintf(NULL,0,"%s_%llu",frac.type_name,curTime);
@@ -2041,4 +2216,5 @@ void newFrame() {
 	}
 	render_IMGUI();
 	SDL_RenderPresent(renderer);
+	SDL_DestroyTexture(kTexture); // From render_IMGUI
 }

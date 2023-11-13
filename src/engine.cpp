@@ -21,6 +21,7 @@ Fractal_Data fracData;
 Render_Data primaryRender;
 Render_Data secondaryRender;
 ImageBuffer* currentBuf = nullptr;
+ImageBuffer* previewBuf = nullptr;
 
 void render_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param);
 
@@ -68,14 +69,18 @@ int render_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERI
 		}
 		if (fracData.type_value == Fractal_ABS_Mandelbrot || fracData.type_value == Fractal_Polar_Mandelbrot) {
 			#define FRAC fracData.type.abs_mandelbrot
-			fp64 cx0; fp64 cy0;
-			fp64 cx1; fp64 cy1;
+			fp64 cx00; fp64 cy00;
+			fp64 cx11; fp64 cy11;
+			fp64 cx01; fp64 cy01;
+			fp64 cx10; fp64 cy10;
 			i32 offX = (i32)(currentBuf->resX * primaryRender.subSample);
 			i32 offY = (i32)(currentBuf->resY * primaryRender.subSample);
 			fp64 extraPadding = 0.0;
-			pixel_to_coordinate((i32)((fp64)offX * -extraPadding),(i32)((fp64)offY * -extraPadding),&cx0,&cy0,&FRAC,&primaryRender);
-			pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * (extraPadding + 1.0)),&cx1,&cy1,&FRAC,&primaryRender);
-			currentBuf->setTransformationData(cx0,cy0,cx1,cy1);
+			pixel_to_coordinate((i32)((fp64)offX * -extraPadding),(i32)((fp64)offY * -extraPadding),&cx00,&cy00,&FRAC,&primaryRender);
+			pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * (extraPadding + 1.0)),&cx11,&cy11,&FRAC,&primaryRender);
+			pixel_to_coordinate((i32)((fp64)offX * -extraPadding),(i32)((fp64)offY * (extraPadding + 1.0)),&cx01,&cy01,&FRAC,&primaryRender);
+			pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * -extraPadding),&cx10,&cy10,&FRAC,&primaryRender);
+			currentBuf->setTransformationData(cx00,cy00,cx11,cy11,cx01,cy01,cx10,cy10);
 			currentBuf->rot = FRAC.rot;
 			#undef FRAC
 		} else if (fracData.type_value == Fractal_Sierpinski_Carpet) {
@@ -92,30 +97,32 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	TimerBox fracTime(1.0 / (60.0 + 0.01));
 	fp64 deltaTime = 0.0;
 
-	//int render_update_level = Change_Level::Full_Reset;
+	int render_update_level = Change_Level::Full_Reset;
 	uint64_t render_update_timecode = 0;
-	next_Write_Cycle_Pos(&currentBuf,Primary_Full);
 	while (QUIT_FLAG == false) {
-		if (fracTime.timerReset()) {
-			/* Update things */
-			read_Parameters(&fracData,&primaryRender,&secondaryRender);
-			//render_update_level = read_Update_Level();
-			if (render_update_timecode != read_Update_Timecode() && ABORT_RENDERING == false) {
-				render_update_timecode = read_Update_Timecode();
-				if (currentBuf != nullptr) {
-					BufferBox sizeBuf = read_Buffer_Size();
-					currentBuf->resizeBuffer(sizeBuf.resX / primaryRender.subSample,sizeBuf.resY / primaryRender.subSample,sizeBuf.channels);
-				}
-				//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
-				render_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
-				//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);
-				next_Write_Cycle_Pos(&currentBuf,Primary_Full);
-				deltaTime = fracTime.getDeltaTime();
-				setRenderDelta(deltaTime);
+		/* Update things */
+		read_Parameters(&fracData,&primaryRender,&secondaryRender);
+		//render_update_level = read_Update_Level();
+		if (render_update_timecode != read_Update_Timecode() && ABORT_RENDERING == false) {
+			render_update_timecode = read_Update_Timecode();
+			if (currentBuf != nullptr) {
+				BufferBox sizeBuf = read_Buffer_Size();
+				currentBuf->resizeBuffer(sizeBuf.resX / primaryRender.subSample,sizeBuf.resY / primaryRender.subSample,sizeBuf.channels);
 			}
-			if (render_update_timecode == read_Update_Timecode() && ABORT_RENDERING == false) {
-				clear_Update_Level();
+			//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
+			render_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
+			//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);
+			next_Write_Cycle_Pos(&currentBuf,Primary_Full);
+			deltaTime = fracTime.getDeltaTime();
+			setRenderDelta(deltaTime);
+			if (read_Abort_Render_Ongoing() == true) {
+				write_Abort_Render_Ongoing(false);
 			}
+		}
+		if (render_update_timecode == read_Update_Timecode() && ABORT_RENDERING == false) {
+			clear_Update_Level();
+		}
+		while (fracTime.timerReset() == false) {
 			if (read_Abort_Render_Ongoing() == true) {
 				write_Abort_Render_Ongoing(false);
 			}
@@ -131,7 +138,12 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 	queryOpenCL_GPU();
 	clear_Cycle_Buffers();
+	write_Engine_Ready(true);
 	while (read_Render_Ready() == false) {
+		if (QUIT_FLAG == true) {
+			printWarning("Engine thread exiting initialization: QUIT_FLAG == true");
+			return -1;
+		}
 		std::this_thread::yield();
 	}
 	start_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);

@@ -25,6 +25,12 @@
 ** Handling shared data between threads
 */
 
+/* Thread Ready */
+	bool read_Render_Ready();
+	void write_Render_Ready(bool f);
+	bool read_Engine_Ready();
+	void write_Engine_Ready(bool f);
+
 struct Render_Item {
 	int priority;
 	int group;
@@ -45,7 +51,7 @@ struct Render_Task {
 
 /* Update Level */
 	namespace Change_Level {
-		enum Change_Level_Enum {Nothing,Refresh,Translation,Zoom,Jump,Minor_Reset,Method_of_Rendering,Rotation,Major_Reset,Full_Reset,Change_Level_Count};
+		enum Change_Level_Enum {Nothing,Refresh,Translation,Zoom,Rotation,Jump,Minor_Reset,Method_of_Rendering,Major_Reset,Full_Reset,Change_Level_Count};
 	};
 	// Used to deterimine if rendering should pause, continue, or reset
 	int read_Update_Level();
@@ -57,17 +63,15 @@ struct Render_Task {
 
 /* Cycle Buffer */
 	enum Cycle_Buffer_Enum {Primary_Full, Primary_Preview, Secondary_Full, Secondary_Preview, Cycle_Buffer_Count};
-	bool next_Read_Cycle_Pos(ImageBuffer** ptr, int buf);
-	bool next_Write_Cycle_Pos(ImageBuffer** ptr, int buf);
+	int next_Read_Cycle_Pos(ImageBuffer** ptr, int buf);
+	int next_Write_Cycle_Pos(ImageBuffer** ptr, int buf);
+	void init_Cycle_Buffers();
 	void delete_Cycle_Buffers();
 	void trim_Cycle_Buffers();
 	void clear_Cycle_Buffers();
 
 	void write_Buffer_Size(BufferBox size);
 	BufferBox read_Buffer_Size();
-
-bool read_Render_Ready();
-void write_Render_Ready(bool f);
 
 bool read_Abort_Render_Ongoing();
 void write_Abort_Render_Ongoing(bool s);

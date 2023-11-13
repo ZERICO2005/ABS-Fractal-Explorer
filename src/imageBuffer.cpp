@@ -13,28 +13,25 @@
 /* ImageBuffer */
 	// No Initalization
 	ImageBuffer::ImageBuffer() {
-		vram = NULL;
+		vram = nullptr;
 		resX = 0;
 		resY = 0;
 		channels = 0;
-		subSample = 0;
 		vramAllocated = false;
 		bytesAllocated = 0;
 	}
 	// Minimal Initialization
 	ImageBuffer::ImageBuffer(uint8_t Channels) {
-		vram = NULL;
+		vram = nullptr;
 		resX = 0;
 		resY = 0;
 		channels = Channels;
-		subSample = 1;
 		vramAllocated = false;
 		bytesAllocated = 0;
 	}
 	// Full Initialization
 	ImageBuffer::ImageBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels) {
 		reallocateBuffer(ResX, ResY, Channels);
-		subSample = 1;
 	}
 
 	// Preallocated Buffer
@@ -43,8 +40,7 @@
 		resX = ResX;
 		resY = ResY;
 		channels = Channels;
-		subSample = 1;
-		if (vram == NULL) {
+		if (vram == nullptr) {
 			vramAllocated = false;
 			bytesAllocated = 0;
 		} else {
@@ -55,7 +51,7 @@
 	
 	// Copies the data from another ImageBuffer
 	void ImageBuffer::vramCopy(ImageBuffer* buf, bool reallocBuf) {
-		if (buf == NULL || buf->vram == NULL || buf->allocated() == false) {
+		if (buf == nullptr || buf->vram == nullptr || buf->allocated() == false) {
 			return;
 		}
 		if (reallocBuf == true) {
@@ -69,13 +65,13 @@
 
 	// Clears the buffer of data
 	void ImageBuffer::clearBuffer() {
-		if (vram == NULL || vramAllocated == false) {
+		if (vram == nullptr || vramAllocated == false) {
 			return;
 		}
 		memset(vram,0,bytesAllocated);
 	}
 	void ImageBuffer::clearBuffer(uint8_t r, uint8_t g, uint8_t b) {
-		if (vram == NULL || vramAllocated == false || bytesAllocated < 3) {
+		if (vram == nullptr || vramAllocated == false || bytesAllocated < 3) {
 			return;
 		}
 		vram[0] = r; vram[1] = g; vram[2] = b;
@@ -84,7 +80,7 @@
 		}
 	}
 	void ImageBuffer::clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
-		if (vram == NULL || vramAllocated == false || bytesAllocated < 4) {
+		if (vram == nullptr || vramAllocated == false || bytesAllocated < 4) {
 			return;
 		}
 		vram[0] = r; vram[1] = g; vram[2] = b; vram[3] = a;
@@ -104,6 +100,17 @@
 
 	// Returns if buffer is allocated
 	bool ImageBuffer::allocated() { return vramAllocated; }
+	// Returns if the buffer is safe to write to
+	bool ImageBuffer::bufferSafe() {
+		if (vramAllocated == false) { return false; }
+		if (bytesAllocated == 0) { return false; }
+		if (vram == nullptr) { return false; }
+		if (resX == 0) { return false; }
+		if (resY == 0) { return false; }
+		if (channels == 0) { return false; }
+		if (bytesAllocated < resX * resY * channels) { return false; }
+		return true;
+	}
 	
 	// Returns the size of the buffer
 	size_t ImageBuffer::getBufferSize() {
@@ -126,7 +133,7 @@
 			vram = (uint8_t*)malloc(bytesAllocated);
 		}
 		vramAllocated = true;
-		if (vram == NULL) {
+		if (vram == nullptr) {
 			vramAllocated = false;
 			bytesAllocated = 0;
 		}
@@ -166,15 +173,15 @@
 		x10 = x1; y10 = y0;
 	}
 	// cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
-	void ImageBuffer::setTransformationData(fp64 x00,fp64 y00,fp64 x11,fp64 y11,fp64 x01,fp64 y01,fp64 x10,fp64 y10) {
-		x00 = x00; y00 = y00;
-		x11 = x11; y11 = y11;
-		x01 = x01; y01 = y01;
-		x10 = x10; y10 = y10;
+	void ImageBuffer::setTransformationData(fp64 ix00,fp64 iy00,fp64 ix11,fp64 iy11,fp64 ix01,fp64 iy01,fp64 ix10,fp64 iy10) {
+		x00 = ix00; y00 = iy00;
+		x11 = ix11; y11 = iy11;
+		x01 = ix01; y01 = iy01;
+		x10 = ix10; y10 = iy10;
 	}
 	// Copies transformation data from another ImageBuffer*
 	void ImageBuffer::setTransformationData(ImageBuffer* buf) {
-		if (buf == NULL) { return; }
+		if (buf == nullptr) { return; }
 		x00 = buf->x00; y00 = buf->y00;
 		x11 = buf->x11; y11 = buf->y11;
 		x01 = buf->x01; y01 = buf->y01;
@@ -184,9 +191,14 @@
 		rot = buf->rot;
 	}
 	void ImageBuffer::printTransformationData(fp64 freq) {
-		printfInterval(freq,"\ndeg(%.3lf) res{%ux%u} vram(%p)",rot * 360 / TAU,resX,resY,vram);
-		printfInterval(freq,"\n{%.4lf,%.4lf} --- {%.4lf,%.4lf}",x00,y00,x10,y10);
-		printfInterval(freq,"\n{%.4lf,%.4lf} --- {%.4lf,%.4lf}",x01,y01,x11,y11);
+		printfInterval(freq,
+			"\ndeg(%.3lf) res{%ux%u} vram(%p)"
+			"\n{%6.4lf,%.4lf} --- {%6.4lf,%6.4lf}"
+			"\n{%6.4lf,%.4lf} --- {%6.4lf,%6.4lf}",
+			rot * 360.0 / TAU,resX,resY,vram,
+			x00,y00,x10,y10,
+			x01,y01,x11,y11
+		);
 		//fflush(stdout);
 	}
 

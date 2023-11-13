@@ -9,6 +9,7 @@
 #include "Common_Def.h"
 #include "engine.h"
 #include "render.h"
+#include "programData.h"
 
 std::atomic<bool> QUIT_FLAG(false);
 std::atomic<bool> ABORT_RENDERING(false);
@@ -21,6 +22,7 @@ int terminate_Fractal_Engine() {
 }
 
 int init_Fractal_Engine(int argc, char* argv[]) {
+	init_Cycle_Buffers();
 	setup_fracExp(argc,argv);
 	setup_fracExpKB(argc,argv);
 	std::thread Thread_Engine(init_Engine, std::ref(QUIT_FLAG), std::ref(ABORT_RENDERING), std::ref(Key_Function_Mutex));

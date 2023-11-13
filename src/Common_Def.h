@@ -89,10 +89,19 @@ typedef double fp64;
 	#define linearInterpolation(x,x0,x1,y0,y1) ( (y0) + ( (((y1) - (y0)) * ((x) - (x0))) / ((x1) - (x0)) ) )
 	#define linearInterpolationLimit(x,x0,x1,y0,y1) ( ((x) <= (x0)) ? (y0) : ( ((x) >= (x1)) ? (y1) : linearInterpolation((x),(x0),(x1),(y0),(y1)) ) )
 
+/* Time */
+	// Returns the time in nanoseconds
+	uint64_t getNanoTime();
+	// Returns the time in seconds 
+	fp64 getDecimalTime();
+
+	#define SECONDS_TO_NANO(t) (uint64_t)((t) * 1.0e9)
+	#define NANO_TO_SECONDS(t) ((fp64)(t) / 1.0e9)
+	
 /* Print Functions */
 	#define printFlush(...) printf(__VA_ARGS__); fflush(stdout)
 	#define printFatalError(...) printf("\n============\nFATAL ERROR: "); printf(__VA_ARGS__); printf("\n============\n"); fflush(stdout)
-	#define printCriticalError(...) printf("\nCritical Error: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
+	#define printCriticalError(...) printf("\nCRITICAL ERROR: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 	#define printError(...) printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 	#define printWarning(...) printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 
@@ -132,15 +141,13 @@ typedef double fp64;
 			} \
 		} \
 	}
-
-/* Time */
-	// Returns the time in nanoseconds
-	uint64_t getNanoTime();
-	// Returns the time in seconds 
-	fp64 getDecimalTime();
-
-	#define SECONDS_TO_NANO(t) (uint64_t)((t) * 1.0e9)
-	#define NANO_TO_SECONDS(t) ((fp64)(t) / 1.0e9)
+	
+	// Waits for a duration in seconds
+	#define BurnTime(s) \
+	{\
+		uint64_t BURN_TIME_NANOSECONDS = getNanoTime();\
+		while (getNanoTime() - BURN_TIME_NANOSECONDS < SECONDS_TO_NANO(s)) {};\
+	}
 
 /* Color */
 	// (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0

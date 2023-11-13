@@ -10,6 +10,29 @@
 #include "Program_Def.h"
 #include "programData.h"
 
+/* Thread Ready */
+	std::mutex pDat_Render_Ready_Mutex;
+	bool pDat_Render_Ready = false;
+	bool read_Render_Ready() {
+		std::lock_guard<std::mutex> lock(pDat_Render_Ready_Mutex);
+		return pDat_Render_Ready;
+	}
+	void write_Render_Ready(bool f) {
+		std::lock_guard<std::mutex> lock(pDat_Render_Ready_Mutex);
+		pDat_Render_Ready = f;
+	}
+
+	std::mutex pDat_Engine_Ready_Mutex;
+	bool pDat_Engine_Ready = false;
+	bool read_Engine_Ready() {
+		std::lock_guard<std::mutex> lock(pDat_Engine_Ready_Mutex);
+		return pDat_Engine_Ready;
+	}
+	void write_Engine_Ready(bool f) {
+		std::lock_guard<std::mutex> lock(pDat_Engine_Ready_Mutex);
+		pDat_Engine_Ready = f;
+	}
+
 /* Update_Level */
 	std::mutex pDat_Update_Level_Mutex;
 	int pDat_Update_Level = Change_Level::Full_Reset;
@@ -53,28 +76,53 @@
 
 	#define Cycle_Buf Cycle_Buffer[buf]
 	// Gets the next frame to read from, returns false if there are no frames to grab
-	bool next_Read_Cycle_Pos(ImageBuffer** ptr, int buf) {
-		if (ptr == nullptr) { return false; }
-		if (buf >= Cycle_Buffer_Count) { return false; }
+	int next_Read_Cycle_Pos(ImageBuffer** ptr, int buf) {
+		if (ptr == nullptr) { return -2; }
+		if (buf >= Cycle_Buffer_Count) { return -3; }
 		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		if (Cycle_Buffer[buf].read_pos == Cycle_Buffer[buf].write_pos) {
+			printCriticalError(
+				"next_Read_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%d].read_pos == Cycle_Buffer[%d].write_pos",
+				Cycle_Buffer[buf].read_pos,Cycle_Buffer[buf].write_pos
+			);
+			return -1;
+		}
 		if ((Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount == Cycle_Buf.write_pos) {
-			return false;
+			return 1;
 		}
 		Cycle_Buf.read_pos = (Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount;
 		*ptr = &Cycle_Buf.image_buf[Cycle_Buf.read_pos];
-		return true;
+		return 0;
 	}
 	// Gets the next buffer to write to, returns false if there are no buffers to grab
-	bool next_Write_Cycle_Pos(ImageBuffer** ptr, int buf) {
-		if (ptr == nullptr) { return false; }
-		if (buf >= Cycle_Buffer_Count) { return false; }
+	int next_Write_Cycle_Pos(ImageBuffer** ptr, int buf) {
+		if (ptr == nullptr) { return -2; }
+		if (buf >= Cycle_Buffer_Count) { return -3; }
 		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		if (Cycle_Buffer[buf].read_pos == Cycle_Buffer[buf].write_pos) {
+			printCriticalError(
+				"next_Read_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%d].read_pos == Cycle_Buffer[%d].write_pos",
+				Cycle_Buffer[buf].read_pos,Cycle_Buffer[buf].write_pos
+			);
+			return -1;
+		}
 		if ((Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount == Cycle_Buf.read_pos) {
-			return false;
+			return 1;
 		}
 		Cycle_Buf.write_pos = (Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount;
 		*ptr = &Cycle_Buf.image_buf[Cycle_Buf.write_pos];
-		return true;
+		return 0;
+	}
+	// To be called by main
+	void init_Cycle_Buffers() {
+		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		for (size_t i = 0; i < Cycle_Buffer_Count; i++) {
+			for (size_t b = 0; b < Cycle_Buffer_Amount; b++) {
+				Cycle_Buffer[i].image_buf[b] = ImageBuffer();
+				Cycle_Buffer[i].read_pos = 0;
+				Cycle_Buffer[i].write_pos = 1;
+			}
+		}
 	}
 	// Frees allocated memory | ImageBuffer.deleteBuffer()
 	void delete_Cycle_Buffers() {
@@ -117,19 +165,7 @@
 		std::lock_guard<std::mutex> lock(pDat_Buffer_Size_Mutex);
 		return pDat_BufSize;
 	}
-
-std::mutex pDat_Render_Ready_Mutex;
-bool pDat_Render_Ready = false;
-
-bool read_Render_Ready() {
-	std::lock_guard<std::mutex> lock(pDat_Render_Ready_Mutex);
-	return pDat_Render_Ready;
-}
-void write_Render_Ready(bool f) {
-	std::lock_guard<std::mutex> lock(pDat_Render_Ready_Mutex);
-	pDat_Render_Ready = f;
-}
-
+	
 std::mutex pDat_Abort_Render_Ongoing_Mutex;
 bool pDat_Abort_Render_Ongoing = false;
 
