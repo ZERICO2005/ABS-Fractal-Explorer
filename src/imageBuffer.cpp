@@ -10,6 +10,8 @@
 #include "imageBuffer.h"
 #include "copyBuffer.h"
 
+#include "Program_Def.h"
+
 /* ImageBuffer */
 	// No Initalization
 	ImageBuffer::ImageBuffer() {
@@ -167,13 +169,27 @@
 
 	// cord{x0,y0} cord{x1,y1}
 	void ImageBuffer::setTransformationData(fp64 x0,fp64 y0,fp64 x1,fp64 y1) { 
+		x00 = (fp128)x0; y00 = (fp128)y0;
+		x11 = (fp128)x1; y11 = (fp128)y1;
+		x01 = (fp128)x0; y01 = (fp128)y1;
+		x10 = (fp128)x1; y10 = (fp128)y0;
+	}
+	// cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
+	void ImageBuffer::setTransformationData(fp64 ix00,fp64 iy00,fp64 ix11,fp64 iy11,fp64 ix01,fp64 iy01,fp64 ix10,fp64 iy10) {
+		x00 = (fp128)ix00; y00 = (fp128)iy00;
+		x11 = (fp128)ix11; y11 = (fp128)iy11;
+		x01 = (fp128)ix01; y01 = (fp128)iy01;
+		x10 = (fp128)ix10; y10 = (fp128)iy10;
+	}
+	// cord{x0,y0} cord{x1,y1}
+	void ImageBuffer::setTransformationData(fp128 x0,fp128 y0,fp128 x1,fp128 y1) { 
 		x00 = x0; y00 = y0;
 		x11 = x1; y11 = y1;
 		x01 = x0; y01 = y1;
 		x10 = x1; y10 = y0;
 	}
 	// cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
-	void ImageBuffer::setTransformationData(fp64 ix00,fp64 iy00,fp64 ix11,fp64 iy11,fp64 ix01,fp64 iy01,fp64 ix10,fp64 iy10) {
+	void ImageBuffer::setTransformationData(fp128 ix00,fp128 iy00,fp128 ix11,fp128 iy11,fp128 ix01,fp128 iy01,fp128 ix10,fp128 iy10) {
 		x00 = ix00; y00 = iy00;
 		x11 = ix11; y11 = iy11;
 		x01 = ix01; y01 = iy01;
@@ -196,8 +212,8 @@
 			"\n{%6.4lf,%.4lf} --- {%6.4lf,%6.4lf}"
 			"\n{%6.4lf,%.4lf} --- {%6.4lf,%6.4lf}",
 			rot * 360.0 / TAU,resX,resY,vram,
-			x00,y00,x10,y10,
-			x01,y01,x11,y11
+			(fp64)x00,(fp64)y00,(fp64)x10,(fp64)y10,
+			(fp64)x01,(fp64)y01,(fp64)x11,(fp64)y11
 		);
 		//fflush(stdout);
 	}

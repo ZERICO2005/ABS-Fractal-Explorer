@@ -69,10 +69,10 @@ int render_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERI
 		}
 		if (fracData.type_value == Fractal_ABS_Mandelbrot || fracData.type_value == Fractal_Polar_Mandelbrot) {
 			#define FRAC fracData.type.abs_mandelbrot
-			fp64 cx00; fp64 cy00;
-			fp64 cx11; fp64 cy11;
-			fp64 cx01; fp64 cy01;
-			fp64 cx10; fp64 cy10;
+			fp128 cx00; fp128 cy00;
+			fp128 cx11; fp128 cy11;
+			fp128 cx01; fp128 cy01;
+			fp128 cx10; fp128 cy10;
 			i32 offX = (i32)(currentBuf->resX * primaryRender.subSample);
 			i32 offY = (i32)(currentBuf->resY * primaryRender.subSample);
 			fp64 extraPadding = 0.0;

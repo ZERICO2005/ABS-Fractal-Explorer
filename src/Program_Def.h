@@ -11,8 +11,6 @@
 
 #include "Common_Def.h"
 
-#include <quadmath.h>
-
 /*
 **	Program_Def.h contains commonly used functions, includes, defines, macros and constants used specifically for this program
 */
@@ -20,10 +18,10 @@
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2023/11/12" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2023/11/15" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 0
-#define PROGRAM_V_PATCH 26
+#define PROGRAM_V_PATCH 27
 #define PROGRAM_V_TAG "debug alpha mostly-stable"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
@@ -32,13 +30,18 @@
 #define enableFP80andFP128
 
 #ifdef enableFP80andFP128
+	#include <quadmath.h>
 	typedef __float128 fp128;
 
 	#ifdef __GNUC__
+		typedef __int128_t int128_t;
+		typedef __uint128_t uint128_t;
 		typedef __int128_t i128;
 		typedef __uint128_t u128;
 		typedef __float80 fp80;
 	#else
+		typedef int64_t int128_t;
+		typedef uint64_t uint128_t;
 		typedef int64_t i128;
 		typedef uint64_t u128;
 		typedef __float128 fp80;
@@ -62,7 +65,15 @@
 	fp128 fmod(fp128 x, fp128 y);
 	fp128 fabs(fp128 x);
 	fp128 copysign(fp128 x, fp128 y);
-
+#else
+	#define quadmath_snprintf snprintf
+	#define strtoflt128 strtod
+	typedef fp64 fp128;
+	typedef fp64 fp80;
+	typedef int64_t int128_t;
+	typedef uint64_t uint128_t;
+	typedef int64_t i128;
+	typedef uint64_t u128;
 #endif
 
 class TimerBox {

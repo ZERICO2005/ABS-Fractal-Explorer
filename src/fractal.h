@@ -36,6 +36,8 @@ fp64 getABSFractalMaxRadius(uint32_t power);
 
 uint64_t limitFormulaID(uint32_t power, uint64_t formula);
 uint64_t getABSValue(uint32_t power);
+fp64 getStretchValue(fp64 s);
+fp64 getZoomDefault(fp64 p);
 
 struct _ABS_Mandelbrot {
 	/* Parameters */
@@ -52,10 +54,10 @@ struct _ABS_Mandelbrot {
 	bool lockToCardioid;
 	bool flipCardioidSide;
 	/* Coordinates */
-	fp64 r;
-	fp64 i;
-	fp64 zr;
-	fp64 zi;
+	fp128 r;
+	fp128 i;
+	fp128 zr;
+	fp128 zi;
 	fp64 zoom;
 	/* Transformation */
 	fp64 rot;
@@ -64,6 +66,7 @@ struct _ABS_Mandelbrot {
 	fp64 stretch;
 	/* Parameters */
 	uint32_t maxItr;
+	fp64 maxItr_Log2;
 	uint32_t power;
 	fp64 polarPower;
 	uint64_t formula;
@@ -142,5 +145,12 @@ void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, ABS_Man
 
 #define POLAR_POWER_MINIMUM 1.0100
 #define POLAR_POWER_MAXIMUM 20.0
+#define MANDELBROT_POWER_MAXIMUM 6
+
+void setMaxItr(ABS_Mandelbrot* frac, fp64 val);
+void setMaxItr(ABS_Mandelbrot* frac, uint32_t val);
+void setStretchValue(ABS_Mandelbrot* frac);
+
+void correctFracParameters(ABS_Mandelbrot* frac);
 
 #endif /* FRACTAL_H */

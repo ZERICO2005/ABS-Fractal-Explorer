@@ -51,7 +51,19 @@ struct Render_Task {
 
 /* Update Level */
 	namespace Change_Level {
-		enum Change_Level_Enum {Nothing,Refresh,Translation,Zoom,Rotation,Jump,Minor_Reset,Method_of_Rendering,Major_Reset,Full_Reset,Change_Level_Count};
+		enum Change_Level_Enum {
+			Nothing, // Image buffer is perfect
+			Refresh, // Image buffer is accurate
+				Translation,Zoom,Stretch,Rotation,Resolution,
+			Minor_Reset, // Image buffer is an approximatation
+				Jump,Method_of_Rendering,Super_Sample,Breakout,Iterations,
+			Moderate_Reset, // Image buffer is outdated
+				Coloring,Polar_Power,Julia,	
+			Major_Reset, // Image buffer is wrong
+				Formula_Change,Power_Change,Fractal_Change,Recompile,
+			Full_Reset, // Restart required
+			Change_Level_Count
+		};
 	};
 	// Used to deterimine if rendering should pause, continue, or reset
 	int read_Update_Level();
