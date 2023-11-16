@@ -100,6 +100,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.sY = 1.0;
 		FRAC.stretch = 0.0;
 		FRAC.maxItr = 192;
+		FRAC.maxItr_Log2 = log2(192.0);
 		FRAC.power = 2;
 		FRAC.polarPower = 2.0;
 		FRAC.integerPolarPower = false;
@@ -142,6 +143,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.sY = 1.0;
 		FRAC.stretch = 0.0;
 		FRAC.maxItr = 192;
+		FRAC.maxItr_Log2 = log2(192.0);
 		FRAC.power = 3;
 		FRAC.polarPower = 3.0;
 		FRAC.formula = 0;
