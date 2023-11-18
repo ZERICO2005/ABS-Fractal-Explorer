@@ -34,6 +34,21 @@ ImGuiIO* io_IMGUI;
 bool Abort_Rendering_Flag = false;
 bool Waiting_To_Abort_Rendering = false;
 
+bool Lock_Key_Inputs = false;
+bool LockKeyInputsInMenus = true;
+
+bool AutoResizeWindows = false;
+bool PreventOutOfBoundsWindows = false;
+fp32 WindowOpacity = 0.95f;
+fp64 WindowAutoScale = 0.7;
+const int32_t ImGui_WINDOW_MARGIN = 8;
+ImGuiWindowFlags ImGui_WINDOW_FLAGS = 0;
+
+bool SaveUsernameInFiles = false; /* This MUST be False by Default */
+#define FileUsernameLength 32
+char FileUsername[FileUsernameLength];
+bool SaveHardwareInfoInFiles = false; /* This MUST be False by Default */
+
 SDL_Texture* texture;
 SDL_Texture* kTexture; // Keyboard graphic
 ImageBuffer Master;
@@ -163,9 +178,69 @@ size_t KeyBind_PresetCount;
 // KeyBind_Preset importedKeyBind = {"Blank",0,NULL};
 // KeyBind_Preset* currentKeyBind = &defaultKeyBind;
 
-std::list<KeyBind> currentKeyBind = defaultKeyBind;
-std::list<KeyBind> importedKeyBind;
+//std::list<KeyBind> currentKeyBind = defaultKeyBind;
+//std::list<KeyBind> importedKeyBind; // Deprecate this
 
+/* KeyBind_Preset */
+	std::list<KeyBind_PRESET> KeyBind_PresetList;
+	KeyBind_PRESET* currentKBPreset;
+
+	void init_KeyBind_PresetList() {
+		if (KeyBind_PresetList.empty() == true) {
+			KeyBind_PRESET temp_KeyBind;
+			initDefaultKeyBind(&temp_KeyBind.kList);
+			temp_KeyBind.name = "Default";
+			KeyBind_PresetList.push_front(temp_KeyBind);
+			currentKBPreset = &KeyBind_PresetList.front();
+		}
+	}
+	void clear_KeyBind_PresetList() {
+		KeyBind_PresetList.clear();
+	}
+	int get_currentKBPreset_Pos() {
+		std::size_t index = 0;
+		for (const auto& element : KeyBind_PresetList) {
+			if (&element == currentKBPreset) {
+				return index;
+			}
+			index++;
+		}
+		return -1;
+	}
+	void set_currentKBPreset_Pos(int pos) {
+		if (pos < 0 || pos >= (int)KeyBind_PresetList.size()) {
+			return;
+		}
+		std::list<KeyBind_PRESET>::iterator iterKBP = KeyBind_PresetList.begin();
+		std::advance(iterKBP, pos);
+		if (iterKBP != KeyBind_PresetList.end()) {
+			currentKBPreset = &(*iterKBP);
+		}
+	}
+	void remove_currentKBPreset() {
+		if (KeyBind_PresetList.size() <= 1) {
+			return;
+		}
+		int pos = 0;
+		for (std::list<KeyBind_PRESET>::iterator iterKBP = KeyBind_PresetList.begin(); iterKBP != KeyBind_PresetList.end(); iterKBP++) {
+			if (currentKBPreset == &(*iterKBP)) {
+				KeyBind_PresetList.erase(iterKBP);
+				if (pos == 0) {
+					currentKBPreset = &KeyBind_PresetList.front();
+				} else {
+					set_currentKBPreset_Pos(pos - 1);
+				}
+				return;
+			}
+			pos++;
+		}
+	}
+	const char* currentKBPreset_Name() {
+		return currentKBPreset->name.c_str();
+	}
+	std::list<KeyBind> currentKeyBind() {
+		return currentKBPreset->kList;
+	}
 
 Key_Status Key_List[SDL_NUM_SCANCODES];
 
@@ -187,11 +262,16 @@ void updateKeys() {
 			Key_List[i].pressed = false;
 		}
 
-		for (const auto& bind : currentKeyBind) {
+		for (const auto& bind : currentKBPreset->kList) {
 			if (bind.key == (SDL_Scancode)i) {
 				Key_Function::Key_Function_Enum func = bind.func;
+				if (Lock_Key_Inputs == true) { // Only listens to FUNCTION key-binds when key inputs are locked
+					if (func <= Key_Function::SCREEN_SPLIT || func >= Key_Function::FUNCTIONS) {
+						continue;
+					}
+				}
 				if (Key_List[i].pressed == true) {
-					func_stat[func].triggered = true;
+						func_stat[func].triggered = true;
 				}
 			}
 		}
@@ -221,12 +301,12 @@ void recolorKeyboard() {
 		for (size_t i = 0; i < ARRAY_LENGTH(InitKeyHSV); i++) {
 			getRGBfromHSV(&(InitKeyRGB[i].r),&(InitKeyRGB[i].g),&(InitKeyRGB[i].b),InitKeyHSV[i].h,InitKeyHSV[i].s,InitKeyHSV[i].v);
 		}
-		if (currentKeyBind.size() <= 0) {
-			currentKeyBind = defaultKeyBind;
-		}
+		// if (currentKBPreset->kList.size() <= 0) {
+		// 	currentKBPreset->kList = defaultKeyBind;
+		// }
 		for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
 			size_t keyColorSet = 0;
-			for (const auto& bind : currentKeyBind) {
+			for (const auto& bind : currentKBPreset->kList) {
 				if (bind.key == (SDL_Scancode)s) {
 					if (keyColorSet != 0) { // Detects if different function types are binded to a key
 						setRGB_Scancode(0xFF,0xFF,0xFF,(SDL_Scancode)s);
@@ -267,19 +347,24 @@ bool keyPressed(uint32_t key) {
 }
 
 int setup_fracExpKB(int argc, char* argv[]) {
+	init_KeyBind_PresetList();
 	if (argc >= 2) {
 		for (int a = 1; a < argc; a++) {
+			KeyBind_PRESET temp_KeyBind;
 			if (strstr(argv[a],".fracExpKB") != NULL) {
 				printFlush("\nFracExp_KeyBind File: %s",argv[a]);
-				read_FracExpKB_File(&importedKeyBind,argv[a]);
-				currentKeyBind = importedKeyBind;
-				cleanKeyBind(&currentKeyBind);
-				printf("\n\tKeyBinds: %zu Preset: %s",importedKeyBind.size(),"<Unimplemented>");
-				break;
+				if (import_KeyBind(&temp_KeyBind,argv[a]) == 0) {
+					printf("\n\tKeyBinds: %zu Preset: %s",temp_KeyBind.kList.size(),temp_KeyBind.name.c_str());
+					KeyBind_PresetList.push_back(temp_KeyBind);
+					if (KeyBind_PresetList.size() == 2) {
+						currentKBPreset = &KeyBind_PresetList.back();
+					}
+				}
 			}
 		}
 		printFlush("\n");
 	}
+
 	return 0;
 }
 
@@ -373,6 +458,36 @@ void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characte
 			continue;
 		} else if ((level >= 1) && !(buf[i] == '^' || buf[i] == 'e' || buf[i] == 'E')) {
 			continue;
+		}
+		buf[p] = buf[i];
+		p++;
+	}
+	for (;p < len; p++) {
+		buf[p] = '\0';
+	}
+}
+
+void correctUsernameText(char* buf, size_t len) { /* Strips characters */
+	size_t p = 0;
+	for (size_t i = 0; i < strnlen(buf,len); i++) {
+		#ifdef displayTerribleProgrammingJokes
+			if (i == 0) {
+				while (i < strnlen(buf,len) && (buf[i] >= '0' && buf[i] <= '9')) {
+					i++;
+				}
+			}
+		#endif
+		if (!(
+			(buf[i] >= 'A' && buf[i] <= 'Z') || 
+			(buf[i] >= 'a' && buf[i] <= 'z') ||
+			(buf[i] >= '0' && buf[i] <= '9') ||
+			(buf[i] == '_')
+		)) {
+			if ((buf[i] == ' ') || (buf[i] == '-') || (buf[i] == '.') || (buf[i] == '~')) {
+				buf[i] = '_';
+			} else {
+				continue;
+			}
 		}
 		buf[p] = buf[i];
 		p++;
@@ -532,7 +647,6 @@ int updateFractalParameters() {
 	moveDelta *= user_sensitivity.global;
 
 	int update_level = Change_Level::Nothing;
-	
 
 	/* Magic Constants */
 		#define ABS_Mandelbrot_Default_Power 2
@@ -854,9 +968,22 @@ int updateFractalParameters() {
 	uint32_t WINDOW_RESY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
 	ImGui::SetNextWindowPos({(fp32)((valX - WINDOW_RESX) / 2),(fp32)((valY - WINDOW_RESY) / 2)}, ImGuiCond_Once); \
 	ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}, ImGuiCond_Once); \
+	if (AutoResizeWindows == true) { \
+		ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}); \
+	} \
 	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
 	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX; \
-	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY;
+	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY; \
+	ImGui::SetNextWindowBgAlpha(WindowOpacity);
+
+#define ImGui_BoundWindowPosition(); \
+	if (PreventOutOfBoundsWindows == true) { \
+		int32_t WINDOW_POSX = ImGui::GetWindowPos().x; \
+		int32_t WINDOW_POSY = ImGui::GetWindowPos().y; \
+		valueLimit(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN); \
+		valueLimit(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN); \
+		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)}); \
+	}
 
 enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
 
@@ -892,7 +1019,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("ms");
 
-    ImGui::Text("Button: %d",buttonSelection); ImGui::SameLine();
     size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
 	if (ImGui::Button("Coordinates")) {
 		buttonSelection = (buttonSelection == GUI_Menu_Coordinates) ? -1 : GUI_Menu_Coordinates;
@@ -934,6 +1060,10 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 			}
 		}
 	}
+	if (Lock_Key_Inputs == true) {
+		ImGui::SameLine();
+		ImGui::Text("Key inputs are locked inside of menus");
+	}
 
 	ImGui::Separator();
 	uint32_t boxSpace = 8;
@@ -959,31 +1089,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::SameLine(); \
 	ImGui::InputInt(id,ptr,16,256);
 
-	/*
-	static char input_real[128] = "-1.0";
-	Param_Input_Box("Real:","##input_real",input_real);
-	ImGui::SameLine();
-	static char input_imag[128] = "0.0";
-	Param_Input_Box("Imag:","##input_imag",input_imag);
-	ImGui::SameLine();
-	static fp64 input_zoom = -0.302;
-	Param_Input_Double("Zoom: 10^","##input_zoom",&input_zoom,"%.6lf"); valueLimit(input_zoom,-10.0,40.0);
-	ImGui::SameLine();
-	static int32_t input_maxItr = 192;
-	Param_Input_Int("Max-Itr:","##input_maxItr",&input_maxItr); valueLimit(input_maxItr,4,16777216);
-
-	static char input_juliaReal[128] = "0.0";
-	Param_Input_Box("Julia-Real:","##input_juliaReal",input_juliaReal);
-	ImGui::SameLine();
-	static char input_juliaImag[128] = "0.0";
-	Param_Input_Box("Julia-Imag:","##input_juliaImag",input_juliaImag);
-	ImGui::SameLine();
-	static char input_zReal[128] = "0.0";
-	Param_Input_Box("Z-Real:","##input_zReal",input_zReal);
-	ImGui::SameLine();
-	static char input_zImag[128] = "0.0";
-	Param_Input_Box("Z-Imag:","##input_zImag",input_zImag);
-	*/
 	#define FRAC frac.type.abs_mandelbrot
 	uint32_t renderFP = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
 	const char* const renderMethod = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
@@ -1023,8 +1128,9 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 }
 
 void Menu_Coordinates() {
-	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
-	ImGui::Begin("Coordinates Menu",&ShowTheXButton);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
+	ImGui::Begin("Coordinates Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
+	ImGui_BoundWindowPosition();
 
 	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
 		#define FRAC frac.type.abs_mandelbrot
@@ -1097,7 +1203,7 @@ void Menu_Coordinates() {
 }
 
 void Menu_Fractal() {
-	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
 	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
 	static bool juliaSet = false;
 	static bool startingZ = false;
@@ -1108,7 +1214,8 @@ void Menu_Fractal() {
 	static bool adjustZoomToPower = false;
 	static bool lockToCardioid = false;
 	static bool flipCardioidSide = false;
-	ImGui::Begin("Fractal Menu",&ShowTheXButton);
+	ImGui::Begin("Fractal Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
+	ImGui_BoundWindowPosition();
 	static int Combo_FractalType = 0;
 	ImGui::Text("Fractal Type:");
     if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
@@ -1232,7 +1339,7 @@ void Menu_Fractal() {
 }
 
 void Menu_Rendering() {
-	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
 	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
 	static int input_subSample = primaryRenderData.subSample;
@@ -1243,8 +1350,9 @@ void Menu_Rendering() {
 	static int Combo_CPU_RenderingMode = 1;
 	static int Combo_GPU_RenderingMode = 1;
 
-	ImGui::Begin("Rendering Menu",&ShowTheXButton);
-	
+	ImGui::Begin("Rendering Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
+	ImGui_BoundWindowPosition();
+
 	ImGui::Text("CPU Rendering Mode:");
 	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
 		switch (Combo_CPU_RenderingMode) {
@@ -1318,8 +1426,37 @@ void Menu_Settings() {
 			ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name); \
 		} \
 	}
-	ImGui_DefaultWindowSize(Master.resX,16,240,400,0.7,Master.resY,16,160,320,0.7);
-	ImGui::Begin("Settings Menu",&ShowTheXButton);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
+	ImGui::Begin("Settings Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
+	ImGui_BoundWindowPosition();
+
+	ImGui::Checkbox("Lock key inputs in menus",&LockKeyInputsInMenus);
+	ImGui::Checkbox("Prevent out of bounds menu windows",&PreventOutOfBoundsWindows);
+	ImGui::Checkbox("Auto-resize menu windows",&AutoResizeWindows);
+	ImGui::Text("Window auto-scale: (0.7 default)");
+	fp32 temp_WindowAutoScale = (fp32)WindowAutoScale;
+	ImGui::SliderFloat("##WindowAutoScale",&temp_WindowAutoScale,0.3f,1.0f,"%.3f");
+	WindowAutoScale = (fp64)temp_WindowAutoScale;
+	ImGui::Text("Window Opacity:");
+	ImGui::SliderFloat("##WindowOpacity",&WindowOpacity,0.3f,1.0f,"%.3f");
+
+	ImGui::Separator();
+	ImGui::Checkbox("Save username in files",&SaveUsernameInFiles);
+	ImGui::Checkbox("Save hardware information in files",&SaveHardwareInfoInFiles);
+	
+	if (SaveUsernameInFiles == true) {
+		correctUsernameText(FileUsername,FileUsernameLength);
+		#ifdef displayTerribleProgrammingJokes
+			//idk why I wrote this
+			ImGui::TextWrapped("Input Username: The Username MUST be a valid C variable name exclusively using the limited subset of 63 characters of the first 128 8-bit ANSI characters in addition to demonstrating an unwavering adherence and strict compliance to the standards outlined in ISO/IEC 9899:1999 for C99 with a NULL terminated char array that MUST NOT exceed 32 characters long including the NULL terminator and MUST be an absolute minimum of 4 characters long");
+		#else
+			ImGui::Text("Input Username: 4-31 characters long, A-Z, a-z, 0-9, and _");
+		#endif
+		ImGui::InputText("##FileUserName_Input",FileUsername,FileUsernameLength);
+	}
+
+	ImGui::Separator();
+
 	ImGui::Text("Base maximum frame-rate off of:");
 	if (ImGui::Combo("##initFrameRate", &Combo_initFrameRate, BufAndLen(initFrameRate))) {
 	
@@ -1457,8 +1594,10 @@ void Menu_Keybinds() {
 		"ANSI (Default)","Extended (Contains some FN keys)","Complete (All 242 SDL Scancodes)"
 	};
 	static bool displayNumpad = true;
-	ImGui_DefaultWindowSize(Master.resX,16,320,480,0.7,Master.resY,16,240,360,0.7);
-	ImGui::Begin("Keybinds Menu",&ShowTheXButton);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,320,480,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,240,360,WindowAutoScale);
+	ImGui::Begin("Keybinds Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
+	ImGui_BoundWindowPosition();
+	ImGui::Checkbox("Lock key inputs in menus",&LockKeyInputsInMenus);
 	ImGui::Text("Keyboard Type:");
 	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
 		
@@ -1522,14 +1661,14 @@ void Menu_Keybinds() {
 		size_t funcCount = 0;
 		if (keyClick != SDL_SCANCODE_UNKNOWN) {
 			using namespace Key_Function;
-			for (const auto& bind : currentKeyBind) {
+			for (const auto& bind : currentKBPreset->kList) {
 				if (bind.key == keyClick) {
 					funcCount++;
 				}
 			}
 			if (funcCount > 0) {
 				//ImGui::Text("Key Functions:");
-				for (const auto& bind : currentKeyBind) {
+				for (const auto& bind : currentKBPreset->kList) {
 					if (bind.key == keyClick) {
 						ImGui::Text("- %s",Key_Function_Text[bind.func]);
 					}
@@ -1566,7 +1705,7 @@ void Menu_Keybinds() {
 			ImGui::TextColored({0.0,1.0,1.0,1.0},"%s",Key_Function::Key_Function_Text[Combo_functionSelect]);
 
 			if(ImGui::Button("Set Key-Bind")) {
-				if (addKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
+				if (addKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
 					recolorKeyboard();
 					Combo_functionSelect = Key_Function::NONE;
 					keyClick = SDL_SCANCODE_UNKNOWN;
@@ -1577,7 +1716,7 @@ void Menu_Keybinds() {
 			if (funcCount != 0) {
 				ImGui::SameLine();
 				if(ImGui::Button("Clear Key-bind")) {
-					if (removeKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
+					if (removeKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
 						recolorKeyboard();
 						Combo_functionSelect = Key_Function::NONE;
 					} else {
@@ -1589,22 +1728,9 @@ void Menu_Keybinds() {
 			ImGui::Text("Click on a Key and Select a Function");
 			ImGui::Text(" ");
 		}
-		if (Combo_functionSelect != Key_Function::NONE) {
-			if(ImGui::Button("Clear Function bindings")) {
-				if (removeKeyBind(&currentKeyBind,(Key_Function::Key_Function_Enum)Combo_functionSelect) >= 0) {
-					recolorKeyboard();
-				} else {
-					printError("removeKeyBind(%s) failed",Key_Function::Key_Function_Text[Combo_functionSelect]);
-				}
-			}
-			ImGui::SameLine();
-			ImGui::Text("%s",Key_Function::Key_Function_Text[Combo_functionSelect]);
-		} else {
-			ImGui::Button("Select a Function");
-		}
 		if (keyClick != SDL_SCANCODE_UNKNOWN) {
 			if(ImGui::Button("Clear Key bindings")) {
-				if (removeKeyBind(&currentKeyBind,keyClick) >= 0) {
+				if (removeKeyBind(&currentKBPreset->kList,keyClick) >= 0) {
 					recolorKeyboard();
 					keyClick = SDL_SCANCODE_UNKNOWN;
 				} else {
@@ -1616,58 +1742,152 @@ void Menu_Keybinds() {
 		} else {
 			ImGui::Button("Click on a Key");
 		}
-		ImGui::Text(" ");
-		ImGui::Separator();
-		ImGui::Text("Current Key-bind: %s","<Unimplemented>"/*currentKeyBind->name*/);
-		if (importedKeyBind.size() > 0) {
-			if (ImGui::Button("Switch to imported key-binds")) {
-				Combo_functionSelect = Key_Function::NONE;
-				keyClick = SDL_SCANCODE_UNKNOWN;
-				currentKeyBind = importedKeyBind;
-				recolorKeyboard();
+		if (Combo_functionSelect != Key_Function::NONE) {
+			if(ImGui::Button("Clear Function bindings")) {
+				if (removeKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_functionSelect) >= 0) {
+					recolorKeyboard();
+				} else {
+					printError("removeKeyBind(%s) failed",Key_Function::Key_Function_Text[Combo_functionSelect]);
+				}
 			}
+			ImGui::SameLine();
+			ImGui::Text("%s",Key_Function::Key_Function_Text[Combo_functionSelect]);
 		} else {
-			ImGui::Text("No imported key-binds available");
+			ImGui::Button("Select a Function");
 		}
-		if (ImGui::Button("Reset to default key-binds")) {
+		ImGui::Text(" ");
+		if (ImGui::Button("Reset current key-bind to defaults")) {
 			Combo_functionSelect = Key_Function::NONE;
 			keyClick = SDL_SCANCODE_UNKNOWN;
-			currentKeyBind = defaultKeyBind;
+			currentKBPreset->kList = defaultKeyBind;
 			recolorKeyboard();
 		}
 		ImGui::Text(" ");
-		
-		//	Disabling the name field since it can cause confusion when typing "./folder" + "KeyBind.fracExpKB" = "./folderKeyBind.fracExpKB"
-		// static char exportFracExpKBName[324] = "KeyBind";
-		static char exportFracExpKBDir[324] = "./KeyBind"; // "./"
-		ImGui::Text("Export current key-bind to directory:");
-		ImGui::InputText("##exportFracExpKBDir",exportFracExpKBDir,TEXT_LENGTH(exportFracExpKBDir));
-		// ImGui::Text("File Name:");
-		// ImGui::InputText("##exportFracExpKBName",exportFracExpKBName,TEXT_LENGTH(exportFracExpKBName));
-		static TimerBox exportTimer(1.0);
-		if (ImGui::Button("Export .FracExpKB File") && exportTimer.timerReset()) {
-			/* Move this file path code into fracExpKB.cpp */
-			const char* const exportFracExpKBExtension = ".fracExpKB";
-			size_t sizeOfPath = 0;
-			sizeOfPath += strnlen(exportFracExpKBExtension,sizeof(exportFracExpKBExtension)) * sizeof(exportFracExpKBExtension[0]);
-			sizeOfPath += strnlen(exportFracExpKBDir,sizeof(exportFracExpKBDir)) * sizeof(exportFracExpKBDir[0]);
-			// sizeOfPath += strnlen(exportFracExpKBName,sizeof(exportFracExpKBName)) * sizeof(exportFracExpKBName[0]);
-			char* exportFracExpKBPath = (char*)malloc(sizeOfPath);
-			if (exportFracExpKBPath != NULL) {
-				memset(exportFracExpKBPath,'\0',sizeOfPath);
-				strncat(exportFracExpKBPath,exportFracExpKBDir,sizeOfPath);
-				// strncat(exportFracExpKBPath,exportFracExpKBName,sizeOfPath);
-				strncat(exportFracExpKBPath,exportFracExpKBExtension,sizeOfPath);
-				if (write_FracExpKB_File(&currentKeyBind,exportFracExpKBPath) >= 0) {
-					printFlush("\n%s was exported successfully",exportFracExpKBPath);
-				} else {
-					printError("%s failed to export",exportFracExpKBPath);
-				}
-			} else {
-				printError("Unable to allocate memory to char* exportFracExpKBPath");
-			}
-			FREE(exportFracExpKBPath);
+
+		ImGui::Separator();
+
+		static char KeyBindName[80];
+		memset(KeyBindName,'\0',ARRAY_LENGTH(KeyBindName));
+		memcpy(KeyBindName,currentKBPreset->name.c_str(),TEXT_LENGTH(KeyBindName));
+		if (currentKBPreset->kList.size() < 6) {
+			ImGui::Text("Warning: The current Key-bind Preset has %llu key-binds, and may not be functional or practical.",currentKBPreset->kList.size());
+			ImGui::Text("Current Key-bind Preset[%d]: ",get_currentKBPreset_Pos()); ImGui::SameLine(0.0,1.0);
+			ImGui::TextColored({1.0,0.5,0.5,1.0},"%llu",currentKBPreset->kList.size()); ImGui::SameLine(0.0,1.0);
+			ImGui::Text(" key-binds");
+		} else {
+			ImGui::Text("Current Key-bind Preset[%d]: %llu key-binds",get_currentKBPreset_Pos(),currentKBPreset->kList.size());
 		}
+		
+		ImGui::InputText("##KeyBindName",BufAndLen(KeyBindName));
+		currentKBPreset->name = KeyBindName;
+		if (ImGui::BeginCombo("##Combo_KeyBind", "Choose a key-bind")) {
+			for (auto iterKB = KeyBind_PresetList.begin(); iterKB != KeyBind_PresetList.end(); iterKB++) {
+				bool is_selected = (currentKBPreset == &(*iterKB));
+				if (ImGui::Selectable(iterKB->name.c_str(), is_selected)) {
+					Combo_functionSelect = Key_Function::NONE;
+					keyClick = SDL_SCANCODE_UNKNOWN;
+					currentKBPreset = &(*iterKB);
+					recolorKeyboard();
+				}
+				// Set the initial focus on the currently selected item
+				if (is_selected) {
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::Text(" ");
+		static uint32_t name_count = 1;
+		if (ImGui::Button("Create key-bind")) {
+			Combo_functionSelect = Key_Function::NONE;
+			keyClick = SDL_SCANCODE_UNKNOWN;
+			KeyBind_PRESET temp_KeyBind;
+			temp_KeyBind = *currentKBPreset;
+			static char rand_name[324]; memset(rand_name,'\0',324);
+			snprintf(rand_name,320,"KeyBind_%u",name_count++);
+			temp_KeyBind.name = rand_name;
+			KeyBind_PresetList.push_back(temp_KeyBind);
+			currentKBPreset = &KeyBind_PresetList.back();
+			recolorKeyboard();
+		}
+		if (KeyBind_PresetList.size() > 1 && ImGui::Button("Remove current key-bind preset")) {
+			Combo_functionSelect = Key_Function::NONE;
+			keyClick = SDL_SCANCODE_UNKNOWN;
+			remove_currentKBPreset();
+			recolorKeyboard();
+		}
+		if (ImGui::Button("Clear all key-binds")) {
+			Combo_functionSelect = Key_Function::NONE;
+			keyClick = SDL_SCANCODE_UNKNOWN;
+			clearKeyBind(&currentKBPreset->kList);
+			recolorKeyboard();
+		}
+
+		ImGui::Text(" ");
+		if (ImGui::Button("Import Key-bind (.FracExpKB)")) {
+			static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',324);
+			int openFileState = openFileInterface(
+				importKeyBindFile,324,"Select a FracExpKB file",
+				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
+				"FracExp Files (*.fracExp)\0*.fracExp\0"\
+				"All Files (*.*)\0*.*\0"
+			);
+			if (openFileState == 0) {
+				Combo_functionSelect = Key_Function::NONE;
+				keyClick = SDL_SCANCODE_UNKNOWN;
+				KeyBind_PRESET temp_KeyBind;
+				import_KeyBind(&temp_KeyBind,importKeyBindFile);
+				KeyBind_PresetList.push_back(temp_KeyBind);
+				currentKBPreset = &KeyBind_PresetList.back();
+				recolorKeyboard();
+			}
+		}
+		if (ImGui::Button("Export Key-bind (.FracExpKB)")) {
+			static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
+			int saveFileState = saveFileInterface(
+				exportKeyBindFile,324,"Save FracExpKB file",
+				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
+				"FracExp Files (*.fracExp)\0*.fracExp\0"\
+				"All Files (*.*)\0*.*\0",
+				"fracExpKB",
+				currentKBPreset->name.c_str()
+			);
+			if (saveFileState == 0) {
+				KeyBind_PRESET temp_KeyBind = *currentKBPreset;
+				export_KeyBind(&temp_KeyBind,exportKeyBindFile);
+			}
+		}
+		// //	Disabling the name field since it can cause confusion when typing "./folder" + "KeyBind.fracExpKB" = "./folderKeyBind.fracExpKB"
+		// // static char exportFracExpKBName[324] = "KeyBind";
+		// static char exportFracExpKBDir[324] = "./KeyBind"; // "./"
+		// ImGui::Text("Export current key-bind to directory:");
+		// ImGui::InputText("##exportFracExpKBDir",exportFracExpKBDir,TEXT_LENGTH(exportFracExpKBDir));
+		// // ImGui::Text("File Name:");
+		// // ImGui::InputText("##exportFracExpKBName",exportFracExpKBName,TEXT_LENGTH(exportFracExpKBName));
+		// static TimerBox exportTimer(1.0);
+		// if (ImGui::Button("Export .FracExpKB File") && exportTimer.timerReset()) {
+		// 	/* Move this file path code into fracExpKB.cpp */
+		// 	const char* const exportFracExpKBExtension = ".fracExpKB";
+		// 	size_t sizeOfPath = 0;
+		// 	sizeOfPath += strnlen(exportFracExpKBExtension,sizeof(exportFracExpKBExtension)) * sizeof(exportFracExpKBExtension[0]);
+		// 	sizeOfPath += strnlen(exportFracExpKBDir,sizeof(exportFracExpKBDir)) * sizeof(exportFracExpKBDir[0]);
+		// 	// sizeOfPath += strnlen(exportFracExpKBName,sizeof(exportFracExpKBName)) * sizeof(exportFracExpKBName[0]);
+		// 	char* exportFracExpKBPath = (char*)malloc(sizeOfPath);
+		// 	if (exportFracExpKBPath != NULL) {
+		// 		memset(exportFracExpKBPath,'\0',sizeOfPath);
+		// 		strncat(exportFracExpKBPath,exportFracExpKBDir,sizeOfPath);
+		// 		// strncat(exportFracExpKBPath,exportFracExpKBName,sizeOfPath);
+		// 		strncat(exportFracExpKBPath,exportFracExpKBExtension,sizeOfPath);
+		// 		if (write_FracExpKB_File(&currentKeyBind,exportFracExpKBPath) >= 0) {
+		// 			printFlush("\n%s was exported successfully",exportFracExpKBPath);
+		// 		} else {
+		// 			printError("%s failed to export",exportFracExpKBPath);
+		// 		}
+		// 	} else {
+		// 		printError("Unable to allocate memory to char* exportFracExpKBPath");
+		// 	}
+		// 	FREE(exportFracExpKBPath);
+		// }
 	}
 	ImGui::Text(" ");
 	ImGui::Separator();
@@ -1720,7 +1940,13 @@ int render_IMGUI() {
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
 	horizontal_buttons_IMGUI(window_flags);
+	
+	ImGui_WINDOW_FLAGS = 0;
+	ImGui_WINDOW_FLAGS |= ImGuiWindowFlags_NoCollapse; 
+	ImGui_WINDOW_FLAGS |= (AutoResizeWindows == true) ? ImGuiWindowFlags_NoResize : 0;
+
 	if (buttonSelection != -1) {
+		Lock_Key_Inputs = (LockKeyInputsInMenus == true) ? true : false;
 		switch(buttonSelection) {
 			case GUI_Menu_Coordinates:
 				Menu_Coordinates();
@@ -1740,14 +1966,17 @@ int render_IMGUI() {
 			case GUI_Menu_KeyBinds:
 				Menu_Keybinds();
 			break;
+			default:
+			Lock_Key_Inputs = false;
 		}
+	} else {
+		Lock_Key_Inputs = false;
 	}
 	if (ShowTheXButton == false) {
 		buttonSelection = -1;
 		ShowTheXButton = true;
 	}
 
-	
 	ImGui::Render();
 	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 	
@@ -2022,8 +2251,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
+	init_KeyBind_PresetList();
 	initKeys();
-	cleanKeyBind(&currentKeyBind);
+	//cleanKeyBind(&currentKeyBind);
 	init_default_sensitivity(&user_sensitivity);
 	bootup_Fractal_Frame_Rendered = false;
 	write_Render_Ready(true);
@@ -2040,8 +2270,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 int terminate_Render() {
 	terminateKeyboardGraphics();
-	currentKeyBind.clear();
-	importedKeyBind.clear();
+	clear_KeyBind_PresetList();
 	ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();

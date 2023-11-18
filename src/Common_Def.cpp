@@ -11,45 +11,81 @@
 /* Functions */
 
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {
-    if (val < min) {
-        val = min;
-    }
-    if (val <= max) {
-        return val;
-    }
-    val *= ratio;
-    if (val < max) {
-        val = max;
-    }
-    return val;
+	if (val < min) {
+		val = min;
+		return val;
+	}
+	if (val <= max) {
+		return val;
+	}
+	val *= ratio;
+	if (val < max) {
+		val = max;
+	}
+	return val;
 }
 
 fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio) {
-    if (val < min) {
-        val = min;
-    }
-    if (val <= max) {
-        return val;
-    }
-    val *= ratio;
-    if (val < max) {
-        val = max;
-    }
-    return val;
+	if (val < min) {
+		val = min;
+		return val;
+	}
+	if (val <= max) {
+		return val;
+	}
+	val *= ratio;
+	if (val < max) {
+		val = max;
+	}
+	return val;
 }
 
 uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio) {
-    if (val < min) {
-        val = min;
-    }
-    if (val <= max) {
-        return val;
-    }
-    val = (uint32_t)((fp64)val * ratio);
-    if (val < max) {
-        val = max;
-    }
-    return val;
+	if (val < min) {
+		val = min;
+		return val;
+	}
+	if (val <= max) {
+		return val;
+	}
+	val = (uint32_t)((fp64)val * ratio);
+	if (val < max) {
+		val = max;
+	}
+	return val;
+}
+
+fp64 calcMinRatioMax(fp64 val, fp64 min, fp64 ratio, fp64 max) {
+	val *= ratio;
+	if (val < min) {
+		return min;
+	}
+	if (val > max) {
+		return max;
+	}
+	return val;
+}
+
+fp32 calcMinRatioMax(fp32 val, fp32 min, fp32 ratio, fp32 max) {
+	val *= ratio;
+	if (val < min) {
+		return min;
+	}
+	if (val > max) {
+		return max;
+	}
+	return val;
+}
+
+uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max) {
+	val = (uint32_t)((fp64)val * ratio);
+	if (val < min) {
+		return min;
+	}
+	if (val > max) {
+		return max;
+	}
+	return val;
 }
 
 /* Time */

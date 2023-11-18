@@ -34,6 +34,12 @@ struct KeyBind_Preset {
 	KeyBind* list;
 }; typedef struct KeyBind_Preset KeyBind_Preset;
 
+// Will become KeyBind_Preset once I fully remove the old KeyBind_Preset
+struct KeyBind_PRESET {
+	std::string name;
+	std::list<KeyBind> kList;
+}; typedef KeyBind_PRESET KeyBind_PRESET;
+
 /* Key-bind List Functions */
 	// Default Key-binds for ABS-Fractal-Explorer
 	const std::list<KeyBind> defaultKeyBind = {
@@ -100,8 +106,11 @@ struct FracExpKB_File {
 int write_FracExpKB_File(KeyBind_Preset* ptr, char* path);
 int read_FracExpKB_File(KeyBind_Preset* ptr, char* path);
 
-int write_FracExpKB_File(std::list<KeyBind>* ptr, char* path);
+int write_FracExpKB_File(std::list<KeyBind>* ptr, char* path, const char* name = nullptr);
 int read_FracExpKB_File(std::list<KeyBind>* ptr, char* path);
+
+int import_KeyBind(KeyBind_PRESET* preset, char* path);
+int export_KeyBind(KeyBind_PRESET* preset, char* path);
 
 const char* const Scancode_Name[] = {
 	"SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_A","SDL_SCANCODE_B","SDL_SCANCODE_C","SDL_SCANCODE_D","SDL_SCANCODE_E","SDL_SCANCODE_F","SDL_SCANCODE_G","SDL_SCANCODE_H","SDL_SCANCODE_I","SDL_SCANCODE_J","SDL_SCANCODE_K","SDL_SCANCODE_L",

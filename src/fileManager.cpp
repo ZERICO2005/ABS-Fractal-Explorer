@@ -7,12 +7,111 @@
 */
 
 #include "Common_Def.h"
+#include "fileManager.h"
+
 #include "copyBuffer.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image_write.h>
+
+/* File Openers */
+
+#ifdef fileManager_Platform_Windows
+	#include <windows.h>
+	int openFileInterface(
+		char* filePath, size_t filePathMaxLen,
+		const char* title,
+		const char* filter
+	) {
+		if (filePathMaxLen == 0) { return -1; }
+		if (title == nullptr) { return -1; }
+		if (filter == nullptr) { return -1; }	
+		size_t len = (filePathMaxLen < MAX_PATH) ? filePathMaxLen : MAX_PATH;
+		memset(filePath,'\0',len);
+		OPENFILENAME ofn;
+		memset(&ofn,0,sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = nullptr;
+		ofn.lpstrFilter = filter;
+		ofn.lpstrFile = filePath;
+		ofn.nMaxFile = len;
+		ofn.lpstrTitle = title;
+		ofn.Flags = OFN_FILEMUSTEXIST;
+		if (GetOpenFileName(&ofn)) {
+			printFlush("\nOpened File: %s",filePath);
+		} else {
+			return 1;
+		}
+		return 0;
+	}
+
+	int saveFileInterface(
+		char* filePath, size_t filePathMaxLen,
+		const char* title,
+		const char* filter,
+		const char* fileType,
+		const char* defaultName
+	) {
+		if (filePathMaxLen == 0) { return -1; }
+		if (title == nullptr) { return -1; }
+		if (filter == nullptr) { return -1; }	
+		size_t len = (filePathMaxLen < MAX_PATH) ? filePathMaxLen : MAX_PATH;
+		memset(filePath, '\0', len);
+		OPENFILENAME ofn;
+		memset(&ofn, 0, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.hwndOwner = nullptr;
+		ofn.lpstrFilter = filter;
+		ofn.lpstrFile = filePath;
+		ofn.nMaxFile = len;
+		ofn.lpstrTitle = title;
+		ofn.Flags = OFN_OVERWRITEPROMPT;
+
+		ofn.lpstrDefExt = fileType;
+		char* defaultName_copy = nullptr;
+		if (defaultName != nullptr) {
+			defaultName_copy = (char*)malloc(strnlen(defaultName,len) + 1);
+		}
+		ofn.lpstrFileTitle = defaultName_copy;
+		bool fileSaved = GetSaveFileName(&ofn);
+		FREE(defaultName_copy);
+
+		if (fileSaved == true) {
+			printf("\nFile Saved: %s", filePath);
+		} else {
+			return 1;
+		}
+		return 0;
+	}
+#endif
+
+#ifdef fileManager_Platform_Linux
+	int openFileInterface(
+		char* filePath, size_t filePathMaxLen,
+		const char* title,
+		const char* filter
+	) {
+		if (filePathMaxLen == 0) { return -1; }
+		return 0;
+	}
+	int saveFileInterface(
+		char* filePath, size_t filePathMaxLen,
+		const char* title,
+		const char* filter,
+		const char* fileType,
+		const char* defaultName
+	) {
+		if (filePathMaxLen == 0) { return -1; }
+		return 0;
+	}
+
+#endif
+
+
+
+/* Image Writers */
 
 int writePNGImage(BufferBox* buf, char* path, char* name, int compression_level) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
