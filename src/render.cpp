@@ -348,16 +348,16 @@ bool keyPressed(uint32_t key) {
 
 int setup_fracExpKB(int argc, char* argv[]) {
 	init_KeyBind_PresetList();
+	size_t importedKeyBinds = 0;
 	if (argc >= 2) {
+		KeyBind_PRESET* temp_KeyBind = currentKBPreset;
 		for (int a = 1; a < argc; a++) {
-			KeyBind_PRESET temp_KeyBind;
 			if (strstr(argv[a],".fracExpKB") != NULL) {
 				printFlush("\nFracExp_KeyBind File: %s",argv[a]);
-				if (import_KeyBind(&temp_KeyBind,argv[a]) == 0) {
-					printf("\n\tKeyBinds: %zu Preset: %s",temp_KeyBind.kList.size(),temp_KeyBind.name.c_str());
-					KeyBind_PresetList.push_back(temp_KeyBind);
-					if (KeyBind_PresetList.size() == 2) {
-						currentKBPreset = &KeyBind_PresetList.back();
+				if (import_KeyBindPresets(&KeyBind_PresetList,&temp_KeyBind,argv[a]) == 0) {
+					importedKeyBinds++;
+					if (importedKeyBinds == 1) {
+						currentKBPreset = temp_KeyBind;
 					}
 				}
 			}
@@ -1777,7 +1777,7 @@ void Menu_Keybinds() {
 		} else {
 			ImGui::Text("Current Key-bind Preset[%d]: %llu key-binds",get_currentKBPreset_Pos(),currentKBPreset->kList.size());
 		}
-		
+
 		ImGui::InputText("##KeyBindName",BufAndLen(KeyBindName));
 		currentKBPreset->name = KeyBindName;
 		if (ImGui::BeginCombo("##Combo_KeyBind", "Choose a key-bind")) {
@@ -1835,14 +1835,11 @@ void Menu_Keybinds() {
 			if (openFileState == 0) {
 				Combo_functionSelect = Key_Function::NONE;
 				keyClick = SDL_SCANCODE_UNKNOWN;
-				KeyBind_PRESET temp_KeyBind;
-				import_KeyBind(&temp_KeyBind,importKeyBindFile);
-				KeyBind_PresetList.push_back(temp_KeyBind);
-				currentKBPreset = &KeyBind_PresetList.back();
+				import_KeyBindPresets(&KeyBind_PresetList,&currentKBPreset,importKeyBindFile);
 				recolorKeyboard();
 			}
 		}
-		if (ImGui::Button("Export Key-bind (.FracExpKB)")) {
+		if (ImGui::Button("Export Current Key-bind (.FracExpKB)")) {
 			static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
 			int saveFileState = saveFileInterface(
 				exportKeyBindFile,324,"Save FracExpKB file",
@@ -1855,6 +1852,20 @@ void Menu_Keybinds() {
 			if (saveFileState == 0) {
 				KeyBind_PRESET temp_KeyBind = *currentKBPreset;
 				export_KeyBind(&temp_KeyBind,exportKeyBindFile);
+			}
+		}
+		if (ImGui::Button("Export All Key-binds (.FracExpKB)")) {
+			static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
+			int saveFileState = saveFileInterface(
+				exportKeyBindFile,324,"Save FracExpKB file",
+				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
+				"FracExp Files (*.fracExp)\0*.fracExp\0"\
+				"All Files (*.*)\0*.*\0",
+				"fracExpKB",
+				currentKBPreset->name.c_str()
+			);
+			if (saveFileState == 0) {
+				export_KeyBindPresets(&KeyBind_PresetList,exportKeyBindFile);
 			}
 		}
 		// //	Disabling the name field since it can cause confusion when typing "./folder" + "KeyBind.fracExpKB" = "./folderKeyBind.fracExpKB"

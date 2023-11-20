@@ -28,11 +28,11 @@ struct KeyBind {
 	SDL_Scancode key;
 }; typedef struct KeyBind KeyBind;
 
-struct KeyBind_Preset {
-	char name[64];
-	size_t length;
-	KeyBind* list;
-}; typedef struct KeyBind_Preset KeyBind_Preset;
+// struct KeyBind_Preset {
+// 	char name[64];
+// 	size_t length;
+// 	KeyBind* list;
+// }; typedef struct KeyBind_Preset KeyBind_Preset;
 
 // Will become KeyBind_Preset once I fully remove the old KeyBind_Preset
 struct KeyBind_PRESET {
@@ -98,19 +98,26 @@ struct FracExpKB_File {
 		uint64_t File_Opened;
 		char File_Username[64]; /* User MUST opt-in for this information to be saved */
 	/* Keybind_List */
-		size_t KeyBind_Preset_Count;
-		uint64_t* KeyBind_Hash; /* 32 bytes */
-		KeyBind_Preset* KeyBind_Preset_List;
+		// size_t KeyBind_Preset_Count;
+		// uint64_t* KeyBind_Hash; /* 32 bytes */
+		std::list<KeyBind_PRESET> KeyBind_Preset_List;
 }; typedef struct FracExpKB_File FracExpKB_File;
 
-int write_FracExpKB_File(KeyBind_Preset* ptr, char* path);
-int read_FracExpKB_File(KeyBind_Preset* ptr, char* path);
+//int write_FracExpKB_File(KeyBind_Preset* ptr, char* path);
+//int read_FracExpKB_File(KeyBind_Preset* ptr, char* path);
 
-int write_FracExpKB_File(std::list<KeyBind>* ptr, char* path, const char* name = nullptr);
-int read_FracExpKB_File(std::list<KeyBind>* ptr, char* path);
+// int write_FracExpKB_File(KeyBind_PRESET ptr, char* path);
+// int read_FracExpKB_File(KeyBind_PRESET ptr, char* path);
 
-int import_KeyBind(KeyBind_PRESET* preset, char* path);
-int export_KeyBind(KeyBind_PRESET* preset, char* path);
+// int import_KeyBind(KeyBind_PRESET* preset, char* path);
+// int export_KeyBind(KeyBind_PRESET* preset, char* path);
+
+/* Imports KeyBind_Presets and updates the current preset */
+int import_KeyBindPresets(std::list<KeyBind_PRESET>* presetList, KeyBind_PRESET** preset, char* path);
+/* Exports multiple KeyBind_Presets */
+int export_KeyBindPresets(const std::list<KeyBind_PRESET>* presetList, char* path);
+/* Exports a singular KeyBind_Preset */
+int export_KeyBind(const KeyBind_PRESET* preset, char* path);
 
 const char* const Scancode_Name[] = {
 	"SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_UNKNOWN","SDL_SCANCODE_A","SDL_SCANCODE_B","SDL_SCANCODE_C","SDL_SCANCODE_D","SDL_SCANCODE_E","SDL_SCANCODE_F","SDL_SCANCODE_G","SDL_SCANCODE_H","SDL_SCANCODE_I","SDL_SCANCODE_J","SDL_SCANCODE_K","SDL_SCANCODE_L",

@@ -95,41 +95,39 @@ const char* const FracExpKB_WriteSDL_ScancodeWebsite {
 	"# https://wiki.libsdl.org/SDL2/SDL_Scancode"
 };
 
+int create_FracExpKB_Preset(FracExpKB_File* frac, char* fracExpKB_raw, Param_List* param_list, size_t param_len);
+
 int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
-	if (path == NULL) {
-		printError("Unable to create_FracExp_File due to NULL parameters");
-		return -1; 
-	}
+	if (frac == nullptr) { printError("Unable to create_FracExp_File since FracExpKB_File* frac is NULL"); return -1; }
+	if (path == nullptr) { printError("Unable to create_FracExp_File since char* path is NULL"); return -1; }
 	/* Setup */
-	char *pathF;
-	correctWindowsFileName(&pathF,path);
-	if (pathF == NULL) {
-		printError("Unable to format pathF, switching to path");
-		pathF = path;
-	}
-	//printFlush("\nPrevious: %s\nUpdated:  %s",path,pathF);
-	FILE *ptrF;
-	ptrF = fopen(path, "rb");
-	if (ptrF == NULL) {
-		printError("ptrF Null, unable to open \"%s\"",path);
-		return -1;
-	}
-	fseek(ptrF, 0, SEEK_END);
-	size_t len = ftell(ptrF);
-	fseek(ptrF, 0, SEEK_SET);
-	char* fracExpKB_raw = (char*)calloc(len + 1,sizeof(char));
-	if (fracExpKB_raw == NULL) {
+		char *pathF;
+		correctWindowsFileName(&pathF,path);
+		if (pathF == NULL) {
+			printError("Unable to format pathF, switching to path");
+			pathF = path;
+		}
+		FILE *ptrF;
+		ptrF = fopen(path, "rb");
+		if (ptrF == NULL) {
+			printError("ptrF Null, unable to open \"%s\"",path);
+			return -1;
+		}
+		fseek(ptrF, 0, SEEK_END);
+		size_t len = ftell(ptrF);
+		fseek(ptrF, 0, SEEK_SET);
+		char* fracExpKB_raw = (char*)calloc(len + 1,sizeof(char));
+		if (fracExpKB_raw == NULL) {
+			FREE(pathF);
+			return -1;
+		}
+		fread(fracExpKB_raw, sizeof(char), len, ptrF); fracExpKB_raw[len] = '\0'; // Manual string termination
+		fclose(ptrF);
 		FREE(pathF);
-		return -1;
-	}
-	fread(fracExpKB_raw, sizeof(char), len, ptrF); fracExpKB_raw[len] = '\0'; // Manual string termination
-	fclose(ptrF);
-	FREE(pathF);
 	Param_List* param_list; size_t param_len = 0;
 	generate_Param_List(fracExpKB_raw,len,&param_list,&param_len);
 	static char fileExtension[64];
-
-	printFlush("\n\nRetriving Data\n");
+	//printFlush("\n\nRetriving Data\n");
 	Param_List* item = NULL;
 	#define integerFromParam(base) ((item != NULL) ? getNumberFromText(&fracExpKB_raw[item->pos], item->len,(base)) : 0)
 	#define stringFromParam(buf) getTextFromParam(fracExpKB_raw, item, (buf), ARRAY_LENGTH(buf))
@@ -204,71 +202,39 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		item = getParam("File_Information/Username");
 		stringFromParam(frac->File_Username);
 	/* KeyBind_List */
-	{
+	if (create_FracExpKB_Preset(frac,fracExpKB_raw,param_list,param_len) != 0) {
+		return -1;
+	}
+	if (frac->KeyBind_Preset_List.size() == 0) {
+		return -2;
+	}
+	if (frac->KeyBind_Preset_List.size() == 0) {
+		return -2;
+	}
+	FREE(fracExpKB_raw);
+	return 0;
+}
+
+int create_FracExpKB_Preset(FracExpKB_File* frac, char* fracExpKB_raw, Param_List* param_list, size_t param_len) {
+	if (frac == nullptr) { printError("FracExpKB_File* frac is NULL"); return -1; }
+	if (fracExpKB_raw == nullptr) { printError("char* fracExpKB_raw is NULL"); return -1; }
+	if (param_list == nullptr) { printError("Param_List* param_list is NULL"); return -1; }
+	if (param_len == 0) { printError("param_len is 0"); return -1; }
+	{ // Insert some sort of loop here
+		Param_List* item = nullptr;
+		
 		#define Key_Function_Skip 0
 		#define SDL_Scancode_Skip 0
 		//printFlush("\n\nKey-Function: Scancode\n");
 		using namespace Key_Function;
-		size_t totalSize = 0;
-		for (size_t i = Key_Function_Skip; i < Parameter_Function_Count; i++) {
-			size_t strSize = 0;
-			char CurDir[128] = "KeyBind_List/Preset/";
-			// 20 is a magic number for the end of CurDir
-			snprintf(&CurDir[20],ARRAY_LENGTH(CurDir)-4,"%s",Key_Function_Text[i]);
-			item = getParam(CurDir);
-			if (item == NULL) { continue; }
-
-			size_t paramArrayLen = getParameterArrayLength(fracExpKB_raw,item,param_list,param_len);
-			//printf("\n%s",Key_Function_Text[i]);
-			for (size_t p = 0; p < paramArrayLen; p++) {
-				char temp[64];
-				for (size_t a = 0; a < ARRAY_LENGTH(temp); a++) { temp[a] = 0x0; }
-				strSize = getTextFromParam(fracExpKB_raw, item + p, temp, ARRAY_LENGTH(temp));
-				if (strSize > 0) {
-					//printf("\n\t%s",temp);
-					totalSize++;
-				}
-			}
-		}
-		//printFlush("\n\nScancode: Key-Function\n");
-		for (size_t i = SDL_Scancode_Skip; i < ARRAY_LENGTH(Scancode_Name); i++) {
-			size_t strSize = 0;
-			char CurDir[128] = "KeyBind_List/Preset/";
-			// 20 is a magic number for the end of CurDir
-			snprintf(&CurDir[20],ARRAY_LENGTH(CurDir)-4,"%s",Scancode_Name[i]);
-			item = getParam(CurDir);
-			if (item == NULL) { continue; }
-
-			size_t paramArrayLen = getParameterArrayLength(fracExpKB_raw,item,param_list,param_len);
-			//printf("\n%s\n",Scancode_Name[i]);
-			for (size_t p = 0; p < paramArrayLen; p++) {
-				char temp[64];
-				for (size_t a = 0; a < ARRAY_LENGTH(temp); a++) { temp[a] = 0x0; }
-				strSize = getTextFromParam(fracExpKB_raw, item + p, temp, ARRAY_LENGTH(temp));
-				if (strSize > 0) {
-					//printf("\n\t%s",temp);
-					totalSize++;
-				}
-			}
-		}
-		//printFlush("\n\nTotal Size: %zu",totalSize);
-
-		/*
-		item = getParam("KeyBind_List/Preset/Name");
-		stringFromParam(frac->KeyBind_Preset_List[0].name);
-		item = getParam("KeyBind_List/Preset/Hash");
-		*/
-
-		frac->KeyBind_Preset_Count = 1;
-		frac->KeyBind_Preset_List = (KeyBind_Preset*)malloc(sizeof(KeyBind_Preset) * frac->KeyBind_Preset_Count);
-		snprintf(frac->KeyBind_Preset_List[0].name,TEXT_LENGTH(frac->KeyBind_Preset_List[0].name),"Imported Key-bind");
-		//getHash((uint64_t*)(frac->KeyBind_Hash) + (0 * 4));
 		
-		frac->KeyBind_Preset_List[0].list = (KeyBind*)malloc(sizeof(KeyBind) * totalSize);
-		frac->KeyBind_Preset_List[0].length = totalSize;
-		#define bindData(index) frac->KeyBind_Preset_List[0].list[index]
-		size_t bindPtr = 0;
-
+		//#define bindData(index) frac->KeyBind_Preset_List[0].list[index]
+		KeyBind_PRESET fPreset;
+		item = getParam("KeyBind_List/Preset/Name");
+		static char temp_fPreset_name[96]; memset(temp_fPreset_name,'\0',96);
+		stringFromParam(temp_fPreset_name);
+		fPreset.name = temp_fPreset_name;
+		size_t bindCount = 0;
 
 		for (size_t i = Key_Function_Skip; i < Parameter_Function_Count; i++) {
 			size_t strSize = 0;
@@ -276,7 +242,7 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 			// 20 is a magic number for the end of CurDir
 			snprintf(&CurDir[20],ARRAY_LENGTH(CurDir)-4,"%s",Key_Function_Text[i]);
 			item = getParam(CurDir);
-			if (item == NULL) { continue; }
+			if (item == nullptr) { continue; }
 
 			size_t paramArrayLen = getParameterArrayLength(fracExpKB_raw,item,param_list,param_len);
 			//printf("\n%s",Key_Function_Text[i]);
@@ -287,9 +253,11 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 				if (strSize > 0) {
 					for (size_t match = SDL_Scancode_Skip; match < ARRAY_LENGTH(Scancode_Name); match++) {
 						if (strictCompareText(temp,strlen(temp),(char*)Scancode_Name[match],strlen((char*)Scancode_Name[match])) == true) {
-							bindData(bindPtr).func = (Key_Function_Enum)i;
-							bindData(bindPtr).key = (SDL_Scancode)match;
-							bindPtr++;
+							KeyBind bind;
+							bind.func = (Key_Function_Enum)i;
+							bind.key = (SDL_Scancode)match;
+							fPreset.kList.push_back(bind);
+							bindCount++;
 							break;
 						}
 					}
@@ -302,7 +270,7 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 			// 20 is a magic number for the end of CurDir
 			snprintf(&CurDir[20],ARRAY_LENGTH(CurDir)-4,"%s",Scancode_Name[i]);
 			item = getParam(CurDir);
-			if (item == NULL) { continue; }
+			if (item == nullptr) { continue; }
 
 			size_t paramArrayLen = getParameterArrayLength(fracExpKB_raw,item,param_list,param_len);
 			//printf("\n%s",Key_Function_Text[i]);
@@ -313,324 +281,492 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 				if (strSize > 0) {
 					for (size_t match = Key_Function_Skip; match < ARRAY_LENGTH(Key_Function_Text); match++) {
 						if (strictCompareText(temp,strlen(temp),(char*)Key_Function_Text[match],strlen((char*)Key_Function_Text[match])) == true) {
-							bindData(bindPtr).func = (Key_Function_Enum)match;
-							bindData(bindPtr).key = (SDL_Scancode)i;
-							bindPtr++;
+							KeyBind bind;
+							bind.func = (Key_Function_Enum)match;
+							bind.key = (SDL_Scancode)i;
+							fPreset.kList.push_back(bind);
+							bindCount++;
 							break;
 						}
 					}
 				}
 			}
 		}
-		//printFlush("\nbindPtr = %zu",bindPtr);
-		frac->KeyBind_Preset_List[0].length = bindPtr; // DEBUG
+		if (bindCount != 0) {
+			frac->KeyBind_Preset_List.push_back(fPreset);
+		}
 	}
-	FREE(fracExpKB_raw);
-	//FREE(param_list);
-	//printFlush("\nFinished\n");
-	
-		
-	//size_t param_start;  size_t param_end;
 	return 0;
 }
 
-int read_FracExpKB_File(KeyBind_Preset* preset, char* path) {
-	if (preset == NULL) {
-		printError("KeyBind_Preset* preset is NULL");
+// int read_FracExpKB_File(KeyBind_Preset* preset, char* path) {
+// 	if (preset == NULL) {
+// 		printError("KeyBind_Preset* preset is NULL");
+// 		return -1;
+// 	}
+// 	if (path == NULL) {
+// 		printWarning("Unable to read_FracExp_File due to NULL path");
+// 		return -1;
+// 	}
+// 	FracExpKB_File* frac = (FracExpKB_File*)malloc(sizeof(FracExpKB_File));
+// 	if (frac == NULL) {
+// 		printError("Unable to allocate memory for FracExpKB_File* frac");
+// 	}
+// 	frac->KeyBind_Preset_Count = 0;
+	
+// 	if (create_FracExpKB_File(frac,path) < 0) {
+// 		if (frac->KeyBind_Preset_List != NULL) {
+// 			for (size_t i = 0; i < frac->KeyBind_Preset_Count; i++) {
+// 				FREE(frac->KeyBind_Preset_List[i].list);
+// 			}
+// 		}
+// 		FREE(frac->KeyBind_Preset_List);
+// 		FREE(frac->KeyBind_Hash);
+// 		FREE(frac);
+// 		return -1;
+// 	}
+
+// 	if (frac->KeyBind_Preset_List == NULL) {
+// 		printError("FracExpKB_File* frac->KeyBind_Preset_List is NULL");
+// 		FREE(frac->KeyBind_Hash);
+// 		FREE(frac);
+// 		return -1;
+// 	}
+// 	if (frac->KeyBind_Preset_Count == 0) {
+// 		printError("FracExpKB_File* frac->KeyBind_Preset_Count is 0");
+// 		FREE(frac->KeyBind_Preset_List);
+// 		FREE(frac->KeyBind_Hash);
+// 		FREE(frac);
+// 		return -1;
+// 	}
+// 	// preset = (KeyBind_Preset*)malloc(sizeof(KeyBind_Preset));
+// 	preset->length = frac->KeyBind_Preset_List[0].length; // Length
+	
+// 	preset->list = (KeyBind*)malloc(sizeof(KeyBind) * preset->length); // List
+// 	snprintf(preset->name,TEXT_LENGTH(preset->name),"%s",frac->KeyBind_Preset_List[0].name); // Name
+// 	for (size_t i = 0; i < preset->length; i++) {
+// 		preset->list[i] = frac->KeyBind_Preset_List[0].list[i];
+// 	}
+// 	printf("\nLength: %zu List: %p Name: %s",preset->length,preset->list,preset->name);
+// 	for (size_t i = 0; i < frac->KeyBind_Preset_Count; i++) {
+// 		printFlush("\nFreeing: %zu",i);
+// 		FREE(frac->KeyBind_Preset_List[i].list);
+// 	}
+// 	FREE(frac->KeyBind_Preset_List);
+// 	//FREE(frac->KeyBind_Hash);
+// 	FREE(frac);
+// 	/*
+// 	printFlush("\nPrinting: %zu",preset->length);
+// 	printFlush("%s\n",preset->name);
+// 	for (size_t i = 0; i < preset->length - 1; i++) {
+// 		printf("\nKeyBind[%zu]:\n\t%s\n\t%s",i,Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
+// 	}
+// 	fflush(stdout);
+// 	*/
+// 	return 0;
+// }
+
+// int write_FracExpKB_File(KeyBind_Preset* preset, char* path) {
+// 	if (preset == NULL) {
+// 		printError("KeyBind_Preset* preset is NULL");
+// 		return -1;
+// 	}
+// 	if (path == NULL) {
+// 		printError("Unable to read_FracExp_File due to NULL path");
+// 		return -1;
+// 	}
+
+// 	/* Setup */
+// 	char *pathW;
+// 	correctWindowsFileName(&pathW,path);
+// 	if (pathW == NULL) {
+// 		printWarning("Unable to format pathF, switching to path");
+// 		pathW = path;
+// 	}
+// 	FILE *ptrW;
+// 	ptrW = fopen(path, "wb");
+// 	if (ptrW == NULL) {
+// 		printError("Unable to open %s",path);
+// 		FREE(pathW);
+// 		return -1;
+// 	}
+// 	fprintf(ptrW,"%s",FracExpKB_WriteDescription);
+// 	fprintf(ptrW,"\n\nFile_Extension:\n\t\".fracExpKB\"");
+// 	fprintf(ptrW,"\n\nFile_Header:");
+// 	fprintf(
+// 		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
+// 		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+// 		FRACEXPKB_V_MAJOR,FRACEXPKB_V_MINOR,FRACEXPKB_V_PATCH,0,FRACEXPKB_V_TAG
+// 	);
+// 	fprintf(
+// 		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
+// 		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+// 		PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,0,PROGRAM_V_TAG
+// 	);
+// 	fprintf(ptrW,"\n\tHash:");
+// 	fprintf(ptrW,"\n\t\tAll:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\t\tCritical:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\t\tFile:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\nFile_Information:");
+// 	fprintf(ptrW,"\n\tPlatform:\n\t\t\"%s\"","Unknown");
+// 	fprintf(ptrW,"\n\tCreated:\n\t\t\"%s\"","2000/01/01 00:00");
+// 	fprintf(ptrW,"\n\tModified\n\t\t\"%s\"","2000/01/01 00:00");
+// 	fprintf(ptrW,"\n\tOpened:\n\t\t\"%s\"","2000/01/01 00:00");
+// 	fprintf(ptrW,"\n\tUsername: %s\n\t\t\"%s\"",FracExpKB_WriteUserInfoNotice,"Unknown");
+// 	fprintf(ptrW,"\n\nKeyBind_List: %s\n\tPreset:\n\t\tName:\n\t\t\t\"%s\"",FracExpKB_WriteSDL_ScancodeWebsite,preset->name);
+// 	for (size_t i = 0; i < preset->length; i++) {
+// 		//fprintf(ptrW,"\n\t\t%s:\n\t\t\t%s",Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
+// 		bool duplicateFunc = false;
+// 		for (size_t a = 0; a < i; a++) {
+// 			if (preset->list[a].func == preset->list[i].func) {
+// 				duplicateFunc = true;
+// 				break;
+// 			}
+// 		}
+// 		if (duplicateFunc == false) {
+// 			fprintf(ptrW,"\n\t\t%s:",Key_Function::Key_Function_Text[preset->list[i].func]);
+// 			for (size_t f = i; f < preset->length; f++) {
+// 				if (preset->list[f].func == preset->list[i].func) {
+// 					fprintf(ptrW,"\n\t\t\t%s",Scancode_Name[preset->list[f].key]);
+// 				}
+// 			}
+// 		}
+		
+// 	}
+// 	fclose(ptrW);
+// 	FREE(pathW);
+// 	return 0;
+// }
+
+// int read_FracExpKB_File(KeyBind_PRESET* preset, char* path) {
+// 	if (preset == nullptr) {
+// 		printError("std::list<KeyBind>* preset is NULL");
+// 		return -1;
+// 	}
+// 	if (path == NULL) {
+// 		printWarning("Unable to read_FracExp_File due to NULL path");
+// 		return -1;
+// 	}
+// 	FracExpKB_File* frac = (FracExpKB_File*)malloc(sizeof(FracExpKB_File));
+// 	if (frac == NULL) {
+// 		printError("Unable to allocate memory for FracExpKB_File* frac");
+// 	}
+// 	frac->KeyBind_Preset_Count = 0;
+
+// 	if (create_FracExpKB_File(frac,path) < 0) {
+// 		if (frac->KeyBind_Preset_List.empty() == false) {
+// 			for (std::list<KeyBind_PRESET>::iterator iterKBP = frac->KeyBind_Preset_List.begin(); iterKBP != frac->KeyBind_Preset_List.end(); iterKBP++) {
+// 				frac->KeyBind_Preset_List.erase(iterKBP);
+// 			}
+// 		}
+// 		frac->KeyBind_Preset_List.clear();
+// 		FREE(frac->KeyBind_Hash);
+// 		FREE(frac);
+// 		return -1;
+// 	}
+
+// 	if (frac->KeyBind_Preset_List.empty() == true) {
+// 		printError("FracExpKB_File* frac->KeyBind_Preset_List is NULL");
+// 		FREE(frac);
+// 		FREE(frac->KeyBind_Hash);
+// 		return -1;
+// 	}
+// 	if (frac->KeyBind_Preset_Count == 0 || frac->KeyBind_Preset_List.size() == 0) {
+// 		printError("FracExpKB_File* frac->KeyBind_Preset_Count is 0");
+// 		if (frac->KeyBind_Preset_List.empty() == false) {
+// 			for (std::list<KeyBind_PRESET>::iterator iterKBP = frac->KeyBind_Preset_List.begin(); iterKBP != frac->KeyBind_Preset_List.end(); iterKBP++) {
+// 				frac->KeyBind_Preset_List.erase(iterKBP);
+// 			}
+// 		}
+// 		FREE(frac->KeyBind_Hash);
+// 		FREE(frac);
+// 		return -1;
+// 	}
+// 	preset->kList.clear();
+// 	*preset = frac->KeyBind_Preset_List.front();
+// 	for (std::list<KeyBind_PRESET>::iterator iterKBP = frac->KeyBind_Preset_List.begin(); iterKBP != frac->KeyBind_Preset_List.end(); iterKBP++) {
+// 		frac->KeyBind_Preset_List.erase(iterKBP);
+// 	}
+// 	FREE(frac);
+// 	return 0;
+// }
+
+// int write_FracExpKB_File(KeyBind_PRESET* preset, char* path) {
+// 	printFlush("\n");
+// 	if (preset == nullptr) {
+// 		printError("std::list<KeyBind>* preset is NULL");
+// 		return -1;
+// 	}
+// 	if (path == NULL) {
+// 		printError("Unable to read_FracExp_File due to NULL path");
+// 		return -1;
+// 	}
+
+// 	/* Setup */
+// 	char *pathW;
+// 	correctWindowsFileName(&pathW,path);
+// 	if (pathW == NULL) {
+// 		printWarning("Unable to format pathF, switching to path");
+// 		pathW = path;
+// 	}
+// 	FILE *ptrW;
+// 	ptrW = fopen(path, "wb");
+// 	if (ptrW == NULL) {
+// 		printError("Unable to open %s",path);
+// 		FREE(pathW);
+// 		return -1;
+// 	}
+// 	fprintf(ptrW,"%s",FracExpKB_WriteDescription);
+// 	fprintf(ptrW,"\n\nFile_Extension:\n\t\".fracExpKB\"");
+// 	fprintf(ptrW,"\n\nFile_Header:");
+// 	fprintf(
+// 		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
+// 		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+// 		FRACEXPKB_V_MAJOR,FRACEXPKB_V_MINOR,FRACEXPKB_V_PATCH,0,FRACEXPKB_V_TAG
+// 	);
+// 	fprintf(
+// 		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
+// 		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+// 		PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,0,PROGRAM_V_TAG
+// 	);
+// 	fprintf(ptrW,"\n\tHash:");
+// 	fprintf(ptrW,"\n\t\tAll:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\t\tCritical:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\t\tFile:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+// 	fprintf(ptrW,"\n\nFile_Information:");
+// 	fprintf(ptrW,"\n\tPlatform:\n\t\t\"%s\"","Unknown");
+// 	fprintf(ptrW,"\n\tCreated:\n\t\t\"%s\"","2000/01/01 00:00");
+// 	fprintf(ptrW,"\n\tModified\n\t\t\"%s\"","2000/01/01 00:00");
+// 	fprintf(ptrW,"\n\tOpened:\n\t\t\"%s\"","2000/01/01 00:00");
+// 	fprintf(ptrW,"\n\tUsername: %s\n\t\t\"%s\"",FracExpKB_WriteUserInfoNotice,"Unknown");
+// 	fprintf(ptrW,"\n\nKeyBind_List: %s\n\tPreset:",FracExpKB_WriteSDL_ScancodeWebsite);
+// 	if (preset->name.empty() == true) {
+// 		fprintf(ptrW,"\n\t\tName:\n\t\t\t\"Untitled-KeyBind_%012llu\"",(getNanoTime() / 1000) % 1000000000000);
+// 	} else {
+// 		fprintf(ptrW,"\n\t\tName:\n\t\t\t\"%s\"",preset->name.c_str());
+// 	}
+// 	cleanKeyBind(&preset->kList);
+// 	for (const auto& bind : preset->kList) {
+// 		//fprintf(ptrW,"\n\t\t%s:\n\t\t\t%s",Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
+		
+// 		fprintf(ptrW,"\n\t\t%s:",Key_Function::Key_Function_Text[bind.func]);
+// 		for (const auto& match : preset->kList) {
+// 			if (match.func == bind.func) {
+// 				fprintf(ptrW,"\n\t\t\t%s",Scancode_Name[match.key]);
+// 			}
+// 		}
+// 	}
+// 	if (fclose(ptrW) == 0) {
+// 		//printFlush("\nExported File: %s",pathW);
+// 	} else {
+// 		printError("\nFailed to close file: %s",pathW);
+// 	}
+// 	FREE(pathW);
+// 	return 0;
+// }
+
+// int import_KeyBind(KeyBind_PRESET* preset, char* path) {
+// 	if (preset == nullptr) {
+// 		printError("KeyBind_Preset* preset is NULL");
+// 		return -1;
+// 	}
+// 	if (path == nullptr) {
+// 		printWarning("Unable to read_FracExp_File due to NULL path");
+// 		return -1;
+// 	}
+// 	static char rand_name[324]; memset(rand_name,'\0',324);
+// 	snprintf(rand_name,320,"Untitled-KeyBind_%012llu",(getNanoTime() / 1000) % 1000000000000);
+// 	preset->name = rand_name;
+// 	int ret = read_FracExpKB_File(preset,path);
+// 	if (ret != 0) {
+// 		return ret;
+// 	}
+// 	cleanKeyBind(&preset->kList);
+// 	printf("\nKeyBinds: %zu Preset: %s",preset->kList.size(),preset->name.c_str());
+// 	return 0;
+// }
+
+// int export_KeyBind(KeyBind_PRESET* preset, char* path) {
+// 	if (preset == nullptr) {
+// 		printError("KeyBind_Preset* preset is NULL");
+// 		return -1;
+// 	}
+// 	if (path == nullptr) {
+// 		printWarning("Unable to write_FracExp_File due to NULL path");
+// 		return -1;
+// 	}
+// 	int ret = write_FracExpKB_File(preset,path);
+// 	return ret;
+// }
+
+/* Modern Functions */
+
+/* Import/Read FracExpKB */
+
+/* Imports KeyBind_Presets and updates the current preset */
+int import_KeyBindPresets(std::list<KeyBind_PRESET>* presetList, KeyBind_PRESET** preset, char* path) {
+	if (presetList == nullptr) {
+		printError("std::list<KeyBind_Preset>* presetList is NULL");
 		return -1;
 	}
-	if (path == NULL) {
+	if (preset == nullptr) {
+		printWarning("KeyBind_PRESET** preset is NULL");
+		return -1;
+	}
+	if (path == nullptr) {
 		printWarning("Unable to read_FracExp_File due to NULL path");
 		return -1;
 	}
-	FracExpKB_File* frac = (FracExpKB_File*)malloc(sizeof(FracExpKB_File));
-	if (frac == NULL) {
-		printError("Unable to allocate memory for FracExpKB_File* frac");
-	}
-	frac->KeyBind_Preset_Count = 0;
-	
-	if (create_FracExpKB_File(frac,path) < 0) {
-		if (frac->KeyBind_Preset_List != NULL) {
-			for (size_t i = 0; i < frac->KeyBind_Preset_Count; i++) {
-				FREE(frac->KeyBind_Preset_List[i].list);
-			}
+	FracExpKB_File frac;
+	int ret = create_FracExpKB_File(&frac,path);
+	if (ret != 0) {
+		while (frac.KeyBind_Preset_List.empty() == false) {
+			frac.KeyBind_Preset_List.back().kList.clear();
+			frac.KeyBind_Preset_List.pop_back();
 		}
-		FREE(frac->KeyBind_Preset_List);
-		FREE(frac->KeyBind_Hash);
-		FREE(frac);
+		printError("read_FracExpKB_File() returned %d",ret);
+		return ret;
+	}
+	if (frac.KeyBind_Preset_List.empty() == true) {
+		printError("FracExpKB file is empty: %s",path);
 		return -1;
 	}
-
-	if (frac->KeyBind_Preset_List == NULL) {
-		printError("FracExpKB_File* frac->KeyBind_Preset_List is NULL");
-		FREE(frac->KeyBind_Hash);
-		FREE(frac);
-		return -1;
-	}
-	if (frac->KeyBind_Preset_Count == 0) {
-		printError("FracExpKB_File* frac->KeyBind_Preset_Count is 0");
-		FREE(frac->KeyBind_Preset_List);
-		FREE(frac->KeyBind_Hash);
-		FREE(frac);
-		return -1;
-	}
-	// preset = (KeyBind_Preset*)malloc(sizeof(KeyBind_Preset));
-	preset->length = frac->KeyBind_Preset_List[0].length; // Length
-	
-	preset->list = (KeyBind*)malloc(sizeof(KeyBind) * preset->length); // List
-	snprintf(preset->name,TEXT_LENGTH(preset->name),"%s",frac->KeyBind_Preset_List[0].name); // Name
-	for (size_t i = 0; i < preset->length; i++) {
-		preset->list[i] = frac->KeyBind_Preset_List[0].list[i];
-	}
-	printf("\nLength: %zu List: %p Name: %s",preset->length,preset->list,preset->name);
-	for (size_t i = 0; i < frac->KeyBind_Preset_Count; i++) {
-		printFlush("\nFreeing: %zu",i);
-		FREE(frac->KeyBind_Preset_List[i].list);
-	}
-	FREE(frac->KeyBind_Preset_List);
-	//FREE(frac->KeyBind_Hash);
-	FREE(frac);
-	/*
-	printFlush("\nPrinting: %zu",preset->length);
-	printFlush("%s\n",preset->name);
-	for (size_t i = 0; i < preset->length - 1; i++) {
-		printf("\nKeyBind[%zu]:\n\t%s\n\t%s",i,Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
-	}
-	fflush(stdout);
-	*/
-	return 0;
-}
-
-int write_FracExpKB_File(KeyBind_Preset* preset, char* path) {
-	if (preset == NULL) {
-		printError("KeyBind_Preset* preset is NULL");
-		return -1;
-	}
-	if (path == NULL) {
-		printError("Unable to read_FracExp_File due to NULL path");
-		return -1;
-	}
-
-	/* Setup */
-	char *pathW;
-	correctWindowsFileName(&pathW,path);
-	if (pathW == NULL) {
-		printWarning("Unable to format pathF, switching to path");
-		pathW = path;
-	}
-	FILE *ptrW;
-	ptrW = fopen(path, "wb");
-	if (ptrW == NULL) {
-		printError("Unable to open %s",path);
-		FREE(pathW);
-		return -1;
-	}
-	fprintf(ptrW,"%s",FracExpKB_WriteDescription);
-	fprintf(ptrW,"\n\nFile_Extension:\n\t\".fracExpKB\"");
-	fprintf(ptrW,"\n\nFile_Header:");
-	fprintf(
-		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
-		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
-		FRACEXPKB_V_MAJOR,FRACEXPKB_V_MINOR,FRACEXPKB_V_PATCH,0,FRACEXPKB_V_TAG
-	);
-	fprintf(
-		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
-		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
-		PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,0,PROGRAM_V_TAG
-	);
-	fprintf(ptrW,"\n\tHash:");
-	fprintf(ptrW,"\n\t\tAll:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tCritical:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tFile:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\nFile_Information:");
-	fprintf(ptrW,"\n\tPlatform:\n\t\t\"%s\"","Unknown");
-	fprintf(ptrW,"\n\tCreated:\n\t\t\"%s\"","2000/01/01 00:00");
-	fprintf(ptrW,"\n\tModified\n\t\t\"%s\"","2000/01/01 00:00");
-	fprintf(ptrW,"\n\tOpened:\n\t\t\"%s\"","2000/01/01 00:00");
-	fprintf(ptrW,"\n\tUsername: %s\n\t\t\"%s\"",FracExpKB_WriteUserInfoNotice,"Unknown");
-	fprintf(ptrW,"\n\nKeyBind_List: %s\n\tPreset:\n\t\tName:\n\t\t\t\"%s\"",FracExpKB_WriteSDL_ScancodeWebsite,preset->name);
-	for (size_t i = 0; i < preset->length; i++) {
-		//fprintf(ptrW,"\n\t\t%s:\n\t\t\t%s",Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
-		bool duplicateFunc = false;
-		for (size_t a = 0; a < i; a++) {
-			if (preset->list[a].func == preset->list[i].func) {
-				duplicateFunc = true;
-				break;
-			}
-		}
-		if (duplicateFunc == false) {
-			fprintf(ptrW,"\n\t\t%s:",Key_Function::Key_Function_Text[preset->list[i].func]);
-			for (size_t f = i; f < preset->length; f++) {
-				if (preset->list[f].func == preset->list[i].func) {
-					fprintf(ptrW,"\n\t\t\t%s",Scancode_Name[preset->list[f].key]);
+	size_t addedPresetCount = 0;
+	while (frac.KeyBind_Preset_List.empty() == false) {
+		addedPresetCount++;
+		KeyBind_PRESET* fPreset = &frac.KeyBind_Preset_List.front();
+		
+		fPreset->name.erase(std::remove(fPreset->name.begin(), fPreset->name.end(), '\"'), fPreset->name.end()); // Temporary
+		bool uniqueName = true;
+		do {
+			uniqueName = true;
+			for (const auto& checkPreset : *presetList) {
+				if (checkPreset.name == fPreset->name) {
+					uniqueName = false;
+					char rand_num = (uint8_t)((getNanoTime() / 1000) % 10) + '0';
+					fPreset->name += rand_num;
+					break;
 				}
 			}
+		} while (uniqueName == false);
+
+		presetList->push_back(*fPreset);
+		frac.KeyBind_Preset_List.pop_front();
+
+		if (addedPresetCount == 1) {
+			*preset = &presetList->back();
 		}
-		
-	}
-	fclose(ptrW);
-	FREE(pathW);
+	};
 	return 0;
 }
 
-int read_FracExpKB_File(std::list<KeyBind>* preset, char* path) {
-	if (preset == nullptr) {
-		printError("std::list<KeyBind>* preset is NULL");
-		return -1;
-	}
-	if (path == NULL) {
-		printWarning("Unable to read_FracExp_File due to NULL path");
-		return -1;
-	}
-	FracExpKB_File* frac = (FracExpKB_File*)malloc(sizeof(FracExpKB_File));
-	if (frac == NULL) {
-		printError("Unable to allocate memory for FracExpKB_File* frac");
-	}
-	frac->KeyBind_Preset_Count = 0;
+/* Export/Write FracExpKB */
 
-	if (create_FracExpKB_File(frac,path) < 0) {
-		if (frac->KeyBind_Preset_List != NULL) {
-			for (size_t i = 0; i < frac->KeyBind_Preset_Count; i++) {
-				FREE(frac->KeyBind_Preset_List[i].list);
-			}
-		}
-		FREE(frac->KeyBind_Preset_List);
-		FREE(frac->KeyBind_Hash);
-		FREE(frac);
-		return -1;
+int write_FracExpKB_Preset(const KeyBind_PRESET* preset, FILE *ptrW) {
+	if (preset == nullptr) { printError("KeyBind_PRESET* preset is NULL"); return -1; }
+	if (ptrW == nullptr) { printError("FILE *ptrW is NULL"); return -1; }
+	/* Preset Header */
+	fprintf(ptrW,"\n\tPreset:");
+	if (preset->name.empty() == true) {
+		fprintf(ptrW,"\n\t\tName:\n\t\t\t\"KeyBind_%012llu\"",(getNanoTime() / 1000) % 1000000000000);
 	}
-
-	if (frac->KeyBind_Preset_List == NULL) {
-		printError("FracExpKB_File* frac->KeyBind_Preset_List is NULL");
-		FREE(frac);
-		FREE(frac->KeyBind_Hash);
-		return -1;
-	}
-	if (frac->KeyBind_Preset_Count == 0) {
-		printError("FracExpKB_File* frac->KeyBind_Preset_Count is 0");
-		FREE(frac->KeyBind_Preset_List);
-		FREE(frac->KeyBind_Hash);
-		FREE(frac);
-		return -1;
-	}
-	preset->clear();
-	for (size_t i = 0; i < frac->KeyBind_Preset_List[0].length; i++) {
-		preset->push_back(frac->KeyBind_Preset_List[0].list[i]);
-	}
-	for (size_t i = 0; i < frac->KeyBind_Preset_Count; i++) {
-		FREE(frac->KeyBind_Preset_List[i].list);
-	}
-	FREE(frac->KeyBind_Preset_List);
-	FREE(frac);
-	return 0;
-}
-
-int write_FracExpKB_File(std::list<KeyBind>* preset, char* path, const char* name) {
-	printFlush("\n");
-	if (preset == nullptr) {
-		printError("std::list<KeyBind>* preset is NULL");
-		return -1;
-	}
-	if (path == NULL) {
-		printError("Unable to read_FracExp_File due to NULL path");
-		return -1;
-	}
-
-	/* Setup */
-	char *pathW;
-	correctWindowsFileName(&pathW,path);
-	if (pathW == NULL) {
-		printWarning("Unable to format pathF, switching to path");
-		pathW = path;
-	}
-	FILE *ptrW;
-	ptrW = fopen(path, "wb");
-	if (ptrW == NULL) {
-		printError("Unable to open %s",path);
-		FREE(pathW);
-		return -1;
-	}
-	fprintf(ptrW,"%s",FracExpKB_WriteDescription);
-	fprintf(ptrW,"\n\nFile_Extension:\n\t\".fracExpKB\"");
-	fprintf(ptrW,"\n\nFile_Header:");
-	fprintf(
-		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
-		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
-		FRACEXPKB_V_MAJOR,FRACEXPKB_V_MINOR,FRACEXPKB_V_PATCH,0,FRACEXPKB_V_TAG
-	);
-	fprintf(
-		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
-		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
-		PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,0,PROGRAM_V_TAG
-	);
-	fprintf(ptrW,"\n\tHash:");
-	fprintf(ptrW,"\n\t\tAll:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tCritical:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tFile:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\nFile_Information:");
-	fprintf(ptrW,"\n\tPlatform:\n\t\t\"%s\"","Unknown");
-	fprintf(ptrW,"\n\tCreated:\n\t\t\"%s\"","2000/01/01 00:00");
-	fprintf(ptrW,"\n\tModified\n\t\t\"%s\"","2000/01/01 00:00");
-	fprintf(ptrW,"\n\tOpened:\n\t\t\"%s\"","2000/01/01 00:00");
-	fprintf(ptrW,"\n\tUsername: %s\n\t\t\"%s\"",FracExpKB_WriteUserInfoNotice,"Unknown");
-	fprintf(ptrW,"\n\nKeyBind_List: %s\n\tPreset:",FracExpKB_WriteSDL_ScancodeWebsite);
-	if (name == nullptr) {
-		fprintf(ptrW,"\n\t\tName:\n\t\t\t\"Untitled-KeyBind_%012llu\"",(getNanoTime() / 1000) % 1000000000000);
-	} else {
-		fprintf(ptrW,"\n\t\tName:\n\t\t\t\"%s\"",name);
-	}
-	cleanKeyBind(preset);
-	for (const auto& bind : *preset) {
-		//fprintf(ptrW,"\n\t\t%s:\n\t\t\t%s",Key_Function::Key_Function_Text[preset->list[i].func],Scancode_Name[preset->list[i].key]);
-		
+	fprintf(ptrW,"\n\t\tName:\n\t\t\t\"%s\"",preset->name.c_str());
+	/* Print KeyBinds */
+	for (const auto& bind : preset->kList) {
 		fprintf(ptrW,"\n\t\t%s:",Key_Function::Key_Function_Text[bind.func]);
-		for (const auto& match : *preset) {
+		for (const auto& match : preset->kList) {
 			if (match.func == bind.func) {
 				fprintf(ptrW,"\n\t\t\t%s",Scancode_Name[match.key]);
 			}
 		}
 	}
-	if (fclose(ptrW) == 0) {
-		//printFlush("\nExported File: %s",pathW);
-	} else {
+	return 0;
+}
+
+int write_FracExpKB_Header(FILE *ptrW) {
+	if (ptrW == nullptr) { printError("FILE *ptrW is NULL"); return -1; }
+	fprintf(ptrW,"%s",FracExpKB_WriteDescription);
+	fprintf(ptrW,"\n\nFile_Extension:\n\t\".fracExpKB\"");
+	fprintf(ptrW,"\n\nFile_Header:");
+	fprintf(
+		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
+		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+		FRACEXPKB_V_MAJOR,FRACEXPKB_V_MINOR,FRACEXPKB_V_PATCH,0,FRACEXPKB_V_TAG
+	);
+	fprintf(
+		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
+		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+		PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,0,PROGRAM_V_TAG
+	);
+	fprintf(ptrW,"\n\tHash:");
+	fprintf(ptrW,"\n\t\tAll:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+	fprintf(ptrW,"\n\t\tCritical:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+	fprintf(ptrW,"\n\t\tFile:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+	fprintf(ptrW,"\n\nFile_Information:");
+	fprintf(ptrW,"\n\tPlatform:\n\t\t\"%s\"","Unknown");
+	fprintf(ptrW,"\n\tCreated:\n\t\t\"%s\"","2000/01/01 00:00");
+	fprintf(ptrW,"\n\tModified\n\t\t\"%s\"","2000/01/01 00:00");
+	fprintf(ptrW,"\n\tOpened:\n\t\t\"%s\"","2000/01/01 00:00");
+	fprintf(ptrW,"\n\tUsername: %s\n\t\t\"%s\"",FracExpKB_WriteUserInfoNotice,"Unknown");
+	fprintf(ptrW,"\n\nKeyBind_List: %s",FracExpKB_WriteSDL_ScancodeWebsite);
+	return 0;
+}
+
+/* Exports multiple KeyBind_Presets */
+int export_KeyBindPresets(const std::list<KeyBind_PRESET>* presetList, char* path) {
+	if (presetList == nullptr) { printError("std::list<KeyBind_PRESET>* presetList is NULL"); return -1; }
+	if (path == nullptr) { printError("export_KeyBindPresets() failed due to NULL path"); return -1; }
+	char *pathW;
+	correctWindowsFileName(&pathW,path);
+	if (pathW == nullptr) {
+		printWarning("Unable to format pathW, switching to path");
+		pathW = path;
+	}
+	FILE *ptrW;
+	ptrW = fopen(path, "wb");
+	if (ptrW == nullptr) {
+		printError("Unable to open %s",path);
+		FREE(pathW);
+		return -1;
+	}
+	/* Write Data */
+	write_FracExpKB_Header(ptrW);
+	for (const auto& preset : *presetList) {
+		write_FracExpKB_Preset(&preset,ptrW);
+	}
+	if (fclose(ptrW) != 0) {
 		printError("\nFailed to close file: %s",pathW);
+		return -1;
 	}
-	FREE(pathW);
 	return 0;
 }
 
-int import_KeyBind(KeyBind_PRESET* preset, char* path) {
-	if (preset == nullptr) {
-		printError("KeyBind_Preset* preset is NULL");
+/* Exports a singular KeyBind_Preset */
+int export_KeyBind(const KeyBind_PRESET* preset, char* path) {
+	if (preset == nullptr) { printError("KeyBind_Preset* preset is NULL"); return -1; }
+	if (path == nullptr) { printError("export_KeyBind() failed due to NULL path"); return -1; }
+	char *pathW;
+	correctWindowsFileName(&pathW,path);
+	if (pathW == nullptr) {
+		printWarning("Unable to format pathW, switching to path");
+		pathW = path;
+	}
+	FILE *ptrW;
+	ptrW = fopen(path, "wb");
+	if (ptrW == nullptr) {
+		printError("Unable to open %s",path);
+		FREE(pathW);
 		return -1;
 	}
-	if (path == nullptr) {
-		printWarning("Unable to read_FracExp_File due to NULL path");
+	/* Write Data */
+	write_FracExpKB_Header(ptrW);
+	write_FracExpKB_Preset(preset,ptrW);
+	if (fclose(ptrW) != 0) {
+		printError("\nFailed to close file: %s",pathW);
 		return -1;
 	}
-	static char rand_name[324]; memset(rand_name,'\0',324);
-	snprintf(rand_name,320,"Untitled-KeyBind_%012llu",(getNanoTime() / 1000) % 1000000000000);
-	preset->name = rand_name;
-	int ret = read_FracExpKB_File(&preset->kList,path);
-	if (ret != 0) {
-		return ret;
-	}
-	cleanKeyBind(&preset->kList);
-	printf("\nKeyBinds: %zu Preset: %s",preset->kList.size(),preset->name.c_str());
 	return 0;
-}
-
-int export_KeyBind(KeyBind_PRESET* preset, char* path) {
-	if (preset == nullptr) {
-		printError("KeyBind_Preset* preset is NULL");
-		return -1;
-	}
-	if (path == nullptr) {
-		printWarning("Unable to read_FracExp_File due to NULL path");
-		return -1;
-	}
-	int ret = write_FracExpKB_File(&preset->kList,path,preset->name.c_str());
-	return ret;
 }
