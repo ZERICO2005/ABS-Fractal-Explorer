@@ -11,6 +11,7 @@
 #include "fracCL.h"
 #include "buildCL.h"
 #include "fractal.h"
+#include "user_data.h"
 
 /*uint32_t getPow2_Step4(uint32_t p) { //Deprecated
    uint32_t n = 16 + (4 * (p % 4));
@@ -184,6 +185,7 @@ u32 rY = 0;
 #define printErrorChange(f,x); { static int CHANGE; if (CHANGE != x) { printFlush(f, x); printOpenCLError(err); } CHANGE = x; }
 
 int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING) {
+	uint64_t clearBufferStart = getNanoTime();
 	if (validateBufferBox(buf) == false) {
 		printError("BufferBox* buf is NULL or has invalid data in renderOpenCL_ABS_Mandelbrot()");
 		return -1;
@@ -254,6 +256,20 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	clFinish(engine.queue); /* Wait for the command queue to get serviced before reading back results */
 	clEnqueueReadBuffer(engine.queue, deviceResultBuf, CL_TRUE, 0, getBufferBoxSize(buf), buf->vram, 0, NULL, NULL); /* Read the kernel's output */
 	//for (u32 z = 0; z < resX * resY * 3; z++) { data[z] = resultBuf[z]; }
+	
+	uint64_t clearBufferFinish = getNanoTime() - clearBufferStart;
+	static uint64_t sumTime = 0;
+	static uint64_t runCount = 0;
+	sumTime += clearBufferFinish;
+	runCount++;
+	fp64 aver = NANO_TO_SECONDS(sumTime) * 1000.0 / (fp64)runCount;
+	printfInterval(
+		0.3,"\n%5llu: %6.2lfms aver: %6.2lfms",
+		runCount,
+		NANO_TO_SECONDS(clearBufferFinish) * 1000.0,
+		aver
+	);
+	
 	return 0;
 }
 

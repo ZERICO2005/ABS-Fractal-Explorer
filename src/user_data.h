@@ -27,6 +27,21 @@ struct User_Parameter_Sensitivity {
 	fp64 breakout_value;
 }; typedef User_Parameter_Sensitivity User_Parameter_Sensitivity;
 
+/*
+struct OpenCL_Hardware_Info {
+	uint32_t DeviceMaxComputeUnits;
+	uint64_t DeviceMaxWorkGroupSize;
+	uint32_t DeviceMaxClockFrequency;
+	uint64_t DeviceMaxMemAllocSize;
+	size_t DeviceMaxParameterSize;
+	uint64_t DeviceGlobalMemSize;
+	uint64_t DeviceMaxConstantBufferSize;
+	uint32_t DeviceMaxConstantArgs;
+	uint64_t DeviceLocalMemSize;
+	size_t DeviceProfilingTimerResolution;
+}; typedef OpenCL_Hardware_Info OpenCL_Hardware_Info;
+*/
+
 bool set_default_sensitivity(User_Parameter_Sensitivity* sen);
 bool init_default_sensitivity(User_Parameter_Sensitivity* sen);
 

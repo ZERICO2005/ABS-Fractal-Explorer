@@ -77,8 +77,15 @@
 			return;
 		}
 		vram[0] = r; vram[1] = g; vram[2] = b;
-		for (size_t i = 3; i < bytesAllocated; i++) {
-			vram[i] = vram[i - 3];
+		const size_t pitch = resX * channels;
+		for (size_t x = 3; x < pitch; x++) {
+			vram[x] = vram[x - 3];
+		}
+		const uint8_t* const srcPtr = vram;
+		uint8_t* dstPtr = vram;
+		for (size_t y = 1; y < resY; y++) {
+			dstPtr += pitch;
+			memcpy(dstPtr,srcPtr,pitch);
 		}
 	}
 	void ImageBuffer::clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
@@ -86,8 +93,15 @@
 			return;
 		}
 		vram[0] = r; vram[1] = g; vram[2] = b; vram[3] = a;
-		for (size_t i = 4; i < bytesAllocated; i++) {
-			vram[i] = vram[i - 4];
+		const size_t pitch = resX * channels;
+		for (size_t x = 4; x < pitch; x++) {
+			vram[x] = vram[x - 4];
+		}
+		const uint8_t* const srcPtr = vram;
+		uint8_t* dstPtr = vram;
+		for (size_t y = 1; y < resY; y++) {
+			dstPtr += pitch;
+			memcpy(dstPtr,srcPtr,pitch);
 		}
 	}
 

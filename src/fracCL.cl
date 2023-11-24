@@ -63,8 +63,8 @@
 	y *= sample;
 	fp32 numY = ((fp32)resY / 2.0f);
 	fp32 numX = ((fp32)resX / 2.0f);
-	fp32 rSin = sin(rot);
-	fp32 rCos = cos(rot);
+	const fp32 rSin = sin(rot);
+	const fp32 rCos = cos(rot);
 	x -= numX;
 	y -= numY;
 
@@ -92,7 +92,7 @@
 			if (type == 1) {
 				zs = (zr * zr + zi * zi); // Otherwise Julia Sets don't work
 				fp32 za = 0.0f;
-				fp32 powerHalf = power / 2.0f;
+				const fp32 powerHalf = power / 2.0f;
 				for (uint32_t itr = 0; itr < maxItr; itr++) {
 					za = atan2(zi, zr) * power;
 					zr = pow(zs, powerHalf) * cos(za) + cr;
