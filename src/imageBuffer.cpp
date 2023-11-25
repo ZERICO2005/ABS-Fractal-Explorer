@@ -72,11 +72,20 @@
 		}
 		memset(vram,0,bytesAllocated);
 	}
+
+	/*
+	Times:
+	0.137ms: clearBuffer()
+	0.185ms: clearBuffer(16,81,199)
+	0.45ms: patternCopy()
+	*/
+
 	void ImageBuffer::clearBuffer(uint8_t r, uint8_t g, uint8_t b) {
 		if (vram == nullptr || vramAllocated == false || bytesAllocated < 3) {
 			return;
 		}
 		vram[0] = r; vram[1] = g; vram[2] = b;
+		//patternCopy(vram + 3,vram,getBufferSize(),3);
 		const size_t pitch = resX * channels;
 		for (size_t x = 3; x < pitch; x++) {
 			vram[x] = vram[x - 3];

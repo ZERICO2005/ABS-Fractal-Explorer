@@ -82,6 +82,8 @@ typedef double fp64;
 	#define valueMinimum(value,minimum) { if ((value) < (minimum)) { (value) = (minimum); } }
 	#define valueMaximum(value,maximum) { if ((value) > (maximum)) { (value) = (maximum); } }
 
+	void patternCopy(uint8_t* Dst, const uint8_t* Src, size_t Size, size_t PatternLength);
+
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);
 	uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio);

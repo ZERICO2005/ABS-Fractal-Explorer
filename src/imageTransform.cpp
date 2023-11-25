@@ -20,7 +20,6 @@ int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render) {
 		return -1;
 	}
 	memcpy(buf->vram, Mat_Render.data, Mat_Render.total() * Mat_Render.elemSize());
-	// printfInterval(0.5,"\nbuf: %ux%u",buf->resX,buf->resY);
 	return 0;
 }
 
@@ -85,8 +84,6 @@ int Image_Scaler_Parallelogram(
 	if (buf == nullptr || img == nullptr || img->vram == nullptr || img->allocated() == false || ren == nullptr) {
 		return -1;
 	}
-	// printfInterval(0.7,"\nsrc: 00{%d,%d} 01{%d,%d} 10{%d,%d}",sx00,sy00,sx01,sy01,sx10,sy10);
-	// printfInterval(0.7,"\ndst: 00{%d,%d} 01{%d,%d} 10{%d,%d}\n",dx00,dy00,dx01,dy01,dx10,dy10);
 	uint64_t stopWatch = getNanoTime();
 	cv::Mat Mat_Render = Image_Place_Parallelogram(
 		buf,img,ren,
@@ -98,7 +95,6 @@ int Image_Scaler_Parallelogram(
 	if (export_OpenCV_Render(buf,Mat_Render) == -1) {
 		return -1;
 	}
-	// printfInterval(1.5,"\nOpenCV: %.3lfms\n",NANO_TO_SECONDS(getNanoTime() - stopWatch) * 1000.0);
 	return 0;
 }
 
@@ -112,7 +108,6 @@ int Image_Scaler_Quadrilateral(
 	if (buf == nullptr || img == nullptr || img->vram == nullptr || img->allocated() == false || ren == nullptr) {
 		return -1;
 	}
-	uint64_t stopWatch = getNanoTime();
 	cv::Mat Mat_Render = Image_Place_Quadrilateral(
 		buf,img,ren,
 		(fp32)sx00,(fp32)sy00,(fp32)sx11,(fp32)sy11,
@@ -123,6 +118,5 @@ int Image_Scaler_Quadrilateral(
 	if (export_OpenCV_Render(buf,Mat_Render) == -1) {
 		return -1;
 	}
-	// printfInterval(1.5,"\nOpenCV: %.3lfms\n",NANO_TO_SECONDS(getNanoTime() - stopWatch) * 1000.0);
 	return 0;
 }

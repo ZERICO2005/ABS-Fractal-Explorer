@@ -15,7 +15,7 @@
 #include "imageBuffer.h"
 #include "render.h"
 
-// Output BufferBox, Input ImageBuffer, cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
+// Output BufferBox, Input ImageBuffer, src{{x00,y00},{x01,y01},{x10,y10}} dst{{x00,y00},{x01,y01},{x10,y10}}
 int Image_Scaler_Parallelogram(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
 	i32 sx00, i32 sy00,
@@ -24,6 +24,7 @@ int Image_Scaler_Parallelogram(
 	i32 dx01, i32 dy01, i32 dx10, i32 dy10
 );
 
+// Output BufferBox, Input ImageBuffer, src{{x00,y00},{x11,y11},{x01,y01},{x10,y10}} dst{{x00,y00},{x11,y11},{x01,y01},{x10,y10}}
 int Image_Scaler_Quadrilateral(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
 	i32 sx00, i32 sy00, i32 sx11, i32 sy11,

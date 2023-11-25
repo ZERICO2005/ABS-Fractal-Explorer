@@ -11,6 +11,8 @@
 #include "bitGraphics.h"
 #include "bitGraphics_Font.h"
 
+#define Bit_Graphics_Channels 3
+
 Bit_Graphics::Bit_Graphics() {
 	terminate_Bit_Graphics();
 }
@@ -70,9 +72,7 @@ void Bit_Graphics::swapBuffer() {
 	buf = (buf == buf0) ? buf1 : buf0;
 }
 void Bit_Graphics::clearBuffer() {
-	for (size_t i = 0; i < ResZ * 3; i++) {
-		buf[i] = 0x00;
-	}
+	memset(buf,0,ResZ);
 }
 uint8_t* Bit_Graphics::getDrawBuffer() {
 	if (initialized == false) { return NULL; }
@@ -128,10 +128,10 @@ void Bit_Graphics::gColor_Hex(uint32_t col) {
 	gColor[0] = col & 0xFF;
 }
 void Bit_Graphics::gColor_HSV(fp64 h, fp64 s, fp64 v) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
-
+	getRGBfromHSV(&gColor[0],&gColor[1],&gColor[2],h,s,v);
 }
 void Bit_Graphics::gColor_HSV(fp32 h, fp32 s, fp32 v) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
-
+	getRGBfromHSV(&gColor[0],&gColor[1],&gColor[2],h,s,v);
 }
 
 /* Internal Routines | No safety checks */
@@ -377,3 +377,5 @@ void Bit_Graphics::debugPrintBuffer() {
 	}
 }
 */
+
+#undef Bit_Graphics_Channels

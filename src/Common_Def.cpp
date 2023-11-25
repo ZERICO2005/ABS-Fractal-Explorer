@@ -10,6 +10,29 @@
 
 /* Functions */
 
+/*
+Fills Dst with a repeating pattern from Src 
+*/
+void patternCopy(uint8_t* Dst, const uint8_t* Src, size_t Size, size_t PatternLength) {
+	if (Src == nullptr || Dst == nullptr || PatternLength == 0) {
+		return;
+	}
+	if (Size <= PatternLength) {
+		memcpy(Dst,Src,Size);
+		return;
+	}
+	memcpy(Dst,Src,PatternLength); // Initial Copy
+	size_t len = PatternLength;
+	size_t pos = PatternLength;
+	
+	while (pos + len <= Size) {
+		memcpy(Dst + pos,Dst,len); 
+		pos += len;
+		len *= 2; // Doubles copy size each iteration
+	}
+	memcpy(Dst + pos,Dst,Size - len); // Copies the remaining portion
+}
+
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {
 	if (val < min) {
 		val = min;

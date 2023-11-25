@@ -182,12 +182,12 @@ size_t KeyBind_PresetCount;
 //std::list<KeyBind> importedKeyBind; // Deprecate this
 
 /* KeyBind_Preset */
-	std::list<KeyBind_PRESET> KeyBind_PresetList;
-	KeyBind_PRESET* currentKBPreset;
+	std::list<KeyBind_Preset> KeyBind_PresetList;
+	KeyBind_Preset* currentKBPreset;
 
 	void init_KeyBind_PresetList() {
 		if (KeyBind_PresetList.empty() == true) {
-			KeyBind_PRESET temp_KeyBind;
+			KeyBind_Preset temp_KeyBind;
 			initDefaultKeyBind(&temp_KeyBind.kList);
 			temp_KeyBind.name = "Default";
 			KeyBind_PresetList.push_front(temp_KeyBind);
@@ -211,7 +211,7 @@ size_t KeyBind_PresetCount;
 		if (pos < 0 || pos >= (int)KeyBind_PresetList.size()) {
 			return;
 		}
-		std::list<KeyBind_PRESET>::iterator iterKBP = KeyBind_PresetList.begin();
+		std::list<KeyBind_Preset>::iterator iterKBP = KeyBind_PresetList.begin();
 		std::advance(iterKBP, pos);
 		if (iterKBP != KeyBind_PresetList.end()) {
 			currentKBPreset = &(*iterKBP);
@@ -222,7 +222,7 @@ size_t KeyBind_PresetCount;
 			return;
 		}
 		int pos = 0;
-		for (std::list<KeyBind_PRESET>::iterator iterKBP = KeyBind_PresetList.begin(); iterKBP != KeyBind_PresetList.end(); iterKBP++) {
+		for (std::list<KeyBind_Preset>::iterator iterKBP = KeyBind_PresetList.begin(); iterKBP != KeyBind_PresetList.end(); iterKBP++) {
 			if (currentKBPreset == &(*iterKBP)) {
 				KeyBind_PresetList.erase(iterKBP);
 				if (pos == 0) {
@@ -350,7 +350,7 @@ int setup_fracExpKB(int argc, char* argv[]) {
 	init_KeyBind_PresetList();
 	size_t importedKeyBinds = 0;
 	if (argc >= 2) {
-		KeyBind_PRESET* temp_KeyBind = currentKBPreset;
+		KeyBind_Preset* temp_KeyBind = currentKBPreset;
 		for (int a = 1; a < argc; a++) {
 			if (strstr(argv[a],".fracExpKB") != NULL) {
 				printFlush("\nFracExp_KeyBind File: %s",argv[a]);
@@ -1801,7 +1801,7 @@ void Menu_Keybinds() {
 		if (ImGui::Button("Create key-bind")) {
 			Combo_functionSelect = Key_Function::NONE;
 			keyClick = SDL_SCANCODE_UNKNOWN;
-			KeyBind_PRESET temp_KeyBind;
+			KeyBind_Preset temp_KeyBind;
 			temp_KeyBind = *currentKBPreset;
 			static char rand_name[324]; memset(rand_name,'\0',324);
 			snprintf(rand_name,320,"KeyBind_%u",name_count++);
@@ -1850,7 +1850,7 @@ void Menu_Keybinds() {
 				currentKBPreset->name.c_str()
 			);
 			if (saveFileState == 0) {
-				KeyBind_PRESET temp_KeyBind = *currentKBPreset;
+				KeyBind_Preset temp_KeyBind = *currentKBPreset;
 				export_KeyBind(&temp_KeyBind,exportKeyBindFile);
 			}
 		}
