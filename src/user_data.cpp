@@ -9,6 +9,14 @@
 #include "Common_Def.h"
 #include "User_Data.h"
 
+int import_config_data(char* path) {
+	return 0;
+}
+
+int export_config_data(char* path) {
+	return 0;
+}
+
 bool set_default_sensitivity(User_Parameter_Sensitivity* sen) {
 	if (sen == nullptr) { return false; }
 	sen->global = 1.0;

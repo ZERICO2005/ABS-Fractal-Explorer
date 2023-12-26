@@ -61,4 +61,10 @@ void newFrame();
 /* SDL_Scancode */
 bool keyPressed(uint32_t key);
 
+/* Framerate stuff */
+
+void updateFrameTimeNano(uint64_t frameTime);
+void updateFrameTime(fp64 frameTime);
+void updateFrameRate(fp64 frameRate);
+
 #endif /* RENDER_H */

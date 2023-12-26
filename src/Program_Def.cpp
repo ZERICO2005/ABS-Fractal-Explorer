@@ -90,12 +90,12 @@
 			return false;
 		}
 		bool TimerBox::timerReset() { return timerReset(freqTime); }
-		bool TimerBox::timerReset(fp64 freq) { return timerReset(SECONDS_TO_NANO(freqTime)); }
+		bool TimerBox::timerReset(fp64 freq) { return timerReset(SECONDS_TO_NANO(freq)); }
 	/* timerReady */
 		bool TimerBox::timerReady(uint64_t freq) {
 			if (getNanoTime() - resetTime >= freq) { return true; }
 			return false;
 		}
 		bool TimerBox::timerReady() { return timerReady(freqTime); }
-		bool TimerBox::timerReady(fp64 freq) { return timerReady(SECONDS_TO_NANO(freqTime)); }
+		bool TimerBox::timerReady(fp64 freq) { return timerReady(SECONDS_TO_NANO(freq)); }
 /* TimerBox */

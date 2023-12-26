@@ -55,6 +55,11 @@ typedef int64_t i64;
 typedef float fp32;
 typedef double fp64;
 
+/* Version */
+
+//#define BUILD_DEBUG
+#define BUILD_RELEASE
+
 /* Constants */
 
 #define PI 		3.1415926535897932384626433832795

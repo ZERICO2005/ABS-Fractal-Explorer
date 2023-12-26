@@ -26,6 +26,35 @@ uint64_t factorialLUT[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800
 
 #define FractalParameters BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, uint32_t p0, uint32_t p1, std::atomic<bool>& ABORT_RENDERING
 
+// 511.5 for 10bit color
+#define Color_Mult 511.5
+// * 4 for 10bit color
+#define Div_Mult(s) ((s) * 4)
+
+#ifdef MONOCHROME_MODE
+	#define CPU_Interior_Coloring(fpX); \
+		outR += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
+		outG += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
+		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));
+
+	#define CPU_Exterior_Coloring(fpX,l); \
+		fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
+		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
+		outG += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
+		outB += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));
+#else
+	#define CPU_Interior_Coloring(fpX); \
+		outR += 0;\
+		outG += 0;\
+		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));
+
+	#define CPU_Exterior_Coloring(fpX,l); \
+		fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
+		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
+		outG += (uint32_t)(param.gA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.gF * smooth + param.gP))));\
+		outB += (uint32_t)(param.bA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.bF * smooth + param.bP))));
+#endif
+
 #define Block0(fpX) \
 uint8_t* data = buf->vram;\
 u32 subSample = ren.subSample;\
@@ -81,17 +110,12 @@ for (; x < resX; x += sample) {\
 					if (zs < low) {\
 						low = zs;\
 					} else if (zs > param.breakoutValue) {\
-						fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
-						outR += (uint32_t)(param.rA * (511.5 - 511.5 * cos(TAU * (param.rF * smooth + param.rP))));\
-						outG += (uint32_t)(param.gA * (511.5 - 511.5 * cos(TAU * (param.gF * smooth + param.gP))));\
-						outB += (uint32_t)(param.bA * (511.5 - 511.5 * cos(TAU * (param.bF * smooth + param.bP))));\
+						CPU_Exterior_Coloring(fpX,l);\
 						break;\
 					}\
 				}\
 				if (zs <= BREAKOUT) {\
-					outR += 0;\
-					outG += 0;\
-					outB += (uint32_t)(param.iA * (511.5 - 511.5 * cos(log(low) * param.iF + param.iP)));\
+					CPU_Interior_Coloring(fpX);\
 				}\
 				x++;\
 			}\
@@ -99,7 +123,7 @@ for (; x < resX; x += sample) {\
 			y++;\
 		}\
 		y-= sample;\
-		uint32_t div = sample * sample * 4;\
+		uint32_t div = Div_Mult(sample * sample);\
 		outR /= div;\
 		outG /= div;\
 		outB /= div;\

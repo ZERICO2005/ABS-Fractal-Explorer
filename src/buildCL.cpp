@@ -386,8 +386,10 @@ const char* FractalOpenCL_SRC = "\
 				outG += (uint32_t)(1.0f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.9f))));\n\
 				outB += (uint32_t)(1.0f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.1f))));\n\
 			} else {\n\
-				//outR += 0;\n\
-				//outG += 0;\n\
+				outR += 0;\n\
+				outG += 0;\n\
+				//outR += (uint16_t)(511.5f - 511.5f * cos(log(low) / 2.0f));\n\
+				//outG += (uint16_t)(511.5f - 511.5f * cos(log(low) / 2.0f));\n\
 				outB += (uint16_t)(511.5f - 511.5f * cos(log(low) / 2.0f));\n\
 			}\n\
 			x++;\n\

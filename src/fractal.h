@@ -17,8 +17,15 @@
 enum FractalTypeEnum {
 	Fractal_ABS_Mandelbrot,Fractal_Polar_Mandelbrot,Fractal_Sierpinski_Carpet
 };
-const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sierpinski Carpet"};
-const char* const FractalTypeFileText[] = {"ABS-Mandelbrot","Polar-Mandelbrot","Sierpinski-Carpet"};
+
+#ifndef BUILD_RELEASE
+	const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sierpinski Carpet"};
+	const char* const FractalTypeFileText[] = {"ABS-Mandelbrot","Polar-Mandelbrot","Sierpinski-Carpet"};
+#else
+	const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot"};
+	const char* const FractalTypeFileText[] = {"ABS-Mandelbrot","Polar-Mandelbrot"};
+#endif
+
 const char* const PowerText[] = {
 	"Constant","Linear","Quadratic","Cubic","Quartic","Quintic","Sextic","Septic","Octic","Nonic",
 	"Decic","Undecic","Dodecic","Tridecic","Tetradecic","Pentadecic","Hexadecic","Heptadecic","Octadecic","Nonadecic",

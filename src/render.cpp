@@ -64,7 +64,7 @@ ImageBuffer* Secondary_Image_Preview = nullptr;
 fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 const fp64 FRAME_RATE_OFFSET = 0.01;
 uint64_t FRAME_RATE_NANO;
-#define  Default_Frame_Rate_Multiplier 1.0
+#define  Default_Frame_Rate_Multiplier 2.0
 const uint8_t color_square_divider = 2; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
@@ -408,7 +408,12 @@ DisplayInfo* getCurrentDisplayInfo() {
 
 static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
-const char* buttonLabels[] = {"Fractal", "Export","Import", "Screenshot", "Rendering", "Settings", "KeyBinds"};
+#ifndef BUILD_RELEASE
+	const char* buttonLabels[] = {"Fractal", "Export", "Import", "Screenshot", "Rendering", "Settings", "KeyBinds"};
+#else
+	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
+#endif
+
 int buttonSelection = -1;
 bool ShowTheXButton = true;
 //bool yeildSwitch = true;
@@ -1026,12 +1031,14 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	if (ImGui::Button("Fractal")) {
 		buttonSelection = (buttonSelection == GUI_Menu_Fractal) ? -1 : GUI_Menu_Fractal;
 	} ImGui::SameLine();
-	if (ImGui::Button("Export")) {
+	#ifndef BUILD_RELEASE
+		if (ImGui::Button("Export")) {
 
-	} ImGui::SameLine();
-	if (ImGui::Button("Import")) {
-		buttonSelection = (buttonSelection == GUI_Menu_Import) ? -1 : GUI_Menu_Import;
-	} ImGui::SameLine();
+		} ImGui::SameLine();
+		if (ImGui::Button("Import")) {
+			buttonSelection = (buttonSelection == GUI_Menu_Import) ? -1 : GUI_Menu_Import;
+		} ImGui::SameLine();
+	#endif
 	if (ImGui::Button("Screenshot")) {
 		exportScreenshot();
 	} ImGui::SameLine();
@@ -1341,7 +1348,11 @@ void Menu_Fractal() {
 void Menu_Rendering() {
 	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
-	static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
+	#ifndef BUILD_RELEASE
+		static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
+	#else
+		static const char* GPU_RenderingModes[] = {"fp32 | 10^5.7 (Default)"};
+	#endif
 	static int input_subSample = primaryRenderData.subSample;
 	static int input_superSample = primaryRenderData.sample;
 	int CPU_ThreadCount = (int)std::thread::hardware_concurrency();
@@ -1370,24 +1381,33 @@ void Menu_Rendering() {
 			break;
 		};
 	}
-	ImGui::Text("Maximum Threads:");
-	ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
-	ImGui::Text("Thread Multiplier:");
-	ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,16);
+	if (ImGui::CollapsingHeader("CPU MULTI-THREADING SETTINGS")) {
+		ImGui::Text("Note: Only modify these settings if you know what you are doing.");
+		ImGui::Text("Maximum Threads:");
+		ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
+		ImGui::Text("Thread Multiplier:");
+		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,16);
+		ImGui::Text(" ");
+	}
 	primaryRenderData.CPU_Threads = input_CPU_MaxThreads * input_CPU_ThreadMultiplier;
-	
+	ImGui::Separator();
+
 	ImGui::Text("GPU Rendering Mode:");
 	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, BufAndLen(GPU_RenderingModes))) {
 		switch (Combo_GPU_RenderingMode) {
-			case 0:
-				primaryRenderData.GPU_Precision = 16;
-			break;
+			#ifndef BUILD_RELEASE
+				case 0:
+					primaryRenderData.GPU_Precision = 16;
+				break;
+			#endif
 			case 1:
 				primaryRenderData.GPU_Precision = 32;
 			break;
-			case 2:
-				primaryRenderData.GPU_Precision = 64;
-			break;
+			#ifndef BUILD_RELEASE
+				case 2:
+					primaryRenderData.GPU_Precision = 64;
+				break;
+			#endif
 		};
 	}
 	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
@@ -1429,161 +1449,185 @@ void Menu_Settings() {
 	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
 	ImGui::Begin("Settings Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition();
-
 	ImGui::Checkbox("Lock key inputs in menus",&LockKeyInputsInMenus);
-	ImGui::Checkbox("Prevent out of bounds menu windows",&PreventOutOfBoundsWindows);
-	ImGui::Checkbox("Auto-resize menu windows",&AutoResizeWindows);
-	ImGui::Text("Window auto-scale: (0.7 default)");
-	fp32 temp_WindowAutoScale = (fp32)WindowAutoScale;
-	ImGui::SliderFloat("##WindowAutoScale",&temp_WindowAutoScale,0.3f,1.0f,"%.3f");
-	WindowAutoScale = (fp64)temp_WindowAutoScale;
-	ImGui::Text("Window Opacity:");
-	ImGui::SliderFloat("##WindowOpacity",&WindowOpacity,0.3f,1.0f,"%.3f");
-
 	ImGui::Separator();
-	ImGui::Checkbox("Save username in files",&SaveUsernameInFiles);
-	ImGui::Checkbox("Save hardware information in files",&SaveHardwareInfoInFiles);
-	
-	if (SaveUsernameInFiles == true) {
-		correctUsernameText(FileUsername,FileUsernameLength);
-		#ifdef displayTerribleProgrammingJokes
-			//idk why I wrote this
-			ImGui::TextWrapped("Input Username: The Username MUST be a valid C variable name exclusively using the limited subset of 63 characters of the first 128 8-bit ANSI characters in addition to demonstrating an unwavering adherence and strict compliance to the standards outlined in ISO/IEC 9899:1999 for C99 with a NULL terminated char array that MUST NOT exceed 32 characters long including the NULL terminator and MUST be an absolute minimum of 4 characters long");
-		#else
-			ImGui::Text("Input Username: 4-31 characters long, A-Z, a-z, 0-9, and _");
-		#endif
-		ImGui::InputText("##FileUserName_Input",FileUsername,FileUsernameLength);
+	if (ImGui::CollapsingHeader("MENU WINDOW SETTINGS")) {
+		ImGui::Checkbox("Prevent out of bounds menu windows",&PreventOutOfBoundsWindows);
+		ImGui::Checkbox("Auto-resize menu windows",&AutoResizeWindows);
+		ImGui::Text("Window Auto-Scale: (0.7 default)");
+		fp32 temp_WindowAutoScale = (fp32)WindowAutoScale;
+		ImGui::SliderFloat("##WindowAutoScale",&temp_WindowAutoScale,0.3f,1.0f,"%.3f");
+		WindowAutoScale = (fp64)temp_WindowAutoScale;
+		ImGui::Text("Window Opacity:");
+		ImGui::SliderFloat("##WindowOpacity",&WindowOpacity,0.3f,1.0f,"%.3f");
+		ImGui::Text(" ");
 	}
-
-	ImGui::Separator();
-
-	ImGui::Text("Base maximum frame-rate off of:");
-	if (ImGui::Combo("##initFrameRate", &Combo_initFrameRate, BufAndLen(initFrameRate))) {
-	
-	}
-	switch(Combo_initFrameRate) {
-		case 0:
-			printDisplayInfo(CURRENT_DISPLAY);
-		break;
-		case 1:
-			printDisplayInfo(Display_Match[Display_Bootup::HighFrameRate]);
-		break;
-		case 2:
-			printDisplayInfo(Display_Match[Display_Bootup::LowFrameRate]);
-		break;
-	}
-
-	DisplayInfo* disp = getCurrentDisplayInfo();
-	static fp64 FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp64)(disp->refreshRate);
-	fp64 TEMP_FPS = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate); // Would normally be either the current, highest, or lowest refresh rate
-	if (Combo_initFrameRate == 3) {
-		static fp32 temp_FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate);
-		ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
-		ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,6.0,1200.0);
-		FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
-	} else {
-		ImGui::Text(" "); // Blank Line
-		static int temp_frameMultiplier = 2 - 1;
-		static fp64 frameMultiplier = 2.0;
-		if (temp_frameMultiplier >= 0) {
-			frameMultiplier = (fp64)(temp_frameMultiplier + 1);
-			ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
-		} else {
-			frameMultiplier = 1.0 / (fp64)(1 - temp_frameMultiplier);
-			ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
-		}
-		ImGui::Text("%.2lffps %.2lfms", frameMultiplier * TEMP_FPS, (1.0 / (frameMultiplier * TEMP_FPS)) * 1000.0);
-		ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,-6 + 1,6 - 1,"");
-	}
-
-	ImGui::Separator();
-
-	ImGui::Text("Which monitor should the application open to:");
-	if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation, BufAndLen(initMonitorLocations))) {
+	if (ImGui::CollapsingHeader("DISPLAY AND FRAME-RATE")) {
+		ImGui::Text("Base maximum frame-rate off of:");
+		if (ImGui::Combo("##initFrameRate", &Combo_initFrameRate, BufAndLen(initFrameRate))) {
 		
-	}
-	if (Combo_initMonitorLocation == 3) { // Specific Monitor
-		static bool overrideDisplayCount = false;
-		int limitDisplayCount = (overrideDisplayCount == true) ? (DISPLAY_COUNT + 8) : DISPLAY_COUNT;
-		if (overrideDisplayCount == false && specificMonitor > (int)DISPLAY_COUNT) {
-			specificMonitor = DISPLAY_COUNT;
 		}
-		if (DISPLAY_COUNT != 1 || overrideDisplayCount == true) {
-			ImGui::InputInt("##specificMonitor",&specificMonitor,1,1); valueLimit(specificMonitor,1,limitDisplayCount);
-		} else {
-			ImGui::Text("Only 1 display detected");
+		uint32_t SELECT_DISPLAY = CURRENT_DISPLAY;
+		switch(Combo_initFrameRate) {
+			case 0:
+				SELECT_DISPLAY = CURRENT_DISPLAY;
+			break;
+			case 1:
+				SELECT_DISPLAY = Display_Match[Display_Bootup::HighFrameRate];
+			break;
+			case 2:
+				SELECT_DISPLAY = Display_Match[Display_Bootup::LowFrameRate];
+			break;
 		}
-		printDisplayInfo(specificMonitor); 
-		ImGui::Checkbox("Override Display Count",&overrideDisplayCount);
-		if (specificMonitor > (int)DISPLAY_COUNT) {
-			ImGui::Text("Note: Display %d will be used if Display %d is not detected",DISPLAY_COUNT,specificMonitor);
+		printDisplayInfo(SELECT_DISPLAY);
+
+		//DisplayInfo* disp = getCurrentDisplayInfo();
+		DisplayInfo* disp = getDisplayInfo(SELECT_DISPLAY);
+		static fp64 FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp64)(disp->refreshRate);
+		fp64 TEMP_FPS = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate); // Would normally be either the current, highest, or lowest refresh rate
+		if (Combo_initFrameRate == 3) { // Constant
+			static fp32 temp_FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate);
+			ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
+			ImGui::Text(" ");
+			ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,6.0,1200.0);
+			FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
+			if (ImGui::Button("Apply FPS")) {
+				updateFrameRate(FPS_Constant_Value + FRAME_RATE_OFFSET);
+			}
+		} else { // Relative
+			ImGui::Text(" "); // Blank Line
+			static int temp_frameMultiplier = 2 - 1;
+			static fp64 frameMultiplier = 2.0;
+			if (temp_frameMultiplier >= 0) {
+				frameMultiplier = (fp64)(temp_frameMultiplier + 1);
+				ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
+			} else {
+				frameMultiplier = 1.0 / (fp64)(1 - temp_frameMultiplier);
+				ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
+			}
+			fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
+			valueLimit(calculatedFPS,6.0,1200.0);
+			ImGui::Text("%.2lffps %.2lfms", calculatedFPS, (1.0 / (calculatedFPS)) * 1000.0);
+			ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,-6 + 1,6 - 1,"");
+			if (ImGui::Button("Apply FPS")) {
+				updateFrameRate(calculatedFPS + FRAME_RATE_OFFSET);
+			}
 		}
-	} else {
-		printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
+
+		#ifndef BUILD_RELEASE
+			ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
+			ImGui::Text("Which monitor should the application open to:");
+			if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation, BufAndLen(initMonitorLocations))) {
+				
+			}
+			if (Combo_initMonitorLocation == 3) { // Specific Monitor
+				static bool overrideDisplayCount = false;
+				int limitDisplayCount = (overrideDisplayCount == true) ? (DISPLAY_COUNT + 8) : DISPLAY_COUNT;
+				if (overrideDisplayCount == false && specificMonitor > (int)DISPLAY_COUNT) {
+					specificMonitor = DISPLAY_COUNT;
+				}
+				if (DISPLAY_COUNT != 1 || overrideDisplayCount == true) {
+					ImGui::InputInt("##specificMonitor",&specificMonitor,1,1); valueLimit(specificMonitor,1,limitDisplayCount);
+				} else {
+					ImGui::Text("Only 1 display detected");
+				}
+				printDisplayInfo(specificMonitor); 
+				ImGui::Checkbox("Override Display Count",&overrideDisplayCount);
+				if (specificMonitor > (int)DISPLAY_COUNT) {
+					ImGui::Text("Note: Display %d will be used if Display %d is not detected",DISPLAY_COUNT,specificMonitor);
+				}
+			} else {
+				printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
+			}
+		#endif
+		ImGui::Text(" ");
 	}
-
-	ImGui::Separator();
-	ImGui::Text(" ");
-
-	static int Combo_ScreenshotFileType = screenshotFileType;
-	static const char* Text_ScreenshotFileType[] = {"PNG","JPG/JPEG","TGA","BMP"};
-	ImGui::Text("Screenshot File Type:");
-	if (ImGui::Combo("##Combo_ScreenshotFileType",&Combo_ScreenshotFileType,BufAndLen(Text_ScreenshotFileType))) {
-		screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
+	if (ImGui::CollapsingHeader("FRACEXP FILES")) {
+		ImGui::Checkbox("Save username in files",&SaveUsernameInFiles);
+		ImGui::Checkbox("Save hardware information in files",&SaveHardwareInfoInFiles);
+		if (SaveUsernameInFiles == true) {
+			correctUsernameText(FileUsername,FileUsernameLength);
+			#ifdef displayTerribleProgrammingJokes
+				//idk why I wrote this
+				ImGui::TextWrapped("Input Username: The Username MUST be a valid C variable name exclusively using the limited subset of 63 characters of the first 128 8-bit ANSI characters in addition to demonstrating an unwavering adherence and strict compliance to the standards outlined in ISO/IEC 9899:1999 for C99 with a NULL terminated char array that MUST NOT exceed 32 characters long including the NULL terminator and MUST be an absolute minimum of 4 characters long");
+			#else
+				ImGui::Text("Input Username: 4-31 characters long, A-Z, a-z, 0-9, and _");
+			#endif
+			ImGui::InputText("##FileUserName_Input",FileUsername,FileUsernameLength);
+		}
+		ImGui::Text(" ");
 	}
-	if (screenshotFileType == Image_File_Format::PNG) {
-		int temp_User_PNG_Compression_Level = User_PNG_Compression_Level;
-		ImGui::Text("PNG Compression Level (Default = 8)");
-		ImGui::SliderInt("##temp_User_PNG_Compression_Level",&temp_User_PNG_Compression_Level,1,9);
-		User_PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
-		if (User_PNG_Compression_Level < 3) { ImGui::Text("Fastest Saving (Large File Size)"); } else
-		if (User_PNG_Compression_Level < 5) { ImGui::Text("Faster Saving"); } else
-		if (User_PNG_Compression_Level < 7) { ImGui::Text("Balanced"); } else
-		if (User_PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
-		{ ImGui::Text("Smallest File Size"); }
-	} else if (screenshotFileType == Image_File_Format::JPG) {
-		int temp_User_JPG_Quality_Level = User_JPG_Quality_Level;
-		ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
-		ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
-		User_JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
-		if (User_JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
-		if (User_JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
-		if (User_JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
-		{ ImGui::Text("Very High Quality (Recommended)"); }
-	}
+	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) {
+		static int Combo_ScreenshotFileType = screenshotFileType;
+		static const char* Text_ScreenshotFileType[] = {"PNG","JPG/JPEG","TGA","BMP"};
+		ImGui::Text("Screenshot File Type:");
+		if (ImGui::Combo("##Combo_ScreenshotFileType",&Combo_ScreenshotFileType,BufAndLen(Text_ScreenshotFileType))) {
+			screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
+		}
+		if (screenshotFileType == Image_File_Format::PNG) {
+			int temp_User_PNG_Compression_Level = User_PNG_Compression_Level;
+			ImGui::Text("PNG Compression Level (Default = 8)");
+			ImGui::SliderInt("##temp_User_PNG_Compression_Level",&temp_User_PNG_Compression_Level,1,9);
+			User_PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
+			if (User_PNG_Compression_Level < 3) { ImGui::Text("Fastest Saving (Large File Size)"); } else
+			if (User_PNG_Compression_Level < 5) { ImGui::Text("Faster Saving"); } else
+			if (User_PNG_Compression_Level < 7) { ImGui::Text("Balanced"); } else
+			if (User_PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
+			{ ImGui::Text("Smallest File Size"); }
+		} else if (screenshotFileType == Image_File_Format::JPG) {
+			int temp_User_JPG_Quality_Level = User_JPG_Quality_Level;
+			ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
+			ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
+			User_JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
+			if (User_JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
+			if (User_JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
+			if (User_JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
+			{ ImGui::Text("Very High Quality (Recommended)"); }
+		}
 
-	ImGui::Separator();
-	ImGui::Text("Note: Super Screenshots are not implemented yet, and will only trigger the regular screenshot function. The following settings will be ignored");
-	ImGui::Text(" ");
-	ImGui::Text("Super Screenshot Settings:");
-	static int32_t super_screenshot_resX = default_Super_Screenshot_ResX;
-	static int32_t super_screenshot_resY = default_Super_Screenshot_ResY;
-	static int32_t super_screenshot_super_sample = default_Super_Screenshot_Sample;
-	static int32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
-	static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
+		ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
+		ImGui::Text("Note: Super Screenshots are not implemented yet, and will only trigger the regular screenshot function. The following settings will be ignored");
+		ImGui::Text(" ");
+		ImGui::Text("Super Screenshot Settings:");
+		static int32_t super_screenshot_resX = default_Super_Screenshot_ResX;
+		static int32_t super_screenshot_resY = default_Super_Screenshot_ResY;
+		static int32_t super_screenshot_super_sample = default_Super_Screenshot_Sample;
+		static int32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
+		static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
 
-	ImGui::Text("Maximum Iterations: %d",super_screenshot_maxItr);
-	ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
-	super_screenshot_maxItr = (int32_t)(pow(2.0f,temp_super_screenshot_maxItr));
-	valueLimit(super_screenshot_maxItr,16,16777216); valueLimit(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
+		ImGui::Text("Maximum Iterations: %d",super_screenshot_maxItr);
+		ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
+		super_screenshot_maxItr = (int32_t)(pow(2.0f,temp_super_screenshot_maxItr));
+		valueLimit(super_screenshot_maxItr,16,16777216); valueLimit(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
 
-	ImGui::Text("Resolution X:");
-	ImGui::InputInt("##super_screenshot_resX",&super_screenshot_resX,16,64);
-	super_screenshot_resX &= 0x7FFFFFFC; // Multiple of 4
-	valueLimit(super_screenshot_resX,64,65536); valueMaximum(super_screenshot_resX,INT_MAX / super_screenshot_resY / 3);
-	ImGui::Text("Resolution Y:");
-	ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
-	valueLimit(super_screenshot_resY,64,65536); valueMaximum(super_screenshot_resY,INT_MAX / super_screenshot_resX / 3);
+		const uint64_t MaximumImageSize = (uint64_t)INT_MAX;
 
-	ImGui::Text("Samples per pixel: %d",super_screenshot_super_sample * super_screenshot_super_sample);
-	ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
-	size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
-	size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
-	ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
-	
-	if (ImGui::Button("Take Super Screenshot")) {
-		//exportSuperScreenshot();
-		exportScreenshot();
+		ImGui::Text("Resolution X:");
+		ImGui::InputInt("##super_screenshot_resX",&super_screenshot_resX,16,64);
+		super_screenshot_resX &= 0x7FFFFFFC; // Multiple of 4
+		valueLimit(super_screenshot_resX,64,65536); valueMaximum(super_screenshot_resX,(int32_t)MaximumImageSize / super_screenshot_resY / 3);
+		ImGui::Text("Resolution Y:");
+		ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
+		valueLimit(super_screenshot_resY,64,65536); valueMaximum(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
+		
+		ImGui::Text("Samples per pixel: %d",super_screenshot_super_sample * super_screenshot_super_sample);
+		ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
+		size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
+		size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
+		ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+		if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * 3 >= 1000000000) {
+			ImGui::Text("Current Image Size: %.1lf megabytes",
+				(fp64)((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * 3) / 1000000.0
+			);
+			ImGui::Text("Maximum Image Size: %.1lf megabytes",
+				(fp64)(MaximumImageSize) / 1000000.0
+			);
+		}
+		if (ImGui::Button("Take Super Screenshot")) {
+			//exportSuperScreenshot();
+			exportScreenshot();
+		}
+		ImGui::Text(" ");
 	}
 	ImGui::End();
 }
@@ -1854,20 +1898,22 @@ void Menu_Keybinds() {
 				export_KeyBind(&temp_KeyBind,exportKeyBindFile);
 			}
 		}
-		if (ImGui::Button("Export All Key-binds (.FracExpKB)")) {
-			static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
-			int saveFileState = saveFileInterface(
-				exportKeyBindFile,324,"Save FracExpKB file",
-				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
-				"FracExp Files (*.fracExp)\0*.fracExp\0"\
-				"All Files (*.*)\0*.*\0",
-				"fracExpKB",
-				currentKBPreset->name.c_str()
-			);
-			if (saveFileState == 0) {
-				export_KeyBindPresets(&KeyBind_PresetList,exportKeyBindFile);
+		#ifndef BUILD_RELEASE
+			if (ImGui::Button("Export All Key-binds (.FracExpKB)")) {
+				static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
+				int saveFileState = saveFileInterface(
+					exportKeyBindFile,324,"Save FracExpKB file",
+					"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
+					"FracExp Files (*.fracExp)\0*.fracExp\0"\
+					"All Files (*.*)\0*.*\0",
+					"fracExpKB",
+					currentKBPreset->name.c_str()
+				);
+				if (saveFileState == 0) {
+					export_KeyBindPresets(&KeyBind_PresetList,exportKeyBindFile);
+				}
 			}
-		}
+		#endif
 		// //	Disabling the name field since it can cause confusion when typing "./folder" + "KeyBind.fracExpKB" = "./folderKeyBind.fracExpKB"
 		// // static char exportFracExpKBName[324] = "KeyBind";
 		// static char exportFracExpKBDir[324] = "./KeyBind"; // "./"
@@ -1997,19 +2043,44 @@ int render_IMGUI() {
 
 bool bootup_Fractal_Frame_Rendered = false;
 
+TimerBox GUI_FrameTimer;
+uint64_t GUI_FrameTimeNano = SECONDS_TO_NANO(1.0/60.0);
+fp64 GUI_FrameTime = 1.0/60.0;
+fp64 GUI_FrameRate = 60.0;
+
+void correctFrameTime() {
+	valueLimit(GUI_FrameTimeNano,SECONDS_TO_NANO(1.0/1200.0),SECONDS_TO_NANO(1.0/6.0));
+	valueLimit(GUI_FrameTime,1.0/1200.0,1.0/6.0);
+	valueLimit(GUI_FrameRate,6.0,1200.0);
+	GUI_FrameTimer.setFreq(GUI_FrameTime);
+}
+
+void updateFrameTimeNano(uint64_t frameTime) {
+	GUI_FrameTimeNano = frameTime;
+	GUI_FrameTime = NANO_TO_SECONDS(frameTime);
+	GUI_FrameRate = 1.0 / NANO_TO_SECONDS(frameTime);
+	correctFrameTime();
+}
+
+void updateFrameTime(fp64 frameTime) {
+	GUI_FrameTimeNano = SECONDS_TO_NANO(frameTime);
+	GUI_FrameTime = frameTime;
+	GUI_FrameRate = 1.0 / frameTime;
+	correctFrameTime();
+}
+
+void updateFrameRate(fp64 frameRate) {
+	GUI_FrameTimeNano = SECONDS_TO_NANO(1.0 / frameRate);
+	GUI_FrameTime = 1.0 / frameRate;
+	GUI_FrameRate = frameRate;
+	correctFrameTime();
+}
+
+
 int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
-	/*
-	static bool yeildPrint = false;
-	static uint64_t yeildCount = 0;
-	static uint64_t yeildSum = 0;
-	static uint64_t yeildTimer = getNanoTime();
-	static uint64_t yeildError = 0;
-	static uint64_t yeildSave = 0;
-	*/
-	uint64_t yeildTimeNano = 80000; /* 80 micro seconds */
-	uint64_t FRAME_RATE_NANO = SECONDS_TO_NANO(1.0 / FRAME_RATE);
-	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
-	TimerBox frameTimer = TimerBox(1.0/FRAME_RATE);
+	updateFrameRate(FRAME_RATE + FRAME_RATE_OFFSET);
+	GUI_FrameTimer = TimerBox(GUI_FrameTime);
+
 	TimerBox maxFrameReset = TimerBox(1.0/5.0); /* Keeps track of longest frame times */
 	write_Update_Level(Change_Level::Full_Reset);
 	while (QUIT_FLAG == false) {
@@ -2024,49 +2095,16 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			}
 		}
 		SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT) {
+		while (SDL_PollEvent(&event)) {
+			ImGui_ImplSDL2_ProcessEvent(&event);
+			if (event.type == SDL_QUIT) {
 				ABORT_RENDERING = true;
-                QUIT_FLAG = true;
-            }
-        }
+				QUIT_FLAG = true;
+			}
+		}
 		updateKeys();
-		/* Poorly implemented, please correct */
-		if (frameTimer.timerReady() == false) {
-			uint64_t yeildLimit = frameTimer.timeElapsedNano();
-			if (yeildLimit < yeildTimeNano) {
-				//uint64_t yeildStart = getNanoTime();
-				std::this_thread::yield();
-				/*
-				uint64_t yeildEnd = getNanoTime() - yeildStart;
-				yeildCount++;
-				if (frameTimer.timerReady() == true) {
-					yeildError++; yeildPrint = true;
-					printFlush("\n%.3lfus",(frameTimer.timeElapsed() - (1.0/FRAME_RATE)) * 1.0e6);
-				} else {
-					yeildSave += yeildEnd;
-				}
-				*/
-			}
-		}
-		
-		/*
-		#define TIME_SCALE 1000
-		if (frameTimer.timerReady() == false) {
-			uint64_t timeElapsed = frameTimer.timeElapsedNano();
-			uint64_t timeLeft = frameTimer.timeToTimerReadyNano();
-			printFlush("\n\nElapsed: %6lluus TimeLeft:  %6lluus",timeElapsed/TIME_SCALE, timeLeft/TIME_SCALE);
-			if (timeLeft > END_SLEEP_HEADROOM) {
-				uint64_t sleepTime = timeLeft - END_SLEEP_HEADROOM;
-				std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
-				uint64_t remainingTime = frameTimer.timeToTimerReadyNano();
-				printFlush("\nSleep:   %6lluus Remaining: %6lluus",sleepTime/TIME_SCALE,remainingTime/TIME_SCALE);
-			}
-		}
-		*/
-		if (frameTimer.timerReset()) {
-			DeltaTime = frameTimer.getDeltaTime();
+		if (GUI_FrameTimer.timerReset()) {
+			DeltaTime = GUI_FrameTimer.getDeltaTime();
 			fp64 RenderTime = getRenderDelta();
 			{
 				static fp64 maxFrameTime = 0.0;
@@ -2075,18 +2113,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 					Frame_Time_Display = maxFrameTime;
 					Render_Time_Display = maxRenderTime;
 					maxFrameTime = 0.0;
-					maxRenderTime = 0.0;
-					/*
-					if (yeildPrint == true || yeildSwitch == true) {
-						yeildSwitch = false;
-						yeildPrint = false;
-						printFlush("\n\nYeild Count: %llu Errors: %llu",yeildCount, yeildError);
-						printFlush("\nTime Saved: %.3lfms",NANO_TO_SECONDS(yeildSave) * 1.0e3);
-						yeildSum += yeildCount;
-						printFlush("\nYeild Error: %.3lfms per error\n",((fp64)(getNanoTime() - yeildTimer) / (fp64)yeildError) / 1.0e6);
-						yeildCount = 0;
-					}
-					*/				
+					maxRenderTime = 0.0;			
 				}
 				if (DeltaTime > maxFrameTime) {
 					maxFrameTime = DeltaTime;
@@ -2094,11 +2121,6 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 				if (RenderTime > maxRenderTime) {
 					maxRenderTime = RenderTime;
 				}
-			}
-			if (FRAME_RATE_NANO < 2 * yeildTimeNano) {
-				yeildTimeNano = 0;
-			} else {
-				yeildTimeNano = FRAME_RATE_NANO - yeildTimeNano;
 			}
 			windowResizingCode();
 			updateFractalParameters();
@@ -2108,6 +2130,110 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	}
 	return 0;
 }
+
+// int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+// 	uint64_t yeildTimeNano = 80000; /* 80 micro seconds */
+// 	uint64_t FRAME_RATE_NANO = SECONDS_TO_NANO(1.0 / FRAME_RATE);
+// 	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
+// 	TimerBox frameTimer = TimerBox(1.0/FRAME_RATE);
+// 	TimerBox maxFrameReset = TimerBox(1.0/5.0); /* Keeps track of longest frame times */
+// 	write_Update_Level(Change_Level::Full_Reset);
+// 	while (QUIT_FLAG == false) {
+// 		{ // Accesses ABORT_RENDERING only when Abort_Rendering_Flag changes to reduce unnecessary accesses
+// 			static bool Abort_Rendering_Change = Abort_Rendering_Flag;
+// 			if (Abort_Rendering_Flag != Abort_Rendering_Change) {
+// 				ABORT_RENDERING = Abort_Rendering_Flag;
+// 				Abort_Rendering_Change = Abort_Rendering_Flag;
+// 				if (Abort_Rendering_Flag == false) {
+// 					write_Update_Level(Change_Level::Full_Reset);
+// 				}
+// 			}
+// 		}
+// 		SDL_Event event;
+//         while (SDL_PollEvent(&event)) {
+//             ImGui_ImplSDL2_ProcessEvent(&event);
+//             if (event.type == SDL_QUIT) {
+// 				ABORT_RENDERING = true;
+//                 QUIT_FLAG = true;
+//             }
+//         }
+// 		updateKeys();
+// 		/* Poorly implemented, please correct */
+// 		if (frameTimer.timerReady() == false) {
+// 			uint64_t yeildLimit = frameTimer.timeElapsedNano();
+// 			if (yeildLimit < yeildTimeNano) {
+// 				//uint64_t yeildStart = getNanoTime();
+// 				std::this_thread::yield();
+// 				/*
+// 				uint64_t yeildEnd = getNanoTime() - yeildStart;
+// 				yeildCount++;
+// 				if (frameTimer.timerReady() == true) {
+// 					yeildError++; yeildPrint = true;
+// 					printFlush("\n%.3lfus",(frameTimer.timeElapsed() - (1.0/FRAME_RATE)) * 1.0e6);
+// 				} else {
+// 					yeildSave += yeildEnd;
+// 				}
+// 				*/
+// 			}
+// 		}
+		
+// 		/*
+// 		#define TIME_SCALE 1000
+// 		if (frameTimer.timerReady() == false) {
+// 			uint64_t timeElapsed = frameTimer.timeElapsedNano();
+// 			uint64_t timeLeft = frameTimer.timeToTimerReadyNano();
+// 			printFlush("\n\nElapsed: %6lluus TimeLeft:  %6lluus",timeElapsed/TIME_SCALE, timeLeft/TIME_SCALE);
+// 			if (timeLeft > END_SLEEP_HEADROOM) {
+// 				uint64_t sleepTime = timeLeft - END_SLEEP_HEADROOM;
+// 				std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
+// 				uint64_t remainingTime = frameTimer.timeToTimerReadyNano();
+// 				printFlush("\nSleep:   %6lluus Remaining: %6lluus",sleepTime/TIME_SCALE,remainingTime/TIME_SCALE);
+// 			}
+// 		}
+// 		*/
+// 		if (frameTimer.timerReset()) {
+// 			DeltaTime = frameTimer.getDeltaTime();
+// 			fp64 RenderTime = getRenderDelta();
+// 			{
+// 				static fp64 maxFrameTime = 0.0;
+// 				static fp64 maxRenderTime = 0.0;
+// 				if (maxFrameReset.timerReset()) {
+// 					Frame_Time_Display = maxFrameTime;
+// 					Render_Time_Display = maxRenderTime;
+// 					maxFrameTime = 0.0;
+// 					maxRenderTime = 0.0;
+// 					/*
+// 					if (yeildPrint == true || yeildSwitch == true) {
+// 						yeildSwitch = false;
+// 						yeildPrint = false;
+// 						printFlush("\n\nYeild Count: %llu Errors: %llu",yeildCount, yeildError);
+// 						printFlush("\nTime Saved: %.3lfms",NANO_TO_SECONDS(yeildSave) * 1.0e3);
+// 						yeildSum += yeildCount;
+// 						printFlush("\nYeild Error: %.3lfms per error\n",((fp64)(getNanoTime() - yeildTimer) / (fp64)yeildError) / 1.0e6);
+// 						yeildCount = 0;
+// 					}
+// 					*/				
+// 				}
+// 				if (DeltaTime > maxFrameTime) {
+// 					maxFrameTime = DeltaTime;
+// 				}
+// 				if (RenderTime > maxRenderTime) {
+// 					maxRenderTime = RenderTime;
+// 				}
+// 			}
+// 			if (FRAME_RATE_NANO < 2 * yeildTimeNano) {
+// 				yeildTimeNano = 0;
+// 			} else {
+// 				yeildTimeNano = FRAME_RATE_NANO - yeildTimeNano;
+// 			}
+// 			windowResizingCode();
+// 			updateFractalParameters();
+// 			write_Parameters(&frac,&primaryRenderData,&secondaryRenderData);
+// 			newFrame();
+// 		}
+// 	}
+// 	return 0;
+// }
 
 // Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 
