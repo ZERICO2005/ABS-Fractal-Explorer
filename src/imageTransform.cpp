@@ -25,6 +25,7 @@ int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render) {
 
 cv::Mat Image_Place_Parallelogram(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	int interpolation_mode,
 	fp32 sx00, fp32 sy00,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
 	fp32 dx00, fp32 dy00,
@@ -44,12 +45,13 @@ cv::Mat Image_Place_Parallelogram(
 	
 	cv::Mat projectionMatrix = cv::getAffineTransform(srcCord, dstCord);
  	cv::Mat Mat_Render(img->resY * ren->subSample, img->resX * ren->subSample, CV_8UC(img->channels));
-	cv::warpAffine(Mat_Image, Mat_Render, projectionMatrix, Mat_Render.size(),cv::INTER_NEAREST);
+	cv::warpAffine(Mat_Image, Mat_Render, projectionMatrix, Mat_Render.size(),interpolation_mode);
 	return Mat_Render;
 }
 
 cv::Mat Image_Place_Quadrilateral(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	int interpolation_mode,
 	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
 	fp32 dx00, fp32 dy00, fp32 dx11, fp32 dy11,
@@ -70,12 +72,13 @@ cv::Mat Image_Place_Quadrilateral(
 	};
 	cv::Mat projectionMatrix = cv::getPerspectiveTransform(srcCord, dstCord);
 	cv::Mat Mat_Render(img->resY * ren->subSample, img->resX * ren->subSample, CV_8UC(img->channels));
-	cv::warpPerspective(Mat_Image, Mat_Render, projectionMatrix, Mat_Render.size(),cv::INTER_NEAREST);
+	cv::warpPerspective(Mat_Image, Mat_Render, projectionMatrix, Mat_Render.size(),interpolation_mode);
 	return Mat_Render;
 }
 
 int Image_Scaler_Parallelogram(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	int interpolation_mode,
 	i32 sx00, i32 sy00,
 	i32 sx01, i32 sy01, i32 sx10, i32 sy10,
 	i32 dx00, i32 dy00,
@@ -87,6 +90,7 @@ int Image_Scaler_Parallelogram(
 	uint64_t stopWatch = getNanoTime();
 	cv::Mat Mat_Render = Image_Place_Parallelogram(
 		buf,img,ren,
+		interpolation_mode,
 		(fp32)sx00,(fp32)sy00,
 		(fp32)sx01,(fp32)sy01,(fp32)sx10,(fp32)sy10,
 		(fp32)dx00,(fp32)dy00,
@@ -100,6 +104,7 @@ int Image_Scaler_Parallelogram(
 
 int Image_Scaler_Quadrilateral(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	int interpolation_mode,
 	i32 sx00, i32 sy00, i32 sx11, i32 sy11,
 	i32 sx01, i32 sy01, i32 sx10, i32 sy10,
 	i32 dx00, i32 dy00, i32 dx11, i32 dy11,
@@ -110,6 +115,7 @@ int Image_Scaler_Quadrilateral(
 	}
 	cv::Mat Mat_Render = Image_Place_Quadrilateral(
 		buf,img,ren,
+		interpolation_mode,
 		(fp32)sx00,(fp32)sy00,(fp32)sx11,(fp32)sy11,
 		(fp32)sx01,(fp32)sy01,(fp32)sx10,(fp32)sy10,
 		(fp32)dx00,(fp32)dy00,(fp32)dx11,(fp32)dy11,

@@ -78,6 +78,9 @@ const char* FractalOpenCL_SRC = "\
 \n\
 	for (u32 v = 0; v < sample; v++) {\n\
 		for (u32 u = 0; u < sample; u++) {\n\
+			if (id >= resX * resY) {\n\
+				return;\n\
+			}\n\
 			fp32 cr,ci,zr,zi;\n\
 			fp32 low = 4.0f; // Squared\n\
 			fp32 temp = 0.0f;\n\

@@ -105,7 +105,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.polarPower = 2.0;
 		FRAC.integerPolarPower = false;
 		FRAC.formula = 0;
-		FRAC.breakoutValue = 16777216.0;
+		FRAC.breakoutValue = 4096.0;
 		FRAC.smoothColoring = true;
 		FRAC.rA = 0.9;
 		FRAC.rF = 0.45;
@@ -147,7 +147,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.power = 3;
 		FRAC.polarPower = 3.0;
 		FRAC.formula = 0;
-		FRAC.breakoutValue = 16777216.0;
+		FRAC.breakoutValue = 4096.0;
 		FRAC.smoothColoring = true;
 		FRAC.rA = 0.875;
 		FRAC.rF = 0.59375;

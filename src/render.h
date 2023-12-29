@@ -42,6 +42,7 @@ struct _Render_Data {
 	uint32_t CPU_Precision;
 	uint32_t CPU_Threads;
 	uint32_t GPU_Precision;
+	uint32_t GPU_Partitions;
 }; typedef struct _Render_Data Render_Data;
 
 namespace Rendering_Method {

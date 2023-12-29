@@ -20,6 +20,7 @@
 #include "imageTransform.h"
 
 #include <SDL2/SDL.h>
+#include <opencv2/opencv.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
@@ -60,11 +61,13 @@ ImageBuffer* Primary_Image_Preview = nullptr;
 ImageBuffer* Secondary_Image = nullptr;
 ImageBuffer* Secondary_Image_Preview = nullptr;
 
+int Frame_Interpolation_Method;
+
 //#define MANUAL_FRAME_RATE_OVERRIDE
 fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 const fp64 FRAME_RATE_OFFSET = 0.01;
 uint64_t FRAME_RATE_NANO;
-#define  Default_Frame_Rate_Multiplier 2.0
+#define  Default_Frame_Rate_Multiplier 1.0
 const uint8_t color_square_divider = 2; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 fp64 DeltaTime = 0.0;
 uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
@@ -146,6 +149,7 @@ void initRenderData(Render_Data* rDat) {
 		rDat->CPU_Threads = (uint32_t)std::thread::hardware_concurrency() - 1;
 	}
 	rDat->GPU_Precision = 32;
+	rDat->GPU_Partitions = 1;
 }
 
 void Bootup_initRenderData() {
@@ -521,6 +525,8 @@ void initFunctionTimers() {
 	func_stat[decSuperSample].freqTime = SECONDS_TO_NANO(1.0/6.0);
 }
 */
+
+enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
 
 #define stretchValue(s) pow(2.0,-abs(s))
 #define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
@@ -952,13 +958,29 @@ int updateFractalParameters() {
 	/* ABS Mandelbrot */
 	/* Polar Mandelbrot */
 	/* Global Application Functions */
-		if (funcTimeDelay(openFractalMenu,0.2)) {
-			buttonSelection = 0;
+		#define GUI_MENU_TOGGLE(m) buttonSelection = (buttonSelection == (m)) ? -1 : (m);
+		if (funcTimeDelay(inputFormula,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_Coordinates);
 		}
-		if (funcTimeDelay(takeScreenshot,0.5)) {
+		if (funcTimeDelay(inputPower,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_Fractal);
+		}
+		if (funcTimeDelay(openFractalMenu,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_Fractal);
+		}
+		if (funcTimeDelay(openKeyBindsMenu,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_KeyBinds);
+		}
+		if (funcTimeDelay(openRenderingMenu,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_Rendering);
+		}
+		if (funcTimeDelay(openSettingsMenu,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_Settings);
+		}
+		if (funcTimeDelay(takeScreenshot,0.4)) {
 			exportScreenshot();
 		}
-		if (funcTimeDelay(takeSuperScreenshot,0.5)) {
+		if (funcTimeDelay(takeSuperScreenshot,0.4)) {
 			exportSuperScreenshot();
 		}
 	#undef FRAC
@@ -990,7 +1012,7 @@ int updateFractalParameters() {
 		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)}); \
 	}
 
-enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
+
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
@@ -1111,7 +1133,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	quadmath_snprintf(temp_quad_zr,temp_quad_len,"%15.12Qf",FRAC.zr);
 	quadmath_snprintf(temp_quad_zi,temp_quad_len,"%15.12Qf",FRAC.zi);
 	ImGui::Text(
-		"Zreal: %s Zimag: %s Rotation: %5.1lf Stetch: %6.4lf",
+		"Zreal: %s Zimag: %s Rotation: %5.1lf Stetch: 2^%6.4lf",
 		temp_quad_zr,temp_quad_zi,FRAC.rot * 360.0 / TAU,FRAC.stretch
 	);
 	ImGui::Text(" ");
@@ -1286,47 +1308,50 @@ void Menu_Fractal() {
 		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
 		if (FRAC.cursorZValue) { ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue); }
 		ImGui::Separator();
-		static int Combo_JuliaSplit = 1;
-		ImGui::Text("Split Screen:");
-		if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, BufAndLen(WindowDivider))) {
-			if (Combo_JuliaSplit == 7) { /* Floating */
-				FRAC.showFloatingJulia = true;
+		#ifndef BUILD_RELEASE
+			static int Combo_JuliaSplit = 1;
+			ImGui::Text("Split Screen:");
+			if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, BufAndLen(WindowDivider))) {
+				if (Combo_JuliaSplit == 7) { /* Floating */
+					FRAC.showFloatingJulia = true;
+				}
 			}
-		}
-		if (Combo_JuliaSplit == 7) { /* Floating */
-			ImGui::Checkbox("Show floating Julia Set window",&FRAC.showFloatingJulia);
-		}
-		ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&FRAC.swapJuliaSplit);
-		static int Combo_JuliaBehaviour = 0;
-		ImGui::Text("Julia Set behaviour:");
-		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
+			if (Combo_JuliaSplit == 7) { /* Floating */
+				ImGui::Checkbox("Show floating Julia Set window",&FRAC.showFloatingJulia);
+			}
+			ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&FRAC.swapJuliaSplit);
+			static int Combo_JuliaBehaviour = 0;
+			ImGui::Text("Julia Set behaviour:");
+			if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
 
-		}
-		ImGui::Separator();
-		/*
-		fp32 temp_col = 0.0f;
-		temp_col = (fp32)FRAC.rA;
-		ImGui::SliderFloat("R",&temp_col,0.0,1.0); FRAC.rA = (fp64)temp_col;
-		temp_col = (fp32)FRAC.gA;
-		ImGui::SliderFloat("G",&temp_col,0.0,1.0); FRAC.gA = (fp64)temp_col;
-		temp_col = (fp32)FRAC.bA;
-		ImGui::SliderFloat("B",&temp_col,0.0,1.0); FRAC.bA = (fp64)temp_col;
-		temp_col = (fp32)FRAC.iA;
-		ImGui::SliderFloat("I",&temp_col,0.0,1.0); FRAC.iA = (fp64)temp_col;
-		*/
-		ImGui::Text("Color: Red, Green, Blue, Interior");
-		ImGui::Text("Phase:");
-		float colP[4] = {(fp32)FRAC.rP,(fp32)FRAC.gP,(fp32)FRAC.bP,(fp32)FRAC.iP};
-		ImGui::ColorEdit4("##colP",colP);
-		FRAC.rP = (fp64)colP[0]; FRAC.gP = (fp64)colP[1]; FRAC.bP = (fp64)colP[2]; FRAC.iP = (fp64)colP[3];
-		ImGui::Text("Amplitude:");
-		float colA[4] = {(fp32)FRAC.rA,(fp32)FRAC.gA,(fp32)FRAC.bA,(fp32)FRAC.iA};
-		ImGui::ColorEdit4("##colA",colA);
-		FRAC.rA = (fp64)colA[0]; FRAC.gA = (fp64)colA[1]; FRAC.bA = (fp64)colA[2]; FRAC.iA = (fp64)colA[3];
-		ImGui::Text("Frequency:");
-		float colF[4] = {(fp32)FRAC.rF,(fp32)FRAC.gF,(fp32)FRAC.bF,(fp32)FRAC.iF};
-		ImGui::ColorEdit4("##colF",colF);
-		FRAC.rF = (fp64)colF[0]; FRAC.gF = (fp64)colF[1]; FRAC.bF = (fp64)colF[2]; FRAC.iF = (fp64)colF[3];
+			}
+			ImGui::Separator();
+		#endif
+			/*
+			fp32 temp_col = 0.0f;
+			temp_col = (fp32)FRAC.rA;
+			ImGui::SliderFloat("R",&temp_col,0.0,1.0); FRAC.rA = (fp64)temp_col;
+			temp_col = (fp32)FRAC.gA;
+			ImGui::SliderFloat("G",&temp_col,0.0,1.0); FRAC.gA = (fp64)temp_col;
+			temp_col = (fp32)FRAC.bA;
+			ImGui::SliderFloat("B",&temp_col,0.0,1.0); FRAC.bA = (fp64)temp_col;
+			temp_col = (fp32)FRAC.iA;
+			ImGui::SliderFloat("I",&temp_col,0.0,1.0); FRAC.iA = (fp64)temp_col;
+			*/
+			ImGui::Text("Note: Color only applies to CPU rendering.");
+			ImGui::Text("Color: Red, Green, Blue, Interior");
+			ImGui::Text("Phase:");
+			float colP[4] = {(fp32)FRAC.rP,(fp32)FRAC.gP,(fp32)FRAC.bP,(fp32)FRAC.iP};
+			ImGui::ColorEdit4("##colP",colP);
+			FRAC.rP = (fp64)colP[0]; FRAC.gP = (fp64)colP[1]; FRAC.bP = (fp64)colP[2]; FRAC.iP = (fp64)colP[3];
+			ImGui::Text("Amplitude:");
+			float colA[4] = {(fp32)FRAC.rA,(fp32)FRAC.gA,(fp32)FRAC.bA,(fp32)FRAC.iA};
+			ImGui::ColorEdit4("##colA",colA);
+			FRAC.rA = (fp64)colA[0]; FRAC.gA = (fp64)colA[1]; FRAC.bA = (fp64)colA[2]; FRAC.iA = (fp64)colA[3];
+			ImGui::Text("Frequency:");
+			float colF[4] = {(fp32)FRAC.rF,(fp32)FRAC.gF,(fp32)FRAC.bF,(fp32)FRAC.iF};
+			ImGui::ColorEdit4("##colF",colF);
+			FRAC.rF = (fp64)colF[0]; FRAC.gF = (fp64)colF[1]; FRAC.bF = (fp64)colF[2]; FRAC.iF = (fp64)colF[3];
 		#undef FRAC
 	} else if (Combo_FractalType == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
 		#define FRAC frac.type.sierpinski_carpet
@@ -1350,8 +1375,10 @@ void Menu_Rendering() {
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
 	#ifndef BUILD_RELEASE
 		static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
+		static int Combo_GPU_RenderingMode = 1;
 	#else
 		static const char* GPU_RenderingModes[] = {"fp32 | 10^5.7 (Default)"};
+		static int Combo_GPU_RenderingMode = 0;
 	#endif
 	static int input_subSample = primaryRenderData.subSample;
 	static int input_superSample = primaryRenderData.sample;
@@ -1359,7 +1386,7 @@ void Menu_Rendering() {
 	static int input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
 	static int input_CPU_ThreadMultiplier = 1;
 	static int Combo_CPU_RenderingMode = 1;
-	static int Combo_GPU_RenderingMode = 1;
+	
 
 	ImGui::Begin("Rendering Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition();
@@ -1410,6 +1437,24 @@ void Menu_Rendering() {
 			#endif
 		};
 	}
+
+	#ifndef BUILD_RELEASE
+		if (ImGui::CollapsingHeader("GPU ADVANCED SETTINGS")) {
+			ImGui::Text("Note: Only modify these settings if you know what you are doing.");
+			ImGui::Text("GPU Render Partitions: (Default = 1)");
+			ImGui::InputInt("##input_CPU_MaxThreads",(int32_t*)(&primaryRenderData.GPU_Partitions),1,16);
+			valueLimit(primaryRenderData.GPU_Partitions,1,1024);
+			ImGui::TextWrapped(
+				"Increasing the amount of partitions can reduce the time it takes for the GPU to quit rendering when the Abort Rendering button is pressed. "\
+				"However, increasing the rendering paritions can cause some performance loss due to the overhead of rendering smaller chunks of the fractal at a time. "\
+				"For the best performance, set render paritions to 1."
+			);
+			ImGui::Text(" ");
+		}
+	#endif
+
+	ImGui::Separator();
+
 	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
 	ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"");
 	primaryRenderData.subSample = input_subSample;
@@ -1420,6 +1465,28 @@ void Menu_Rendering() {
 	ImGui::Text("Total Pixels Rendered: %ux%u %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
 	primaryRenderData.sample = input_superSample;
 	ImGui::Separator();
+	static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Lanczos"};
+	static int OpenCV_interpolation_mode = 0;
+	ImGui::Text("Frame Interpolation Method:");
+	if (ImGui::Combo("##Frame_Interpolation_Method", &OpenCV_interpolation_mode, BufAndLen(OpenCV_interpolation_mode_list))) {
+		switch (OpenCV_interpolation_mode) {
+			case 0:
+				Frame_Interpolation_Method = cv::INTER_NEAREST;
+			break;
+			case 1:
+				Frame_Interpolation_Method = cv::INTER_LINEAR;
+			break;
+			case 2:
+				Frame_Interpolation_Method = cv::INTER_CUBIC;
+			break;
+			case 3:
+				Frame_Interpolation_Method = cv::INTER_LANCZOS4;
+			break;
+			default:
+				Frame_Interpolation_Method = cv::INTER_NEAREST;
+		};
+	}
+	ImGui::Text("Nearest Neighbor is the fastest method. Other methods might not be able to hit 60.0fps at higher resolutions.");
 
 	ImGui::End();
 }
@@ -1449,6 +1516,8 @@ void Menu_Settings() {
 	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
 	ImGui::Begin("Settings Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition();
+	ImGui::Text("ABS-Fractal-Explorer v%s", PROGRAM_VERSION);
+	ImGui::Separator();
 	ImGui::Checkbox("Lock key inputs in menus",&LockKeyInputsInMenus);
 	ImGui::Separator();
 	if (ImGui::CollapsingHeader("MENU WINDOW SETTINGS")) {
@@ -1496,8 +1565,8 @@ void Menu_Settings() {
 			}
 		} else { // Relative
 			ImGui::Text(" "); // Blank Line
-			static int temp_frameMultiplier = 2 - 1;
-			static fp64 frameMultiplier = 2.0;
+			static int temp_frameMultiplier = (Default_Frame_Rate_Multiplier >= 0.0) ? (int)(Default_Frame_Rate_Multiplier - 1.0) : (int)(1.0 - 1.0);
+			static fp64 frameMultiplier = Default_Frame_Rate_Multiplier;
 			if (temp_frameMultiplier >= 0) {
 				frameMultiplier = (fp64)(temp_frameMultiplier + 1);
 				ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
@@ -2377,6 +2446,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     io_IMGUI = &ImGui::GetIO();
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	io_IMGUI->IniFilename = nullptr;
     ImGui::StyleColorsDark(); // ImGui::StyleColorsLight();
 	ImGui_ImplSDLRenderer2_Init(renderer);
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -2601,6 +2671,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (
 		Image_Scaler_Parallelogram(
 			&blit, image, ren,
+			Frame_Interpolation_Method,
 			sx00, sy00,
 			sx01, sy01, sx10, sy10,
 			dx00, dy00,
@@ -2612,7 +2683,8 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	}
 	// if (
 	// 	Image_Scaler_Quadrilateral(
-	// 		&blit, image,
+	// 		&blit, image, ren,
+	// 		Frame_Interpolation_Method,
 	// 		sx00, sy00, sx11, sy11,
 	// 		sx01, sy01, sx10, sy10,
 	// 		dx00, dy00, dx11, dy11,

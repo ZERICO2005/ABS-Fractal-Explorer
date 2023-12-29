@@ -102,7 +102,7 @@ for (; x < resX; x += sample) {\
 					zi = (param.startingZ == false) ? (fpX)0.0 : param.zi;\
 				}\
 				fpX low = (fpX)4.0;\
-				fpX temp;\
+				fpX temp = (fpX)0.0;\
 				fpX zs = (fpX)0.0;\
 				for (u32 itr = 0; itr < maxItr; itr++) {
 

@@ -234,14 +234,39 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, 13, sizeof(cl_mem), &deviceResultBuf);
 	printErrorChange("\nKernelArgs: %d",err);
 
+	// size_t partitionCount = (ren.GPU_Partitions < resX * resY / 2) ? ren.GPU_Partitions : (resX * resY / 2);
+	// for (size_t p = 0; p < partitionCount; p++) {
+	// 	printfInterval(0.3,"\nGPU: %s %zu/%zu",boolText(ABORT_RENDERING),p,partitionCount);
+	// 	if (ABORT_RENDERING == true) {
+	// 		printFlush("\nAborted GPU partition %zu/%zu",p,partitionCount);
+	// 		break;
+	// 	}
+	// 	size_t p0 = ((resX * resY) * p) / partitionCount;
+	// 	size_t p1 = ((resX * resY) * (p + 1)) / partitionCount;
+	// 	size_t pSize = p1 - p0;
+	// 	size_t cor = (pSize) % KernelWorkGroupSize; // Calculates the correction factor to ensure divisibility
+	// 	cor = (cor == 0) ? 0 : (KernelWorkGroupSize - cor);
+	// 	local_size = KernelWorkGroupSize;
+	// 	global_size = pSize + cor; // Number of total work items - localSize must be devisor
+
+	// 	err = clEnqueueNDRangeKernel(engine.queue, engine.kernel, 1, &p0, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
+	// 	printErrorChange("\nclEnqueueNDRangeKernel: %d",err);
+	// }
+	// if (ABORT_RENDERING == true) {
+	// 	printFlush("\nAborted GPU");
+	// } else {
+	// 	printFlush("\nSafe Return");
+	// }
+
 	uint32_t cor = (resX * resY) % KernelWorkGroupSize; // Calculates the correction factor to ensure divisibility
 	cor = (cor == 0) ? 0 : (KernelWorkGroupSize - cor);
 	local_size = KernelWorkGroupSize;
 	global_size = resX * resY + cor; // Number of total work items - localSize must be devisor
 	err = clEnqueueNDRangeKernel(engine.queue, engine.kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
 	printErrorChange("\nclEnqueueNDRangeKernel: %d",err);
-	
+
 	clFinish(engine.queue); /* Wait for the command queue to get serviced before reading back results */
+
 	clEnqueueReadBuffer(engine.queue, deviceResultBuf, CL_TRUE, 0, getBufferBoxSize(buf), buf->vram, 0, NULL, NULL); /* Read the kernel's output */
 	//for (u32 z = 0; z < resX * resY * 3; z++) { data[z] = resultBuf[z]; }
 	
