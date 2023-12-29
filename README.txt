@@ -1,7 +1,9 @@
-ABS-Fractal-Explorer v1.0.16 debug pre-alpha
-zerico2005 | 2023/11/01
+ABS-Fractal-Explorer v1.1.0 alpha
+zerico2005 | 2023/12/28
 
 This version of ABS-Fractal-Explorer is a rewrite, which has fixed several flaws present in v1.0.9 and earlier versions. Some features have not been reimplemented yet, and will be added one at a time to prevent future issues from arising.
+
+ABS-Fractal-Explorer v1.0.2 can be found under a different branch: https://github.com/ZERICO2005/ABS-Fractal-Explorer/tree/v1.0.2
 
 Controls (Full controls/keybinds are in the Key-binds Menu):
 	WASD: Move/Pan
