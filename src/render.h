@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -38,6 +38,7 @@ struct _Render_Data {
 	fp64 areaMult;
 	uint32_t resDiv;
 	/* Rendering Method */
+	bool export_Image;
 	uint32_t rendering_method;
 	uint32_t CPU_Precision;
 	uint32_t CPU_Threads;
@@ -67,5 +68,11 @@ bool keyPressed(uint32_t key);
 void updateFrameTimeNano(uint64_t frameTime);
 void updateFrameTime(fp64 frameTime);
 void updateFrameRate(fp64 frameRate);
+
+namespace Image_File_Format {
+	enum Image_File_Format_Enum {
+		PNG,JPG,TGA,BMP,HDR,Image_File_Format_Count
+	};
+}
 
 #endif /* RENDER_H */

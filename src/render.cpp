@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -93,10 +93,20 @@ uint64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
 Fractal_Data frac;
 Render_Data primaryRenderData;
 Render_Data secondaryRenderData;
-#define default_Super_Screenshot_ResX 3840
-#define default_Super_Screenshot_ResY 2160
-#define default_Super_Screenshot_Sample 4
-#define default_Super_Screenshot_MaxItr 65536
+
+#define default_Super_Screenshot_ResX 1920
+#define default_Super_Screenshot_ResY 1080
+#define default_Super_Screenshot_Sample 3
+#define default_Super_Screenshot_MaxItr 16384
+#define default_Super_Screenshot_ThreadMultiplier 6
+
+int32_t super_screenshot_resX = default_Super_Screenshot_ResX;
+int32_t super_screenshot_resY = default_Super_Screenshot_ResY;
+int32_t super_screenshot_super_sample = default_Super_Screenshot_Sample;
+int32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
+int32_t super_screenshot_threadMultiplier = default_Super_Screenshot_ThreadMultiplier;
+int32_t super_screenshot_maxThreads = 1;
+
 Render_Data primarySuperRenderData;
 Render_Data secondarySuperRenderData;
 
@@ -105,12 +115,6 @@ Render_Data secondarySuperRenderData;
 
 int exportScreenshot();
 int exportSuperScreenshot();
-
-namespace Image_File_Format {
-	enum Image_File_Format_Enum {
-		PNG,JPG,TGA,BMP,HDR,Image_File_Format_Count
-	};
-}
 
 Image_File_Format::Image_File_Format_Enum screenshotFileType = Image_File_Format::PNG;
 uint32_t User_PNG_Compression_Level = 8;
@@ -150,6 +154,8 @@ void initRenderData(Render_Data* rDat) {
 	}
 	rDat->GPU_Precision = 32;
 	rDat->GPU_Partitions = 1;
+	rDat->export_Image = false;
+	rDat->export_Image = false;
 }
 
 void Bootup_initRenderData() {
@@ -159,10 +165,10 @@ void Bootup_initRenderData() {
 	initRenderData(&secondarySuperRenderData);
 	primarySuperRenderData.resX = default_Super_Screenshot_ResX;
 	primarySuperRenderData.resY = default_Super_Screenshot_ResY;
-	primarySuperRenderData.sample = default_Super_Screenshot_ResY;
+	primarySuperRenderData.sample = default_Super_Screenshot_Sample;
 	secondarySuperRenderData.resX = default_Super_Screenshot_ResX;
 	secondarySuperRenderData.resY = default_Super_Screenshot_ResY;
-	secondarySuperRenderData.sample = default_Super_Screenshot_ResY;
+	secondarySuperRenderData.sample = default_Super_Screenshot_Sample;
 }
 
 /* Keyboard and Scancodes */
@@ -506,6 +512,22 @@ void correctUsernameText(char* buf, size_t len) { /* Strips characters */
 	}
 }
 
+int utitledFileNameGenerator(char* buf, size_t maxLen) {
+	static const char* UntitledFile_Front[] = { // Easier to read atomic names
+		"Aluminum","Argon","Beryllium","Bismuth","Boron","Bromine","Calcium","Carbon","Cesium","Chlorine","Chromium","Cobalt","Copper","Fluorine","Gallium","Gold","Hafnium","Helium","Hydrogen","Iodine","Iridium","Iron","Krypton","Lithium","Magnesium","Neon","Neptunium","Nickel","Nitrogen","Osmium","Oxygen","Phosphorus","Platinum","Plutonium","Potassium","Rhodium","Silicon","Silver","Sodium","Sulfur","Technetium","Thorium","Titanium","Tungsten","Uranium","Vanadium","Xenon"
+	};
+	static const char* UntitledFile_Middle[] = { // Common color names
+		"Amber","Aquamarine","Beige","Black","Blue","Brown","Charcoal","Cyan","Fuchsia","Green","Grey","Indigo","Lime","Magenta","Maroon","Mint","Olive","Orange","Pink","Purple","Red","Teal","Turquoise","Violet","White","Yellow"
+	};
+	static const char* UntitledFile_End[] = { // Shapes and mathematical terms
+		"Cardiod","Catenary","Circle","Cube","Cycloid","Cylinder","Diamond","Dodecagon","Ellispse","Exponential","Hexagon","Hyperbola","Icosahedron","Logarithm","Nephroid","Octogon","Parabola","Parallelogram","Pentagon","Polynomial","Rectangle","Rhombus","Sphere","Square","Star","Tangent","Tesseract","Tetreahedron","Trapozoid","Triangle","Vertex"
+	};
+	srand((unsigned int)getNanoTime());
+	uint32_t choice_front = rand() % ARRAY_LENGTH(UntitledFile_Front);
+	uint32_t choice_middle = rand() % ARRAY_LENGTH(UntitledFile_Middle);
+	uint32_t choice_end = rand() % ARRAY_LENGTH(UntitledFile_End);
+	return snprintf(buf,maxLen,"%s-%s-%s",UntitledFile_Front[choice_front],UntitledFile_Middle[choice_middle],UntitledFile_End[choice_end]);
+};
 /*
 void initFunctionTimers() {
 	using namespace Key_Function;
@@ -1386,6 +1408,9 @@ void Menu_Rendering() {
 	static int input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
 	static int input_CPU_ThreadMultiplier = 1;
 	static int Combo_CPU_RenderingMode = 1;
+
+	static int input_super_CPU_MaxThreads = super_screenshot_maxThreads;
+	static int input_super_CPU_ThreadMultiplier = super_screenshot_threadMultiplier;
 	
 
 	ImGui::Begin("Rendering Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
@@ -1415,8 +1440,16 @@ void Menu_Rendering() {
 		ImGui::Text("Thread Multiplier:");
 		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,16);
 		ImGui::Text(" ");
+		ImGui::Text("Super Screenshot:");
+		ImGui::Text("Maximum Threads:");
+		ImGui::SliderInt("##input_CPU_MaxThreads",&input_super_CPU_MaxThreads,1,CPU_ThreadCount);
+		ImGui::Text("Thread Multiplier:");
+		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
+		ImGui::Text(" ");
 	}
 	primaryRenderData.CPU_Threads = input_CPU_MaxThreads * input_CPU_ThreadMultiplier;
+	super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
+	super_screenshot_maxThreads = input_CPU_MaxThreads;
 	ImGui::Separator();
 
 	ImGui::Text("GPU Rendering Mode:");
@@ -1652,24 +1685,39 @@ void Menu_Settings() {
 			if (User_JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
 			if (User_JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
 			{ ImGui::Text("Very High Quality (Recommended)"); }
+		} else if (screenshotFileType == Image_File_Format::TGA || screenshotFileType == Image_File_Format::BMP) {
+			ImGui::Text("Note: Super Screenshots only support PNG and JPG.");
 		}
 
 		ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
-		ImGui::Text("Note: Super Screenshots are not implemented yet, and will only trigger the regular screenshot function. The following settings will be ignored");
-		ImGui::Text(" ");
 		ImGui::Text("Super Screenshot Settings:");
-		static int32_t super_screenshot_resX = default_Super_Screenshot_ResX;
-		static int32_t super_screenshot_resY = default_Super_Screenshot_ResY;
-		static int32_t super_screenshot_super_sample = default_Super_Screenshot_Sample;
-		static int32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
+		ImGui::Text(" ");
+		
 		static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
-
 		ImGui::Text("Maximum Iterations: %d",super_screenshot_maxItr);
 		ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
 		super_screenshot_maxItr = (int32_t)(pow(2.0f,temp_super_screenshot_maxItr));
 		valueLimit(super_screenshot_maxItr,16,16777216); valueLimit(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
 
-		const uint64_t MaximumImageSize = (uint64_t)INT_MAX;
+		const uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
+
+		ImGui::Text("Samples per pixel: %d",super_screenshot_super_sample * super_screenshot_super_sample);
+		ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
+		size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
+		size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
+
+		ImGui::Text(" ");
+		static int Combo_Common_ResolutionPreset = 3;
+		const uint32_t Combo_Common_ResolutionPreset_RESX[] = {640,1280,1366,1920,2560,3840,5120,7680};
+		const uint32_t Combo_Common_ResolutionPreset_RESY[] = {480, 720, 768,1080,1440,2160,2880,4320};
+		static const char* Common_ResolutionPreset[] = {
+			"640x480 SD","1280x720 HD","1366x768 WXGA","1920x1080 FHD","2560x1440 QHD","3840x2160 4K","5120x2880 5K","7680x4320 8K"
+		};
+		ImGui::Text("Resolution Presets:");
+		if (ImGui::Combo("##Common_Resolutions",&Combo_Common_ResolutionPreset,BufAndLen(Common_ResolutionPreset))) {
+			super_screenshot_resX = Combo_Common_ResolutionPreset_RESX[Combo_Common_ResolutionPreset];
+			super_screenshot_resY = Combo_Common_ResolutionPreset_RESY[Combo_Common_ResolutionPreset];
+		}
 
 		ImGui::Text("Resolution X:");
 		ImGui::InputInt("##super_screenshot_resX",&super_screenshot_resX,16,64);
@@ -1679,10 +1727,7 @@ void Menu_Settings() {
 		ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
 		valueLimit(super_screenshot_resY,64,65536); valueMaximum(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
 		
-		ImGui::Text("Samples per pixel: %d",super_screenshot_super_sample * super_screenshot_super_sample);
-		ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
-		size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
-		size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
+		ImGui::Text(" ");
 		ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
 		if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * 3 >= 1000000000) {
 			ImGui::Text("Current Image Size: %.1lf megabytes",
@@ -1692,9 +1737,10 @@ void Menu_Settings() {
 				(fp64)(MaximumImageSize) / 1000000.0
 			);
 		}
+		ImGui::Text(" ");
 		if (ImGui::Button("Take Super Screenshot")) {
-			//exportSuperScreenshot();
-			exportScreenshot();
+			exportSuperScreenshot();
+			//exportScreenshot();
 		}
 		ImGui::Text(" ");
 	}
@@ -2233,7 +2279,6 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 			if (yeildLimit < yeildTimeNano) {
 // 				//uint64_t yeildStart = getNanoTime();
 // 				std::this_thread::yield();
-// 				/*
 // 				uint64_t yeildEnd = getNanoTime() - yeildStart;
 // 				yeildCount++;
 // 				if (frameTimer.timerReady() == true) {
@@ -2440,6 +2485,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,3,0});
+	
+	super_screenshot_maxThreads = std::thread::hardware_concurrency();
 	// IMGUI
 	IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -2590,6 +2637,28 @@ int exportSuperScreenshot() {
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportSuperFractalBuffer == false) {
 		resetTime = getNanoTime();
 		exportSuperFractalBuffer = true;
+		Fractal_Data superFrac = frac;
+		Render_Data superRenderData = primaryRenderData;
+		if (superFrac.type_value == Fractal_ABS_Mandelbrot) {
+			superFrac.type.abs_mandelbrot.maxItr = super_screenshot_maxItr;
+		} else if (superFrac.type_value == Fractal_Polar_Mandelbrot) {
+			superFrac.type.polar_mandelbrot.maxItr = super_screenshot_maxItr;
+		}
+		superRenderData.resX = super_screenshot_resX;
+		superRenderData.resY = super_screenshot_resY;
+		superRenderData.sample = super_screenshot_super_sample;
+		superRenderData.subSample = 1;
+		superRenderData.CPU_Threads = super_screenshot_maxThreads * super_screenshot_threadMultiplier;
+		switch(screenshotFileType) {
+			case Image_File_Format::PNG:
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,User_PNG_Compression_Level);
+			break;
+			case Image_File_Format::JPG:
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,User_JPG_Quality_Level);
+			break;
+			default:
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,User_PNG_Compression_Level);
+		}
 	}
 	return 0;
 }

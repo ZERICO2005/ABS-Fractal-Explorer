@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -50,6 +50,7 @@ struct Render_Task {
 }; typedef Render_Task Render_Task;
 
 /* Update Level */
+
 	namespace Change_Level {
 		enum Change_Level_Enum {
 			Nothing, // Image buffer is perfect
@@ -65,6 +66,7 @@ struct Render_Task {
 			Change_Level_Count
 		};
 	};
+
 	// Used to deterimine if rendering should pause, continue, or reset
 	int read_Update_Level();
 	uint64_t read_Update_Timecode();
@@ -111,5 +113,16 @@ int write_Image_Buffers(ImageBuffer* primary);
 
 void setRenderDelta(fp64 t);
 fp64 getRenderDelta();
+
+/* Image Render */
+	void reset_Image_Render();
+	void send_Image_Render(
+		const Fractal_Data* frac, const Render_Data* super,
+		uint32_t image_file_format, uint8_t image_quality
+	);
+	bool receive_Image_Render(
+		Fractal_Data* frac, Render_Data* super,
+		uint32_t* image_file_format, uint8_t* image_quality
+	);
 
 #endif /* PROGRAMDATA_H */

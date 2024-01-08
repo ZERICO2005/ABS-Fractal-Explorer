@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -322,3 +322,50 @@ fp64 getRenderDelta() {
 	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
 	return renderDelta;
 }
+
+/* Image Render */
+	std::mutex pDat_Image_Render_Mutex;
+	Fractal_Data pDat_Image_Render_Fractal;
+	Render_Data pDat_Image_Render_Data;
+	bool pDat_Image_Render_Ready = false;
+	uint32_t pDat_Image_File_Format = 0;
+	uint8_t pDat_Image_Quality = 8;
+
+	void reset_Image_Render() {
+		std::lock_guard<std::mutex> lock(pDat_Image_Render_Mutex);
+		pDat_Image_Render_Ready = false;
+		memset(&pDat_Image_Render_Fractal,0,sizeof(Fractal_Data));
+		memset(&pDat_Image_Render_Data,0,sizeof(Render_Data));
+	}
+
+	void send_Image_Render(
+		const Fractal_Data* frac, const Render_Data* super,
+		uint32_t image_file_format, uint8_t image_quality
+	) {
+		if (frac == nullptr || super == nullptr) {
+			return;
+		}
+		std::lock_guard<std::mutex> lock(pDat_Image_Render_Mutex);
+		pDat_Image_Render_Ready = false;
+		pDat_Image_Render_Fractal = *frac;
+		pDat_Image_Render_Data = *super;
+		pDat_Image_Render_Ready = true;
+	}
+
+	bool receive_Image_Render(
+		Fractal_Data* frac, Render_Data* super, uint32_t* image_file_format, uint8_t* image_quality
+	) {
+		if (frac == nullptr || super == nullptr || image_file_format == nullptr || image_quality == nullptr) {
+			return false;
+		}
+		std::lock_guard<std::mutex> lock(pDat_Image_Render_Mutex);
+		if (pDat_Image_Render_Ready == false) {
+			return false;
+		}
+		*frac = pDat_Image_Render_Fractal;
+		*super = pDat_Image_Render_Data;
+		*image_file_format = pDat_Image_File_Format;
+		*image_quality = pDat_Image_Quality;
+		pDat_Image_Render_Ready = false;
+		return true;
+	}
