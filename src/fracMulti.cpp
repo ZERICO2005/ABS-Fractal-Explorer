@@ -78,6 +78,9 @@ x *= sample;\
 y *= sample;\
 uint32_t sResX = resX - 1;\
 uint32_t sResY = resY - 1;\
+fpX zoomVal = pow((fpX)10.0, zoom);\
+fpX rotSin = sin((fpX)param.rot);\
+fpX rotCos = cos((fpX)param.rot);\
 fpX numY = ((fpX)sResY / (fpX)2.0);\
 fpX numX = ((fpX)sResX / (fpX)2.0);\
 fpX numZ = (sResX >= sResY) ? numY * pow((fpX)10.0, zoom) : numX * pow((fpX)10.0, zoom);
@@ -93,11 +96,11 @@ for (; x < resX; x += sample) {\
 		for (u32 v = 0; v < sample; v++) {\
 			for (u32 u = 0; u < sample; u++) {\
 				if (param.juliaSet == true) {\
-					cpu_pixel_to_coordinate(x, y, &zr, &zi, &param, resX, resY, subSample);\
+					cpu_pixel_to_coordinate(x, y, &zr, &zi, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
 					cr = param.zr;\
 					ci = param.zi;\
 				} else {\
-					cpu_pixel_to_coordinate(x, y, &cr, &ci, &param, resX, resY, subSample);\
+					cpu_pixel_to_coordinate(x, y, &cr, &ci, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
 					zr = (param.startingZ == false) ? (fpX)0.0 : param.zr;\
 					zi = (param.startingZ == false) ? (fpX)0.0 : param.zi;\
 				}\
@@ -683,52 +686,77 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 	//printfInterval(0.3,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u",param.r,param.i,param.zoom,param.maxItr);
 
 	// Default is FP64
-	if (param.power == 2) {
-		if (ren.CPU_Precision == 32) { generateThreads(quadraticRenderFP32); } else
-		#ifdef enableFP80andFP128
-			if (ren.CPU_Precision == 80) { generateThreads(quadraticRenderFP80); } else
-			if (ren.CPU_Precision == 128) { generateThreads(quadraticRenderFP128); } else
-		#endif
-		{ generateThreads(quadraticRenderFP64); }
-	} else if (param.power == 3) {
-		if (ren.CPU_Precision == 32) { generateThreads(cubicRenderFP32); } else
-		#ifdef enableFP80andFP128
-			if (ren.CPU_Precision == 80) { generateThreads(cubicRenderFP80); } else
-			if (ren.CPU_Precision == 128) { generateThreads(cubicRenderFP128); } else
-		#endif
-		{ generateThreads(cubicRenderFP64); }
-	} else if (param.power == 4) {
-		if (ren.CPU_Precision == 32) { generateThreads(quarticRenderFP32); } else
-		#ifdef enableFP80andFP128
-			if (ren.CPU_Precision == 80) { generateThreads(quarticRenderFP80); } else
-			if (ren.CPU_Precision == 128) { generateThreads(quarticRenderFP128); } else
-		#endif
-		{ generateThreads(quarticRenderFP64); }
-	} else if (param.power == 5) {
-		if (ren.CPU_Precision == 32) { generateThreads(quinticRenderFP32); } else
-		#ifdef enableFP80andFP128
-			if (ren.CPU_Precision == 80) { generateThreads(quinticRenderFP80); } else
-			if (ren.CPU_Precision == 128) { generateThreads(quinticRenderFP128); } else
-		#endif
-		{ generateThreads(quinticRenderFP64); }
-	} else if (param.power == 6) {
-		if (ren.CPU_Precision == 32) { generateThreads(sexticRenderFP32); } else
-		#ifdef enableFP80andFP128
-			if (ren.CPU_Precision == 80) { generateThreads(sexticRenderFP80); } else
-			if (ren.CPU_Precision == 128) { generateThreads(sexticRenderFP128); } else
-		#endif
-		{ generateThreads(sexticRenderFP64); }
-	} else {
-		// if (ren.CPU_Precision == 32) { generateThreads(polynomialRenderFP32); } else
-		// #ifdef enableFP80andFP128
-		// 	if (ren.CPU_Precision == 80) { generateThreads(polynomialRenderFP80); } else
-		// 	if (ren.CPU_Precision == 128) { generateThreads(polynomialRenderFP128); } else
-		// #endif
-		// { generateThreads(polynomialRenderFP64); }
-		printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
-		return;
-		//generateThreads(renderRow); //Original Method
-	}
+	switch(param.power) {
+		case 2:
+			switch(ren.CPU_Precision) {
+				case 32: generateThreads(quadraticRenderFP32); break;
+				#ifdef enableFP80andFP128
+				case 80: generateThreads(quadraticRenderFP80); break;
+				case 128: generateThreads(quadraticRenderFP128); break;
+				#endif
+				default: // 64
+				generateThreads(quadraticRenderFP64);
+			};
+		break;
+		case 3:
+			switch(ren.CPU_Precision) {
+				case 32: generateThreads(cubicRenderFP32); break;
+				#ifdef enableFP80andFP128
+				case 80: generateThreads(cubicRenderFP80); break;
+				case 128: generateThreads(cubicRenderFP128); break;
+				#endif
+				default: // 64
+				generateThreads(cubicRenderFP64);
+			};
+		break;
+		case 4:
+			switch(ren.CPU_Precision) {
+				case 32: generateThreads(quarticRenderFP32); break;
+				#ifdef enableFP80andFP128
+				case 80: generateThreads(quarticRenderFP80); break;
+				case 128: generateThreads(quarticRenderFP128); break;
+				#endif
+				default: // 64
+				generateThreads(quarticRenderFP64);
+			};
+		break;
+		case 5:
+			switch(ren.CPU_Precision) {
+				case 32: generateThreads(quinticRenderFP32); break;
+				#ifdef enableFP80andFP128
+				case 80: generateThreads(quinticRenderFP80); break;
+				case 128: generateThreads(quinticRenderFP128); break;
+				#endif
+				default: // 64
+				generateThreads(quinticRenderFP64);
+			};
+		break;
+		case 6:
+			switch(ren.CPU_Precision) {
+				case 32: generateThreads(sexticRenderFP32); break;
+				#ifdef enableFP80andFP128
+				case 80: generateThreads(sexticRenderFP80); break;
+				case 128: generateThreads(sexticRenderFP128); break;
+				#endif
+				default: // 64
+				generateThreads(sexticRenderFP64);
+			};
+		break;
+		default:
+			// switch(ren.CPU_Precision) {
+			// 	case 32: generateThreads(polynomialRenderFP32); break;
+			// 	#ifdef enableFP80andFP128
+			// 	case 80: generateThreads(polynomialRenderFP80); break;
+			// 	case 128: generateThreads(polynomialRenderFP128); break;
+			// 	#endif
+			// 	default: // 64
+			// 	generateThreads(polynomialRenderFP64);
+			// };
+			printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
+			return;
+			//generateThreads(renderRow); //Original Method
+	};
+
 	for (u32 t = 0; t < tc; t++) {
 		renderThread.at(t).join();
 	}
@@ -786,9 +814,12 @@ polarAngle_template(fp64);
 	y *= sample;\
 	uint32_t sResX = resX - 1;\
 	uint32_t sResY = resY - 1;\
+	fpX zoomVal = pow((fpX)10.0, zoom);\
+	fpX rotSin = sin((fpX)param.rot);\
+	fpX rotCos = cos((fpX)param.rot);\
 	fpX numY = ((fpX)sResY / (fpX)2.0);\
 	fpX numX = ((fpX)sResX / (fpX)2.0);\
-	fpX numZ = (sResX >= sResY) ? numY * pow((fpX)10.0, zoom) : numX * pow((fpX)10.0, zoom);\
+	fpX numZ = (sResX >= sResY) ? numY * zoomVal : numX * zoomVal;\
 	const fpX power = (fpX)param.polarPower;\
 	const fpX powerHalf = (fpX)(param.polarPower / 2.0);\
 	const fp64 powerLog2 = 1.0 / log2((fp64)param.polarPower);\
@@ -803,11 +834,11 @@ polarAngle_template(fp64);
 			for (uint32_t v = 0; v < sample; v++) {\
 				for (uint32_t u = 0; u < sample; u++) {\
 					if (param.juliaSet == true) {\
-						cpu_pixel_to_coordinate(x, y, &zr, &zi, &param, resX, resY, subSample);\
+						cpu_pixel_to_coordinate(x, y, &zr, &zi, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
 						cr = param.zr;\
 						ci = param.zi;\
 					} else {\
-						cpu_pixel_to_coordinate(x, y, &cr, &ci, &param, resX, resY, subSample);\
+						cpu_pixel_to_coordinate(x, y, &cr, &ci, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
 						zr = (param.startingZ == false) ? (fpX)0.0 : param.zr;\
 						zi = (param.startingZ == false) ? (fpX)0.0 : param.zi;\
 					}\
@@ -880,12 +911,15 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 	/* Thread Creation */
 	
 	// Default is FP64
-		if (ren.CPU_Precision == 32) { generateThreads(polarRenderFP32); } else
+	switch(ren.CPU_Precision) {
+		case 32: generateThreads(polarRenderFP32); break;
 		#ifdef enableFP80andFP128
-			if (ren.CPU_Precision == 80) { generateThreads(polarRenderFP80); } else
-			if (ren.CPU_Precision == 128) { generateThreads(polarRenderFP128); } else
+		case 80: generateThreads(polarRenderFP80); break;
+		case 128: generateThreads(polarRenderFP128); break;
 		#endif
-		{ generateThreads(polarRenderFP64); }
+		default: // 64
+		generateThreads(polarRenderFP64);
+	};
 	for (u32 t = 0; t < tc; t++) {
 		renderThread.at(t).join();
 	}

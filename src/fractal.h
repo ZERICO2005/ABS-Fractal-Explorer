@@ -143,11 +143,11 @@ void pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, ABS_Mandelb
 	void pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, ABS_Mandelbrot* param, Render_Data* ren);
 #endif
 
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, fp32 zoomVal, fp32 rotSin, fp32 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, fp64 zoomVal, fp64 rotSin, fp64 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
 #ifdef enableFP80andFP128
-	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
-	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, fp80 zoomVal, fp80 rotSin, fp80 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, fp128 zoomVal, fp128 rotSin, fp128 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
 #endif
 
 #define POLAR_POWER_MINIMUM 1.0100
