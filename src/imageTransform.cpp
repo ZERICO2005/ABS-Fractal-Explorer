@@ -14,6 +14,7 @@
 #include <opencv2/opencv.hpp>
 
 int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, BufferBox* backgroundImage, BufferBox* foregroundImage) {
+	
 	initBufferBox(buf,nullptr,Mat_Render.cols,Mat_Render.rows,Mat_Render.channels());
 	buf->vram = (uint8_t*)malloc(Mat_Render.total() * Mat_Render.elemSize());
 	if (buf->vram == nullptr) {
