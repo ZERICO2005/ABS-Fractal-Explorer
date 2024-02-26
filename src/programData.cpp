@@ -153,7 +153,7 @@
 	}
 
 	std::mutex pDat_Buffer_Size_Mutex;
-	BufferBox pDat_BufSize = {NULL,0,0,3,0};
+	BufferBox pDat_BufSize = {NULL,0,0,IMAGE_BUFFER_CHANNELS,0};
 	void write_Buffer_Size(BufferBox size) {
 		std::lock_guard<std::mutex> lock(pDat_Buffer_Size_Mutex);
 		pDat_BufSize.resX = size.resX;
@@ -219,8 +219,8 @@ void write_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* sec
 /* Render Buffers */
 
 std::mutex pDat_Render_Buffers_Mutex;
-BufferBox pDat_primary = {NULL,0,0,3,0};
-BufferBox pDat_secondary = {NULL,0,0,3,0};
+BufferBox pDat_primary = {NULL,0,0,IMAGE_BUFFER_CHANNELS,0};
+BufferBox pDat_secondary = {NULL,0,0,IMAGE_BUFFER_CHANNELS,0};
 bool pDat_Render_Buffer_Read = false;
 
 int read_Render_Buffers(BufferBox* primary) {
@@ -272,7 +272,7 @@ int write_Render_Buffers(BufferBox* primary) {
 /* Image Buffer */
 
 std::mutex pDat_Image_Buffers_Mutex;
-ImageBuffer pDat_primaryImage = ImageBuffer(3);
+ImageBuffer pDat_primaryImage = ImageBuffer(IMAGE_BUFFER_CHANNELS);
 bool pDat_Image_Buffers_Read = false;
 
 int clear_Image_Buffers() {

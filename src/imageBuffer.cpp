@@ -84,6 +84,10 @@
 		if (vram == nullptr || vramAllocated == false || bytesAllocated < 3) {
 			return;
 		}
+		if (channels == 4) {
+			clearBuffer(r,g,b,0xFF);
+			return;
+		}
 		vram[0] = r; vram[1] = g; vram[2] = b;
 		//patternCopy(vram + 3,vram,getBufferSize(),3);
 		const size_t pitch = resX * channels;
@@ -100,6 +104,9 @@
 	void ImageBuffer::clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 		if (vram == nullptr || vramAllocated == false || bytesAllocated < 4) {
 			return;
+		}
+		if (channels == 3) {
+			clearBuffer(r,g,b);
 		}
 		vram[0] = r; vram[1] = g; vram[2] = b; vram[3] = a;
 		const size_t pitch = resX * channels;

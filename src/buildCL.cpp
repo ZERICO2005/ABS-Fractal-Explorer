@@ -42,6 +42,7 @@ const char* FractalOpenCL_SRC = "\
 	#define TAU		6.283185307179586f\n\
 	#define EULER	2.718281828459045f\n\
 	#define BREAKOUT 4096.0f\n\
+	#define IMAGE_BUFFER_CHANNELS 4\n\
 /* Constants */\n\
 \n\
  __kernel void renderFracCLPoint(\n\
@@ -58,6 +59,7 @@ const char* FractalOpenCL_SRC = "\
 	uint32_t outR = 0;\n\
 	uint32_t outG = 0;\n\
 	uint32_t outB = 0;\n\
+	uint32_t outA = 0;\n\
 	fp32 smooth = 0.0;\n\
 	u8 type = (formula & 0x40000000) ? 1 : (uint8_t)power;\n\
 	fp32 y = (fp32)(id / resX);\n\
@@ -388,12 +390,14 @@ const char* FractalOpenCL_SRC = "\
 				outR += (uint32_t)(0.9f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.5f))));\n\
 				outG += (uint32_t)(1.0f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.9f))));\n\
 				outB += (uint32_t)(1.0f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.1f))));\n\
+				outA += 0xFF;\n\
 			} else {\n\
 				outR += 0;\n\
 				outG += 0;\n\
 				//outR += (uint16_t)(511.5f - 511.5f * cos(log(low) / 2.0f));\n\
 				//outG += (uint16_t)(511.5f - 511.5f * cos(log(low) / 2.0f));\n\
 				outB += (uint16_t)(511.5f - 511.5f * cos(log(low) / 2.0f));\n\
+				outA += 0xFF;\n\
 			}\n\
 			x++;\n\
 		}\n\
@@ -404,9 +408,10 @@ const char* FractalOpenCL_SRC = "\
 	outR /= div;\n\
 	outG /= div;\n\
 	outB /= div;\n\
-	//uint32_t outA = (outR + outG + outB) / 3; outR = outA; outG = outA; outB = outA; /* Grey-scale */\n\
-	//uint32_t outA = (outR + outG + outB) / 3; outR = (outA + outR) / 2; outG = (outA + outG) / 2; outB = (outA + outB) / 2; /* Low-saturation */\n\
-	id *= 3;\n\
+	outA /= div;\n\
+	//uint32_t outAvr = (outR + outG + outB) / 3; outR = outAvr; outG = outAvr; outB = outAvr; /* Grey-scale */\n\
+	//uint32_t outAvr = (outR + outG + outB) / 3; outR = (outAvr + outR) / 2; outG = (outAvr + outG) / 2; outB = (outAvr + outB) / 2; /* Low-saturation */\n\
+	id *= IMAGE_BUFFER_CHANNELS;\n\
 	resultBuf[id] = (uint8_t)outR; id++;\n\
 	resultBuf[id] = (uint8_t)outG; id++;\n\
 	resultBuf[id] = (uint8_t)outB;\n\

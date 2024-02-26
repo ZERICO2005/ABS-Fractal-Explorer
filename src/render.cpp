@@ -50,6 +50,8 @@ bool SaveUsernameInFiles = false; /* This MUST be False by Default */
 char FileUsername[FileUsernameLength];
 bool SaveHardwareInfoInFiles = false; /* This MUST be False by Default */
 
+int IMGUI_Theme = 1; // 0 Classic, 1 Dark, 2 Light
+
 SDL_Texture* texture;
 SDL_Texture* kTexture; // Keyboard graphic
 ImageBuffer Master;
@@ -438,7 +440,7 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		if (y < RESY_Minimum) { y = RESY_Minimum; }
 		if (x > RESX_Maximum) { x = RESX_Maximum; }
 		if (y > RESY_Maximum) { y = RESY_Maximum; }
-		if (x & 0x3) { x &= 0xFFFFFFFC; } // Sets resX to a multiple of 4 so I don't have to deal with padded and unpadded image buffers
+		//if (x & 0x3) { x &= 0xFFFFFFFC; } // Sets resX to a multiple of 4 so I don't have to deal with padded and unpadded image buffers
 		
 		SDL_SetWindowSize(window,x,y);
 		SDL_RenderSetLogicalSize(renderer, x, y);
@@ -453,12 +455,13 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		updateRenderData(&primaryRenderData);
 		updateRenderData(&secondaryRenderData);
 		write_Update_Level(Change_Level::Full_Reset);
-		Master.resizeBuffer(x,y,3);
+		Master.resizeBuffer(x,y,IMAGE_BUFFER_CHANNELS);
 		if (texture != NULL) {
 			SDL_DestroyTexture(texture);
 		}
-		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
-		write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,3,0});
+		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
+
+		write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
 		reVal = true;
 	}
 	rX = x;
@@ -1563,6 +1566,28 @@ void Menu_Settings() {
 		ImGui::Text("Window Opacity:");
 		ImGui::SliderFloat("##WindowOpacity",&WindowOpacity,0.3f,1.0f,"%.3f");
 		ImGui::Text(" ");
+		
+
+		static const char* GUI_Theme_Options[] = {
+			"Classic","Dark-mode (Default)","Light-mode (Unsupported)"
+		};
+		ImGui::Text("GUI Theme:");
+		if (ImGui::Combo("##IMGUI_Theme",&IMGUI_Theme,BufAndLen(GUI_Theme_Options))) {
+			switch(IMGUI_Theme) {
+				case 0:
+					ImGui::StyleColorsClassic();
+				break;
+				case 1:
+					ImGui::StyleColorsDark();
+				break;
+				case 2:
+					ImGui::StyleColorsLight();
+				break;
+				default:
+					ImGui::StyleColorsDark();
+			};
+		}
+		ImGui::Text(" ");
 	}
 	if (ImGui::CollapsingHeader("DISPLAY AND FRAME-RATE")) {
 		ImGui::Text("Base maximum frame-rate off of:");
@@ -1729,9 +1754,9 @@ void Menu_Settings() {
 		
 		ImGui::Text(" ");
 		ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
-		if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * 3 >= 1000000000) {
+		if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS >= 1000000000) {
 			ImGui::Text("Current Image Size: %.1lf megabytes",
-				(fp64)((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * 3) / 1000000.0
+				(fp64)((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS) / 1000000.0
 			);
 			ImGui::Text("Maximum Image Size: %.1lf megabytes",
 				(fp64)(MaximumImageSize) / 1000000.0
@@ -1797,7 +1822,7 @@ void Menu_Keybinds() {
 			(uint8_t)Combo_keyboardSize, displayNumpad,
 			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover, &hoverInBounds
 		);
-		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, kBuf.resX, kBuf.resY, 24, 3 * kBuf.resX, SDL_PIXELFORMAT_RGB24);
+		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, kBuf.resX, kBuf.resY, IMAGE_BUFFER_CHANNELS * 8, IMAGE_BUFFER_CHANNELS * kBuf.resX, SDL_PIXELFORMAT_ABGR8888);
 		if (kSurface == nullptr) {
 			fprintf(stderr, "Failed to create SDL surface: %s\n", SDL_GetError());
 		}
@@ -2477,14 +2502,16 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %dMB",SDL_GetSystemRAM());
 	// Allocate Buffers
-	//initBufferBox(&Master,NULL,initResX,initResY,3);
-	Master = ImageBuffer(initResX,initResY,3);
-	initBufferBox(&TestGraphic,nullptr,Master.resX,Master.resY - RESY_UI,3);
+	//initBufferBox(&Master,NULL,initResX,initResY,IMAGE_BUFFER_CHANNELS);
+	Master = ImageBuffer(initResX,initResY,IMAGE_BUFFER_CHANNELS);
+	initBufferBox(&TestGraphic,nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS);
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
 	window = SDL_CreateWindow(PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_SetWindowMinimumSize(window, RESX_Minimum, RESY_Minimum);
+	SDL_SetWindowMaximumSize(window, RESX_Maximum, RESY_Maximum);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
-	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,3,0});
+	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
 	
 	super_screenshot_maxThreads = std::thread::hardware_concurrency();
 	// IMGUI
@@ -2494,7 +2521,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io_IMGUI->IniFilename = nullptr;
-    ImGui::StyleColorsDark(); // ImGui::StyleColorsLight();
+    ImGui::StyleColorsDark();
 	ImGui_ImplSDLRenderer2_Init(renderer);
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	
@@ -2503,7 +2530,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	if (texture != nullptr) {
 		SDL_DestroyTexture(texture);
 	}
-	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
+	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
 	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
 	init_KeyBind_PresetList();
 	initKeys();
@@ -2562,6 +2589,7 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 				TestGraphic.vram[z] = 0; z++;
 			#endif
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = 0xFF; z++;
 		}
 	}
 }
@@ -2580,6 +2608,7 @@ void renderAbortGraphic(fp64 speed) {
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 			TestGraphic.vram[z] = ((w + x + y) % 256) / 4; TestGraphic.vram[z] /= color_square_divider; z++;
 			TestGraphic.vram[z] = 0; z++;
+			TestGraphic.vram[z] = 0xFF; z++;
 		}
 	}
 }
@@ -2598,6 +2627,7 @@ void renderPauseGraphic(fp64 speed) {
 			TestGraphic.vram[z] = 0; z++;
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 			TestGraphic.vram[z] = 0; z++;
+			TestGraphic.vram[z] = 0xFF; z++;
 		}
 	}
 }
@@ -2616,6 +2646,7 @@ void renderLoadingGraphic(fp64 speed) {
 			TestGraphic.vram[z] = 0; z++;
 			TestGraphic.vram[z] = 0; z++;
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = 0xFF; z++;
 		}
 	}
 }
@@ -2691,7 +2722,7 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 		return 1;
 	}
 	if ((image->rot != FRAC.rot) || ((fx0 < (i32)Master.resX) && (fy0 < (i32)(Master.resY - RESY_UI)))) {
-		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(image->vram, image->resX, image->resY, image->channels * 8, image->channels * image->resX, SDL_PIXELFORMAT_RGB24);
+		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(image->vram, image->resX, image->resY, image->channels * 8, image->channels * image->resX, SDL_PIXELFORMAT_ABGR8888);
 		fx1 -= fx0;
 		fy1 -= fy0;
 		SDL_Rect srcRect = {0,0,(i32)image->resX,(i32)image->resY};
@@ -2722,24 +2753,31 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 		return -1;
 	}
 
-	i32 dx00 = 0; i32 dy00 = 0; i32 dx11 = 0; i32 dy11 = 0;
-	i32 dx01 = 0; i32 dy01 = 0; i32 dx10 = 0; i32 dy10 = 0;
-	coordinate_to_pixel(image->x00 - FRAC.r,image->y00 - FRAC.i,&dx00,&dy00,&FRAC,ren);
-	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&dx11,&dy11,&FRAC,ren);
-	coordinate_to_pixel(image->x01 - FRAC.r,image->y01 - FRAC.i,&dx01,&dy01,&FRAC,ren);
-	coordinate_to_pixel(image->x10 - FRAC.r,image->y10 - FRAC.i,&dx10,&dy10,&FRAC,ren);
-	int32_t resX = (i32)(image->resX);
-	int32_t resY = (i32)(image->resY);
-	i32 sx00 = 0; i32 sy00 = 0;
-	i32 sx11 = resX; i32 sy11 = resY;
-	i32 sx01 = 0; i32 sy01 = resY;
-	i32 sx10 = resX; i32 sy10 = 0;
+	fp32 dx00 = 0.0f; fp32 dy00 = 0.0f; fp32 dx11 = 0.0f; fp32 dy11 = 0.0f;
+	fp32 dx01 = 0.0f; fp32 dy01 = 0.0f; fp32 dx10 = 0.0f; fp32 dy10 = 0.0f;
+	coordinate_to_image_cordinate(image->x00 - FRAC.r,image->y00 - FRAC.i,&dx00,&dy00,&FRAC,ren);
+	coordinate_to_image_cordinate(image->x11 - FRAC.r,image->y11 - FRAC.i,&dx11,&dy11,&FRAC,ren);
+	coordinate_to_image_cordinate(image->x01 - FRAC.r,image->y01 - FRAC.i,&dx01,&dy01,&FRAC,ren);
+	coordinate_to_image_cordinate(image->x10 - FRAC.r,image->y10 - FRAC.i,&dx10,&dy10,&FRAC,ren);
+	int32_t resX = (int32_t)(image->resX);
+	int32_t resY = (int32_t)(image->resY);
+	fp32 sx00 = 0.0f; fp32 sy00 = 0.0f;
+	fp32 sx11 = resX; fp32 sy11 = (fp32)resY;
+	fp32 sx01 = 0.0f; fp32 sy01 = (fp32)resY;
+	fp32 sx10 = resX; fp32 sy10 = 0.0f;
 	// image->printTransformationData(0.6);
 	// printfInterval(0.6,"\nsrc: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
 	// printfInterval(0.6,"\ndst: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
+	uint32_t backgroundColor = 0xFF000000;
+	backgroundColor |= (uint32_t)(FRAC.rA * (127.5 - 127.5 * cos(TAU * FRAC.rP)));
+	backgroundColor |= (uint32_t)(FRAC.gA * (127.5 - 127.5 * cos(TAU * FRAC.gP))) << 8;
+	backgroundColor |= (uint32_t)(FRAC.bA * (127.5 - 127.5 * cos(TAU * FRAC.bP))) << 16;
+
 	if (
 		Image_Scaler_Parallelogram(
 			&blit, image, ren,
+			backgroundColor,
+			nullptr, nullptr,
 			Frame_Interpolation_Method,
 			sx00, sy00,
 			sx01, sy01, sx10, sy10,
@@ -2747,7 +2785,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 			dx01, dy01, dx10, dy10
 		) == -1
 	) {
-		printError("\nscaleImage failed");
+		printError("\nImage_Scaler_Parallelogram failed");
 		return -1;
 	}
 	// if (
@@ -2760,7 +2798,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// 		dx01, dy01, dx10, dy10
 	// 	) == -1
 	// ) {
-	// 	printError("\nscaleImage failed");
+	// 	printError("\nImage_Scaler_Quadrilateral failed");
 	// 	return -1;
 	// }
 	//printfInterval(0.6,"\n%p: %ux%u %uC %uP",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);

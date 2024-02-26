@@ -27,32 +27,38 @@ uint64_t factorialLUT[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800
 #define FractalParameters BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, uint32_t p0, uint32_t p1, std::atomic<bool>& ABORT_RENDERING
 
 // 511.5 for 10bit color
-#define Color_Mult 511.5
+// 127.5 for 8bit color
+#define Color_Mult 127.5
 // * 4 for 10bit color
-#define Div_Mult(s) ((s) * 4)
+// * 1 for 8bit color
+#define Div_Mult(s) ((s) * 1)
 
 #ifdef MONOCHROME_MODE
 	#define CPU_Interior_Coloring(fpX); \
 		outR += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
 		outG += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
-		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));
+		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
+		outA += 0xFF;
 
 	#define CPU_Exterior_Coloring(fpX,l); \
 		fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
 		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
 		outG += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
-		outB += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));
+		outB += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
+		outA += 0xFF;
 #else
 	#define CPU_Interior_Coloring(fpX); \
 		outR += 0;\
 		outG += 0;\
-		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));
+		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
+		outA += 0xFF;
 
 	#define CPU_Exterior_Coloring(fpX,l); \
 		fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
 		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
 		outG += (uint32_t)(param.gA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.gF * smooth + param.gP))));\
-		outB += (uint32_t)(param.bA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.bF * smooth + param.bP))));
+		outB += (uint32_t)(param.bA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.bF * smooth + param.bP))));\
+		outA += 0xFF;
 #endif
 
 #define Block0(fpX) \
@@ -60,7 +66,7 @@ uint8_t* data = buf->vram;\
 u32 subSample = ren.subSample;\
 u32 resX = buf->resX;\
 u32 resY = buf->resY;\
-u32 dataPtr = p0 * 3;\
+u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 u32 maxItr = param.maxItr;\
 fpX r = param.r;\
 fpX i = param.i;\
@@ -93,6 +99,7 @@ for (; x < resX; x += sample) {\
 		uint32_t outR = 0;\
 		uint32_t outG = 0;\
 		uint32_t outB = 0;\
+		uint32_t outA = 0;\
 		for (u32 v = 0; v < sample; v++) {\
 			for (u32 u = 0; u < sample; u++) {\
 				if (param.juliaSet == true) {\
@@ -130,9 +137,11 @@ for (; x < resX; x += sample) {\
 		outR /= div;\
 		outG /= div;\
 		outB /= div;\
+		outA /= div;\
 		data[dataPtr] = outR; dataPtr++;\
 		data[dataPtr] = outG; dataPtr++;\
 		data[dataPtr] = outB; dataPtr++;\
+		data[dataPtr] = outA; dataPtr++;\
 		p0++;\
 	}\
 	x = 0;\
@@ -449,7 +458,7 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 	u32 subSample = ren.subSample;\
 // 	u32 resX = buf->resX;\
 // 	u32 resY = buf->resY;\
-// 	u32 dataPtr = p0 * 3;\
+// 	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 // 	u32 maxItr = param.maxItr;\
 // 	fpX r = param.r;\
 // 	fpX i = param.i;\
@@ -511,6 +520,7 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 			uint32_t outR = 0;\
 // 			uint32_t outG = 0;\
 // 			uint32_t outB = 0;\
+// 			uint32_t outA = 0;\
 // 			for (uint32_t v = 0; v < sample; v++) {\
 // 				for (uint32_t u = 0; u < sample; u++) {\
 // 					if (param.juliaSet == true) {\
@@ -553,7 +563,7 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 							fpX acc = (fpX)1.0;\
 // 							acc *= fSign[iT];\
 // 							ziAcc += acc;\
-// 						}\
+// 						}\sample * sample * 4
 // 						\
 // 						ziAcc = zr * zi * 2;\
 // 						zrAcc = (fOuter[2]) ? fabs(zrAcc) : zrAcc;\
@@ -567,16 +577,18 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 							low = zs;\
 // 						} else if (zs > param.breakoutValue) {\
 // 							fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) * powerLog2));\
-// 							outR += (uint32_t)(param.rA * (511.5 - 511.5 * cos(TAU * (param.rF * smooth + param.rP))));\
-// 							outG += (uint32_t)(param.gA * (511.5 - 511.5 * cos(TAU * (param.gF * smooth + param.gP))));\
-// 							outB += (uint32_t)(param.bA * (511.5 - 511.5 * cos(TAU * (param.bF * smooth + param.bP))));\
+// 							outR += (uint32_t)(param.rA * (Color_Mult - Color_Mult * cos(TAU * (param.rF * smooth + param.rP))));\
+// 							outG += (uint32_t)(param.gA * (Color_Mult - Color_Mult * cos(TAU * (param.gF * smooth + param.gP))));\
+// 							outB += (uint32_t)(param.bA * (Color_Mult - Color_Mult * cos(TAU * (param.bF * smooth + param.bP))));\
+//							outA += 0xFF;
 // 							break;\
 // 						}\
 // 					}\
 // 					if (zs <= BREAKOUT) {\
 // 						outR += 0;\
 // 						outG += 0;\
-// 						outB += (uint32_t)(param.iA * (511.5 - 511.5 * cos(log(low) * param.iF + param.iP)));\
+// 						outB += (uint32_t)(param.iA * (Color_Mult - Color_Mult * cos(log(low) * param.iF + param.iP)));\
+//						outA += 0xFF;\
 // 					}\
 // 					x++;\
 // 				}\
@@ -584,13 +596,15 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 				y++;\
 // 			}\
 // 			y-= sample;\
-// 			uint32_t div = sample * sample * 4;\
+// 			uint32_t div = Div_Mult(sample * sample);\
 // 			outR /= div;\
 // 			outG /= div;\
 // 			outB /= div;\
+//			outA /= div;\
 // 			data[dataPtr] = outR; dataPtr++;\
 // 			data[dataPtr] = outG; dataPtr++;\
 // 			data[dataPtr] = outB; dataPtr++;\
+//			data[dataPtr] = outA; dataPtr++;\
 // 			p0++;\
 // 		}\
 // 		x = 0;\
@@ -606,7 +620,7 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // #endif
 
 void renderRow(ABS_Mandelbrot* param, uint8_t* data, uint32_t resX, uint32_t resY, uint8_t subSample, uint32_t p0, uint32_t p1) { // Deprecated
-	u32 dataPtr = p0 * 3; // RGB
+	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS; // RGB
 	u32 maxItr = param->maxItr;
 	fp64 typeC = (fp64)param->power;
 	
@@ -796,7 +810,7 @@ polarAngle_template(fp64);
 	u32 subSample = ren.subSample;\
 	u32 resX = buf->resX;\
 	u32 resY = buf->resY;\
-	u32 dataPtr = p0 * 3;\
+	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 	u32 maxItr = param.maxItr;\
 	fpX r = param.r;\
 	fpX i = param.i;\
@@ -831,6 +845,7 @@ polarAngle_template(fp64);
 			uint32_t outR = 0;\
 			uint32_t outG = 0;\
 			uint32_t outB = 0;\
+			uint32_t outA = 0;\
 			for (uint32_t v = 0; v < sample; v++) {\
 				for (uint32_t u = 0; u < sample; u++) {\
 					if (param.juliaSet == true) {\
@@ -855,16 +870,18 @@ polarAngle_template(fp64);
 							low = zs;\
 						} else if (zs > param.breakoutValue) {\
 							fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) * powerLog2));\
-							outR += (uint32_t)(param.rA * (511.5 - 511.5 * cos(TAU * (param.rF * smooth + param.rP))));\
-							outG += (uint32_t)(param.gA * (511.5 - 511.5 * cos(TAU * (param.gF * smooth + param.gP))));\
-							outB += (uint32_t)(param.bA * (511.5 - 511.5 * cos(TAU * (param.bF * smooth + param.bP))));\
+							outR += (uint32_t)(param.rA * (Color_Mult - Color_Mult * cos(TAU * (param.rF * smooth + param.rP))));\
+							outG += (uint32_t)(param.gA * (Color_Mult - Color_Mult * cos(TAU * (param.gF * smooth + param.gP))));\
+							outB += (uint32_t)(param.bA * (Color_Mult - Color_Mult * cos(TAU * (param.bF * smooth + param.bP))));\
+							outA += 0xFF;\
 							break;\
 						}\
 					}\
 					if (zs <= BREAKOUT) {\
 						outR += 0;\
 						outG += 0;\
-						outB += (uint32_t)(param.iA * (511.5 - 511.5 * cos(log(low) * param.iF + param.iP)));\
+						outB += (uint32_t)(param.iA * (Color_Mult - Color_Mult * cos(log(low) * param.iF + param.iP)));\
+						outA += 0xFF;\
 					}\
 					x++;\
 				}\
@@ -872,13 +889,15 @@ polarAngle_template(fp64);
 				y++;\
 			}\
 			y-= sample;\
-			uint32_t div = sample * sample * 4;\
+			uint32_t div = Div_Mult(sample * sample);\
 			outR /= div;\
 			outG /= div;\
 			outB /= div;\
+			outA /= div;\
 			data[dataPtr] = outR; dataPtr++;\
 			data[dataPtr] = outG; dataPtr++;\
 			data[dataPtr] = outB; dataPtr++;\
+			data[dataPtr] = outA; dataPtr++;\
 			p0++;\
 		}\
 		x = 0;\
@@ -935,7 +954,7 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 // 	u32 subSample = ren.subSample;\
 // 	u32 resX = buf->resX;\
 // 	u32 resY = buf->resY;\
-// 	u32 dataPtr = p0 * 3;\
+// 	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 // 	u32 maxItr = param.maxItr;\
 // 	fpX r = param.x;\
 // 	fpX i = param.y;\
@@ -964,6 +983,7 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 // 			uint32_t outR = 0;\
 // 			uint32_t outG = 0;\
 // 			uint32_t outB = 0;\
+// 			uint32_t outA = 0;\
 // 			for (uint32_t v = 0; v < sample; v++) {\
 // 				for (uint32_t u = 0; u < sample; u++) {\
 // 					bool escape = false;\
@@ -974,26 +994,26 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 // 							if (fmod(floor(zr),(fpX)3.0) == (fpX)1.0 && fmod(floor(zi),(fpX)3.0) == (fpX)1.0) {\
 // 								escape = true;\
 // 								if (itr != maxItr) {\
-// 									data[3 * ((y * resX) + x)] = 0;\
-// 									data[3 * ((y * resX) + x) + 1] = 0;\
-// 									data[3 * ((y * resX) + x) + 2] = 0;\
+// 									data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x)] = 0;\
+// 									data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 1] = 0;\
+// 									data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 2] = 0;\
 // 								} else {\
-// 									data[3 * ((y * resX) + x)] = 71; /* Colors the smallest holes a little bit lighter */\
-// 									data[3 * ((y * resX) + x) + 1] = 0;\
-// 									data[3 * ((y * resX) + x) + 2] = 0;\
+// 									data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x)] = 71; /* Colors the smallest holes a little bit lighter */\
+// 									data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 1] = 0;\
+// 									data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 2] = 0;\
 // 								}\
 // 								break;\
 // 							}\
 // 						}\
 // 						if (escape == false) {\
-// 							data[3 * ((y * resX) + x)] = 255;\
-// 							data[3 * ((y * resX) + x) + 1] = 0;\
-// 							data[3 * ((y * resX) + x) + 2] = 0;\
+// 							data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x)] = 255;\
+// 							data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 1] = 0;\
+// 							data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 2] = 0;\
 // 						}\
 // 					} else { /* Colors out of bounds a dark red */\
-// 						data[3 * ((y * resX) + x)] = 63;\
-// 						data[3 * ((y * resX) + x) + 1] = 0;\
-// 						data[3 * ((y * resX) + x) + 2] = 0;\
+// 						data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x)] = 63;\
+// 						data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 1] = 0;\
+// 						data[IMAGE_BUFFER_CHANNELS * ((y * resX) + x) + 2] = 0;\
 // 					}\
 // 					x++;\
 // 				}\
@@ -1001,13 +1021,15 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 // 				y++;\
 // 			}\
 // 			y-= sample;\
-// 			uint32_t div = sample * sample * 4;\
+// 			uint32_t div = Div_Mult(sample * sample);\
 // 			outR /= div;\
 // 			outG /= div;\
 // 			outB /= div;\
+// 			outA /= div;\
 // 			data[dataPtr] = outR; dataPtr++;\
 // 			data[dataPtr] = outG; dataPtr++;\
 // 			data[dataPtr] = outB; dataPtr++;\
+// 			data[dataPtr] = outA; dataPtr++;\
 // 			p0++;\
 // 		}\
 // 		x = 0;\

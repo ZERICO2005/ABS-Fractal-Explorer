@@ -60,7 +60,7 @@ class Bit_Graphics {
 		size_t ResX;
 		size_t ResY;
 		size_t ResZ; // Total size
-		uint8_t gColor[3];
+		uint8_t gColor[4];
 		bool initialized;
 };
 

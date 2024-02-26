@@ -136,6 +136,13 @@ void coordinate_to_pixel(fp64 xI, fp64 yI, int32_t* xO, int32_t* yO, ABS_Mandelb
 	void coordinate_to_pixel(fp128 xI, fp128 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
 #endif
 
+void coordinate_to_image_cordinate(fp32 xI, fp32 yI, fp32* xO ,fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+void coordinate_to_image_cordinate(fp64 xI, fp64 yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+#ifdef enableFP80andFP128
+	void coordinate_to_image_cordinate(fp80 xI, fp80 yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+	void coordinate_to_image_cordinate(fp128 xI, fp128 yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+#endif
+
 void pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, ABS_Mandelbrot* param, Render_Data* ren);
 void pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
 #ifdef enableFP80andFP128

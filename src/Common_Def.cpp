@@ -13,24 +13,25 @@
 /*
 Fills Dst with a repeating pattern from Src 
 */
-void patternCopy(uint8_t* Dst, const uint8_t* Src, size_t Size, size_t PatternLength) {
-	if (Src == nullptr || Dst == nullptr || PatternLength == 0) {
-		return;
+
+int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize) {
+	if (buf == nullptr || PatternData == nullptr) { return -1; }
+	if (bufSize == 0 || PatternSize == 0) { return -1; }
+	if (bufSize <= PatternSize) {
+		memcpy(buf,PatternData,bufSize);
+		return 0;
 	}
-	if (Size <= PatternLength) {
-		memcpy(Dst,Src,Size);
-		return;
-	}
-	memcpy(Dst,Src,PatternLength); // Initial Copy
-	size_t len = PatternLength;
-	size_t pos = PatternLength;
+	memcpy(buf,PatternData,PatternSize); // Initial Copy
+	size_t len = PatternSize;
+	size_t pos = PatternSize;
 	
-	while (pos + len <= Size) {
-		memcpy(Dst + pos,Dst,len); 
+	while (pos + len <= bufSize) {
+		memcpy(buf + pos,buf,len); 
 		pos += len;
 		len *= 2; // Doubles copy size each iteration
 	}
-	memcpy(Dst + pos,Dst,Size - len); // Copies the remaining portion
+	memcpy(buf + pos,buf,bufSize - len); // Copies the remaining portion
+	return 0;
 }
 
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {
@@ -123,7 +124,7 @@ fp64 getDecimalTime() { // Returns the time in seconds
 	return (fp64)getNanoTime() / 1.0e9;
 }
 
-/* Color */
+/* Color 24bit */
 
 // (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
 void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp64 hue, fp64 sat, fp64 val) { 
@@ -200,5 +201,93 @@ uint32_t getRGBfromHSV(fp64 hue, fp64 sat, fp64 val) {
 uint32_t getRGBfromHSV(fp32 hue, fp32 sat, fp32 val) {
 	uint8_t r,g,b;
 	getRGBfromHSV(&r,&g,&b,hue,sat,val);
+	return (r << 16) + (g << 8) + b;
+}
+
+/* Color 32bit */
+
+// (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp64 hue, fp64 sat, fp64 val, fp64 alpha) {
+	if (r == NULL || g == NULL || b == NULL) { return; }
+	if (a == NULL) {
+		getRGBfromHSV(r,g,b,hue,sat,val);
+		return;
+	}
+	uint8_t hi = (uint8_t)(hue / 60.0) % 6;
+	fp64 f = (hue / 60.0) - floor(hue / 60.0);
+	val *= 255.0;
+	uint8_t vR = (uint8_t)val;
+	uint8_t pR = (uint8_t)(val * (1.0 - sat));
+	uint8_t qR = (uint8_t)(val * (1.0 - f * sat));
+	uint8_t tR = (uint8_t)(val * (1.0 - (1.0 - f) * sat));
+	switch(hi) {
+		case 0:
+		*r = vR; *g = tR; *b = pR;
+		return;
+		case 1:
+		*r = qR; *g = vR; *b = pR;
+		return;
+		case 2:
+		*r = pR; *g = vR; *b = tR;
+		return;
+		case 3:
+		*r = pR; *g = qR; *b = vR;
+		return;
+		case 4:
+		*r = tR; *g = pR; *b = vR;
+		return;
+		case 5:
+		*r = vR; *g = pR; *b = qR;
+		return;
+	}
+}
+
+// (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp32 hue, fp32 sat, fp32 val, fp32 alpha) {
+	if (r == NULL || g == NULL || b == NULL) { return; }
+	if (a == NULL) {
+		getRGBfromHSV(r,g,b,hue,sat,val);
+		return;
+	}
+	uint8_t hi = (uint8_t)(hue / 60.0) % 6;
+	fp32 f = (hue / 60.0) - floor(hue / 60.0);
+	val *= 255.0;
+	uint8_t vR = (uint8_t)val;
+	uint8_t pR = (uint8_t)(val * (1.0 - sat));
+	uint8_t qR = (uint8_t)(val * (1.0 - f * sat));
+	uint8_t tR = (uint8_t)(val * (1.0 - (1.0 - f) * sat));
+	switch(hi) {
+		case 0:
+		*r = vR; *g = tR; *b = pR;
+		return;
+		case 1:
+		*r = qR; *g = vR; *b = pR;
+		return;
+		case 2:
+		*r = pR; *g = vR; *b = tR;
+		return;
+		case 3:
+		*r = pR; *g = qR; *b = vR;
+		return;
+		case 4:
+		*r = tR; *g = pR; *b = vR;
+		return;
+		case 5:
+		*r = vR; *g = pR; *b = qR;
+		return;
+	}
+}
+
+// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+uint32_t getRGBAfromHSVA(fp64 hue, fp64 sat, fp64 val, fp64 alpha) {
+	uint8_t r,g,b,a;
+	getRGBAfromHSVA(&r,&g,&b,&a,hue,sat,val,alpha);
+	return (r << 16) + (g << 8) + b;
+}
+
+// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+uint32_t getRGBAfromHSVA(fp32 hue, fp32 sat, fp32 val, fp32 alpha) {
+	uint8_t r,g,b,a;
+	getRGBAfromHSVA(&r,&g,&b,&a,hue,sat,val,alpha);
 	return (r << 16) + (g << 8) + b;
 }

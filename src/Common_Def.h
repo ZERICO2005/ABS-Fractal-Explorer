@@ -87,7 +87,7 @@ typedef double fp64;
 	#define valueMinimum(value,minimum) { if ((value) < (minimum)) { (value) = (minimum); } }
 	#define valueMaximum(value,maximum) { if ((value) > (maximum)) { (value) = (maximum); } }
 
-	void patternCopy(uint8_t* Dst, const uint8_t* Src, size_t Size, size_t PatternLength);
+	int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize);
 
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);
@@ -168,5 +168,14 @@ typedef double fp64;
 	uint32_t getRGBfromHSV(fp64 hue, fp64 sat, fp64 val);
 	// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
 	uint32_t getRGBfromHSV(fp32 hue, fp32 sat, fp32 val);
+
+	// (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+	void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp64 hue, fp64 sat, fp64 val, fp64 alpha);
+	// (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+	void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp32 hue, fp32 sat, fp32 val, fp32 alpha);
+	// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+	uint32_t getRGBAfromHSVA(fp64 hue, fp64 sat, fp64 val, fp64 alpha);
+	// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
+	uint32_t getRGBAfromHSVA(fp32 hue, fp32 sat, fp32 val, fp32 alpha);
 
 #endif /* COMMON_DEF_H */

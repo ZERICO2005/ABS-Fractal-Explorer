@@ -18,21 +18,25 @@
 // Output BufferBox, Input ImageBuffer, src{{x00,y00},{x01,y01},{x10,y10}} dst{{x00,y00},{x01,y01},{x10,y10}}
 int Image_Scaler_Parallelogram(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	uint32_t backgroundColor,
+	BufferBox* backgroundImage, BufferBox* foregroundImage,
 	int interpolation_mode,
-	i32 sx00, i32 sy00,
-	i32 sx01, i32 sy01, i32 sx10, i32 sy10,
-	i32 dx00, i32 dy00,
-	i32 dx01, i32 dy01, i32 dx10, i32 dy10
+	fp32 sx00, fp32 sy00,
+	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
+	fp32 dx00, fp32 dy00,
+	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
 );
 
 // Output BufferBox, Input ImageBuffer, src{{x00,y00},{x11,y11},{x01,y01},{x10,y10}} dst{{x00,y00},{x11,y11},{x01,y01},{x10,y10}}
 int Image_Scaler_Quadrilateral(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	uint32_t backgroundColor,
+	BufferBox* backgroundImage, BufferBox* foregroundImage,
 	int interpolation_mode,
-	i32 sx00, i32 sy00, i32 sx11, i32 sy11,
-	i32 sx01, i32 sy01, i32 sx10, i32 sy10,
-	i32 dx00, i32 dy00, i32 dx11, i32 dy11,
-	i32 dx01, i32 dy01, i32 dx10, i32 dy10
+	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
+	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
+	fp32 dx00, fp32 dy00, fp32 dx11, fp32 dy11,
+	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
 );
 
 #endif /* IMAGE_TRANSFORM_H */

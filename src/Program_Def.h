@@ -20,10 +20,10 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/01/31" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/02/26" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
-#define PROGRAM_V_PATCH 2
+#define PROGRAM_V_PATCH 3
 #define PROGRAM_V_TAG "Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
@@ -77,6 +77,11 @@
 	typedef int64_t i128;
 	typedef uint64_t u128;
 #endif
+
+constexpr size_t IMAGE_BUFFER_CHANNELS = 4;
+/* Use to correct any magic numbers
+(?<!\d\.)\b3\b
+*/
 
 class TimerBox {
 	public:

@@ -228,6 +228,27 @@ coordinate_to_pixel_template(fp64);
 	coordinate_to_pixel_template(fp128);
 #endif
 
+#define coordinate_to_image_cordinate_template(fpX); \
+void coordinate_to_image_cordinate(fpX xI, fpX yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren) {\
+	/* Reverses Transformations */\
+	fpX xC = xI * cos(-(fpX)param->rot) - yI * sin(-(fpX)param->rot);\
+	fpX yC = yI * cos(-(fpX)param->rot) + xI * sin(-(fpX)param->rot);\
+	xC /= (fpX)param->sX;\
+	yC /= (fpX)param->sY;\
+	/* Normalizes Coordinates */\
+	uint32_t resX = ren->resX - 1;\
+	uint32_t resY = ren->resY - 1;\
+	uint32_t resZ = (resX >= resY) ? resY : resX;\
+	*xO = (fp32)((xC) * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resX) / (fpX)2.0);\
+	*yO = (fp32)(-(yC) * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resY) / (fpX)2.0);\
+}
+coordinate_to_image_cordinate_template(fp32);
+coordinate_to_image_cordinate_template(fp64);
+#ifdef enableFP80andFP128
+	coordinate_to_image_cordinate_template(fp80);
+	coordinate_to_image_cordinate_template(fp128);
+#endif
+
 #define cpu_pixel_to_coordinate_template(fpX); \
 void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, fpX zoomVal, fpX rotSin, fpX rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample) { \
 	/* Normalizes Coordinates */\

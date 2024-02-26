@@ -54,13 +54,13 @@ int32_t init_OpenCL() {
 		return -1;
 	}
 	/* OpenCL structures */
-	//resultBuf = (uint8_t*)malloc(sizeof(uint8_t) * resX * resY * 3); 
+	//resultBuf = (uint8_t*)malloc(sizeof(uint8_t) * resX * resY * IMAGE_BUFFER_CHANNELS); 
 	try {
 		engine.device = create_device();
 		engine.context = clCreateContext(NULL, 1, &engine.device, NULL, NULL, &err);
 		engine.program = build_program(engine.context, engine.device, PROGRAM_FILE); /* Build program */
 		engine.queue = clCreateCommandQueue(engine.context, engine.device, 0, &err); /* Create a command queue */
-		//deviceResultBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, resX*resY*3, NULL, NULL); /* Create data buffer */
+		//deviceResultBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, resX*resY*IMAGE_BUFFER_CHANNELS, NULL, NULL); /* Create data buffer */
 		deviceResultBuf = NULL;
 		// Write our data set into the input array in device memory
 		//err = clEnqueueWriteBuffer(queue, dreals, CL_TRUE, 0, sizeof(float)*nreals, reals, 0, NULL, NULL);
@@ -88,7 +88,7 @@ void printFloatingPointConfig(const char* headerText, uint32_t config) {
 	writefToLog("%s",headerText);
 	#define configPrint(x,y); if (config & x) { writefToLog(" | " y); }
 	configPrint(CL_FP_DENORM,"CL_FP_DENORM");
-	configPrint(CL_FP_INF_NAN,"CL_FP_INF_NAN");
+	configPrint(CL_FP_INF_NAN,"CL_FP_INF_NAN");enablePrinting
 	configPrint(CL_FP_ROUND_TO_NEAREST,"CL_FP_ROUND_TO_NEAREST");
 	configPrint(CL_FP_ROUND_TO_ZERO,"CL_FP_ROUND_TO_ZERO");
 	configPrint(CL_FP_ROUND_TO_INF,"CL_FP_ROUND_TO_INF");
@@ -268,7 +268,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	clFinish(engine.queue); /* Wait for the command queue to get serviced before reading back results */
 
 	clEnqueueReadBuffer(engine.queue, deviceResultBuf, CL_TRUE, 0, getBufferBoxSize(buf), buf->vram, 0, NULL, NULL); /* Read the kernel's output */
-	//for (u32 z = 0; z < resX * resY * 3; z++) { data[z] = resultBuf[z]; }
+	//for (u32 z = 0; z < resX * resY * IMAGE_BUFFER_CHANNELS; z++) { data[z] = resultBuf[z]; }
 	
 	return 0;
 }

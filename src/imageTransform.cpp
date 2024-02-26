@@ -13,7 +13,7 @@
 #include "render.h"
 #include <opencv2/opencv.hpp>
 
-int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render) {
+int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, BufferBox* backgroundImage, BufferBox* foregroundImage) {
 	initBufferBox(buf,nullptr,Mat_Render.cols,Mat_Render.rows,Mat_Render.channels());
 	buf->vram = (uint8_t*)malloc(Mat_Render.total() * Mat_Render.elemSize());
 	if (buf->vram == nullptr) {
@@ -24,7 +24,7 @@ int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render) {
 }
 
 cv::Mat Image_Place_Parallelogram(
-	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	ImageBuffer* img, Render_Data* ren,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
@@ -50,7 +50,7 @@ cv::Mat Image_Place_Parallelogram(
 }
 
 cv::Mat Image_Place_Quadrilateral(
-	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	ImageBuffer* img, Render_Data* ren,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
@@ -78,25 +78,27 @@ cv::Mat Image_Place_Quadrilateral(
 
 int Image_Scaler_Parallelogram(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	uint32_t backgroundColor,
+	BufferBox* backgroundImage, BufferBox* foregroundImage,
 	int interpolation_mode,
-	i32 sx00, i32 sy00,
-	i32 sx01, i32 sy01, i32 sx10, i32 sy10,
-	i32 dx00, i32 dy00,
-	i32 dx01, i32 dy01, i32 dx10, i32 dy10
+	fp32 sx00, fp32 sy00,
+	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
+	fp32 dx00, fp32 dy00,
+	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
 ) {
 	if (buf == nullptr || img == nullptr || img->vram == nullptr || img->allocated() == false || ren == nullptr) {
 		return -1;
 	}
 	uint64_t stopWatch = getNanoTime();
 	cv::Mat Mat_Render = Image_Place_Parallelogram(
-		buf,img,ren,
+		img,ren,
 		interpolation_mode,
-		(fp32)sx00,(fp32)sy00,
-		(fp32)sx01,(fp32)sy01,(fp32)sx10,(fp32)sy10,
-		(fp32)dx00,(fp32)dy00,
-		(fp32)dx01,(fp32)dy01,(fp32)dx10,(fp32)dy10
+		sx00,sy00,
+		sx01,sy01,sx10,sy10,
+		dx00,dy00,
+		dx01,dy01,dx10,dy10
 	);
-	if (export_OpenCV_Render(buf,Mat_Render) == -1) {
+	if (export_OpenCV_Render(buf,Mat_Render,backgroundColor,backgroundImage,foregroundImage) == -1) {
 		return -1;
 	}
 	return 0;
@@ -104,24 +106,26 @@ int Image_Scaler_Parallelogram(
 
 int Image_Scaler_Quadrilateral(
 	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	uint32_t backgroundColor,
+	BufferBox* backgroundImage, BufferBox* foregroundImage,
 	int interpolation_mode,
-	i32 sx00, i32 sy00, i32 sx11, i32 sy11,
-	i32 sx01, i32 sy01, i32 sx10, i32 sy10,
-	i32 dx00, i32 dy00, i32 dx11, i32 dy11,
-	i32 dx01, i32 dy01, i32 dx10, i32 dy10
+	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
+	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
+	fp32 dx00, fp32 dy00, fp32 dx11, fp32 dy11,
+	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
 ) {
 	if (buf == nullptr || img == nullptr || img->vram == nullptr || img->allocated() == false || ren == nullptr) {
 		return -1;
 	}
 	cv::Mat Mat_Render = Image_Place_Quadrilateral(
-		buf,img,ren,
+		img,ren,
 		interpolation_mode,
-		(fp32)sx00,(fp32)sy00,(fp32)sx11,(fp32)sy11,
-		(fp32)sx01,(fp32)sy01,(fp32)sx10,(fp32)sy10,
-		(fp32)dx00,(fp32)dy00,(fp32)dx11,(fp32)dy11,
-		(fp32)dx01,(fp32)dy01,(fp32)dx10,(fp32)dy10
+		sx00,sy00,sx11,sy11,
+		sx01,sy01,sx10,sy10,
+		dx00,dy00,dx11,dy11,
+		dx01,dy01,dx10,dy10
 	);
-	if (export_OpenCV_Render(buf,Mat_Render) == -1) {
+	if (export_OpenCV_Render(buf,Mat_Render,backgroundColor,backgroundImage,foregroundImage) == -1) {
 		return -1;
 	}
 	return 0;
