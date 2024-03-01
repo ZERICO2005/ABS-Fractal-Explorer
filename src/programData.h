@@ -92,8 +92,8 @@ void write_Abort_Render_Ongoing(bool s);
 
 struct Function_Status {
 	bool triggered;
-	uint64_t resetTime;
-	uint64_t freqTime;
+	nano64_t resetTime;
+	nano64_t freqTime;
 }; typedef struct Function_Status Function_Status;
 
 int read_Function_Status(Function_Status* list);

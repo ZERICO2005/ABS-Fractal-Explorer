@@ -55,6 +55,8 @@ typedef int64_t i64;
 typedef float fp32;
 typedef double fp64;
 
+typedef int64_t nano64_t;
+
 /* Version */
 
 //#define BUILD_DEBUG
@@ -77,15 +79,15 @@ typedef double fp64;
 
 /* Functions */
 	// Left Circular Shift
-	#define ROL(n,b) (((n) << (b)) | ((n) >> ((sizeof(n) * 8) - (b))))
+	#define ROL(n,b) (((n) << (b)) | ((n) >> ((sizeof(n) * CHAR_BIT) - (b))))
 	// Right Circular Shift
-	#define ROR(n,b) (((n) >> (b)) | ((n) << ((sizeof(n) * 8) - (b))))
+	#define ROR(n,b) (((n) >> (b)) | ((n) << ((sizeof(n) * CHAR_BIT) - (b))))
 
 	#define boolText(bool) ((bool) ? "True" : "False")
 
-	#define valueLimit(value,minimum,maximum) { if ((value) < (minimum)) { (value) = (minimum); } else if ((value) > (maximum)) { (value) = (maximum); } }
-	#define valueMinimum(value,minimum) { if ((value) < (minimum)) { (value) = (minimum); } }
-	#define valueMaximum(value,maximum) { if ((value) > (maximum)) { (value) = (maximum); } }
+	#define valueLimit(value,minimum,maximum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) ) )
+	#define valueMinimum(value,minimum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ((value) = (value)) )
+	#define valueMaximum(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
 
 	int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize);
 
@@ -97,15 +99,15 @@ typedef double fp64;
 	uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max);
 
 	#define linearInterpolation(x,x0,x1,y0,y1) ( (y0) + ( (((y1) - (y0)) * ((x) - (x0))) / ((x1) - (x0)) ) )
-	#define linearInterpolationLimit(x,x0,x1,y0,y1) ( ((x) <= (x0)) ? (y0) : ( ((x) >= (x1)) ? (y1) : linearInterpolation((x),(x0),(x1),(y0),(y1)) ) )
+	#define linearInterpolationClamp(x,x0,x1,y0,y1) ( ((x) <= (x0)) ? (y0) : ( ((x) >= (x1)) ? (y1) : linearInterpolation((x),(x0),(x1),(y0),(y1)) ) )
 
 /* Time */
 	// Returns the time in nanoseconds
-	uint64_t getNanoTime();
+	nano64_t getNanoTime();
 	// Returns the time in seconds 
 	fp64 getDecimalTime();
 
-	#define SECONDS_TO_NANO(t) (uint64_t)((t) * 1.0e9)
+	#define SECONDS_TO_NANO(t) (nano64_t)((t) * 1.0e9)
 	#define NANO_TO_SECONDS(t) ((fp64)(t) / 1.0e9)
 	
 /* Print Functions */
@@ -129,8 +131,8 @@ typedef double fp64;
 	// Print up to every (freq) seconds, also calls fflush(stdout);
 	#define printfInterval(freq,...); \
 	{ \
-		static uint64_t ResetTime_PrintfInterval = getNanoTime(); \
-		if (getNanoTime() - ResetTime_PrintfInterval > (uint64_t)((freq) * 1.0e9)) { \
+		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
+		if (getNanoTime() - ResetTime_PrintfInterval > (nano64_t)((freq) * 1.0e9)) { \
 			ResetTime_PrintfInterval = getNanoTime(); \
 			printf(__VA_ARGS__); \
 			fflush(stdout); \
@@ -140,9 +142,9 @@ typedef double fp64;
 	// Print change in value up to every (freq) seconds, also calls fflush(stdout);
 	#define printfChangeInterval(type,value,freq,...) \
 	{ \
-		static uint64_t ResetTime_PrintfInterval = getNanoTime(); \
+		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
 		static type Detect_Change = (value); \
-		if (getNanoTime() - ResetTime_PrintfInterval > (uint64_t)((freq) * 1.0e9)) { \
+		if (getNanoTime() - ResetTime_PrintfInterval > (nano64_t)((freq) * 1.0e9)) { \
 			if (Detect_Change != (value)) { \
 				ResetTime_PrintfInterval = getNanoTime(); \
 				printf(__VA_ARGS__); \
@@ -155,7 +157,7 @@ typedef double fp64;
 	// Waits for a duration in seconds
 	#define BurnTime(s) \
 	{\
-		uint64_t BURN_TIME_NANOSECONDS = getNanoTime();\
+		nano64_t BURN_TIME_NANOSECONDS = getNanoTime();\
 		while (getNanoTime() - BURN_TIME_NANOSECONDS < SECONDS_TO_NANO(s)) {};\
 	}
 

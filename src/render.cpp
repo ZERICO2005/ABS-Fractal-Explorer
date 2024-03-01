@@ -1047,15 +1047,15 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	fp64 Frame_FPS_Display = 1.0 / Frame_Time_Display;
 	fp64 Render_FPS_Display = 1.0 / Render_Time_Display;
 	GUI_FrameRateColor = {
-		(fp32)linearInterpolationLimit(Frame_FPS_Display,59.0,119.0,1.0,0.0),
-		(fp32)linearInterpolationLimit(Frame_FPS_Display,0.0,29.0,0.0,1.0),
-		(fp32)linearInterpolationLimit(Frame_FPS_Display,29.0,59.0,0.0,1.0),
+		(fp32)linearInterpolationClamp(Frame_FPS_Display,59.0,119.0,1.0,0.0),
+		(fp32)linearInterpolationClamp(Frame_FPS_Display,0.0,29.0,0.0,1.0),
+		(fp32)linearInterpolationClamp(Frame_FPS_Display,29.0,59.0,0.0,1.0),
 		1.0
 	};
 	Render_FrameRateColor = {
-		(fp32)linearInterpolationLimit(Render_FPS_Display,59.0,119.0,1.0,0.0),
-		(fp32)linearInterpolationLimit(Render_FPS_Display,0.0,29.0,0.0,1.0),
-		(fp32)linearInterpolationLimit(Render_FPS_Display,29.0,59.0,0.0,1.0),
+		(fp32)linearInterpolationClamp(Render_FPS_Display,59.0,119.0,1.0,0.0),
+		(fp32)linearInterpolationClamp(Render_FPS_Display,0.0,29.0,0.0,1.0),
+		(fp32)linearInterpolationClamp(Render_FPS_Display,29.0,59.0,0.0,1.0),
 		1.0
 	};
 	

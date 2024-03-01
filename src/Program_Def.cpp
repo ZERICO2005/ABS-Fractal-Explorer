@@ -35,10 +35,10 @@
 	/* Constructors */
 		TimerBox::TimerBox() {
 			updateTime();
-			setFreq((uint64_t)0);
+			setFreq((nano64_t)0);
 			deltaTime = 0;
 		}
-		TimerBox::TimerBox(uint64_t freq) {
+		TimerBox::TimerBox(nano64_t freq) {
 			updateTime();
 			setFreq(freq);
 			deltaTime = 0;
@@ -50,38 +50,38 @@
 		}
 	/* resetTime */
 		void TimerBox::updateTime() { resetTime = getNanoTime(); }
-		void TimerBox::setTime(uint64_t time) { resetTime = time; }
+		void TimerBox::setTime(nano64_t time) { resetTime = time; }
 		void TimerBox::setTime(fp64 time) { resetTime = SECONDS_TO_NANO(time); }
-		uint64_t TimerBox::getResetTimeNano() { return resetTime; }
+		nano64_t TimerBox::getResetTimeNano() { return resetTime; }
 		fp64 TimerBox::getResetTime() { return NANO_TO_SECONDS(resetTime); }
 	/* deltaTime */
-		uint64_t TimerBox::getDeltaTimeNano() {
+		nano64_t TimerBox::getDeltaTimeNano() {
 			return deltaTime;
 		}
 		fp64 TimerBox::getDeltaTime() {
 			return NANO_TO_SECONDS(deltaTime);
 		}
 	/* freqTime */
-		void TimerBox::setFreq(uint64_t freq) { freqTime = freq; }
+		void TimerBox::setFreq(nano64_t freq) { freqTime = freq; }
 		void TimerBox::setFreq(fp64 freq) { freqTime = SECONDS_TO_NANO(freq); }
-		uint64_t TimerBox::getResetFreqNano() { return freqTime; }
+		nano64_t TimerBox::getResetFreqNano() { return freqTime; }
 		fp64 TimerBox::getResetFreq() { return NANO_TO_SECONDS(freqTime); }
 	/* timeElapsed */
-		uint64_t TimerBox::timeElapsedNano() {
+		nano64_t TimerBox::timeElapsedNano() {
 			return getNanoTime() - resetTime;
 		}
 		fp64 TimerBox::timeElapsed() {
 			return NANO_TO_SECONDS(getNanoTime() - resetTime);
 		}
-		uint64_t TimerBox::timeToTimerReadyNano() {
+		nano64_t TimerBox::timeToTimerReadyNano() {
 			return (timeElapsedNano() < freqTime) ? (freqTime - timeElapsedNano()) : 0;
 		}
 		fp64 TimerBox::timeToTimerReady() {
 			return NANO_TO_SECONDS(timeToTimerReadyNano());
 		}
 	/* timerReset */
-		bool TimerBox::timerReset(uint64_t freq) {
-			uint64_t delta = getNanoTime() - resetTime;
+		bool TimerBox::timerReset(nano64_t freq) {
+			nano64_t delta = getNanoTime() - resetTime;
 			if (delta >= freq) {
 				deltaTime = delta;
 				resetTime = getNanoTime();
@@ -92,7 +92,7 @@
 		bool TimerBox::timerReset() { return timerReset(freqTime); }
 		bool TimerBox::timerReset(fp64 freq) { return timerReset(SECONDS_TO_NANO(freq)); }
 	/* timerReady */
-		bool TimerBox::timerReady(uint64_t freq) {
+		bool TimerBox::timerReady(nano64_t freq) {
 			if (getNanoTime() - resetTime >= freq) { return true; }
 			return false;
 		}

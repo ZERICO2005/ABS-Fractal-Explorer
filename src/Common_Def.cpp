@@ -114,8 +114,8 @@ uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max) {
 
 /* Time */
 
-uint64_t getNanoTime() { // Returns the time in nanoseconds
-	using nanoseconds = std::chrono::duration<std::uint64_t, std::nano>;
+nano64_t getNanoTime() { // Returns the time in nanoseconds
+	using nanoseconds = std::chrono::duration<nano64_t, std::nano>;
 	auto now = std::chrono::high_resolution_clock::now();
 	return std::chrono::duration_cast<nanoseconds>(now.time_since_epoch()).count();
 }
@@ -128,7 +128,6 @@ fp64 getDecimalTime() { // Returns the time in seconds
 
 // (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
 void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp64 hue, fp64 sat, fp64 val) { 
-	if (r == NULL || g == NULL || b == NULL) { return; }
 	uint8_t hi = (uint8_t)(hue / 60.0) % 6;
 	fp64 f = (hue / 60.0) - floor(hue / 60.0);
 	val *= 255.0;
@@ -136,31 +135,34 @@ void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp64 hue, fp64 sat, fp64 
 	uint8_t pR = (uint8_t)(val * (1.0 - sat));
 	uint8_t qR = (uint8_t)(val * (1.0 - f * sat));
 	uint8_t tR = (uint8_t)(val * (1.0 - (1.0 - f) * sat));
+	uint8_t R = 0; uint8_t G = 0; uint8_t B = 0;
 	switch(hi) {
 		case 0:
-		*r = vR; *g = tR; *b = pR;
-		return;
+		R = vR; G = tR; B = pR;
+		break;
 		case 1:
-		*r = qR; *g = vR; *b = pR;
-		return;
+		R = qR; G = vR; B = pR;
+		break;
 		case 2:
-		*r = pR; *g = vR; *b = tR;
-		return;
+		R = pR; G = vR; B = tR;
+		break;
 		case 3:
-		*r = pR; *g = qR; *b = vR;
-		return;
+		R = pR; G = qR; B = vR;
+		break;
 		case 4:
-		*r = tR; *g = pR; *b = vR;
-		return;
+		R = tR; G = pR; B = vR;
+		break;
 		case 5:
-		*r = vR; *g = pR; *b = qR;
-		return;
+		R = vR; G = pR; B = qR;
+		break;
 	}
+	if (r != nullptr) { *r = R; }
+	if (g != nullptr) { *g = G; }
+	if (b != nullptr) { *b = B; }
 }
 
 // (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
 void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp32 hue, fp32 sat, fp32 val) {
-	if (r == NULL || g == NULL || b == NULL) { return; }
 	uint8_t hi = (uint8_t)(hue / 60.0) % 6;
 	fp32 f = (hue / 60.0) - floor(hue / 60.0);
 	val *= 255.0;
@@ -168,26 +170,30 @@ void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp32 hue, fp32 sat, fp32 
 	uint8_t pR = (uint8_t)(val * (1.0 - sat));
 	uint8_t qR = (uint8_t)(val * (1.0 - f * sat));
 	uint8_t tR = (uint8_t)(val * (1.0 - (1.0 - f) * sat));
+	uint8_t R = 0; uint8_t G = 0; uint8_t B = 0;
 	switch(hi) {
 		case 0:
-		*r = vR; *g = tR; *b = pR;
-		return;
+		R = vR; G = tR; B = pR;
+		break;
 		case 1:
-		*r = qR; *g = vR; *b = pR;
-		return;
+		R = qR; G = vR; B = pR;
+		break;
 		case 2:
-		*r = pR; *g = vR; *b = tR;
-		return;
+		R = pR; G = vR; B = tR;
+		break;
 		case 3:
-		*r = pR; *g = qR; *b = vR;
-		return;
+		R = pR; G = qR; B = vR;
+		break;
 		case 4:
-		*r = tR; *g = pR; *b = vR;
-		return;
+		R = tR; G = pR; B = vR;
+		break;
 		case 5:
-		*r = vR; *g = pR; *b = qR;
-		return;
+		R = vR; G = pR; B = qR;
+		break;
 	}
+	if (r != nullptr) { *r = R; }
+	if (g != nullptr) { *g = G; }
+	if (b != nullptr) { *b = B; }
 }
 
 // H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
@@ -208,74 +214,18 @@ uint32_t getRGBfromHSV(fp32 hue, fp32 sat, fp32 val) {
 
 // (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
 void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp64 hue, fp64 sat, fp64 val, fp64 alpha) {
-	if (r == NULL || g == NULL || b == NULL) { return; }
-	if (a == NULL) {
-		getRGBfromHSV(r,g,b,hue,sat,val);
-		return;
+	if (a != nullptr) {
+		*a = (uint8_t)(valueLimit(alpha,0.0,1.0) * 255.0);
 	}
-	uint8_t hi = (uint8_t)(hue / 60.0) % 6;
-	fp64 f = (hue / 60.0) - floor(hue / 60.0);
-	val *= 255.0;
-	uint8_t vR = (uint8_t)val;
-	uint8_t pR = (uint8_t)(val * (1.0 - sat));
-	uint8_t qR = (uint8_t)(val * (1.0 - f * sat));
-	uint8_t tR = (uint8_t)(val * (1.0 - (1.0 - f) * sat));
-	switch(hi) {
-		case 0:
-		*r = vR; *g = tR; *b = pR;
-		return;
-		case 1:
-		*r = qR; *g = vR; *b = pR;
-		return;
-		case 2:
-		*r = pR; *g = vR; *b = tR;
-		return;
-		case 3:
-		*r = pR; *g = qR; *b = vR;
-		return;
-		case 4:
-		*r = tR; *g = pR; *b = vR;
-		return;
-		case 5:
-		*r = vR; *g = pR; *b = qR;
-		return;
-	}
+	getRGBfromHSV(r,g,b,hue,sat,val);
 }
 
 // (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
 void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp32 hue, fp32 sat, fp32 val, fp32 alpha) {
-	if (r == NULL || g == NULL || b == NULL) { return; }
-	if (a == NULL) {
-		getRGBfromHSV(r,g,b,hue,sat,val);
-		return;
+	if (a != nullptr) {
+		*a = (uint8_t)(valueLimit(alpha,0.0,1.0) * 255.0);
 	}
-	uint8_t hi = (uint8_t)(hue / 60.0) % 6;
-	fp32 f = (hue / 60.0) - floor(hue / 60.0);
-	val *= 255.0;
-	uint8_t vR = (uint8_t)val;
-	uint8_t pR = (uint8_t)(val * (1.0 - sat));
-	uint8_t qR = (uint8_t)(val * (1.0 - f * sat));
-	uint8_t tR = (uint8_t)(val * (1.0 - (1.0 - f) * sat));
-	switch(hi) {
-		case 0:
-		*r = vR; *g = tR; *b = pR;
-		return;
-		case 1:
-		*r = qR; *g = vR; *b = pR;
-		return;
-		case 2:
-		*r = pR; *g = vR; *b = tR;
-		return;
-		case 3:
-		*r = pR; *g = qR; *b = vR;
-		return;
-		case 4:
-		*r = tR; *g = pR; *b = vR;
-		return;
-		case 5:
-		*r = vR; *g = pR; *b = qR;
-		return;
-	}
+	getRGBfromHSV(r,g,b,hue,sat,val);
 }
 
 // H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0

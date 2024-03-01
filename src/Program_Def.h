@@ -20,10 +20,10 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/02/26" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/02/29" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
-#define PROGRAM_V_PATCH 3
+#define PROGRAM_V_PATCH 4
 #define PROGRAM_V_TAG "Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
@@ -87,39 +87,39 @@ class TimerBox {
 	public:
 	/* Constructors */
 		TimerBox();
-		TimerBox(uint64_t freq);
+		TimerBox(nano64_t freq);
 		TimerBox(fp64 freq);
 	/* resetTime */
 		void updateTime();
-		void setTime(uint64_t time);
+		void setTime(nano64_t time);
 		void setTime(fp64 time);
-		uint64_t getResetTimeNano();
+		nano64_t getResetTimeNano();
 		fp64 getResetTime();
 	/* deltaTime */
-		uint64_t getDeltaTimeNano();
+		nano64_t getDeltaTimeNano();
 		fp64 getDeltaTime();
 	/* freqTime */
-		void setFreq(uint64_t freq);
+		void setFreq(nano64_t freq);
 		void setFreq(fp64 freq);
-		uint64_t getResetFreqNano();
+		nano64_t getResetFreqNano();
 		fp64 getResetFreq();
 	/* timeElapsed */
-		uint64_t timeElapsedNano();
+		nano64_t timeElapsedNano();
 		fp64 timeElapsed();
-		uint64_t timeToTimerReadyNano();
+		nano64_t timeToTimerReadyNano();
 		fp64 timeToTimerReady();
 	/* timerReset | Resets the Timer */
 		bool timerReset();
-		bool timerReset(uint64_t freq);
+		bool timerReset(nano64_t freq);
 		bool timerReset(fp64 freq);
 	/* timerReady | Does not reset the Timer */
 		bool timerReady();
-		bool timerReady(uint64_t freq);
+		bool timerReady(nano64_t freq);
 		bool timerReady(fp64 freq);
 	private:
-		uint64_t resetTime;
-		uint64_t freqTime;
-		uint64_t deltaTime;
+		nano64_t resetTime;
+		nano64_t freqTime;
+		nano64_t deltaTime;
 };
 
 // Disable this for release builds
