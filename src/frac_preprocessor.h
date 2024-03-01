@@ -51,7 +51,7 @@ struct Frac_Param_PC {
 	fp64 interior_Phase;
 	uint8_t interior_Alpha;
 	uint8_t exterior_Alpha;
-}; typedef struct Frac_Param_PC;
+}; typedef struct Frac_Param_PC Frac_Param_PC;
 
 // Read only precalculated values
 struct Frac_Render_PC {
@@ -72,13 +72,13 @@ struct Frac_Render_PC {
 	uint32_t CPU_Threads;
 	uint32_t GPU_Precision;
 	uint32_t GPU_Partitions;
-}; typedef struct Frac_Render_PC;
+}; typedef struct Frac_Render_PC Frac_Render_PC;
 
 struct Frac_Task_PC {
 	nano64_t timeStamp;
 	Frac_Param_PC param_PC;
 	Frac_Render_PC render_PC;
-}; typedef struct Frac_Task_PC;
+}; typedef struct Frac_Task_PC Frac_Task_PC;
 
 // Returns 0 on success, negative otherwise
 int preCalc_Frac_Param(

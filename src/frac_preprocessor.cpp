@@ -68,7 +68,7 @@ int preCalc_Frac_Render(
 int preCalc_Frac_Task(
 	Frac_Task_PC& task_PC,
 	const ABS_Mandelbrot& frac, const ABS_Mandelbrot& render_data,
-	nano64_t timeStamp = 0
+	nano64_t timeStamp
 ) {
 	return 0;
 }
@@ -77,7 +77,7 @@ int preCalc_Frac_Task(
 int mergeTo_Frac_Task(
 	Frac_Task_PC& task_PC,
 	Frac_Param_PC& param_PC, Frac_Render_PC& render_PC,
-	nano64_t timeStamp = 0
+	nano64_t timeStamp
 ) {
 	return 0;
 }

@@ -408,13 +408,14 @@ const char* FractalOpenCL_SRC = "\
 	outR /= div;\n\
 	outG /= div;\n\
 	outB /= div;\n\
-	outA /= div;\n\
+	outA /= sample * sample;\n\
 	//uint32_t outAvr = (outR + outG + outB) / 3; outR = outAvr; outG = outAvr; outB = outAvr; /* Grey-scale */\n\
 	//uint32_t outAvr = (outR + outG + outB) / 3; outR = (outAvr + outR) / 2; outG = (outAvr + outG) / 2; outB = (outAvr + outB) / 2; /* Low-saturation */\n\
 	id *= IMAGE_BUFFER_CHANNELS;\n\
 	resultBuf[id] = (uint8_t)outR; id++;\n\
 	resultBuf[id] = (uint8_t)outG; id++;\n\
-	resultBuf[id] = (uint8_t)outB;\n\
+	resultBuf[id] = (uint8_t)outB; id++;\n\
+	resultBuf[id] = (uint8_t)outA;\n\
 }\n\
 ";
 

@@ -43,9 +43,15 @@ cv::Mat Image_Place_Parallelogram(
 		cv::Point2f(dx10, dy10),
 		cv::Point2f(dx01, dy01)
 	};
-	
+	// printfInterval(0.5,
+	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}"
+	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}\n",
+	// 	sx00,sy00,sx10,sy10,
+	// 	sx01,sy01,sx10,sy01
+	// );
 	cv::Mat projectionMatrix = cv::getAffineTransform(srcCord, dstCord);
- 	cv::Mat Mat_Render(img->resY * ren->subSample, img->resX * ren->subSample, CV_8UC(img->channels));
+ 	//cv::Mat Mat_Render(img->resY * ren->subSample, img->resX * ren->subSample, CV_8UC(img->channels));
+	cv::Mat Mat_Render(ren->resY, ren->resX, CV_8UC(img->channels));
 	cv::warpAffine(Mat_Image, Mat_Render, projectionMatrix, Mat_Render.size(),interpolation_mode);
 	return Mat_Render;
 }
