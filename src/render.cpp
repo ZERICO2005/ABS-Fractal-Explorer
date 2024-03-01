@@ -1405,8 +1405,8 @@ void Menu_Rendering() {
 		static const char* GPU_RenderingModes[] = {"fp32 | 10^5.7 (Default)"};
 		static int Combo_GPU_RenderingMode = 0;
 	#endif
-	static int input_subSample = primaryRenderData.subSample;
-	static int input_superSample = primaryRenderData.sample;
+	int input_subSample = primaryRenderData.subSample;
+	int input_superSample = primaryRenderData.sample;
 	int CPU_ThreadCount = (int)std::thread::hardware_concurrency();
 	static int input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
 	static int input_CPU_ThreadMultiplier = 1;
@@ -1492,14 +1492,16 @@ void Menu_Rendering() {
 	ImGui::Separator();
 
 	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
-	ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"");
-	primaryRenderData.subSample = input_subSample;
+	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
+		primaryRenderData.subSample = input_subSample;
+	}
 	ImGui::Text("Samples per pixel: %d",input_superSample * input_superSample);
-	ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"");
+	if (ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"")) {
+		primaryRenderData.sample = input_superSample;
+	}
 	uint32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
 	uint32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
 	ImGui::Text("Total Pixels Rendered: %ux%u %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
-	primaryRenderData.sample = input_superSample;
 	ImGui::Separator();
 	static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Lanczos"};
 	static int OpenCV_interpolation_mode = 0;
@@ -2765,10 +2767,20 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	coordinate_to_image_cordinate(image->x10 - FRAC.r,image->y10 - FRAC.i,&dx10,&dy10,&FRAC,ren);
 	int32_t resX = (int32_t)(image->resX);
 	int32_t resY = (int32_t)(image->resY);
+	// printfInterval(0.5,
+	// 	"\nres{%ux%u}"
+	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}"
+	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}\n",
+	// 	resX,resY,
+	// 	dx00,dy00,dx10,dy10,
+	// 	dx01,dy01,dx11,dy11
+	// );
+	fp32 dimX = ((fp32)ren->resX / (fp32)ren->subSample);
+	fp32 dimY = ((fp32)ren->resY / (fp32)ren->subSample);
 	fp32 sx00 = 0.0f; fp32 sy00 = 0.0f;
-	fp32 sx11 = resX; fp32 sy11 = (fp32)resY;
+	fp32 sx11 = (fp32)resX; fp32 sy11 = (fp32)resY;
 	fp32 sx01 = 0.0f; fp32 sy01 = (fp32)resY;
-	fp32 sx10 = resX; fp32 sy10 = 0.0f;
+	fp32 sx10 = (fp32)resX; fp32 sy10 = 0.0f;
 	// image->printTransformationData(0.6);
 	// printfInterval(0.6,"\nsrc: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
 	// printfInterval(0.6,"\ndst: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
