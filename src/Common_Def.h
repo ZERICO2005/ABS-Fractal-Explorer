@@ -91,6 +91,8 @@ typedef int64_t nano64_t;
 
 	int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize);
 
+	int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize);
+
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);
 	uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio);

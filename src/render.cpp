@@ -2641,14 +2641,18 @@ void renderLoadingGraphic(fp64 speed) {
 	f += DeltaTime * speed;
 	uint32_t w = (uint32_t)(f * (256.0));
 	size_t z = 0;
-	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
-		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = 0; z++;
-			TestGraphic.vram[z] = 0; z++;
-			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
-			TestGraphic.vram[z] = 0xFF; z++;
-		}
-	}
+	uint32_t dimX = MIN(TestGraphic.resX,256);
+	uint32_t dimY = MIN(TestGraphic.resY,256);
+	// for (uint32_t y = 0; y < dimY; y++) {
+	// 	for (uint32_t x = 0; x < dimX; x++) {
+	// 		TestGraphic.vram[z] = 0; z++;
+	// 		TestGraphic.vram[z] = 0; z++;
+	// 		TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+	// 		TestGraphic.vram[z] = 0xFF; z++;
+	// 	}
+	// 	inPlacePatternMemcpy(&TestGraphic.vram[0],TestGraphic.resX * TestGraphic.channels,dimX);
+	// }
+	// inPlacePatternMemcpy(&TestGraphic.vram[z],TestGraphic.resY * (TestGraphic.resX * TestGraphic.channels),dimX * (dimY * TestGraphic.channels));
 }
 
 bool exportFractalBuffer = false;

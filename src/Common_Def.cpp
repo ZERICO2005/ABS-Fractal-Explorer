@@ -34,6 +34,22 @@ int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size
 	return 0;
 }
 
+// Assumes pattern is set in the first N bytes in buf
+int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize) {
+	if (buf == nullptr) { return -1; }
+	if (bufSize == 0 || PatternSize == 0) { return -1; }
+	if (bufSize <= PatternSize) { return 0; }
+	size_t len = PatternSize;
+	size_t pos = PatternSize;
+	while (pos + len <= bufSize) {
+		memcpy(buf + pos,buf,len); 
+		pos += len;
+		len *= 2; // Doubles copy size each iteration
+	}
+	memcpy(buf + pos,buf,bufSize - len); // Copies the remaining portion
+	return 0;
+}
+
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {
 	if (val < min) {
 		val = min;
