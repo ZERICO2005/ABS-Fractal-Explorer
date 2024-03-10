@@ -52,6 +52,7 @@ class Bit_Graphics {
 	private:
 		void internal_plot(size_t x, size_t y);
 		void internal_plotFast(size_t z);
+		void internal_horiz(size_t x0, size_t y, size_t x1);
 		void drawLine0(int32_t x0, int32_t y0, int32_t x1, int32_t y1);
 		void drawLine1(int32_t x0, int32_t y0, int32_t x1, int32_t y1);
 		uint8_t* buf; // Current buffer

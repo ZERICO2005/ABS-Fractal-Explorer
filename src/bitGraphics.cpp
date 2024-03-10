@@ -155,54 +155,43 @@ void Bit_Graphics::internal_plotFast(size_t z) { //z position
 	buf[z] = gColor[2]; z++;
 	buf[z] = gColor[3];
 }
-
+void Bit_Graphics::internal_horiz(size_t x0, size_t y, size_t x1) { //x start, y postion, x length
+	size_t fill = (x0 + y * ResX) * Bit_Graphics_Channels;
+	patternMemcpy(&buf[fill],x1 * Bit_Graphics_Channels,gColor,Bit_Graphics_Channels);
+}
 /* Primatives */
 void Bit_Graphics::plot(size_t x, size_t y) { //x position, y position
 	if (x > ResX || y > ResY) { return; }
 	size_t z = (y * ResX + x) * Bit_Graphics_Channels;
-	buf[z] = gColor[0]; z++;
-	buf[z] = gColor[1]; z++;
-	buf[z] = gColor[2]; z++;
-	buf[z] = gColor[3];
+	
 }
 void Bit_Graphics::plotFast(size_t z) { //z position
 	if (z > ResZ) { return; }
-	z *= Bit_Graphics_Channels;
-	buf[z] = gColor[0]; z++;
-	buf[z] = gColor[1]; z++;
-	buf[z] = gColor[2]; z++;
-	buf[z] = gColor[3];
+	memcpy(&buf[z],gColor,Bit_Graphics_Channels);
 }
 void Bit_Graphics::fillScreen() {
-	size_t i = 0;
-	for (size_t z = 0; z < ResZ; z++) {
-		buf[i] = gColor[0]; i++;
-		buf[i] = gColor[1]; i++;
-		buf[i] = gColor[2]; i++;
-		buf[i] = gColor[3]; i++;
-	}
+	patternMemcpy(buf,ResZ * Bit_Graphics_Channels,gColor,Bit_Graphics_Channels);
 }
 void Bit_Graphics::fillRect(size_t x0, size_t y0, size_t x1, size_t y1) { //x start, y start, x length, y length
 	if (x0 >= ResX || y0 >= ResY || x1 == 0 || y1 == 0) { return; }
 	if (x0 + x1 > ResX || y0 + y1 > ResY) { return; }
 	size_t v = (y0 * ResX + x0);
-	const size_t jump = ResX - x1;
+	//const size_t jump = ResX - x1;
 	for (size_t dY = 0; dY < y1; dY++) {
-		for (size_t dX = 0; dX < x1; dX++) {
-			internal_plotFast(v);
-			v++;
-		}
-		v += jump;
+		// for (size_t dX = 0; dX < x1; dX++) {
+		// 	internal_plotFast(v);
+		// 	v++;
+		// }
+		// v += jump;
+		patternMemcpy(&buf[v * Bit_Graphics_Channels], x1 * Bit_Graphics_Channels, gColor, Bit_Graphics_Channels);
+		v += ResX;
 	}
 }
 void Bit_Graphics::horiz(size_t x0, size_t y, size_t x1) { //x start, y postion, x length
 	if (x0 >= ResX || y >= ResY || x1 == 0) { return; }
 	if (x0 + x1 > ResX) { return; }
-	size_t fill = x0 + y * ResX;
-	size_t z = fill + x1;
-	for (; fill < z; fill++) {
-		internal_plotFast(fill);
-	}
+	size_t fill = (x0 + y * ResX) * Bit_Graphics_Channels;
+	patternMemcpy(&buf[fill],x1 * Bit_Graphics_Channels,gColor,Bit_Graphics_Channels);
 }
 void Bit_Graphics::vert(size_t x, size_t y0, size_t y1) { //x postion, y start, y length
 	if (x >= ResX || y0 >= ResY || y1 == 0) { return; }

@@ -9,6 +9,7 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 #include "render.h"
+#include "temp_global_render.h"
 
 #include "copyBuffer.h"
 #include "fractal.h"
@@ -28,101 +29,17 @@
 #include "programData.h"
 #include "user_data.h"
 
-SDL_Renderer* renderer;
-SDL_Window* window;
-ImGuiIO* io_IMGUI;
+#include "display_GUI.h"
 
-bool Abort_Rendering_Flag = false;
-bool Waiting_To_Abort_Rendering = false;
 
-bool Lock_Key_Inputs = false;
-bool LockKeyInputsInMenus = true;
 
-bool AutoResizeWindows = false;
-bool PreventOutOfBoundsWindows = false;
-fp32 WindowOpacity = 0.95f;
-fp64 WindowAutoScale = 0.7;
-const int32_t ImGui_WINDOW_MARGIN = 8;
-ImGuiWindowFlags ImGui_WINDOW_FLAGS = 0;
 
-bool SaveUsernameInFiles = false; /* This MUST be False by Default */
-#define FileUsernameLength 32
-char FileUsername[FileUsernameLength];
-bool SaveHardwareInfoInFiles = false; /* This MUST be False by Default */
-
-int IMGUI_Theme = 1; // 0 Classic, 1 Dark, 2 Light
-
-SDL_Texture* texture;
-SDL_Texture* kTexture; // Keyboard graphic
-ImageBuffer Master;
-BufferBox TestGraphic;
-fp64 TestGraphicSpeed = 0.4;
-
-ImageBuffer* Primary_Image = nullptr;
-ImageBuffer* Primary_Image_Preview = nullptr;
-ImageBuffer* Secondary_Image = nullptr;
-ImageBuffer* Secondary_Image_Preview = nullptr;
-
-int Frame_Interpolation_Method;
-
-//#define MANUAL_FRAME_RATE_OVERRIDE
-fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
-const fp64 FRAME_RATE_OFFSET = 0.01;
-uint64_t FRAME_RATE_NANO;
-#define  Default_Frame_Rate_Multiplier 1.0
-const uint8_t color_square_divider = 2; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
-fp64 DeltaTime = 0.0;
-uint64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
-
-fp64 Frame_Time_Display = 0.0;
-fp64 Render_Time_Display = 0.0;
-
-uint32_t RESY_UI = 128;
-
-uint64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
-
-#define RESX_Default 800
-#define RESY_Default 600
-#define RESX_Minimum 400
-#define RESY_Minimum 320
-#define RESX_Maximum 8192
-#define RESY_Maximum 4608
-#define RESX_Margin 16
-#define RESY_Margin 16
-
-/* Fractal Data */
-
-Fractal_Data frac;
-Render_Data primaryRenderData;
-Render_Data secondaryRenderData;
-
-#define default_Super_Screenshot_ResX 1920
-#define default_Super_Screenshot_ResY 1080
-#define default_Super_Screenshot_Sample 3
-#define default_Super_Screenshot_MaxItr 16384
-#define default_Super_Screenshot_ThreadMultiplier 6
-
-int32_t super_screenshot_resX = default_Super_Screenshot_ResX;
-int32_t super_screenshot_resY = default_Super_Screenshot_ResY;
-int32_t super_screenshot_super_sample = default_Super_Screenshot_Sample;
-int32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
-int32_t super_screenshot_threadMultiplier = default_Super_Screenshot_ThreadMultiplier;
-int32_t super_screenshot_maxThreads = 1;
-
-Render_Data primarySuperRenderData;
-Render_Data secondarySuperRenderData;
 
 // ImageBuffer primaryFracImage;
 // ImageBuffer secondaryFracImage;
 
 int exportScreenshot();
 int exportSuperScreenshot();
-
-Image_File_Format::Image_File_Format_Enum screenshotFileType = Image_File_Format::PNG;
-uint32_t User_PNG_Compression_Level = 8;
-uint32_t User_JPG_Quality_Level = 95;
-
-User_Parameter_Sensitivity user_sensitivity;
 
 void updateRenderData(Render_Data* rDat) {
 	if (rDat == NULL) { return; }
@@ -175,16 +92,16 @@ void Bootup_initRenderData() {
 
 /* Keyboard and Scancodes */
 
-const uint8_t* KEYS;
+// const uint8_t* KEYS;
 
-struct _Key_Status {
-	SDL_Scancode key;
-	bool pressed;
-	uint64_t timePressed;
-	uint64_t timeReleased;
-}; typedef struct _Key_Status Key_Status;
+// struct _Key_Status {
+// 	SDL_Scancode key;
+// 	bool pressed;
+// 	uint64_t timePressed;
+// 	uint64_t timeReleased;
+// }; typedef struct _Key_Status Key_Status;
 
-size_t KeyBind_PresetCount;
+//size_t KeyBind_PresetCount;
 //KeyBind_Preset* KeyBind_List;
 // KeyBind_Preset defaultKeyBind = {"Default Key-bind",ARRAY_LENGTH(defaultKeyBind),defaultKeyBind};
 // KeyBind_Preset importedKeyBind = {"Blank",0,NULL};
@@ -194,8 +111,8 @@ size_t KeyBind_PresetCount;
 //std::list<KeyBind> importedKeyBind; // Deprecate this
 
 /* KeyBind_Preset */
-	std::list<KeyBind_Preset> KeyBind_PresetList;
-	KeyBind_Preset* currentKBPreset;
+	// std::list<KeyBind_Preset> KeyBind_PresetList;
+	// KeyBind_Preset* currentKBPreset;
 
 	void init_KeyBind_PresetList() {
 		if (KeyBind_PresetList.empty() == true) {
@@ -254,9 +171,9 @@ size_t KeyBind_PresetCount;
 		return currentKBPreset->kList;
 	}
 
-Key_Status Key_List[SDL_NUM_SCANCODES];
+// Key_Status Key_List[SDL_NUM_SCANCODES];
 
-Function_Status func_stat[Key_Function::Parameter_Function_Count];
+// Function_Status func_stat[Key_Function::Parameter_Function_Count];
 
 void updateKeys() {
 	for (size_t t = 0; t < ARRAY_LENGTH(func_stat); t++) {
@@ -380,32 +297,32 @@ int setup_fracExpKB(int argc, char* argv[]) {
 	return 0;
 }
 
-// Amount of displays detected
-uint32_t DISPLAY_COUNT = 0;
-/* Display Bootup */
-	namespace Display_Bootup {
-		enum Display_Bootup_Enum {
-			Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
-		};
-	};
-	uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
-	uint32_t Display_Match[Display_Bootup::Length];
-	Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
-	bool useDefaultWindowSize = false;
+// // Amount of displays detected
+// uint32_t DISPLAY_COUNT = 0;
+// /* Display Bootup */
+// 	namespace Display_Bootup {
+// 		enum Display_Bootup_Enum {
+// 			Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
+// 		};
+// 	};
+// 	uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
+// 	uint32_t Display_Match[Display_Bootup::Length];
+// 	Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
+// 	bool useDefaultWindowSize = false;
 
-struct _DisplayInfo {
-	uint32_t resX;
-	uint32_t resY;
-	int32_t posX;
-	int32_t posY;
-	uint32_t refreshRate;
-	uint8_t bbp;
-	const char* name;
-}; typedef struct _DisplayInfo DisplayInfo;
-DisplayInfo* DisplayList;
+// struct _DisplayInfo {
+// 	uint32_t resX;
+// 	uint32_t resY;
+// 	int32_t posX;
+// 	int32_t posY;
+// 	uint32_t refreshRate;
+// 	uint8_t bbp;
+// 	const char* name;
+// }; typedef struct _DisplayInfo DisplayInfo;
+// DisplayInfo* DisplayList;
 
-// Counts from ONE
-uint32_t CURRENT_DISPLAY = 1;
+// // Counts from ONE
+// uint32_t CURRENT_DISPLAY = 1;
 // Counts from ONE
 DisplayInfo* getDisplayInfo(size_t i = 1) {
 	if (i == 0 || i > DISPLAY_COUNT || DisplayList == NULL) {
@@ -418,17 +335,13 @@ DisplayInfo* getCurrentDisplayInfo() {
 	return getDisplayInfo((size_t)CURRENT_DISPLAY);
 }
 
-static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
+// static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
-#ifndef BUILD_RELEASE
-	const char* buttonLabels[] = {"Fractal", "Export", "Import", "Screenshot", "Rendering", "Settings", "KeyBinds"};
-#else
-	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
-#endif
-
-int buttonSelection = -1;
-bool ShowTheXButton = true;
-//bool yeildSwitch = true;
+// #ifndef BUILD_RELEASE
+// 	const char* buttonLabels[] = {"Fractal", "Export", "Import", "Screenshot", "Rendering", "Settings", "KeyBinds"};
+// #else
+// 	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
+// #endif
 
 bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 	bool reVal = false;
@@ -551,10 +464,10 @@ void initFunctionTimers() {
 }
 */
 
-enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
+// enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
 
-#define stretchValue(s) pow(2.0,-abs(s))
-#define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
+// #define stretchValue(s) pow(2.0,-abs(s))
+// #define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
 
 void moveCord(fp128* x, fp128* y, fp64 angle, fp64 speed) {
 	*x += speed * cos(angle);
@@ -586,7 +499,7 @@ bool funcTimeDelay(Key_Function::Key_Function_Enum func, fp64 freq) {
 	return false;
 }
 
-#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
+//#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
 int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac, Render_Data* ren, int update_level = Change_Level::Nothing) {
 	if (frac == nullptr) { return update_level; }
 	if (ren == nullptr) { return update_level; }
@@ -672,6 +585,15 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac, Render_Data* ren, int 
 	ren0 = *ren;
 	return update_level;
 }
+
+// #define BufAndLen(x) x,ARRAY_LENGTH(x)
+
+// bool bootup_Fractal_Frame_Rendered = false;
+
+// TimerBox GUI_FrameTimer;
+// uint64_t GUI_FrameTimeNano = SECONDS_TO_NANO(1.0/60.0);
+// fp64 GUI_FrameTime = 1.0/60.0;
+// fp64 GUI_FrameRate = 60.0;
 
 int updateFractalParameters() {
 	using namespace Key_Function;
@@ -1405,8 +1327,8 @@ void Menu_Rendering() {
 		static const char* GPU_RenderingModes[] = {"fp32 | 10^5.7 (Default)"};
 		static int Combo_GPU_RenderingMode = 0;
 	#endif
-	int input_subSample = primaryRenderData.subSample;
-	int input_superSample = primaryRenderData.sample;
+	static int input_subSample = primaryRenderData.subSample;
+	static int input_superSample = primaryRenderData.sample;
 	int CPU_ThreadCount = (int)std::thread::hardware_concurrency();
 	static int input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
 	static int input_CPU_ThreadMultiplier = 1;
@@ -1492,16 +1414,14 @@ void Menu_Rendering() {
 	ImGui::Separator();
 
 	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
-	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
-		primaryRenderData.subSample = input_subSample;
-	}
+	ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"");
+	primaryRenderData.subSample = input_subSample;
 	ImGui::Text("Samples per pixel: %d",input_superSample * input_superSample);
-	if (ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"")) {
-		primaryRenderData.sample = input_superSample;
-	}
+	ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"");
 	uint32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
 	uint32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
 	ImGui::Text("Total Pixels Rendered: %ux%u %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+	primaryRenderData.sample = input_superSample;
 	ImGui::Separator();
 	static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Lanczos"};
 	static int OpenCV_interpolation_mode = 0;
@@ -2183,12 +2103,6 @@ int render_IMGUI() {
 	return 0;
 }
 
-bool bootup_Fractal_Frame_Rendered = false;
-
-TimerBox GUI_FrameTimer;
-uint64_t GUI_FrameTimeNano = SECONDS_TO_NANO(1.0/60.0);
-fp64 GUI_FrameTime = 1.0/60.0;
-fp64 GUI_FrameRate = 60.0;
 
 void correctFrameTime() {
 	valueLimit(GUI_FrameTimeNano,SECONDS_TO_NANO(1.0/1200.0),SECONDS_TO_NANO(1.0/6.0));
@@ -2566,13 +2480,12 @@ int terminate_Render() {
 	return 0;
 }
 
-BufferBox* buf;
 
 void setRenderedBufferBox(BufferBox* box) {
 	buf = box;
 }
 
-#define fullColorTestGraphic
+
 
 void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	static fp64 f = 0.0;
@@ -2657,8 +2570,7 @@ void renderLoadingGraphic(fp64 speed) {
 	// inPlacePatternMemcpy(&TestGraphic.vram[z],TestGraphic.resY * (TestGraphic.resX * TestGraphic.channels),dimX * (dimY * TestGraphic.channels));
 }
 
-bool exportFractalBuffer = false;
-bool exportSuperFractalBuffer = false;
+
 
 int exportScreenshot() {
 	static uint64_t resetTime = 0;
@@ -2700,10 +2612,9 @@ int exportSuperScreenshot() {
 	return 0;
 }
 
-#define Use_OpenCV_Scaler
 
-SDL_Texture* scale_tex = nullptr;
-SDL_Surface* scale_surface = nullptr;
+
+
 
 int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }

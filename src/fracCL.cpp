@@ -221,10 +221,19 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	uint32_t kArg = 0;
 
 	const uint32_t debug_val_0x00 = 0x10;
-	const uint32_t debug_val_0xFF = 0x6F;
+	const uint32_t debug_val_0xFF = 0xFF;
 	const fp32 debug_val_0f = 0.0f;
 	const fp32 debug_val_1f = 1.0f;
 
+
+	fp32 exterior_R_Freq = (fp32)param.rF; fp32 exterior_R_Phase = (fp32)param.rP; fp32 exterior_R_Amp = (fp32)param.rA;
+	fp32 exterior_G_Freq = (fp32)param.gF; fp32 exterior_G_Phase = (fp32)param.gP; fp32 exterior_G_Amp = (fp32)param.gA;
+	fp32 exterior_B_Freq = (fp32)param.bF; fp32 exterior_B_Phase = (fp32)param.bP; fp32 exterior_B_Amp = (fp32)param.bA;
+	uint32_t exterior_Alpha = 0xFF;
+	fp32 interior_R_Freq = 0.0f; fp32 interior_R_Phase = 0.0f; fp32 interior_R_Amp = 0.0f;
+	fp32 interior_G_Freq = 0.0f; fp32 interior_G_Phase = 0.0f; fp32 interior_G_Amp = 0.0f;
+	fp32 interior_B_Freq = (fp32)param.iF; fp32 interior_B_Phase = (fp32)param.iP; fp32 interior_B_Amp = (fp32)param.bA;
+	uint32_t interior_Alpha = 0xFF;
 	
 	err = clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &r);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &i);
@@ -240,27 +249,28 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &numZ);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &numW);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(cl_mem), &deviceResultBuf);
+
 	/* Exterior Color */
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.rF);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.rP);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.rA);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.gF);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.gP);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.gA);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.bF);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.bP);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.bA);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_R_Freq);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_R_Phase);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_R_Amp);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_G_Freq);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_G_Phase);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_G_Amp);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_B_Freq);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_B_Phase);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &exterior_B_Amp);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &debug_val_0xFF);
 	/* Interior Color */
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &debug_val_0f);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &debug_val_0f);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &debug_val_0f);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &debug_val_0f);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &debug_val_0f);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &debug_val_0f);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.iF);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.iP);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &param.iA);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_R_Freq);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_R_Phase);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_R_Amp);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_G_Freq);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_G_Phase);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_G_Amp);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_B_Freq);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_B_Phase);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_B_Amp);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &debug_val_0xFF);
 
 	printErrorChange("\nKernelArgs: %d",err);

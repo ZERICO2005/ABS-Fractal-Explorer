@@ -14,9 +14,10 @@
 Fills Dst with a repeating pattern from Src 
 */
 
+// Fills a buffer with a repeating pattern of N bytes
 int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize) {
 	if (buf == nullptr || PatternData == nullptr) { return -1; }
-	if (bufSize == 0 || PatternSize == 0) { return -1; }
+	if (bufSize == 0 || PatternSize == 0) { return 0; } // 0 Bytes to copy
 	if (bufSize <= PatternSize) {
 		memcpy(buf,PatternData,bufSize);
 		return 0;
@@ -34,13 +35,14 @@ int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size
 	return 0;
 }
 
-// Assumes pattern is set in the first N bytes in buf
+// Assumes the pattern is set in the first N bytes in buf
 int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize) {
 	if (buf == nullptr) { return -1; }
-	if (bufSize == 0 || PatternSize == 0) { return -1; }
+	if (bufSize == 0 || PatternSize == 0) { return 0; } // 0 Bytes to copy
 	if (bufSize <= PatternSize) { return 0; }
 	size_t len = PatternSize;
 	size_t pos = PatternSize;
+
 	while (pos + len <= bufSize) {
 		memcpy(buf + pos,buf,len); 
 		pos += len;
