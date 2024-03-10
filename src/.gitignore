@@ -1,0 +1,8 @@
+# https://github.com/meganz/mingw-std-threads
+mingw.condition_variable.h
+mingw.invoke.h
+mingw.mutex.h
+mingw.thread.h
+mingw.future.h
+mingw.latch.h
+mingw.shared_mutex.h
