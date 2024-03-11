@@ -1510,7 +1510,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	//cleanKeyBind(&currentKeyBind);
 	init_default_sensitivity(&user_sensitivity);
 	/* User Config Test */
-		User_Configuration_Data config_data = {0};
+		// User_Configuration_Data config_data = {0};
 		// char filePath[320]; memset(filePath,'\0',sizeof(filePath));
 		// openFileInterface(filePath,ARRAY_LENGTH(filePath));
 		if (import_config_data(config_data,"./config.fracExpConfig") == 0) {
@@ -1535,6 +1535,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
 			User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
 			User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
+		} else {
+			default_User_Configuration_Data(config_data);
 		}
 		
 

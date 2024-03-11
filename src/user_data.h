@@ -10,6 +10,12 @@
 
 #include "Common_Def.h"
 
+/* File Settings */
+	struct User_Configuration_Behaviour {
+		bool AutoLoad_Config_File;
+		bool AutoSave_Config_File;
+	}; typedef struct User_Configuration_Behaviour User_Configuration_Behaviour;
+
 /* Parameter Sensitivity */
 	const char* const Sensitivity_Labels[] {
 		"Global Sensitivity","Coordinate","Zoom","Iteration","Julia Coordinate","Rotation","Stretch","Polar Power","Breakout Value"
@@ -27,6 +33,15 @@
 		fp64 breakout_value;
 	}; typedef User_Parameter_Sensitivity User_Parameter_Sensitivity;
 
+/* Display Settings */
+	struct User_Display_Preferences {
+		int_enum Display_Bootup_Type;
+		int Specific_Bootup_Display;
+		bool Bootup_Fullscreen;
+		bool ScaleWindowToScreenSize;
+		fp64 Bootup_Window_Scale;
+	}; typedef struct User_Display_Preferences User_Display_Preferences;
+
 /* GUI Settings */
 	struct User_GUI_Settings {
 		bool LockKeyInputsInMenus;
@@ -38,30 +53,54 @@
 
 /* Screenshot Settings */
 	struct User_Screenshot_Settings {
-		int screenshotFileType;
+		int_enum screenshotFileType;
 		uint32_t PNG_Compression_Level;
 		uint32_t JPG_Quality_Level;
 	}; typedef struct User_Screenshot_Settings User_Screenshot_Settings;
-	
-/* File Settings */
-	struct User_Configuration_Behaviour {
-		bool AutoLoad_Config_File;
-		bool AutoSave_Config_File;
-	}; typedef struct User_Configuration_Behaviour User_Configuration_Behaviour;
 
 /* User Data Configuration */
 	enum User_Configuration_Enum {
-		Configuration_Behaviour,Parameter_Sensitivity,GUI_Settings,Screenshot_Settings,User_Configuration_Enum_Count
+		Configuration_Behaviour,Parameter_Sensitivity,Display_Preferences,GUI_Settings,Screenshot_Settings,User_Configuration_Enum_Count
 	};
 	const char* const User_Configuration_Labels[] = {
-		"Configuration_Behaviour","Parameter_Sensitivity","GUI_Settings","Screenshot_Settings"
+		"Configuration_Behaviour","Parameter_Sensitivity","Display_Preferences","GUI_Settings","Screenshot_Settings"
 	};
 	struct User_Configuration_Data {
 		User_Configuration_Behaviour Configuration_Behaviour;
 		User_Parameter_Sensitivity Parameter_Sensitivity;
+		User_Display_Preferences Display_Preferences;
 		User_GUI_Settings GUI_Settings;
 		User_Screenshot_Settings Screenshot_Settings;
 	}; typedef struct User_Configuration_Data User_Configuration_Data;
+
+// Import from file-path
+int import_config_data(User_Configuration_Data& config_data, const char* path);
+
+// Export to file-path
+int export_config_data(User_Configuration_Data& config_data, const char* path);
+
+/* clean_config_data */
+	// Sets everything to valid values
+	void clean_User_Configuration_Data(User_Configuration_Data& config_data);
+
+	void clean_Configuration_Behaviour(User_Configuration_Behaviour& config_data);
+	void clean_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data);
+	void clean_Display_Preferences(User_Display_Preferences& config_data);
+	void clean_GUI_Settings(User_GUI_Settings& config_data);
+	void clean_Screenshot_Settings(User_Screenshot_Settings& config_data);
+
+/* default_config_data */
+	// Sets everything to default values
+	void default_User_Configuration_Data(User_Configuration_Data& config_data);
+
+	void default_Configuration_Behaviour(User_Configuration_Behaviour& config_data);
+	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data);
+	void default_Display_Preferences(User_Display_Preferences& config_data);
+	void default_GUI_Settings(User_GUI_Settings& config_data);
+	void default_Screenshot_Settings(User_Screenshot_Settings& config_data);
+
+
+// Legacy
 
 /*
 struct OpenCL_Hardware_Info {
@@ -77,16 +116,6 @@ struct OpenCL_Hardware_Info {
 	size_t DeviceProfilingTimerResolution;
 }; typedef OpenCL_Hardware_Info OpenCL_Hardware_Info;
 */
-
-// Sets everything to valid values
-void clean_User_Configuration_Data(User_Configuration_Data& config_data);
-void clean_Configuration_Behaviour(User_Configuration_Behaviour& config_data);
-void clean_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data);
-void clean_GUI_Settings(User_GUI_Settings& config_data);
-void clean_Screenshot_Settings(User_Screenshot_Settings& config_data);
-
-int import_config_data(User_Configuration_Data& config_data, const char* path);
-int export_config_data(User_Configuration_Data& config_data, const char* path);
 
 bool set_default_sensitivity(User_Parameter_Sensitivity* sen);
 bool init_default_sensitivity(User_Parameter_Sensitivity* sen);

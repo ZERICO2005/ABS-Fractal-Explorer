@@ -217,6 +217,7 @@
 
 /* Other */
 
+	User_Configuration_Data config_data = {0};
 	bool SaveUsernameInFiles = false; /* This MUST be False by Default */
 	//#define FileUsernameLength 32
 	char FileUsername[FileUsernameLength] = {0};

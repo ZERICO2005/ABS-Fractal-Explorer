@@ -26,6 +26,8 @@ find_package(SDL2 REQUIRED)
 find_package(OpenCL REQUIRED)
 find_package(OpenCV REQUIRED)
 
+# Icon
+set(ICON_FILE "./icons/ABS-Icon.ico")
 file(GLOB SRC_FILES "${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp")
 file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
 # Create an executable
@@ -35,5 +37,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${IMGUI_DIR})
 # Compiler Flags Debug(-g -O0) Release(-O3)
 set(OPT_FLAG -g -O3)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=always")
+set(MARCH_FLAGS "")
 target_compile_options(${PROJECT_NAME} PUBLIC ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always -Wall -Wno-unused-variable -Wno-comment)
 target_link_libraries(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++ SDL2 SDL2main OpenCL quadmath ${OpenCV_LIBS})

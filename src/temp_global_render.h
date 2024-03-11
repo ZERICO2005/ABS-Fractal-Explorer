@@ -223,5 +223,6 @@
 	#define FileUsernameLength 32
 	extern char FileUsername[FileUsernameLength];
 	extern bool SaveHardwareInfoInFiles; /* This MUST be False by Default */
+	extern User_Configuration_Data config_data;
 
 #endif /* TEMP_GLOBAL_RENDER_H */

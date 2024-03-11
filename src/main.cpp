@@ -33,6 +33,34 @@ int init_Fractal_Engine(int argc, char* argv[]) {
 	return 0;
 }
 
+// int write_ini_file(const char* path) {
+// 	if (path == nullptr) { printError("write_ini_file has nullptr path"); return -1; }
+// 	// if (config_data.Configuration_Behaviour.AutoSave_Config_File == false) { return 0; }        
+// 	FILE* file = nullptr;
+// 	file = fopen(path, "r");
+// 	if (file != nullptr) { // File already exists
+// 		fclose(file);
+// 		return 0;
+// 	}
+// 	file = fopen(path, "w");
+// 	if (file == nullptr) {
+// 		printError("Unable to write_ini_file to %s", path);
+// 		return -1;
+// 	}
+
+// 	fprintf(file,
+// 		"[Desktop Entry]\n"\
+// 		"Name=ABS-Fractal-Explorer\n"\
+// 		"Exec=ABS-Fractal-Explorer.exe\n"\
+// 		"Icon=ABS-Icon.ico\n"\
+// 		"Type=Application"
+// 	);
+
+//     fclose(file);
+
+// 	return 0;
+// }
+
 //#define print_pointer_sizes
 
 int main(int argc, char* argv[]) {
@@ -59,6 +87,7 @@ int main(int argc, char* argv[]) {
 	if (argc >= 2) {
 		printFlush("\nArgument Count: %d\n",argc - 1);
 	}
+	//write_ini_file("./ABS-Fractal-Explorer.ini");
 	init_Fractal_Engine(argc, argv);
 	terminate_Fractal_Engine();
 	return 0;

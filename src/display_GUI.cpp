@@ -1176,6 +1176,7 @@ void Menu_Keybinds() {
 		}
 	ImGui::Text(" ");
 	ImGui::Text("Global Sensitivity Multiplier:");
+
 	sen_slider("##sen_global",user_sensitivity.global,0.4,2.5);
 	if (ImGui::Button("Reset Sensitvity")) {
 		set_default_sensitivity(&user_sensitivity);

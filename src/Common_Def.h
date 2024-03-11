@@ -57,6 +57,8 @@ typedef double fp64;
 
 typedef int64_t nano64_t;
 
+typedef int int_enum;
+
 /* Version */
 
 //#define BUILD_DEBUG
@@ -113,7 +115,12 @@ typedef int64_t nano64_t;
 
 	#define SECONDS_TO_NANO(t) (nano64_t)((t) * 1.0e9)
 	#define NANO_TO_SECONDS(t) ((fp64)(t) / 1.0e9)
-	
+
+	// // Callocs the date and time in UTC
+	// const char* getDateAndTimeUTC(
+	// 	char DateDelimiter = '-', char DateSeparator = '_', char TimeDelimiter = '-'
+	// );
+
 /* Print Functions */
 	#define printFlush(...) printf(__VA_ARGS__); fflush(stdout)
 	#define printFatalError(...) printf("\n============\nFATAL ERROR: "); printf(__VA_ARGS__); printf("\n============\n"); fflush(stdout)

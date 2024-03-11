@@ -142,6 +142,30 @@ fp64 getDecimalTime() { // Returns the time in seconds
 	return (fp64)getNanoTime() / 1.0e9;
 }
 
+// const char* getDateAndTimeUTC(
+// 	char DateDelimiter, char DateSeparator, char TimeDelimiter
+// ) {
+// 	static char timeFormat[sizeof("%Y-%m-%d_%H-%M-%S")];
+// 	memset(timeFormat,'\0',sizeof(timeFormat));
+
+// 	char* timeText = nullptr;
+// 	size_t timeTextLen = sizeof("YYYY-mm-dd_HH-MM-SS");
+// 	timeText = (char*)calloc(timeTextLen,sizeof(char));
+// 	if (timeText == nullptr) {
+// 		return nullptr;
+// 	}
+	
+// 	snprintf(timeFormat,sizeof(timeFormat),"%%Y%c%%m%c%%d%c%%H%c%%M%c%%S",
+// 		DateDelimiter,DateDelimiter,DateSeparator,TimeDelimiter,TimeDelimiter
+// 	);
+// 	time_t currentTime;
+// 	struct tm *localTime;
+// 	time(&currentTime);
+// 	localTime = localtime(&currentTime);
+// 	strftime(timeText, timeTextLen, timeFormat, localTime);
+// 	return timeText;
+// }
+
 /* Color 24bit */
 
 // (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
