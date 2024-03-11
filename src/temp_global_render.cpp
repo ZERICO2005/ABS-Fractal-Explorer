@@ -58,8 +58,8 @@
 	int32_t super_screenshot_threadMultiplier = default_Super_Screenshot_ThreadMultiplier;
 	int32_t super_screenshot_maxThreads = 1;
 
-	Render_Data primarySuperRenderData;
-	Render_Data secondarySuperRenderData;
+	Render_Data primarySuperRenderData = {0};
+	Render_Data secondarySuperRenderData = {0};
 
 /* ImGui Stuff */
 	ImGuiIO* io_IMGUI = nullptr;
@@ -83,13 +83,13 @@
 	bool exportFractalBuffer = false;
 	bool exportSuperFractalBuffer = false;
 
-	BufferBox* buf;
+	BufferBox* buf = nullptr;
 
 	bool Abort_Rendering_Flag = false;
 	bool Waiting_To_Abort_Rendering = false;
 	ImageBuffer Master;
 	
-	BufferBox TestGraphic;
+	BufferBox TestGraphic = {0};
 	//#define fullColorTestGraphic
 	fp64 TestGraphicSpeed = 0.4;
 	
@@ -102,7 +102,7 @@
 	//#define MANUAL_FRAME_RATE_OVERRIDE
 	fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 	const fp64 FRAME_RATE_OFFSET = 0.01;
-	uint64_t FRAME_RATE_NANO;
+	uint64_t FRAME_RATE_NANO = 0;
 	//#define  Default_Frame_Rate_Multiplier 1.0
 	const uint8_t color_square_divider = 2; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 	fp64 DeltaTime = 0.0;
@@ -124,9 +124,9 @@
 
 /* Fractals */
 
-	Fractal_Data frac;
-	Render_Data primaryRenderData;
-	Render_Data secondaryRenderData;
+	Fractal_Data frac = {0};
+	Render_Data primaryRenderData = {0};
+	Render_Data secondaryRenderData = {0};
 	
 	//#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
 
@@ -136,11 +136,11 @@
 	uint32_t User_PNG_Compression_Level = 8;
 	uint32_t User_JPG_Quality_Level = 95;
 
-	User_Parameter_Sensitivity user_sensitivity;
+	User_Parameter_Sensitivity user_sensitivity = {0};
 
 /* Keyboard */
 
-	const uint8_t* KEYS;
+	const uint8_t* KEYS = nullptr;
 
 	// struct Key_Status {
 	// 	SDL_Scancode key;
@@ -149,9 +149,9 @@
 	// 	uint64_t timeReleased;
 	// }; typedef struct Key_Status Key_Status;
 
-	size_t KeyBind_PresetCount;
+	size_t KeyBind_PresetCount = 0;
 	std::list<KeyBind_Preset> KeyBind_PresetList;
-	KeyBind_Preset* currentKBPreset;
+	KeyBind_Preset* currentKBPreset = nullptr;
 
 	Key_Status Key_List[SDL_NUM_SCANCODES];
 
@@ -197,7 +197,7 @@
 		// 	};
 		// };
 		uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
-		uint32_t Display_Match[Display_Bootup::Length];
+		uint32_t Display_Match[Display_Bootup::Length] = {0};
 		Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
 		bool useDefaultWindowSize = false;
 
@@ -210,7 +210,7 @@
 	// 	uint8_t bbp;
 	// 	const char* name;
 	// }; typedef struct DisplayInfo DisplayInfo;
-	DisplayInfo* DisplayList;
+	DisplayInfo* DisplayList = nullptr;
 
 	// Counts from ONE
 	uint32_t CURRENT_DISPLAY = 1;
@@ -219,5 +219,5 @@
 
 	bool SaveUsernameInFiles = false; /* This MUST be False by Default */
 	//#define FileUsernameLength 32
-	char FileUsername[FileUsernameLength];
+	char FileUsername[FileUsernameLength] = {0};
 	bool SaveHardwareInfoInFiles = false; /* This MUST be False by Default */

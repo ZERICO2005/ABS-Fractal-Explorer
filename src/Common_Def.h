@@ -83,11 +83,13 @@ typedef int64_t nano64_t;
 	// Right Circular Shift
 	#define ROR(n,b) (((n) >> (b)) | ((n) << ((sizeof(n) * CHAR_BIT) - (b))))
 
-	#define boolText(bool) ((bool) ? "True" : "False")
+	#define boolText(bool) ((bool) ? "true" : "false")
+	#define BoolText(bool) ((bool) ? "True" : "False")
 
 	#define valueLimit(value,minimum,maximum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) ) )
 	#define valueMinimum(value,minimum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ((value) = (value)) )
 	#define valueMaximum(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
+	#define valueRestore(value,restore,minimum,maximum) ( ((value) >= (minimum) && (value) <= (maximum)) ? ((value) = (value)) : ((value) = (restore)) )
 
 	int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize);
 

@@ -203,15 +203,15 @@
 		extern Display_Bootup::Display_Bootup_Enum Display_Bootup_Type;
 		extern bool useDefaultWindowSize;
 
-	struct DisplayInfo {
-		uint32_t resX;
-		uint32_t resY;
-		int32_t posX;
-		int32_t posY;
-		uint32_t refreshRate;
-		uint8_t bbp;
-		const char* name;
-	}; typedef struct DisplayInfo DisplayInfo;
+	// struct DisplayInfo {
+	// 	uint32_t resX;
+	// 	uint32_t resY;
+	// 	int32_t posX;
+	// 	int32_t posY;
+	// 	uint32_t refreshRate;
+	// 	uint8_t bbp;
+	// 	const char* name;
+	// }; typedef struct DisplayInfo DisplayInfo;
 	extern DisplayInfo* DisplayList;
 
 	// Counts from ONE

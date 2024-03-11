@@ -1,0 +1,33 @@
+ABS-Fractal-Explorer Config File
+
+Version:
+	Date: 2024/03/10
+	Major: 1
+	Minor: 1
+	Patch: 5
+	Tag: Alpha
+
+Parameter_Sensitivity:
+	global: 1.000000
+	coordinate: 1.000000
+	zoom: 1.000000
+	invert_zoom: false
+	maxIter: 1.000000
+	julia: 1.000000
+	rotation: 1.000000
+	stretch: 1.000000
+	polar_power: 1.000000
+	breakout_value: 1.000000
+
+GUI_Settings:
+	Lock_Key_Inputs: false
+	LockKeyInputsInMenus: true
+	AutoResizeWindows: false
+	PreventOutOfBoundsWindows: false
+	WindowOpacity: 0.950000
+	WindowAutoScale: 0.700000
+
+Screenshot_Settings:
+	screenshotFileType: 0
+	PNG_Compression_Level: 8
+	JPG_Quality_Level: 95

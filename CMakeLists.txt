@@ -33,7 +33,7 @@ add_executable(${PROJECT_NAME} ${SRC_FILES} ${IMGUI_FILES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${IMGUI_DIR})
 # Compiler Flags Debug(-g -O0) Release(-O3)
-set(OPT_FLAG -O3)
+set(OPT_FLAG -g -O3)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=always")
 target_compile_options(${PROJECT_NAME} PUBLIC ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always -Wall -Wno-unused-variable -Wno-comment)
 target_link_libraries(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++ SDL2 SDL2main OpenCL quadmath ${OpenCV_LIBS})

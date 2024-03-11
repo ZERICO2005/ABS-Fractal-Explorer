@@ -33,6 +33,9 @@
 	}
 	// Full Initialization
 	ImageBuffer::ImageBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels) {
+		vram = nullptr;
+		vramAllocated = false;
+		bytesAllocated = 0;
 		reallocateBuffer(ResX, ResY, Channels);
 	}
 

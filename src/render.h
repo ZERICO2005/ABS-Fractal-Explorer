@@ -15,6 +15,8 @@
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_scancode.h>
 
+#include "display_GUI.h"
+
 /* Holds resolution, sampling, precision and rendering method */
 struct Render_Data {
 	/* Dimensions */
@@ -95,8 +97,8 @@ namespace Image_File_Format {
 // #include "programData.h"
 // #include "user_data.h"
 
-// int exportScreenshot();
-// int exportSuperScreenshot();
+int exportScreenshot();
+int exportSuperScreenshot();
 
 // /* Fractal movement stuff */
 // void moveCord(fp128* x, fp128* y, fp64 angle, fp64 speed);
@@ -116,19 +118,38 @@ namespace Image_File_Format {
 
 // int utitledFileNameGenerator(char* buf, size_t maxLen);
 
-// void correctUsernameText(char* buf, size_t len);
+void correctUsernameText(char* buf, size_t len);
 
 // void correctTextFloat(char* buf, size_t len, uint8_t level);
 
-// DisplayInfo* getDisplayInfo(size_t i = 1);
-// DisplayInfo* getCurrentDisplayInfo();
+/* Display */
 
-// /* Keys */
+struct DisplayInfo {
+	uint32_t resX;
+	uint32_t resY;
+	int32_t posX;
+	int32_t posY;
+	uint32_t refreshRate;
+	uint8_t bbp;
+	const char* name;
+}; typedef struct DisplayInfo DisplayInfo;
 
-// void updateKeys();
-// void recolorKeyboard();
-// void initKeys();
-// bool keyPressed(uint32_t key);
-// int setup_fracExpKB(int argc, char* argv[]);
+DisplayInfo* getDisplayInfo(size_t i = 1);
+DisplayInfo* getCurrentDisplayInfo();
+
+/* Keys */
+
+void updateKeys();
+void recolorKeyboard();
+void initKeys();
+bool keyPressed(uint32_t key);
+int setup_fracExpKB(int argc, char* argv[]);
+
+void init_KeyBind_PresetList();
+void clear_KeyBind_PresetList();
+int get_currentKBPreset_Pos();
+void set_currentKBPreset_Pos(int pos);
+void remove_currentKBPreset();
+
 
 #endif /* RENDER_H */
