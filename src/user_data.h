@@ -11,10 +11,10 @@
 #include "Common_Def.h"
 
 /* File Settings */
-	struct User_Configuration_Behaviour {
+	struct User_Automatic_Behaviour {
 		bool AutoLoad_Config_File;
 		bool AutoSave_Config_File;
-	}; typedef struct User_Configuration_Behaviour User_Configuration_Behaviour;
+	}; typedef struct User_Automatic_Behaviour User_Automatic_Behaviour;
 
 /* Parameter Sensitivity */
 	const char* const Sensitivity_Labels[] {
@@ -47,6 +47,7 @@
 		bool LockKeyInputsInMenus;
 		bool AutoResizeWindows;
 		bool PreventOutOfBoundsWindows;
+		int_enum GUI_Theme;
 		fp32 WindowOpacity;
 		fp64 WindowAutoScale;
 	}; typedef struct User_GUI_Settings User_GUI_Settings;
@@ -60,13 +61,13 @@
 
 /* User Data Configuration */
 	enum User_Configuration_Enum {
-		Configuration_Behaviour,Parameter_Sensitivity,Display_Preferences,GUI_Settings,Screenshot_Settings,User_Configuration_Enum_Count
+		Automatic_Behaviour,Parameter_Sensitivity,Display_Preferences,GUI_Settings,Screenshot_Settings,User_Configuration_Enum_Count
 	};
 	const char* const User_Configuration_Labels[] = {
-		"Configuration_Behaviour","Parameter_Sensitivity","Display_Preferences","GUI_Settings","Screenshot_Settings"
+		"Automatic_Behaviour","Parameter_Sensitivity","Display_Preferences","GUI_Settings","Screenshot_Settings"
 	};
 	struct User_Configuration_Data {
-		User_Configuration_Behaviour Configuration_Behaviour;
+		User_Automatic_Behaviour Automatic_Behaviour;
 		User_Parameter_Sensitivity Parameter_Sensitivity;
 		User_Display_Preferences Display_Preferences;
 		User_GUI_Settings GUI_Settings;
@@ -83,7 +84,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path);
 	// Sets everything to valid values
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data);
 
-	void clean_Configuration_Behaviour(User_Configuration_Behaviour& config_data);
+	void clean_Automatic_Behaviour(User_Automatic_Behaviour& config_data);
 	void clean_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data);
 	void clean_Display_Preferences(User_Display_Preferences& config_data);
 	void clean_GUI_Settings(User_GUI_Settings& config_data);
@@ -91,12 +92,12 @@ int export_config_data(User_Configuration_Data& config_data, const char* path);
 
 /* default_config_data */
 	// Sets everything to default values
-	void default_User_Configuration_Data(User_Configuration_Data& config_data);
+	void default_User_Configuration_Data(User_Configuration_Data& config_data, bool reset_Extra = false);
 
-	void default_Configuration_Behaviour(User_Configuration_Behaviour& config_data);
-	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data);
+	void default_Automatic_Behaviour(User_Automatic_Behaviour& config_data);
+	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data, bool reset_Invert = false);
 	void default_Display_Preferences(User_Display_Preferences& config_data);
-	void default_GUI_Settings(User_GUI_Settings& config_data);
+	void default_GUI_Settings(User_GUI_Settings& config_data, bool reset_GUI_Theme = false, bool reset_LockKeyInputsInMenus = false);
 	void default_Screenshot_Settings(User_Screenshot_Settings& config_data);
 
 
@@ -116,8 +117,5 @@ struct OpenCL_Hardware_Info {
 	size_t DeviceProfilingTimerResolution;
 }; typedef OpenCL_Hardware_Info OpenCL_Hardware_Info;
 */
-
-bool set_default_sensitivity(User_Parameter_Sensitivity* sen);
-bool init_default_sensitivity(User_Parameter_Sensitivity* sen);
 
 #endif /* USER_DATA_H */

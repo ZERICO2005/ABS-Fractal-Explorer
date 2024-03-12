@@ -39,16 +39,16 @@
 	uint32_t WINDOW_RESY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
 	ImGui::SetNextWindowPos({(fp32)((valX - WINDOW_RESX) / 2),(fp32)((valY - WINDOW_RESY) / 2)}, ImGuiCond_Once); \
 	ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}, ImGuiCond_Once); \
-	if (AutoResizeWindows == true) { \
+	if (config_data.GUI_Settings.AutoResizeWindows == true) { \
 		ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}); \
 	} \
 	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
 	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX; \
 	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY; \
-	ImGui::SetNextWindowBgAlpha(WindowOpacity);
+	ImGui::SetNextWindowBgAlpha(config_data.GUI_Settings.WindowOpacity);
 
 #define ImGui_BoundWindowPosition(); \
-	if (PreventOutOfBoundsWindows == true) { \
+	if (config_data.GUI_Settings.PreventOutOfBoundsWindows == true) { \
 		int32_t WINDOW_POSX = ImGui::GetWindowPos().x; \
 		int32_t WINDOW_POSY = ImGui::GetWindowPos().y; \
 		valueLimit(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN); \
@@ -56,6 +56,25 @@
 		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)}); \
 	}
 
+void set_IMGUI_Theme(int_enum theme) {
+	switch(theme) {
+		case 0:
+			ImGui::StyleColorsClassic();
+		break;
+		case 1:
+			ImGui::StyleColorsDark();
+		break;
+		case 2:
+			ImGui::StyleColorsLight();
+		break;
+		default:
+			ImGui::StyleColorsDark();
+	};
+}
+
+void refresh_IMGUI(User_Configuration_Data& config) {
+	set_IMGUI_Theme(config.GUI_Settings.GUI_Theme);
+}
 
 int render_IMGUI() {
 	if (window == nullptr) {
@@ -74,10 +93,10 @@ int render_IMGUI() {
 	
 	ImGui_WINDOW_FLAGS = 0;
 	ImGui_WINDOW_FLAGS |= ImGuiWindowFlags_NoCollapse; 
-	ImGui_WINDOW_FLAGS |= (AutoResizeWindows == true) ? ImGuiWindowFlags_NoResize : 0;
+	ImGui_WINDOW_FLAGS |= (config_data.GUI_Settings.AutoResizeWindows == true) ? ImGuiWindowFlags_NoResize : 0;
 
 	if (buttonSelection != -1) {
-		Lock_Key_Inputs = (LockKeyInputsInMenus == true) ? true : false;
+		Lock_Key_Inputs = (config_data.GUI_Settings.LockKeyInputsInMenus == true) ? true : false;
 		switch(buttonSelection) {
 			case GUI_Menu_Coordinates:
 				Menu_Coordinates();
@@ -258,7 +277,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 }
 
 void Menu_Coordinates() {
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
 	ImGui::Begin("Coordinates Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition();
 
@@ -333,7 +352,7 @@ void Menu_Coordinates() {
 }
 
 void Menu_Fractal() {
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
 	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
 	static bool juliaSet = false;
 	static bool startingZ = false;
@@ -472,7 +491,7 @@ void Menu_Fractal() {
 }
 
 void Menu_Rendering() {
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
 	#ifndef BUILD_RELEASE
 		static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
@@ -612,11 +631,11 @@ void Menu_Settings() {
 	static int Combo_initFrameRate = 0;
 	static const char* initMonitorLocations[] = {
 		"Automatic","First Monitor","Last Monitor","Specific Monitor",
-		"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
+		"Left","Right","Center (Placeholder)","Top","Bottom","Top-Left (Placeholder)","Top-Right (Placeholder)","Bottom-Left (Placeholder)","Bottom-Right (Placeholder)",
 		"Highest Resolution","Highest Framerate","Lowest Resolution","Lowest Framerate"
 	};
-	static int Combo_initMonitorLocation = 0;
-	static int specificMonitor = SPECIFIC_BOOTUP_DISPLAY;
+	static int Combo_initMonitorLocation = config_data.Display_Preferences.Display_Bootup_Type;
+	int& specificMonitor = config_data.Display_Preferences.Specific_Bootup_Display;
 
 	#define printDisplayInfo(displayNumber); \
 	{ \
@@ -627,44 +646,50 @@ void Menu_Settings() {
 			ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name); \
 		} \
 	}
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,WindowAutoScale);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
 	ImGui::Begin("Settings Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition();
+
+	User_GUI_Settings& config_GUI_Settings = config_data.GUI_Settings;
+	User_Display_Preferences& config_Display = config_data.Display_Preferences;
+
 	ImGui::Text("ABS-Fractal-Explorer v%s", PROGRAM_VERSION);
 	ImGui::Separator();
-	ImGui::Checkbox("Lock key inputs in menus",&LockKeyInputsInMenus);
-	ImGui::Separator();
+	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
+	ImGui::Text(" ");
+	if(ImGui::Button("Import fracExpConfig")) {
+		static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
+		openFileInterface(filePath,sizeof(filePath));
+		import_config_data(config_data,filePath);
+		refresh_IMGUI(config_data);
+	}
+	if(ImGui::Button("Export fracExpConfig")) {
+		static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
+		saveFileInterface(filePath,sizeof(filePath));
+		export_config_data(config_data,filePath);
+	}
+	ImGui::Checkbox("Automatically load fracExpConfig File",&config_data.Automatic_Behaviour.AutoLoad_Config_File);
+	ImGui::Checkbox("Automatically save fracExpConfig File",&config_data.Automatic_Behaviour.AutoSave_Config_File);
+	ImGui::Text(" ");
+	ImGui::SeparatorText("CATEGORIES:");
 	if (ImGui::CollapsingHeader("MENU WINDOW SETTINGS")) {
-		ImGui::Checkbox("Prevent out of bounds menu windows",&PreventOutOfBoundsWindows);
-		ImGui::Checkbox("Auto-resize menu windows",&AutoResizeWindows);
-		ImGui::Text("Window Auto-Scale: (0.7 default)");
-		fp32 temp_WindowAutoScale = (fp32)WindowAutoScale;
-		ImGui::SliderFloat("##WindowAutoScale",&temp_WindowAutoScale,0.3f,1.0f,"%.3f");
-		WindowAutoScale = (fp64)temp_WindowAutoScale;
-		ImGui::Text("Window Opacity:");
-		ImGui::SliderFloat("##WindowOpacity",&WindowOpacity,0.3f,1.0f,"%.3f");
-		ImGui::Text(" ");
-		
-
-		static const char* GUI_Theme_Options[] = {
-			"Classic","Dark-mode (Default)","Light-mode (Unsupported)"
-		};
-		ImGui::Text("GUI Theme:");
-		if (ImGui::Combo("##IMGUI_Theme",&IMGUI_Theme,BufAndLen(GUI_Theme_Options))) {
-			switch(IMGUI_Theme) {
-				case 0:
-					ImGui::StyleColorsClassic();
-				break;
-				case 1:
-					ImGui::StyleColorsDark();
-				break;
-				case 2:
-					ImGui::StyleColorsLight();
-				break;
-				default:
-					ImGui::StyleColorsDark();
+		{
+			static const char* GUI_Theme_Options[] = {
+				"Classic","Dark-mode (Default)","Light-mode (Unsupported)"
 			};
+			ImGui::Text("ImGui Theme:");
+			if (ImGui::Combo("##IMGUI_Theme",&config_GUI_Settings.GUI_Theme,BufAndLen(GUI_Theme_Options))) {
+				set_IMGUI_Theme(config_GUI_Settings.GUI_Theme);
+			}
 		}
+		ImGui::Checkbox("Prevent out of bounds menu windows",&config_data.GUI_Settings.PreventOutOfBoundsWindows);
+		ImGui::Checkbox("Auto-resize menu windows",&config_data.GUI_Settings.AutoResizeWindows);
+		ImGui::Text("Window Auto-Scale: (0.7 default)");
+		fp32 temp_WindowAutoScale = (fp32)config_data.GUI_Settings.WindowAutoScale;
+		ImGui::SliderFloat("##WindowAutoScale",&temp_WindowAutoScale,0.3f,1.0f,"%.3f");
+		config_data.GUI_Settings.WindowAutoScale = (fp64)temp_WindowAutoScale;
+		ImGui::Text("Window Opacity:");
+		ImGui::SliderFloat("##WindowOpacity",&config_data.GUI_Settings.WindowOpacity,0.3f,1.0f,"%.3f");
 		ImGui::Text(" ");
 	}
 	if (ImGui::CollapsingHeader("DISPLAY AND FRAME-RATE")) {
@@ -719,32 +744,39 @@ void Menu_Settings() {
 			}
 		}
 
-		#ifndef BUILD_RELEASE
-			ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
-			ImGui::Text("Which monitor should the application open to:");
-			if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation, BufAndLen(initMonitorLocations))) {
-				
+		ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
+		ImGui::Text("Which monitor should the application open to:");
+		if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation, BufAndLen(initMonitorLocations))) {
+			config_data.Display_Preferences.Display_Bootup_Type = Combo_initMonitorLocation;
+		}
+		if (Combo_initMonitorLocation == 3) { // Specific Monitor
+			static bool overrideDisplayCount = false;
+			// if (overrideDisplayCount == false && specificMonitor > (int)DISPLAY_COUNT) {
+			// 	specificMonitor = DISPLAY_COUNT;
+			// }
+			if (specificMonitor > (int)DISPLAY_COUNT) {
+				overrideDisplayCount = true;
 			}
-			if (Combo_initMonitorLocation == 3) { // Specific Monitor
-				static bool overrideDisplayCount = false;
-				int limitDisplayCount = (overrideDisplayCount == true) ? (DISPLAY_COUNT + 8) : DISPLAY_COUNT;
-				if (overrideDisplayCount == false && specificMonitor > (int)DISPLAY_COUNT) {
-					specificMonitor = DISPLAY_COUNT;
-				}
-				if (DISPLAY_COUNT != 1 || overrideDisplayCount == true) {
-					ImGui::InputInt("##specificMonitor",&specificMonitor,1,1); valueLimit(specificMonitor,1,limitDisplayCount);
-				} else {
-					ImGui::Text("Only 1 display detected");
-				}
-				printDisplayInfo(specificMonitor); 
-				ImGui::Checkbox("Override Display Count",&overrideDisplayCount);
-				if (specificMonitor > (int)DISPLAY_COUNT) {
-					ImGui::Text("Note: Display %d will be used if Display %d is not detected",DISPLAY_COUNT,specificMonitor);
-				}
+			int limitDisplayCount = (overrideDisplayCount == false || DISPLAY_COUNT > 144) ? DISPLAY_COUNT : 144;
+			if (DISPLAY_COUNT != 1 || overrideDisplayCount == true) {
+				if(ImGui::InputInt("##specificMonitor",&specificMonitor,1,1)) {
+					valueLimit(specificMonitor,1,limitDisplayCount);
+				} 
 			} else {
-				printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
+				ImGui::Text("Only 1 display detected");
 			}
-		#endif
+			printDisplayInfo(specificMonitor); 
+			if (ImGui::Checkbox("Override Display Count",&overrideDisplayCount)) {
+				if (overrideDisplayCount == false) {
+					valueLimit(specificMonitor,1,(int)DISPLAY_COUNT);
+				}
+			}
+			if (specificMonitor > (int)DISPLAY_COUNT) {
+				ImGui::Text("Note: Display %d will be used if Display %d is not detected",DISPLAY_COUNT,specificMonitor);
+			}
+		} else {
+			printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
+		}
 		ImGui::Text(" ");
 	}
 	if (ImGui::CollapsingHeader("FRACEXP FILES")) {
@@ -847,6 +879,26 @@ void Menu_Settings() {
 		}
 		ImGui::Text(" ");
 	}
+	#ifndef BUILD_RELEASE
+		if (ImGui::CollapsingHeader("CONFIGURATION MANAGER")) {
+			ImGui::SeparatorText("Reset Configurations");
+			if(ImGui::Button("Default Configuration Data")) {
+				default_User_Configuration_Data(config_data, false);
+				set_IMGUI_Theme(config_data.GUI_Settings.GUI_Theme);
+			}
+			ImGui::Text(" ");
+			if(ImGui::Button("Reset Parameter Sensitivity")) { default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, false); }
+			if(ImGui::Button("Reset Display Preferences")) { default_Display_Preferences(config_data.Display_Preferences); }
+			if(ImGui::Button("Reset GUI Settings")) { default_GUI_Settings(config_data.GUI_Settings, false, false); }
+			if(ImGui::Button("Reset Screenshot")) { default_Screenshot_Settings(config_data.Screenshot_Settings); }
+			ImGui::Text(" ");
+			if(ImGui::Button("Full Reset")) { 
+				default_User_Configuration_Data(config_data, true);
+				set_IMGUI_Theme(config_data.GUI_Settings.GUI_Theme);
+			}
+			ImGui::Text(" ");
+		}
+	#endif
 	ImGui::End();
 }
 
@@ -856,10 +908,10 @@ void Menu_Keybinds() {
 		"ANSI (Default)","Extended (Contains some FN keys)","Complete (All 242 SDL Scancodes)"
 	};
 	static bool displayNumpad = true;
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,320,480,WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,240,360,WindowAutoScale);
+	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,320,480,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,240,360,config_data.GUI_Settings.WindowAutoScale);
 	ImGui::Begin("Keybinds Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition();
-	ImGui::Checkbox("Lock key inputs in menus",&LockKeyInputsInMenus);
+	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
 	ImGui::Text("Keyboard Type:");
 	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
 		
@@ -1087,9 +1139,9 @@ void Menu_Keybinds() {
 
 		ImGui::Text(" ");
 		if (ImGui::Button("Import Key-bind (.FracExpKB)")) {
-			static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',324);
+			static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',sizeof(importKeyBindFile));
 			int openFileState = openFileInterface(
-				importKeyBindFile,324,"Select a FracExpKB file",
+				importKeyBindFile,sizeof(importKeyBindFile),"Select a FracExpKB file",
 				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
 				"FracExp Files (*.fracExp)\0*.fracExp\0"\
 				"All Files (*.*)\0*.*\0"
@@ -1102,9 +1154,9 @@ void Menu_Keybinds() {
 			}
 		}
 		if (ImGui::Button("Export Current Key-bind (.FracExpKB)")) {
-			static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
+			static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',sizeof(exportKeyBindFile));
 			int saveFileState = saveFileInterface(
-				exportKeyBindFile,324,"Save FracExpKB file",
+				exportKeyBindFile,sizeof(exportKeyBindFile),"Save FracExpKB file",
 				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
 				"FracExp Files (*.fracExp)\0*.fracExp\0"\
 				"All Files (*.*)\0*.*\0",
@@ -1177,367 +1229,29 @@ void Menu_Keybinds() {
 	ImGui::Text(" ");
 	ImGui::Text("Global Sensitivity Multiplier:");
 
-	sen_slider("##sen_global",user_sensitivity.global,0.4,2.5);
+	User_Parameter_Sensitivity& config_sensitivity = config_data.Parameter_Sensitivity;
+
+	sen_slider("##sen_global",config_sensitivity.global,0.4,2.5);
 	if (ImGui::Button("Reset Sensitvity")) {
-		set_default_sensitivity(&user_sensitivity);
+		default_Parameter_Sensitivity(config_sensitivity);
 	}
 	ImGui::Text(" ");
 	ImGui::Text("Coordinate:");
-	sen_slider("##sen_coordinate",user_sensitivity.coordinate,0.4,2.5);
+	sen_slider("##sen_coordinate",config_sensitivity.coordinate,0.4,2.5);
 	ImGui::Text("Zoom:");
-	sen_slider("##sen_zoom",user_sensitivity.zoom,0.4,2.5);
-	ImGui::Checkbox("Invert Zoom",&user_sensitivity.invert_zoom);
+	sen_slider("##sen_zoom",config_sensitivity.zoom,0.4,2.5);
+	ImGui::Checkbox("Invert Zoom",&config_sensitivity.invert_zoom);
 	ImGui::Text("Maximum Iterations:");
-	sen_slider("##sen_maxIter",user_sensitivity.maxIter,0.4,2.5);
+	sen_slider("##sen_maxIter",config_sensitivity.maxIter,0.4,2.5);
 	ImGui::Text("Z-Value/Julia:");
-	sen_slider("##sen_julia",user_sensitivity.julia,0.4,2.5);
+	sen_slider("##sen_julia",config_sensitivity.julia,0.4,2.5);
 	ImGui::Text("Rotation:");
-	sen_slider("##sen_rotation",user_sensitivity.rotation,0.4,2.5);
+	sen_slider("##sen_rotation",config_sensitivity.rotation,0.4,2.5);
 	ImGui::Text("Stretch:");
-	sen_slider("##sen_stretch",user_sensitivity.stretch,0.4,2.5);
+	sen_slider("##sen_stretch",config_sensitivity.stretch,0.4,2.5);
 	ImGui::Text("Polar Power:");
-	sen_slider("##sen_polar_power",user_sensitivity.polar_power,0.4,2.5);
+	sen_slider("##sen_polar_power",config_sensitivity.polar_power,0.4,2.5);
 	ImGui::Text("Breakout Value:");
-	sen_slider("##sen_breakout_value",user_sensitivity.breakout_value,0.4,2.5);
+	sen_slider("##sen_breakout_value",config_sensitivity.breakout_value,0.4,2.5);
 	ImGui::End();
 }
-
-// int updateFractalParameters() {
-// 	using namespace Key_Function;
-// 	using namespace Change_Level;
-// 	#define FRAC frac.type.abs_mandelbrot
-// 	fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
-// 	fp64 moveDelta = (DeltaTime < 0.2) ? DeltaTime : 0.2;
-	
-// 	moveDelta *= user_sensitivity.global;
-
-// 	int update_level = Change_Level::Nothing;
-
-// 	/* Magic Constants */
-// 		#define ABS_Mandelbrot_Default_Power 2
-// 		#define Polar_Mandelbrot_Default_Power 3.0
-// 	/* Boolean toggles */
-// 		#define paramToggle(func,toggle,freq) if (funcTimeDelay(func,freq)) { toggle = !toggle; }
-// 		#define paramToggleUpdate(func,toggle,freq,level) if (funcTimeDelay(func,freq)) { toggle = !toggle; Update_Level(level); }
-// 		paramToggle(toggleAdjustZoomToPower,FRAC.adjustZoomToPower,0.4);
-// 		paramToggleUpdate(toggleJulia,FRAC.juliaSet,0.4,Major_Reset);
-// 		paramToggleUpdate(toggleABSandPolarMandelbrot,FRAC.polarMandelbrot,0.4,Major_Reset);
-// 		paramToggle(toggleRelativeZValue,FRAC.relativeZValue,0.4);
-// 		paramToggle(toggleCursorZValue,FRAC.cursorZValue,0.4);
-// 		paramToggleUpdate(toggleStartingZ,FRAC.startingZ,0.4,Minor_Reset);
-// 		paramToggleUpdate(toggleIntegerPower,FRAC.integerPolarPower,0.4,Minor_Reset);
-// 		#undef paramToggle
-// 	/* Real and Imaginary Coordinates */
-// 		if (func_stat[incRealPos].triggered == true) {
-// 			moveCord(
-// 				&FRAC.r, &FRAC.i, 0.0 * TAU + FRAC.rot,
-// 				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.coordinate
-// 			);
-// 		}
-// 		if (func_stat[decRealPos].triggered == true) {
-// 			moveCord(
-// 				&FRAC.r, &FRAC.i, 0.5 * TAU + FRAC.rot,
-// 				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.coordinate
-// 			);
-// 		}
-// 		if (func_stat[incImagPos].triggered == true) {
-// 			moveCord(
-// 				&FRAC.r, &FRAC.i, 0.25 * TAU + FRAC.rot,
-// 				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.coordinate
-// 			);
-// 		}
-// 		if (func_stat[decImagPos].triggered == true) {
-// 			moveCord(
-// 				&FRAC.r, &FRAC.i, 0.75 * TAU + FRAC.rot,
-// 				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.coordinate
-// 			);
-// 		}
-// 		if (funcTimeDelay(resetRealPos,0.2)) {
-// 			FRAC.r = 0.0;
-// 			Update_Level(Jump);
-// 		}
-// 		if (funcTimeDelay(resetImagPos,0.2)) {
-// 			FRAC.i = 0.0;
-// 			Update_Level(Jump);
-// 		}
-// 	/* Real and Imaginary Julia Z Coordinates */
-// 		if (func_stat[incZReal].triggered == true) {
-// 			moveCord(
-// 				&FRAC.zr, &FRAC.zi, 0.0 * TAU + FRAC.rot,
-// 				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.julia
-// 			);
-// 		}
-// 		if (func_stat[decZReal].triggered == true) {
-// 			moveCord(
-// 				&FRAC.zr, &FRAC.zi, 0.5 * TAU + FRAC.rot,
-// 				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.julia
-// 			);
-// 		}
-// 		if (func_stat[incZImag].triggered == true) {
-// 			moveCord(
-// 				&FRAC.zr, &FRAC.zi, 0.25 * TAU + FRAC.rot,
-// 				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.julia
-// 			);
-// 		}
-// 		if (func_stat[decZImag].triggered == true) {
-// 			moveCord(
-// 				&FRAC.zr, &FRAC.zi, 0.75 * TAU + FRAC.rot,
-// 				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.julia
-// 			);
-// 		}
-// 		if (funcTimeDelay(resetZReal,0.2)) {
-// 			FRAC.zr = 0.0;
-// 			Update_Level(Jump);
-// 		}
-// 		if (funcTimeDelay(resetZImag,0.2)) {
-// 			FRAC.zi = 0.0;
-// 			Update_Level(Jump);
-// 		}
-// 		if (FRAC.cursorZValue == true) {
-// 			if (FRAC.relativeZValue == true) {
-// 				fp64 resZ = (fp64)((Master.resX > Master.resY) ? Master.resY : Master.resX);
-// 				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
-// 				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
-// 			} else {
-// 				pixel_to_coordinate(ImGui::GetMousePos().x,ImGui::GetMousePos().y - RESY_UI,&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData);
-// 			}
-// 		}
-// 	/* Zoom */
-// 		if (func_stat[incZoom].triggered == true) {
-// 			FRAC.zoom += 0.25 * moveDelta * user_sensitivity.zoom * (user_sensitivity.invert_zoom ? -1.0 : 1.0);
-// 		}
-// 		if (func_stat[decZoom].triggered == true) {
-// 			FRAC.zoom -= 0.25 * moveDelta * user_sensitivity.zoom * (user_sensitivity.invert_zoom ? -1.0 : 1.0);
-// 		}
-// 		if (funcTimeDelay(resetZoom,0.2)) {
-// 			FRAC.zoom = zoomDefault(FRAC.power);
-// 			Update_Level(Jump);
-// 		}
-// 		if (funcTimeDelay(resetCoordinates,0.2)) {
-// 			FRAC.r = 0.0; FRAC.i = 0.0;
-// 			FRAC.stretch = 0.0; FRAC.rot = 0.0;
-// 			if (FRAC.polarMandelbrot == true) {
-// 				FRAC.zoom = zoomDefault(FRAC.polarPower);
-// 			} else {
-// 				FRAC.zoom = zoomDefault((fp64)FRAC.power);
-// 			}
-// 			valueLimit(FRAC.zoom,-0.4,0.4);
-// 			Update_Level(Jump);
-// 		}
-// 	/* maxItr */
-// 		if (func_stat[incMaxItr].triggered) {
-// 			FRAC.maxItr_Log2 += 2.0 * moveDelta * user_sensitivity.maxIter;
-// 			setMaxItr(&FRAC,FRAC.maxItr_Log2);
-// 		}
-// 		if (func_stat[decMaxItr].triggered) {
-// 			FRAC.maxItr_Log2 -= 2.0 * moveDelta * user_sensitivity.maxIter;
-// 			setMaxItr(&FRAC,FRAC.maxItr_Log2);
-// 		}
-// 		if (funcTimeDelay(resetMaxItr,0.2)) {
-// 			FRAC.maxItr_Log2 = log2(192.0);
-// 			FRAC.maxItr = 192;
-// 			setMaxItr(&FRAC,FRAC.maxItr_Log2);
-// 		}
-// 	/* Formula*/
-// 		if (funcTimeDelay(incFormula,1.0/10.0)) {
-// 			FRAC.formula++;
-// 		}
-// 		if (funcTimeDelay(decFormula,1.0/10.0)) {
-// 			FRAC.formula--;
-// 		}
-// 		if (funcTimeDelay(incFamily,1.0/10.0)) {
-// 			FRAC.formula += getABSValue(FRAC.power);
-// 		}
-// 		if (funcTimeDelay(decFamily,1.0/10.0)) {
-// 			FRAC.formula -= getABSValue(FRAC.power);
-// 		}
-// 		if (funcTimeDelay(resetFormula,0.2)) {
-// 			FRAC.formula = 0;
-// 		}
-// 	/* Power */
-// 		if (FRAC.polarMandelbrot == true) {
-// 			if (FRAC.integerPolarPower == true) {
-// 				if (funcTimeDelay(incPower,1.0/6.0)) {
-// 					FRAC.polarPower++;
-// 				}
-// 				if (funcTimeDelay(decPower,1.0/6.0)) {
-// 					FRAC.polarPower--;
-// 				}
-// 			} else {
-// 				if (func_stat[incPower].triggered) {
-// 					FRAC.polarPower += moveDelta * 1.0 * user_sensitivity.polar_power;
-// 				}
-// 				if (func_stat[decPower].triggered) {
-// 					FRAC.polarPower -= moveDelta * 1.0 * user_sensitivity.polar_power;
-// 				}
-// 			}
-			
-// 			if (funcTimeDelay(resetPower,0.2)) {
-// 				FRAC.polarPower = Polar_Mandelbrot_Default_Power;
-// 			}
-// 			if (funcTimeDelay(roundPower,0.2)) {
-// 				FRAC.polarPower = round(FRAC.polarPower);
-// 			}
-// 			if (funcTimeDelay(floorPower,0.2)) {
-// 				FRAC.polarPower = floor(FRAC.polarPower);
-// 			}
-// 			if (funcTimeDelay(ceilingPower,0.2)) {
-// 				FRAC.polarPower = ceil(FRAC.polarPower);
-// 			}
-// 		} else {
-// 			if (funcTimeDelay(incPower,1.0/6.0)) {
-// 				FRAC.power++;
-// 			}
-// 			if (funcTimeDelay(decPower,1.0/6.0)) {
-// 				FRAC.power--;
-// 			}
-// 			if (funcTimeDelay(resetPower,0.2)) {
-// 				FRAC.power = ABS_Mandelbrot_Default_Power;
-// 			}
-// 			FRAC.formula = limitFormulaID(FRAC.power,FRAC.formula);
-// 		}
-// 	/* Rotations */
-// 		if (func_stat[counterclockwiseRot].triggered) {
-// 			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * user_sensitivity.rotation;
-// 		}
-// 		if (func_stat[clockwiseRot].triggered) {
-// 			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * user_sensitivity.rotation;
-// 		}
-// 		if (funcTimeDelay(clockwiseRot90,0.3)) {
-// 			FRAC.rot += (TAU * (90.0/360.0));
-// 		}
-// 		if (funcTimeDelay(counterclockwiseRot90,0.3)) {
-// 			FRAC.rot -= (TAU * (90.0/360.0));
-// 		}
-// 		if (funcTimeDelay(rotate180,0.3)) {
-// 			FRAC.rot += (TAU * (180.0/360.0));
-// 		}
-// 		if (funcTimeDelay(clockwiseRotStep,1.0/10.0)) {
-// 			FRAC.rot += (TAU * (15.0/360.0));
-// 		}
-// 		if (funcTimeDelay(counterclockwiseRotStep,1.0/10.0)) {
-// 			FRAC.rot += (TAU * (15.0/360.0));
-// 		}
-// 		if (funcTimeDelay(clockwiseRotPower,1.0/6.0)) {
-// 			FRAC.rot += (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
-// 		}
-// 		if (funcTimeDelay(counterclockwiseRotPower,1.0/6.0)) {
-// 			FRAC.rot -= (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
-// 		}
-// 		if (funcTimeDelay(resetRotation,0.2)) {
-// 			FRAC.rot = 0.0;
-// 		}
-// 		FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
-// 	/* Transformations */
-// 		if (func_stat[incStretch].triggered) {
-// 			FRAC.stretch += 1.0 * moveDelta * user_sensitivity.stretch;
-// 		}
-// 		if (func_stat[decStretch].triggered) {
-// 			FRAC.stretch -= 1.0 * moveDelta * user_sensitivity.stretch;
-// 		}
-// 		if (funcTimeDelay(resetStretch,0.2)) {
-// 			FRAC.stretch = 0.0;
-// 		}
-// 		if (funcTimeDelay(resetTransformations,0.2)) {
-// 			FRAC.rot = 0.0;
-// 			FRAC.stretch = 0.0;
-// 		}
-// 	/* Breakout Value */
-// 		if (func_stat[incBreakout].triggered) {
-// 			temp_breakoutValue += 2.0 * moveDelta * user_sensitivity.breakout_value;
-// 		}
-// 		if (func_stat[decBreakout].triggered) {
-// 			temp_breakoutValue -= 2.0 * moveDelta * user_sensitivity.breakout_value;
-// 		}
-// 		if (funcTimeDelay(resetBreakout,0.2)) {
-// 			temp_breakoutValue = log2(16777216.0);
-// 		}
-// 	/* Rendering */
-// 		if (funcTimeDelay(incSubSample,1.0/6.0)) {
-// 			primaryRenderData.subSample++;
-// 		}
-// 		if (funcTimeDelay(decSubSample,1.0/6.0)) {
-// 			primaryRenderData.subSample--;
-// 		}
-// 		if (funcTimeDelay(resetSubSample,0.2)) {
-// 			primaryRenderData.subSample = 1;
-// 		}
-// 		valueLimit(primaryRenderData.subSample,1,24);
-// 		if (funcTimeDelay(incSuperSample,1.0/6.0)) {
-// 			primaryRenderData.sample++;
-// 		}
-// 		if (funcTimeDelay(decSuperSample,1.0/6.0)) {
-// 			primaryRenderData.sample--;
-// 		}
-// 		if (funcTimeDelay(resetSuperSample,0.2)) {
-// 			primaryRenderData.sample = 1;
-// 		}
-// 		valueLimit(primaryRenderData.sample,1,24);
-// 	/* Rendering Method */
-// 	{
-// 		using namespace Rendering_Method;
-// 		if (funcTimeDelay(fp32CpuRendering,0.2)) {
-// 			primaryRenderData.rendering_method = CPU_Rendering;
-// 			primaryRenderData.CPU_Precision = 32;
-// 		}
-// 		if (funcTimeDelay(fp64CpuRendering,0.2)) {
-// 			primaryRenderData.rendering_method = CPU_Rendering;
-// 			primaryRenderData.CPU_Precision = 64;
-// 		}
-// 		if (funcTimeDelay(fp80CpuRendering,0.2)) {
-// 			primaryRenderData.rendering_method = CPU_Rendering;
-// 			primaryRenderData.CPU_Precision = 80;
-// 		}
-// 		if (funcTimeDelay(fp128CpuRendering,0.2)) {
-// 			primaryRenderData.rendering_method = CPU_Rendering;
-// 			primaryRenderData.CPU_Precision = 128;
-// 		}
-// 		if (funcTimeDelay(fp16GpuRendering,0.2)) {
-// 			primaryRenderData.rendering_method = GPU_Rendering;
-// 			primaryRenderData.GPU_Precision = 16;
-// 		}
-// 		if (funcTimeDelay(fp32GpuRendering,0.2)) {
-// 			primaryRenderData.rendering_method = GPU_Rendering;
-// 			primaryRenderData.GPU_Precision = 32;
-// 		}
-// 		if (funcTimeDelay(fp64GpuRendering,0.2)) {
-// 			primaryRenderData.rendering_method = GPU_Rendering;
-// 			primaryRenderData.GPU_Precision = 64;
-// 		}
-// 	}
-// 	/* Other */
-// 	FRAC.breakoutValue = pow(2.0,temp_breakoutValue);
-// 	correctFracParameters(&FRAC);
-// 	update_level = get_ABS_Mandelbrot_Update_Level(&FRAC,&primaryRenderData,update_level);
-// 	/* ABS Mandelbrot */
-// 	/* Polar Mandelbrot */
-// 	/* Global Application Functions */
-// 		#define GUI_MENU_TOGGLE(m) buttonSelection = (buttonSelection == (m)) ? -1 : (m);
-// 		if (funcTimeDelay(inputFormula,0.4)) {
-// 			GUI_MENU_TOGGLE(GUI_Menu_Coordinates);
-// 		}
-// 		if (funcTimeDelay(inputPower,0.4)) {
-// 			GUI_MENU_TOGGLE(GUI_Menu_Fractal);
-// 		}
-// 		if (funcTimeDelay(openFractalMenu,0.4)) {
-// 			GUI_MENU_TOGGLE(GUI_Menu_Fractal);
-// 		}
-// 		if (funcTimeDelay(openKeyBindsMenu,0.4)) {
-// 			GUI_MENU_TOGGLE(GUI_Menu_KeyBinds);
-// 		}
-// 		if (funcTimeDelay(openRenderingMenu,0.4)) {
-// 			GUI_MENU_TOGGLE(GUI_Menu_Rendering);
-// 		}
-// 		if (funcTimeDelay(openSettingsMenu,0.4)) {
-// 			GUI_MENU_TOGGLE(GUI_Menu_Settings);
-// 		}
-// 		if (funcTimeDelay(takeScreenshot,0.4)) {
-// 			exportScreenshot();
-// 		}
-// 		if (funcTimeDelay(takeSuperScreenshot,0.4)) {
-// 			exportSuperScreenshot();
-// 		}
-// 	#undef FRAC
-// 	write_Update_Level(update_level);
-// 	return update_level;
-// }

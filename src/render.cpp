@@ -215,7 +215,7 @@ void recolorKeyboard() {
 		struct init_key_HSV {
 			enum Key_Function_Enum type;
 			fp64 h; fp64 s; fp64 v;
-		}; typedef init_key_HSV init_key_HSV;
+		};
 		init_key_HSV InitKeyHSV[] = {
 			{NONE,0.0,0.0,0.5},
 			{COORDINATES,0.0,0.7,1.0},{TRANSFORMATIONS,180.0,0.7,1.0},{JULIA,300.0,0.6,1.0},
@@ -225,7 +225,7 @@ void recolorKeyboard() {
 		struct init_key_RGB {
 			enum Key_Function_Enum type;
 			uint8_t r; uint8_t g; uint8_t b;
-		}; typedef init_key_RGB init_key_RGB;
+		};
 		init_key_RGB InitKeyRGB[ARRAY_LENGTH(InitKeyHSV)];
 		for (size_t i = 0; i < ARRAY_LENGTH(InitKeyHSV); i++) {
 			getRGBfromHSV(&(InitKeyRGB[i].r),&(InitKeyRGB[i].g),&(InitKeyRGB[i].b),InitKeyHSV[i].h,InitKeyHSV[i].s,InitKeyHSV[i].v);
@@ -500,10 +500,10 @@ bool funcTimeDelay(Key_Function::Key_Function_Enum func, fp64 freq) {
 }
 
 //#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
-int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac, Render_Data* ren, int update_level = Change_Level::Nothing) {
-	if (frac == nullptr) { return update_level; }
+int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren, int update_level = Change_Level::Nothing) {
+	if (frac_data == nullptr) { return update_level; }
 	if (ren == nullptr) { return update_level; }
-	static ABS_Mandelbrot frac0 = *frac;
+	static ABS_Mandelbrot frac0 = *frac_data;
 	static Render_Data ren0 = *ren;
 	using namespace Change_Level;
 	
@@ -534,54 +534,54 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac, Render_Data* ren, int 
 		Update_Level(Change_Level::Rotation);
 	}
 	/* ABS_Mandelbrot */
-	if (frac->r != frac0.r || frac->i != frac0.i) {
+	if (frac_data->r != frac0.r || frac_data->i != frac0.i) {
 		Update_Level(Change_Level::Translation);
 	}
-	if (frac->zoom != frac0.zoom) {
+	if (frac_data->zoom != frac0.zoom) {
 		Update_Level(Change_Level::Zoom);
 	}
-	if (frac->zr != frac0.zr || frac->zi != frac0.zi) {
+	if (frac_data->zr != frac0.zr || frac_data->zi != frac0.zi) {
 		Update_Level(Change_Level::Julia);
 	}
-	if (frac->maxItr != frac0.maxItr || frac->maxItr_Log2 != frac0.maxItr_Log2) {
+	if (frac_data->maxItr != frac0.maxItr || frac_data->maxItr_Log2 != frac0.maxItr_Log2) {
 		Update_Level(Change_Level::Iterations);
 	}
-	if (frac->rot != frac0.rot) {
+	if (frac_data->rot != frac0.rot) {
 		Update_Level(Change_Level::Rotation);
 	}
-	if (frac->stretch != frac0.stretch) {
+	if (frac_data->stretch != frac0.stretch) {
 		Update_Level(Change_Level::Stretch);
 	}
-	if (frac->breakoutValue != frac0.breakoutValue) {
+	if (frac_data->breakoutValue != frac0.breakoutValue) {
 		Update_Level(Change_Level::Breakout);
 	}
 	if (
-		(frac->rA != frac0.rA || frac->rF != frac0.rF || frac->rP != frac0.rP) ||
-		(frac->gA != frac0.gA || frac->gF != frac0.gF || frac->gP != frac0.gP) ||
-		(frac->bA != frac0.bA || frac->bF != frac0.bF || frac->bP != frac0.bP) ||
-		(frac->iA != frac0.iA || frac->iF != frac0.iF || frac->iP != frac0.iP)
+		(frac_data->rA != frac0.rA || frac_data->rF != frac0.rF || frac_data->rP != frac0.rP) ||
+		(frac_data->gA != frac0.gA || frac_data->gF != frac0.gF || frac_data->gP != frac0.gP) ||
+		(frac_data->bA != frac0.bA || frac_data->bF != frac0.bF || frac_data->bP != frac0.bP) ||
+		(frac_data->iA != frac0.iA || frac_data->iF != frac0.iF || frac_data->iP != frac0.iP)
 	) {
 		Update_Level(Change_Level::Coloring);
 	}
-	if (frac->smoothColoring != frac0.smoothColoring) {
+	if (frac_data->smoothColoring != frac0.smoothColoring) {
 		Update_Level(Change_Level::Coloring);
 	}
-	if (frac->power != frac0.power) {
+	if (frac_data->power != frac0.power) {
 		Update_Level(Change_Level::Power_Change);
 	}
-	if (frac->polarPower != frac0.polarPower) {
+	if (frac_data->polarPower != frac0.polarPower) {
 		Update_Level(Change_Level::Polar_Power);
 	}
-	if (frac->formula != frac0.formula) {
+	if (frac_data->formula != frac0.formula) {
 		Update_Level(Change_Level::Formula_Change);
 	}
-	if (frac->polarMandelbrot != frac0.polarMandelbrot) {
+	if (frac_data->polarMandelbrot != frac0.polarMandelbrot) {
 		Update_Level(Change_Level::Fractal_Change);
 	}
-	if (frac->juliaSet != frac0.juliaSet) {
+	if (frac_data->juliaSet != frac0.juliaSet) {
 		Update_Level(Change_Level::Fractal_Change);
 	}
-	frac0 = *frac;
+	frac0 = *frac_data;
 	ren0 = *ren;
 	return update_level;
 }
@@ -602,7 +602,9 @@ int updateFractalParameters() {
 	fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
 	fp64 moveDelta = (DeltaTime < 0.2) ? DeltaTime : 0.2;
 	
-	moveDelta *= user_sensitivity.global;
+	const User_Parameter_Sensitivity& config_sensitivity = config_data.Parameter_Sensitivity;
+
+	moveDelta *= config_sensitivity.global;
 
 	int update_level = Change_Level::Nothing;
 
@@ -624,25 +626,25 @@ int updateFractalParameters() {
 		if (func_stat[incRealPos].triggered == true) {
 			moveCord(
 				&FRAC.r, &FRAC.i, 0.0 * TAU + FRAC.rot,
-				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.coordinate
+				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * config_sensitivity.coordinate
 			);
 		}
 		if (func_stat[decRealPos].triggered == true) {
 			moveCord(
 				&FRAC.r, &FRAC.i, 0.5 * TAU + FRAC.rot,
-				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.coordinate
+				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * config_sensitivity.coordinate
 			);
 		}
 		if (func_stat[incImagPos].triggered == true) {
 			moveCord(
 				&FRAC.r, &FRAC.i, 0.25 * TAU + FRAC.rot,
-				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.coordinate
+				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * config_sensitivity.coordinate
 			);
 		}
 		if (func_stat[decImagPos].triggered == true) {
 			moveCord(
 				&FRAC.r, &FRAC.i, 0.75 * TAU + FRAC.rot,
-				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.coordinate
+				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * config_sensitivity.coordinate
 			);
 		}
 		if (funcTimeDelay(resetRealPos,0.2)) {
@@ -657,25 +659,25 @@ int updateFractalParameters() {
 		if (func_stat[incZReal].triggered == true) {
 			moveCord(
 				&FRAC.zr, &FRAC.zi, 0.0 * TAU + FRAC.rot,
-				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.julia
+				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * config_sensitivity.julia
 			);
 		}
 		if (func_stat[decZReal].triggered == true) {
 			moveCord(
 				&FRAC.zr, &FRAC.zi, 0.5 * TAU + FRAC.rot,
-				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * user_sensitivity.julia
+				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sX * config_sensitivity.julia
 			);
 		}
 		if (func_stat[incZImag].triggered == true) {
 			moveCord(
 				&FRAC.zr, &FRAC.zi, 0.25 * TAU + FRAC.rot,
-				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.julia
+				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * config_sensitivity.julia
 			);
 		}
 		if (func_stat[decZImag].triggered == true) {
 			moveCord(
 				&FRAC.zr, &FRAC.zi, 0.75 * TAU + FRAC.rot,
-				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * user_sensitivity.julia
+				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * config_sensitivity.julia
 			);
 		}
 		if (funcTimeDelay(resetZReal,0.2)) {
@@ -697,10 +699,10 @@ int updateFractalParameters() {
 		}
 	/* Zoom */
 		if (func_stat[incZoom].triggered == true) {
-			FRAC.zoom += 0.25 * moveDelta * user_sensitivity.zoom * (user_sensitivity.invert_zoom ? -1.0 : 1.0);
+			FRAC.zoom += 0.25 * moveDelta * config_sensitivity.zoom * (config_sensitivity.invert_zoom ? -1.0 : 1.0);
 		}
 		if (func_stat[decZoom].triggered == true) {
-			FRAC.zoom -= 0.25 * moveDelta * user_sensitivity.zoom * (user_sensitivity.invert_zoom ? -1.0 : 1.0);
+			FRAC.zoom -= 0.25 * moveDelta * config_sensitivity.zoom * (config_sensitivity.invert_zoom ? -1.0 : 1.0);
 		}
 		if (funcTimeDelay(resetZoom,0.2)) {
 			FRAC.zoom = zoomDefault(FRAC.power);
@@ -719,11 +721,11 @@ int updateFractalParameters() {
 		}
 	/* maxItr */
 		if (func_stat[incMaxItr].triggered) {
-			FRAC.maxItr_Log2 += 2.0 * moveDelta * user_sensitivity.maxIter;
+			FRAC.maxItr_Log2 += 2.0 * moveDelta * config_sensitivity.maxIter;
 			setMaxItr(&FRAC,FRAC.maxItr_Log2);
 		}
 		if (func_stat[decMaxItr].triggered) {
-			FRAC.maxItr_Log2 -= 2.0 * moveDelta * user_sensitivity.maxIter;
+			FRAC.maxItr_Log2 -= 2.0 * moveDelta * config_sensitivity.maxIter;
 			setMaxItr(&FRAC,FRAC.maxItr_Log2);
 		}
 		if (funcTimeDelay(resetMaxItr,0.2)) {
@@ -758,10 +760,10 @@ int updateFractalParameters() {
 				}
 			} else {
 				if (func_stat[incPower].triggered) {
-					FRAC.polarPower += moveDelta * 1.0 * user_sensitivity.polar_power;
+					FRAC.polarPower += moveDelta * 1.0 * config_sensitivity.polar_power;
 				}
 				if (func_stat[decPower].triggered) {
-					FRAC.polarPower -= moveDelta * 1.0 * user_sensitivity.polar_power;
+					FRAC.polarPower -= moveDelta * 1.0 * config_sensitivity.polar_power;
 				}
 			}
 			
@@ -791,10 +793,10 @@ int updateFractalParameters() {
 		}
 	/* Rotations */
 		if (func_stat[counterclockwiseRot].triggered) {
-			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * user_sensitivity.rotation;
+			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * config_sensitivity.rotation;
 		}
 		if (func_stat[clockwiseRot].triggered) {
-			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * user_sensitivity.rotation;
+			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * config_sensitivity.rotation;
 		}
 		if (funcTimeDelay(clockwiseRot90,0.3)) {
 			FRAC.rot += (TAU * (90.0/360.0));
@@ -823,10 +825,10 @@ int updateFractalParameters() {
 		FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
 	/* Transformations */
 		if (func_stat[incStretch].triggered) {
-			FRAC.stretch += 1.0 * moveDelta * user_sensitivity.stretch;
+			FRAC.stretch += 1.0 * moveDelta * config_sensitivity.stretch;
 		}
 		if (func_stat[decStretch].triggered) {
-			FRAC.stretch -= 1.0 * moveDelta * user_sensitivity.stretch;
+			FRAC.stretch -= 1.0 * moveDelta * config_sensitivity.stretch;
 		}
 		if (funcTimeDelay(resetStretch,0.2)) {
 			FRAC.stretch = 0.0;
@@ -837,10 +839,10 @@ int updateFractalParameters() {
 		}
 	/* Breakout Value */
 		if (func_stat[incBreakout].triggered) {
-			temp_breakoutValue += 2.0 * moveDelta * user_sensitivity.breakout_value;
+			temp_breakoutValue += 2.0 * moveDelta * config_sensitivity.breakout_value;
 		}
 		if (func_stat[decBreakout].triggered) {
-			temp_breakoutValue -= 2.0 * moveDelta * user_sensitivity.breakout_value;
+			temp_breakoutValue -= 2.0 * moveDelta * config_sensitivity.breakout_value;
 		}
 		if (funcTimeDelay(resetBreakout,0.2)) {
 			temp_breakoutValue = log2(16777216.0);
@@ -935,29 +937,29 @@ int updateFractalParameters() {
 	return update_level;
 }
 
-#define BufAndLen(x) x,ARRAY_LENGTH(x)
-/* Sets defualt window size and position along with size constraints */
-#define ImGui_DefaultWindowSize(valX,bufX,minX,maxX,ratioX,valY,bufY,minY,maxY,ratioY); \
-	uint32_t WINDOW_RESX = calcMinMaxRatio(valX-bufX,minX,maxX,ratioX); \
-	uint32_t WINDOW_RESY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
-	ImGui::SetNextWindowPos({(fp32)((valX - WINDOW_RESX) / 2),(fp32)((valY - WINDOW_RESY) / 2)}, ImGuiCond_Once); \
-	ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}, ImGuiCond_Once); \
-	if (AutoResizeWindows == true) { \
-		ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}); \
-	} \
-	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
-	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX; \
-	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY; \
-	ImGui::SetNextWindowBgAlpha(WindowOpacity);
+// #define BufAndLen(x) x,ARRAY_LENGTH(x)
+// /* Sets defualt window size and position along with size constraints */
+// #define ImGui_DefaultWindowSize(valX,bufX,minX,maxX,ratioX,valY,bufY,minY,maxY,ratioY); \
+// 	uint32_t WINDOW_RESX = calcMinMaxRatio(valX-bufX,minX,maxX,ratioX); \
+// 	uint32_t WINDOW_RESY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
+// 	ImGui::SetNextWindowPos({(fp32)((valX - WINDOW_RESX) / 2),(fp32)((valY - WINDOW_RESY) / 2)}, ImGuiCond_Once); \
+// 	ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}, ImGuiCond_Once); \
+// 	if (AutoResizeWindows == true) { \
+// 		ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}); \
+// 	} \
+// 	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
+// 	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX; \
+// 	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY; \
+// 	ImGui::SetNextWindowBgAlpha(WindowOpacity);
 
-#define ImGui_BoundWindowPosition(); \
-	if (PreventOutOfBoundsWindows == true) { \
-		int32_t WINDOW_POSX = ImGui::GetWindowPos().x; \
-		int32_t WINDOW_POSY = ImGui::GetWindowPos().y; \
-		valueLimit(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN); \
-		valueLimit(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN); \
-		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)}); \
-	}
+// #define ImGui_BoundWindowPosition(); \
+// 	if (PreventOutOfBoundsWindows == true) { \
+// 		int32_t WINDOW_POSX = ImGui::GetWindowPos().x; \
+// 		int32_t WINDOW_POSY = ImGui::GetWindowPos().y; \
+// 		valueLimit(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN); \
+// 		valueLimit(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN); \
+// 		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)}); \
+// 	}
 
 
 // void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
@@ -1349,7 +1351,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 
 // Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 
-int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
+int setupDisplayInfo(const User_Display_Preferences& display_config,int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
 	if (initResX == nullptr || initResY == nullptr || initPosX == nullptr || initPosY == nullptr) {
 		printError("Unable to get Display Info, NULL parameters");
 		return -1;
@@ -1361,7 +1363,7 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 		printError("No Displays Detected");
 		return -1;
 	}
-	DisplayList = (DisplayInfo*)malloc(DISPLAY_COUNT * sizeof(DisplayInfo));
+	DisplayList = (DisplayInfo*)calloc(DISPLAY_COUNT, sizeof(DisplayInfo));
 	if (DisplayList == nullptr) {
 		FREE(DisplayList);
 		printError("Unable to allocate memory for DisplayList");
@@ -1373,7 +1375,8 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 	Display_Match[Display_Bootup::Automatic] = 1;
 	Display_Match[Display_Bootup::First] = 1;
 	Display_Match[Display_Bootup::Last] = DISPLAY_COUNT;
-	Display_Match[Display_Bootup::Specific] = SPECIFIC_BOOTUP_DISPLAY;
+	int Specific_Bootup_Display = display_config.Specific_Bootup_Display;
+	Display_Match[Display_Bootup::Specific] = valueLimit(Specific_Bootup_Display,1,(int32_t)DISPLAY_COUNT);
 	#define Display(match) DisplayList[Display_Match[(match)] - 1]
 	for (size_t i = 0; i < DISPLAY_COUNT; i++) {
 		SDL_DisplayMode mode;
@@ -1400,22 +1403,22 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 		if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup::LowResolution).resX * Display(Display_Bootup::LowResolution).resY) { Display_Match[Display_Bootup::LowResolution] = i + 1; }
 		if (DisplayList[i].refreshRate < Display(Display_Bootup::LowFrameRate).refreshRate) { Display_Match[Display_Bootup::LowFrameRate] = i + 1; }
 	}
-	*initResX = Display(Display_Bootup_Type).resX;
-	*initResY = Display(Display_Bootup_Type).resY;
-	*initPosX = Display(Display_Bootup_Type).posX;
-	*initPosY = Display(Display_Bootup_Type).posY;
-	if (Display(Display_Bootup_Type).resX < RESX_Minimum || Display(Display_Bootup_Type).resY < RESY_Minimum) {
+	*initResX = Display(display_config.Display_Bootup_Type).resX;
+	*initResY = Display(display_config.Display_Bootup_Type).resY;
+	*initPosX = Display(display_config.Display_Bootup_Type).posX;
+	*initPosY = Display(display_config.Display_Bootup_Type).posY;
+	if (Display(display_config.Display_Bootup_Type).resX < RESX_Minimum || Display(display_config.Display_Bootup_Type).resY < RESY_Minimum) {
 		if (DISPLAY_COUNT == 1) {
 			printWarning("This display does not meet the minimum screen resolution");
 			return 0;
 		}
 		for (size_t i = 0; i < DISPLAY_COUNT; i++) {
-			if (Display(Display_Bootup_Type).resX >= RESX_Minimum && Display(Display_Bootup_Type).resY >= RESY_Minimum) {
+			if (Display(display_config.Display_Bootup_Type).resX >= RESX_Minimum && Display(display_config.Display_Bootup_Type).resY >= RESY_Minimum) {
 				*initResX = DisplayList[i].resX;
 				*initResY = DisplayList[i].resX;
 				*initPosX = DisplayList[i].resX;
-				*initPosY = DisplayList[Display_Bootup_Type].resX;
-				printWarning("Display %u does not meet the minimum screen resolution, switching to display %zu",Display_Match[Display_Bootup_Type],i + 1);
+				*initPosY = DisplayList[display_config.Display_Bootup_Type].resX;
+				printWarning("Display %u does not meet the minimum screen resolution, switching to display %zu",Display_Match[display_config.Display_Bootup_Type],i + 1);
 				return 0;
 			}
 		}
@@ -1426,18 +1429,71 @@ int setupDisplayInfo(int32_t* initResX, int32_t* initResY, int32_t* initPosX, in
 	return 0;
 }
 
+void init_config_data() {
+	if (import_config_data(config_data,"./config.fracExpConfig") == 0) {
+		if (config_data.Automatic_Behaviour.AutoLoad_Config_File == false) {
+			default_User_Configuration_Data(config_data, true);
+			return;
+		}
+		clean_User_Configuration_Data(config_data);
+
+		/* GUI Settings */
+			// LockKeyInputsInMenus = config_data.GUI_Settings.LockKeyInputsInMenus;
+			// AutoResizeWindows = config_data.GUI_Settings.AutoResizeWindows;
+			// PreventOutOfBoundsWindows = config_data.GUI_Settings.AutoResizeWindows;
+			// WindowOpacity = config_data.GUI_Settings.WindowOpacity;
+			// WindowAutoScale = config_data.GUI_Settings.WindowAutoScale;
+		/* Screenshot Settings */
+		int temp_screenshotFileType = config_data.Screenshot_Settings.screenshotFileType;
+		if (temp_screenshotFileType < 0 || temp_screenshotFileType >= Image_File_Format::Image_File_Format_Count) {
+			temp_screenshotFileType = Image_File_Format::PNG;
+		}
+		screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
+		User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
+		User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
+	} else {
+		default_User_Configuration_Data(config_data, true);
+	}
+}
+
+void terminate_config_data() {
+	if (config_data.Automatic_Behaviour.AutoSave_Config_File == false) {
+		return;
+	}
+
+	// char filePath[320]; memset(filePath,'\0',sizeof(filePath));
+	// saveFileInterface(filePath,ARRAY_LENGTH(filePath));
+	// User_Configuration_Data config_data = {0};
+	/* GUI Settings */
+		// config_data.GUI_Settings.LockKeyInputsInMenus = LockKeyInputsInMenus;
+		// config_data.GUI_Settings.AutoResizeWindows = AutoResizeWindows;
+		// config_data.GUI_Settings.PreventOutOfBoundsWindows = AutoResizeWindows;
+		// config_data.GUI_Settings.WindowOpacity = WindowOpacity;
+		// config_data.GUI_Settings.WindowAutoScale = WindowAutoScale;
+	/* Screenshot Settings */
+		config_data.Screenshot_Settings.screenshotFileType = (int)screenshotFileType;
+		config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
+		config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
+
+	export_config_data(config_data,"./config.fracExpConfig");
+}
+
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+	init_config_data();
 	//SDL_Init(SDL_INIT_VIDEO);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
 		return -1;
 	}
 	printf("\nSystem Information:");
+	int32_t dispResX, dispResY;
 	int32_t initResX, initResY, initPosX, initPosY;
-	if (setupDisplayInfo(&initResX,&initResY,&initPosX,&initPosY) < 0) {
+	if (setupDisplayInfo(config_data.Display_Preferences,&initResX,&initResY,&initPosX,&initPosY) < 0) {
 		printCriticalError("init_Render failed to setup Display Info");
 	}
-
+	//printFlush("\nOld: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
+	dispResX = initResX;
+	dispResY = initResY;
 	initResX -= RESX_Margin;
 	initResY -= RESY_Margin;
 	if (useDefaultWindowSize == true) {
@@ -1461,7 +1517,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			initResY = RESX_Maximum;
 		}
 	}
-
+	initPosX += (dispResX - initResX) / 2;
+	initPosY += (dispResY - initResY) / 2;
+	//printFlush("\nNew: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
 			DisplayInfo* disp = getCurrentDisplayInfo();
@@ -1479,7 +1537,12 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	Master = ImageBuffer(initResX,initResY,IMAGE_BUFFER_CHANNELS);
 	initBufferBox(&TestGraphic,nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS);
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
-	window = SDL_CreateWindow(PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Master.resX, Master.resY, SDL_WINDOW_RESIZABLE);
+	window = SDL_CreateWindow(
+		PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE,
+		initPosX, initPosY,
+		Master.resX, Master.resY,
+		SDL_WINDOW_RESIZABLE
+	);
     SDL_SetWindowMinimumSize(window, RESX_Minimum, RESY_Minimum);
 	SDL_SetWindowMaximumSize(window, RESX_Maximum, RESY_Maximum);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -1494,7 +1557,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io_IMGUI->IniFilename = nullptr;
-    ImGui::StyleColorsDark();
+    set_IMGUI_Theme(config_data.GUI_Settings.GUI_Theme);
 	ImGui_ImplSDLRenderer2_Init(renderer);
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	
@@ -1508,39 +1571,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	init_KeyBind_PresetList();
 	initKeys();
 	//cleanKeyBind(&currentKeyBind);
-	init_default_sensitivity(&user_sensitivity);
-	/* User Config Test */
-		// User_Configuration_Data config_data = {0};
-		// char filePath[320]; memset(filePath,'\0',sizeof(filePath));
-		// openFileInterface(filePath,ARRAY_LENGTH(filePath));
-		if (import_config_data(config_data,"./config.fracExpConfig") == 0) {
-			clean_User_Configuration_Data(config_data);
-
-			/* Configuration Behaviour */
-				config_data.Configuration_Behaviour.AutoLoad_Config_File = true;
-				config_data.Configuration_Behaviour.AutoSave_Config_File = true;
-			/* Parameter Sensitivity */
-				user_sensitivity = config_data.Parameter_Sensitivity;
-			/* GUI Settings */
-				LockKeyInputsInMenus = config_data.GUI_Settings.LockKeyInputsInMenus;
-				AutoResizeWindows = config_data.GUI_Settings.AutoResizeWindows;
-				PreventOutOfBoundsWindows = config_data.GUI_Settings.AutoResizeWindows;
-				WindowOpacity = config_data.GUI_Settings.WindowOpacity;
-				WindowAutoScale = config_data.GUI_Settings.WindowAutoScale;
-			/* Screenshot Settings */
-			int temp_screenshotFileType = config_data.Screenshot_Settings.screenshotFileType;
-			if (temp_screenshotFileType < 0 || temp_screenshotFileType >= Image_File_Format::Image_File_Format_Count) {
-				temp_screenshotFileType = Image_File_Format::PNG;
-			}
-			screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
-			User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
-			User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
-		} else {
-			default_User_Configuration_Data(config_data);
-		}
 		
-
 	bootup_Fractal_Frame_Rendered = false;
+	printFlush("\n");
 	write_Render_Ready(true);
 	while (read_Engine_Ready() == false) {
 		if (QUIT_FLAG == true) {
@@ -1554,28 +1587,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 }
 
 int terminate_Render() {
-	/* User Config Test */
-		User_Configuration_Data config_data = {0};
-		// char filePath[320]; memset(filePath,'\0',sizeof(filePath));
-		// saveFileInterface(filePath,ARRAY_LENGTH(filePath));
-		/* Configuration Behaviour */
-			config_data.Configuration_Behaviour.AutoLoad_Config_File = true;
-			config_data.Configuration_Behaviour.AutoSave_Config_File = true;
-		/* Parameter Sensitivity */
-		config_data.Parameter_Sensitivity = user_sensitivity;
-		/* GUI Settings */
-			config_data.GUI_Settings.LockKeyInputsInMenus = LockKeyInputsInMenus;
-			config_data.GUI_Settings.AutoResizeWindows = AutoResizeWindows;
-			config_data.GUI_Settings.PreventOutOfBoundsWindows = AutoResizeWindows;
-			config_data.GUI_Settings.WindowOpacity = WindowOpacity;
-			config_data.GUI_Settings.WindowAutoScale = WindowAutoScale;
-		/* Screenshot Settings */
-			config_data.Screenshot_Settings.screenshotFileType = (int)screenshotFileType;
-			config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
-			config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
-		
-		export_config_data(config_data,"./config.fracExpConfig");
-
+	terminate_config_data();
 	terminateKeyboardGraphics();
 	clear_KeyBind_PresetList();
 	ImGui_ImplSDLRenderer2_Shutdown();
@@ -1592,7 +1604,7 @@ int terminate_Render() {
 
 
 void setRenderedBufferBox(BufferBox* box) {
-	buf = box;
+	rendered_buf = box;
 }
 
 

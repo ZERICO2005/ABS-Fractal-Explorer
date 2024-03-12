@@ -67,7 +67,6 @@
 	extern ImGuiIO* io_IMGUI;
 	extern int32_t ImGui_WINDOW_MARGIN;
 	extern ImGuiWindowFlags ImGui_WINDOW_FLAGS;
-	extern int IMGUI_Theme; // 0 Classic, 1 Dark, 2 Light
 
 /* SDL2 */
 	extern SDL_Renderer* renderer;
@@ -85,7 +84,7 @@
 	extern bool exportFractalBuffer;
 	extern bool exportSuperFractalBuffer;
 
-	extern BufferBox* buf;
+	extern BufferBox* rendered_buf;
 
 	extern bool Abort_Rendering_Flag;
 	extern bool Waiting_To_Abort_Rendering;
@@ -138,8 +137,6 @@
 	extern uint32_t User_PNG_Compression_Level;
 	extern uint32_t User_JPG_Quality_Level;
 
-	extern User_Parameter_Sensitivity user_sensitivity;
-
 /* Keyboard */
 
 	extern const uint8_t* KEYS;
@@ -167,12 +164,6 @@
 	#define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
 
 	extern bool Lock_Key_Inputs;
-	extern bool LockKeyInputsInMenus;
-
-	extern bool AutoResizeWindows;
-	extern bool PreventOutOfBoundsWindows;
-	extern fp32 WindowOpacity;
-	extern fp64 WindowAutoScale;
 
 	#define BufAndLen(x) x,ARRAY_LENGTH(x)
 
@@ -198,9 +189,9 @@
 				Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 			};
 		};
-		extern uint32_t SPECIFIC_BOOTUP_DISPLAY; // Supposed to be save data
+		//extern uint32_t SPECIFIC_BOOTUP_DISPLAY; // Supposed to be save data
 		extern uint32_t Display_Match[Display_Bootup::Length];
-		extern Display_Bootup::Display_Bootup_Enum Display_Bootup_Type;
+		//extern Display_Bootup::Display_Bootup_Enum Display_Bootup_Type;
 		extern bool useDefaultWindowSize;
 
 	// struct DisplayInfo {

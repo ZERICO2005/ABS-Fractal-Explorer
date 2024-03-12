@@ -10,31 +10,8 @@
 #include "Program_Def.h"
 #include "User_Data.h"
 
-struct Point {
-	int x;
-	int y;
-};
-typedef struct Point Point;
-
-struct Triangle {
-	Point a;
-	Point b;
-	Point c;
-};
-typedef struct Triangle Triangle;
-
-Point point = {
-	.x = 10, .y = 20
-};
-
-Triangle tri = {
-	.a = {.x = 1, .y = 2},
-	.b = {.x = 3, .y = 4},
-	.c = {.x = 5, .y = 6},
-};
-
 constexpr User_Configuration_Data Default_Config = {
-	.Configuration_Behaviour = {
+	.Automatic_Behaviour = {
 		.AutoLoad_Config_File = true,
 		.AutoSave_Config_File = true
 	},
@@ -52,7 +29,7 @@ constexpr User_Configuration_Data Default_Config = {
 	},
 	.Display_Preferences = {
 		.Display_Bootup_Type = 0, // 0 == Automatic (Enum)
-		.Specific_Bootup_Display = 0,
+		.Specific_Bootup_Display = 1,
 		.Bootup_Fullscreen = false,
 		.ScaleWindowToScreenSize = false,
 		.Bootup_Window_Scale = 0.7
@@ -61,6 +38,7 @@ constexpr User_Configuration_Data Default_Config = {
 		.LockKeyInputsInMenus = true,
 		.AutoResizeWindows = false,
 		.PreventOutOfBoundsWindows = false,
+		.GUI_Theme = 1, // 0 == Dark Theme (Enum)
 		.WindowOpacity = 0.95f,
 		.WindowAutoScale = 0.7
 	},
@@ -76,9 +54,9 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 
 /* clean_config_data */
 
-	void clean_Configuration_Behaviour(User_Configuration_Behaviour& config_data) {
-		const User_Configuration_Behaviour& config_default = Default_Config.Configuration_Behaviour;
-		return; // Configuration_Behaviour only has bools
+	void clean_Configuration_Behaviour(User_Automatic_Behaviour& config_data) {
+		const User_Automatic_Behaviour& config_default = Default_Config.Automatic_Behaviour;
+		return; // Automatic_Behaviour only has bools
 	}
 
 	void clean_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data) {
@@ -97,7 +75,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 	void clean_Display_Preferences(User_Display_Preferences& config_data) {
 		const User_Display_Preferences& config_default = Default_Config.Display_Preferences;
 		// clean_config_data(Display_Bootup_Type, 0, 0);
-		clean_config_data(Specific_Bootup_Display, 144, 0); // Does anyone even have 144 displays? Probably not.
+		clean_config_data(Specific_Bootup_Display, 1, 144); // Does anyone even have 144 displays? Probably not.
 		clean_config_data(Bootup_Window_Scale, 0.01, 1.0);
 	}
 
@@ -115,7 +93,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 	}
 
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data) {
-		clean_Configuration_Behaviour(config_data.Configuration_Behaviour);
+		clean_Configuration_Behaviour(config_data.Automatic_Behaviour);
 		clean_Parameter_Sensitivity(config_data.Parameter_Sensitivity);
 		clean_Display_Preferences(config_data.Display_Preferences);
 		clean_GUI_Settings(config_data.GUI_Settings);
@@ -124,17 +102,33 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 
 /* default_config_data */
 
-	void default_Configuration_Behaviour(User_Configuration_Behaviour& config_data) { config_data = Default_Config.Configuration_Behaviour; }
-	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data) { config_data = Default_Config.Parameter_Sensitivity; }
+	void default_Configuration_Behaviour(User_Automatic_Behaviour& config_data) { config_data = Default_Config.Automatic_Behaviour; }
+	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data, bool reset_Invert) {
+		bool invertZoom = config_data.invert_zoom;
+		config_data = Default_Config.Parameter_Sensitivity;
+		if (reset_Invert == false) {
+			config_data.invert_zoom = invertZoom; // Preserves this setting
+		}
+	}
 	void default_Display_Preferences(User_Display_Preferences& config_data) { config_data = Default_Config.Display_Preferences; }
-	void default_GUI_Settings(User_GUI_Settings& config_data) { config_data = Default_Config.GUI_Settings; }
+	void default_GUI_Settings(User_GUI_Settings& config_data, bool reset_GUI_Theme, bool reset_LockKeyInputsInMenus) {
+		bool LockKeyInputsInMenus = config_data.LockKeyInputsInMenus;
+		bool GUI_Theme = config_data.GUI_Theme;
+		config_data = Default_Config.GUI_Settings;
+		if (reset_LockKeyInputsInMenus == false) {
+			config_data.LockKeyInputsInMenus = LockKeyInputsInMenus; // Preserves this setting
+		}
+		if (reset_GUI_Theme == false) {
+			config_data.GUI_Theme = GUI_Theme; // Preserves this setting
+		}
+	}
 	void default_Screenshot_Settings(User_Screenshot_Settings& config_data) { config_data = Default_Config.Screenshot_Settings; }
 
-	void default_User_Configuration_Data(User_Configuration_Data& config_data) {
-		default_Configuration_Behaviour(config_data.Configuration_Behaviour);
-		default_Parameter_Sensitivity(config_data.Parameter_Sensitivity);
+	void default_User_Configuration_Data(User_Configuration_Data& config_data, bool reset_Extra) {
+		default_Configuration_Behaviour(config_data.Automatic_Behaviour);
+		default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, reset_Extra);
 		default_Display_Preferences(config_data.Display_Preferences);
-		default_GUI_Settings(config_data.GUI_Settings);
+		default_GUI_Settings(config_data.GUI_Settings, reset_Extra, reset_Extra);
 		default_Screenshot_Settings(config_data.Screenshot_Settings);
 	}
 
@@ -220,11 +214,37 @@ bool textToBool_TrueDefault(const char* Text) {
 	(strncmp(Text,"FALSE",strlen("FALSE")) == 0) ? false : true;
 }
 
+void compare_Versions(int32_t version_major, int32_t version_minor, int32_t version_patch) {
+	if (
+		(PROGRAM_V_MAJOR < version_major) ||
+		(PROGRAM_V_MAJOR == version_major && PROGRAM_V_MINOR < version_minor)
+	) {
+		printFlush(
+			"\nWarning: Config-File might not be backwards compatible:"\
+			"\n(Current) v%d.%d.%d < (Config-File) v%d.%d.%d",
+			version_major,version_minor,version_patch,
+			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH
+		);
+	}
+	if (
+		(PROGRAM_V_MAJOR < version_major) ||
+		(PROGRAM_V_MAJOR == version_major && PROGRAM_V_MINOR < version_minor)
+	) {
+		printFlush(
+			"\nWarning: Config-File might not be fully supported:"\
+			"\n(Current) v%d.%d.%d > (Config-File) v%d.%d.%d",
+			version_major,version_minor,version_patch,
+			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH
+		);
+	}
+}
+
 void load_config_values(User_Configuration_Data& config_data, const char* Config_Text) {
 	if (Config_Text == nullptr) { return; }
 
 	#define textToFloat32(str) (fp32)atof(str)
 	#define textToFloat64(str) atof(str)
+
 	#define textToInt32(str) atoi(str)
 	// textToEnum will need to support text values too
 	#define textToEnum(str) atoi(str)
@@ -234,13 +254,20 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 
 	const char* config_label = nullptr;
 
-	config_label = User_Configuration_Labels[Configuration_Behaviour];
-		// if (textToBool(get_config_value(Config_Text,config_label,"AutoLoad_Config_File")) == false) {
+	config_label = "Version";
+	int32_t version_major = textToInt32(get_config_value(Config_Text,config_label,"Major"));
+	int32_t version_minor = textToInt32(get_config_value(Config_Text,config_label,"Minor"));
+	int32_t version_patch = textToInt32(get_config_value(Config_Text,config_label,"Patch"));
+	compare_Versions(version_major,version_minor,version_patch);
+
+	config_label = User_Configuration_Labels[Automatic_Behaviour];
+		// if (textToBool_TrueDefault(get_config_value(Config_Text,config_label,"AutoLoad_Config_File")) == false) {
+		// 	default_User_Configuration_Data(config_data);
 		// 	return;
 		// } // Uses the defualts
-		config_data.Configuration_Behaviour.AutoLoad_Config_File =
+		config_data.Automatic_Behaviour.AutoLoad_Config_File =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"AutoLoad_Config_File"));
-		config_data.Configuration_Behaviour.AutoSave_Config_File =
+		config_data.Automatic_Behaviour.AutoSave_Config_File =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"AutoSave_Config_File"));
 
 	config_label = User_Configuration_Labels[Parameter_Sensitivity];
@@ -284,6 +311,8 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		textToBool_FalseDefault(get_config_value(Config_Text,config_label,"AutoResizeWindows"));
 		config_data.GUI_Settings.PreventOutOfBoundsWindows =
 		textToBool_FalseDefault(get_config_value(Config_Text,config_label,"PreventOutOfBoundsWindows"));
+		config_data.GUI_Settings.GUI_Theme =
+		textToEnum(get_config_value(Config_Text,config_label,"GUI_Theme"));
 		config_data.GUI_Settings.WindowOpacity =
 		textToFloat32(get_config_value(Config_Text,config_label,"WindowOpacity"));
 		config_data.GUI_Settings.WindowAutoScale =
@@ -364,7 +393,7 @@ const char* getDateAndTimeUTC(
 
 int export_config_data(User_Configuration_Data& config_data, const char* path) {
 	if (path == nullptr) { printError("export_config_data has nullptr path"); return -1; }
-	// if (config_data.Configuration_Behaviour.AutoSave_Config_File == false) { return 0; }
+	// if (config_data.Automatic_Behaviour.AutoSave_Config_File == false) { return 0; }
 	FILE* file = fopen(path, "w");
 	if (file == nullptr) {
 		printError("Unable to export_config_data to %s", path);
@@ -388,12 +417,12 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 			fprintf(file, "\n\tExport_Time: %s UTC", timeText);
 		}
 
-	fprintf(file,"\n\n%s:",User_Configuration_Labels[Configuration_Behaviour]);
+	fprintf(file,"\n\n%s:",User_Configuration_Labels[Automatic_Behaviour]);
 		fprintf(file,"\n\tAutoLoad_Config_File: %s",
-			boolText(config_data.Configuration_Behaviour.AutoLoad_Config_File)
+			boolText(config_data.Automatic_Behaviour.AutoLoad_Config_File)
 		);
 		fprintf(file,"\n\tAutoSave_Config_File: %s",
-			boolText(config_data.Configuration_Behaviour.AutoSave_Config_File)
+			boolText(config_data.Automatic_Behaviour.AutoSave_Config_File)
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Parameter_Sensitivity]);
@@ -429,19 +458,19 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Display_Preferences]);
-		fprintf(file,"\n\t: %d",
+		fprintf(file,"\n\tDisplay_Bootup_Type: %d",
 			config_data.Display_Preferences.Display_Bootup_Type
 		);
-		fprintf(file,"\n\t: %d",
+		fprintf(file,"\n\tSpecific_Bootup_Display: %d",
 			config_data.Display_Preferences.Specific_Bootup_Display
 		);
-		fprintf(file,"\n\t: %s",
+		fprintf(file,"\n\tBootup_Fullscreen: %s",
 			boolText(config_data.Display_Preferences.Bootup_Fullscreen)
 		);
-		fprintf(file,"\n\t: %s",
+		fprintf(file,"\n\tScaleWindowToScreenSize: %s",
 			boolText(config_data.Display_Preferences.ScaleWindowToScreenSize)
 		);
-		fprintf(file,"\n\t: %.6lf",
+		fprintf(file,"\n\tBootup_Window_Scale: %.6lf",
 			config_data.Display_Preferences.Bootup_Window_Scale
 		);
 
@@ -454,6 +483,9 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 		fprintf(file,"\n\tPreventOutOfBoundsWindows: %s",
 			boolText(config_data.GUI_Settings.PreventOutOfBoundsWindows)
+		);
+		fprintf(file,"\n\tGUI_Theme: %d",
+			config_data.GUI_Settings.GUI_Theme
 		);
 		fprintf(file,"\n\tWindowOpacity: %.6f",
 			config_data.GUI_Settings.WindowOpacity
@@ -475,24 +507,4 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		
 	fclose(file);
 	return 0;
-}
-
-bool set_default_sensitivity(User_Parameter_Sensitivity* sen) {
-	if (sen == nullptr) { return false; }
-	sen->global = 1.0;
-	sen->coordinate = 1.0;
-	sen->zoom = 1.0;
-	sen->maxIter = 1.0;
-	sen->julia = 1.0;
-	sen->rotation = 1.0;
-	sen->stretch = 1.0;
-	sen->polar_power = 1.0;
-	sen->breakout_value = 1.0;
-	return true;
-}
-
-bool init_default_sensitivity(User_Parameter_Sensitivity* sen) {
-	if (sen == nullptr) { return false; }
-	sen->invert_zoom = false;
-	return set_default_sensitivity(sen);
 }

@@ -11,7 +11,7 @@
 
 #include "Common_Def.h"
 #include "Program_Def.h"
-
+#include "user_data.h"
 #include "imgui.h"
 
 // struct Display_GUI {
@@ -21,6 +21,10 @@
 // }; typedef struct Display_GUI Display_GUI;
 
 int render_IMGUI();
+void refresh_IMGUI(User_Configuration_Data& config);
+
+// 0 Classic, 1 Dark, 2 Light
+void set_IMGUI_Theme(int_enum theme);
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags);
 

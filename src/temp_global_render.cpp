@@ -65,7 +65,6 @@
 	ImGuiIO* io_IMGUI = nullptr;
 	int32_t ImGui_WINDOW_MARGIN = 8;
 	ImGuiWindowFlags ImGui_WINDOW_FLAGS = 0;
-	int IMGUI_Theme = 1; // 0 Classic, 1 Dark, 2 Light
 
 /* SDL2 */
 	SDL_Renderer* renderer = nullptr;
@@ -83,7 +82,7 @@
 	bool exportFractalBuffer = false;
 	bool exportSuperFractalBuffer = false;
 
-	BufferBox* buf = nullptr;
+	BufferBox* rendered_buf = nullptr;
 
 	bool Abort_Rendering_Flag = false;
 	bool Waiting_To_Abort_Rendering = false;
@@ -136,8 +135,6 @@
 	uint32_t User_PNG_Compression_Level = 8;
 	uint32_t User_JPG_Quality_Level = 95;
 
-	User_Parameter_Sensitivity user_sensitivity = {0};
-
 /* Keyboard */
 
 	const uint8_t* KEYS = nullptr;
@@ -165,12 +162,6 @@
 	//#define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
 
 	bool Lock_Key_Inputs = false;
-	bool LockKeyInputsInMenus = true;
-
-	bool AutoResizeWindows = false;
-	bool PreventOutOfBoundsWindows = false;
-	fp32 WindowOpacity = 0.95f;
-	fp64 WindowAutoScale = 0.7;
 
 	//#define BufAndLen(x) x,ARRAY_LENGTH(x)
 
@@ -196,9 +187,9 @@
 		// 		Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 		// 	};
 		// };
-		uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
+		//uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
 		uint32_t Display_Match[Display_Bootup::Length] = {0};
-		Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
+		//Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
 		bool useDefaultWindowSize = false;
 
 	// struct DisplayInfo {

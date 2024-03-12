@@ -19,40 +19,40 @@ int preCalc_Frac_Param(
 	const ABS_Mandelbrot& frac
 ) {
 	/* Type */
-	param_PC.polarMandelbrot = frac.polarMandelbrot;
+		param_PC.polarMandelbrot = frac.polarMandelbrot;
 	/* Coordinates */
-	param_PC.r = frac.r;
-	param_PC.i = frac.i;
-	param_PC.zr = frac.zr;
-	param_PC.zi = frac.zi;
-	param_PC.zoom_PC = pow(10.0,frac.zoom);
+		param_PC.r = frac.r;
+		param_PC.i = frac.i;
+		param_PC.zr = frac.zr;
+		param_PC.zi = frac.zi;
+		param_PC.zoom_PC = pow(10.0,frac.zoom);
 	/* Transformation */
-	param_PC.rotSin_PC = sin(frac.rot);
-	param_PC.rotCos_PC = cos(frac.rot);
-	param_PC.sX = frac.sX;
-	param_PC.sY = frac.sY;
+		param_PC.rotSin_PC = sin(frac.rot);
+		param_PC.rotCos_PC = cos(frac.rot);
+		param_PC.sX = frac.sX;
+		param_PC.sY = frac.sY;
 	/* Parameters */
-	param_PC.maxItr = frac.maxItr;
-	param_PC.formula = frac.formula;
-	param_PC.breakoutValue = frac.breakoutValue;
-		param_PC.power = frac.power;
-		param_PC.polarPower = frac.polarPower;
+		param_PC.maxItr = frac.maxItr;
+		param_PC.formula = frac.formula;
+		param_PC.breakoutValue = frac.breakoutValue;
+			param_PC.power = frac.power;
+			param_PC.polarPower = frac.polarPower;
 	/* Coloring */
-	param_PC.smoothColoring = frac.smoothColoring;
-	param_PC.r_Amp = frac.rA;
-	param_PC.r_Freq = frac.rF;
-	param_PC.r_Phase = frac.rP;
-	param_PC.g_Amp = frac.gA;
-	param_PC.g_Freq = frac.gF;
-	param_PC.g_Phase = frac.gP;
-	param_PC.b_Amp = frac.bA;
-	param_PC.b_Freq = frac.bF;
-	param_PC.b_Phase = frac.bP;
-	param_PC.interior_Amp = frac.bA;
-	param_PC.interior_Freq = frac.bF;
-	param_PC.interior_Phase = frac.bP;
-	param_PC.interior_Alpha = 0xFF;
-	param_PC.exterior_Alpha = 0xFF;
+		param_PC.smoothColoring = frac.smoothColoring;
+		param_PC.r_Amp = frac.rA;
+		param_PC.r_Freq = frac.rF;
+		param_PC.r_Phase = frac.rP;
+		param_PC.g_Amp = frac.gA;
+		param_PC.g_Freq = frac.gF;
+		param_PC.g_Phase = frac.gP;
+		param_PC.b_Amp = frac.bA;
+		param_PC.b_Freq = frac.bF;
+		param_PC.b_Phase = frac.bP;
+		param_PC.interior_Amp = frac.bA;
+		param_PC.interior_Freq = frac.bF;
+		param_PC.interior_Phase = frac.bP;
+		param_PC.interior_Alpha = 0xFF;
+		param_PC.exterior_Alpha = 0xFF;
 	return 0;
 }
 
