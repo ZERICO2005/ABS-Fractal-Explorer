@@ -54,7 +54,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 
 /* clean_config_data */
 
-	void clean_Configuration_Behaviour(User_Automatic_Behaviour& config_data) {
+	void clean_Automatic_Behaviour(User_Automatic_Behaviour& config_data) {
 		const User_Automatic_Behaviour& config_default = Default_Config.Automatic_Behaviour;
 		return; // Automatic_Behaviour only has bools
 	}
@@ -93,7 +93,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 	}
 
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data) {
-		clean_Configuration_Behaviour(config_data.Automatic_Behaviour);
+		clean_Automatic_Behaviour(config_data.Automatic_Behaviour);
 		clean_Parameter_Sensitivity(config_data.Parameter_Sensitivity);
 		clean_Display_Preferences(config_data.Display_Preferences);
 		clean_GUI_Settings(config_data.GUI_Settings);
@@ -102,7 +102,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 
 /* default_config_data */
 
-	void default_Configuration_Behaviour(User_Automatic_Behaviour& config_data) { config_data = Default_Config.Automatic_Behaviour; }
+	void default_Automatic_Behaviour(User_Automatic_Behaviour& config_data) { config_data = Default_Config.Automatic_Behaviour; }
 	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data, bool reset_Invert) {
 		bool invertZoom = config_data.invert_zoom;
 		config_data = Default_Config.Parameter_Sensitivity;
@@ -125,7 +125,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 	void default_Screenshot_Settings(User_Screenshot_Settings& config_data) { config_data = Default_Config.Screenshot_Settings; }
 
 	void default_User_Configuration_Data(User_Configuration_Data& config_data, bool reset_Extra) {
-		default_Configuration_Behaviour(config_data.Automatic_Behaviour);
+		default_Automatic_Behaviour(config_data.Automatic_Behaviour);
 		default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, reset_Extra);
 		default_Display_Preferences(config_data.Display_Preferences);
 		default_GUI_Settings(config_data.GUI_Settings, reset_Extra, reset_Extra);

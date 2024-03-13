@@ -630,9 +630,9 @@ void Menu_Settings() {
 	};
 	static int Combo_initFrameRate = 0;
 	static const char* initMonitorLocations[] = {
-		"Automatic","First Monitor","Last Monitor","Specific Monitor",
+		"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
 		"Left","Right","Center (Placeholder)","Top","Bottom","Top-Left (Placeholder)","Top-Right (Placeholder)","Bottom-Left (Placeholder)","Bottom-Right (Placeholder)",
-		"Highest Resolution","Highest Framerate","Lowest Resolution","Lowest Framerate"
+		"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
 	};
 	static int Combo_initMonitorLocation = config_data.Display_Preferences.Display_Bootup_Type;
 	int& specificMonitor = config_data.Display_Preferences.Specific_Bootup_Display;

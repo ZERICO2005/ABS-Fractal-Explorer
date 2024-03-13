@@ -93,6 +93,9 @@ typedef int int_enum;
 	#define valueMaximum(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
 	#define valueRestore(value,restore,minimum,maximum) ( ((value) >= (minimum) && (value) <= (maximum)) ? ((value) = (value)) : ((value) = (restore)) )
 
+	#define BASE_0_TO_1_INDEXING(i) ((i) + 1)
+	#define BASE_1_TO_0_INDEXING(i) ((i) - 1)
+
 	int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize);
 
 	int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize);

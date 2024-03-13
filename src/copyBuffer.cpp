@@ -58,7 +58,7 @@ bool printValidateBufferBox(BufferBox* box) {
 
 /* Internal use only, does not contain safety measures */
 void blitBuffer(
-	uint8_t* srcBuf, uint8_t* dstBuf,
+	const uint8_t* srcBuf, uint8_t* dstBuf,
 	uint32_t srcPitch, uint32_t dstPitch, uint32_t channels,
 	uint32_t sizeX, uint32_t sizeY,
 	uint32_t srcX, uint32_t srcY,
