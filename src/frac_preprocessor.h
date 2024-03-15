@@ -15,56 +15,73 @@
 #include "fractal.h"
 
 // Stores precalculated (PC) fractal parameters. Struct will be read only in rendering engines
+template<typename fpX, typename fpC>
 struct Frac_Param_PC {
 	/* Type */
 		bool polarMandelbrot;
+		bool juliaSet;
 	/* Coordinates */
-		fp128 r;
-		fp128 i;
-		fp128 zr;
-		fp128 zi;
-		fp64 zoom_PC;
+		fpX r;
+		fpX i;
+		fpX zr;
+		fpX zi;
+		fpX zoom_PC;
 	/* Transformation */
-		fp128 rotSin_PC;
-		fp128 rotCos_PC;
-		fp64 sX;
-		fp64 sY;
+		fpX rotSin_PC;
+		fpX rotCos_PC;
+		fpX sX;
+		fpX sY;
+	/* Values */
+		fpX recip_numZ;
+		fpX neg_recip_numW;
 	/* Parameters */
 		uint32_t maxItr;
 		uint64_t formula;
-		fp64 breakoutValue;
+		fpX breakoutValue;
 			uint32_t power;
-			fp64 polarPower;
+			fpX polarPower;
+			fpX recip_log2_Power;
+			size_t mult_count;
+			size_t bool_count;
 	/* Coloring */
-		bool smoothColoring;
-		fp64 r_Amp;
-		fp64 r_Freq;
-		fp64 r_Phase;
-		fp64 g_Amp;
-		fp64 g_Freq;
-		fp64 g_Phase;
-		fp64 b_Amp;
-		fp64 b_Freq;
-		fp64 b_Phase;
-		fp64 interior_Amp;
-		fp64 interior_Freq;
-		fp64 interior_Phase;
+		// Phase and Freq are pre-multiplied by TAU
+		fpC r_Amp;
+		fpC r_Freq;
+		fpC r_Phase;
+		fpC g_Amp;
+		fpC g_Freq;
+		fpC g_Phase;
+		fpC b_Amp;
+		fpC b_Freq;
+		fpC b_Phase;
+		fpC interior_Amp;
+		fpC interior_Freq;
+		fpC interior_Phase;
+		// Other
+		fpC Color_Mult;
+		uint32_t Div_Mult;
 		uint8_t interior_Alpha;
 		uint8_t exterior_Alpha;
-}; typedef struct Frac_Param_PC Frac_Param_PC;
+		bool smoothColoring;
+};
 
 // Read only precalculated values
 struct Frac_Render_PC {
-	uint32_t total_ResX;
-	uint32_t total_ResY;
-	int32_t offset_PosX;
-	int32_t offset_PosY;
-	uint32_t sub_ResX;
-	uint32_t sub_ResY;
+	int32_t total_ResX;
+	int32_t total_ResY;
+	int32_t sub_ResX;
+	int32_t sub_ResY;
+	int32_t start_PosX;
+	int32_t start_PosY;
+	int32_t end_PosX;
+	int32_t end_PosY;
 
 	size_t total_Size;
 	size_t pitch;
 	uint8_t channels;
+
+	int32_t super_sampleX;
+	int32_t super_sampleY;
 
 	bool export_Image;
 	uint32_t rendering_method;
@@ -74,15 +91,17 @@ struct Frac_Render_PC {
 	uint32_t GPU_Partitions;
 }; typedef struct Frac_Render_PC Frac_Render_PC;
 
+template <typename fpX, typename fpC>
 struct Frac_Task_PC {
 	nano64_t timeStamp;
-	Frac_Param_PC param_PC;
+	Frac_Param_PC<fpX,fpC> param_PC;
 	Frac_Render_PC render_PC;
-}; typedef struct Frac_Task_PC Frac_Task_PC;
+};
 
 // Returns 0 on success, negative otherwise
+template <typename fpX, typename fpC>
 int preCalc_Frac_Param(
-	Frac_Param_PC& param_PC,
+	Frac_Param_PC<fpX,fpC>& param_PC,
 	const ABS_Mandelbrot& frac
 );
 
@@ -93,16 +112,19 @@ int preCalc_Frac_Render(
 );
 
 // Returns 0 on success, negative otherwise
+template <typename fpX, typename fpC>
 int preCalc_Frac_Task(
-	Frac_Task_PC& task_PC,
+	Frac_Task_PC<fpX,fpC>& task_PC,
 	const ABS_Mandelbrot& frac, const ABS_Mandelbrot& render_data,
 	nano64_t timeStamp = 0
 );
 
+
 // Returns 0 on success, negative otherwise
+template <typename fpX, typename fpC>
 int mergeTo_Frac_Task(
-	Frac_Task_PC& task_PC,
-	Frac_Param_PC& param_PC, Frac_Render_PC& render_PC,
+	Frac_Task_PC<fpX,fpC>& task_PC,
+	Frac_Param_PC<fpX,fpC>& param_PC, Frac_Render_PC& render_PC,
 	nano64_t timeStamp = 0
 );
 

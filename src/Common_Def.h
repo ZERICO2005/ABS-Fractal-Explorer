@@ -100,6 +100,9 @@ typedef int int_enum;
 
 	int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize);
 
+	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+	uint64_t fnv1a_hash(const uint8_t* buf, size_t len);
+
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);
 	uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio);

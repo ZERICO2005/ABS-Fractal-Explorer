@@ -33,29 +33,44 @@
 # Display_Preferences
 	## Display_Bootup_Type
 	*(0 Automatic)*<br>
-	Configures how the program should determine which display to open on. Doesn't have an effect if the system only has one monitor.
+	Configures how the program should determine which display to open on. Doesn't have an effect if the system only has one monitor. 
 	
-	0. Automatic (Currently just display 1)
-	1. First Display
-	2. Last Display
-	3. Specific Display (Opens on a specific display as defined by `Specific_Bootup_Display`, or the `Last Display` if it is not available)
+	0. Automatic: Goes through a multi-step process to determine which display to use
+		* If the current and previous `Display_Config_Hash` values match, the display will open on the `Previous_Display_Used`.
+		* If the current and previous `Display_Config_Hash` do **not** match, or the `Previous_Display_Used` is not set, the display will open on the `Cursors Position`.
+		* If the `Cursor Position` display is invalid, the `Primary Display` will be used.
+		* If the `Primary Display` is also invalid, then the first valid display will be used.
+		* If none of the displays are valid, then the display with the highest resolution will be used.
+	1. Cursor Position
+	2. Primary Display
+	2. First Display
+	3. Last Display
+	4. Specific Display (Opens on a specific display as defined by `Specific_Bootup_Display`, or the `Last Display` if it is not available)
 	
-	Directional Based: (Based on a displays position)
-	4. Left
-	5. Right
-	6. Center (Not implemented)
-	7. Top
-	8. Bottom
-	9. Top-Left (Not implemented)
-	10. Top-Right (Not implemented)
-	11. Bottom-Left (Not implemented)
-	12. Bottom-Right (Not implemented)
+	Directional Based: (Calculated from the center cordinate of a display)
+	5. Left
+	6. Right
+	7. Center
+	8. Top
+	9. Bottom
+	10. Top-Left
+	11. Top-Right
+	12. Bottom-Left
+	13. Bottom-Right
 	
 	Attribute Based:
-	13. Highest Resolution
-	14. Highest Framerate
-	15. Lowest Resolution
-	16. Lowest Framerate
+	14. Highest Resolution
+	15. Highest Framerate
+	16. Lowest Resolution
+	17. Lowest Framerate
+	18. Widest Aspect Ratio
+	19. Tallest Aspect Ratio
+	
+	## Previous_Display_Used
+	Stores which display the center of window was on when the application was closed.
+	
+	## Display_Config_Hash
+	Generates a unique hash value for your display configuration. When `Display_Bootup_Type` is set to  `0 Automatic`, this hash value is used to detect if the display configuration has changed.
 	
 	## Specific_Bootup_Display
 	

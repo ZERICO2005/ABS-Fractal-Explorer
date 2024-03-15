@@ -25,6 +25,13 @@ class DisplayInfo {
 			fp64 refreshRate, uint8_t bitsPerPixel,
 			std::string name
 		);
+		// Writes to any non nullptr parameters
+		void retriveDisplayInfo(
+			int32_t* resX, int32_t* resY,
+			int32_t* posX, int32_t* posY,
+			fp64* refreshRate = nullptr, uint8_t* bitsPerPixel = nullptr,
+			std::string* name = nullptr
+		) const;
 		void getPosition(int32_t& x, int32_t& y) const;
 		int64_t getSquaredDistanceFromPoint(int32_t x, int32_t y) const;
 		void getResolution(int32_t& x, int32_t& y) const;
@@ -32,6 +39,7 @@ class DisplayInfo {
 		fp64 getHorizontalAspectRatio() const;
 		fp64 getVerticalAspectRatio() const;
 		fp64 getRefreshRate() const;
+		uint8_t getBitsPerPixel() const;
 		std::string getName() const;
 	
 		int32_t getLeftPosX() const;
@@ -86,8 +94,11 @@ int32_t matchDisplay(
 	const DisplayInfo*& displayArray, size_t displayCount,
 	Display_Bootup::Display_Bootup_Enum bootupType,
 	int32_t specificDisplay,
-	int32_t cursorPosX, int32_t cursorPosY
+	int32_t cursorPosX, int32_t cursorPosY,
 	int32_t minResX, int32_t minResY
 );
+
+// Used to determine if the display configuration has changed. Returns 0 if parameters are invalid
+uint64_t getDisplayConfigHash(const DisplayInfo*& displayArray, size_t displayCount);
 
 #endif /* DISPLAY_INFO_H */

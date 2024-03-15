@@ -30,6 +30,7 @@
 #include "user_data.h"
 
 #include "display_GUI.h"
+#include "displayInfo.h"
 
 
 
@@ -300,17 +301,17 @@ int setup_fracExpKB(int argc, char* argv[]) {
 // // Amount of displays detected
 // uint32_t DISPLAY_COUNT = 0;
 // /* Display Bootup */
-// 	namespace Display_Bootup {
-// 		enum Display_Bootup_Enum {
+// 	namespace Display_Bootup_Legacy {
+// 		enum Display_Bootup_Enum_Legacy {
 // 			Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 // 		};
 // 	};
 // 	uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
-// 	uint32_t Display_Match[Display_Bootup::Length];
-// 	Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
+// 	uint32_t Display_Match[Display_Bootup_Legacy::Length];
+// 	Display_Bootup_Legacy::Display_Bootup_Enum_Legacy Display_Bootup_Type = Display_Bootup_Legacy::Automatic;
 // 	bool useDefaultWindowSize = false;
 
-// struct _DisplayInfo {
+// struct _DisplayInfo_Legacy {
 // 	uint32_t resX;
 // 	uint32_t resY;
 // 	int32_t posX;
@@ -318,20 +319,20 @@ int setup_fracExpKB(int argc, char* argv[]) {
 // 	uint32_t refreshRate;
 // 	uint8_t bbp;
 // 	const char* name;
-// }; typedef struct _DisplayInfo DisplayInfo;
-// DisplayInfo* DisplayList;
+// }; typedef struct _DisplayInfo_Legacy DisplayInfo_Legacy;
+// DisplayInfo_Legacy* DisplayList;
 
 // // Counts from ONE
 // uint32_t CURRENT_DISPLAY = 1;
 // Counts from ONE
-DisplayInfo* getDisplayInfo(size_t i) { // size_t i = 1
+DisplayInfo_Legacy* getDisplayInfo(size_t i) { // size_t i = 1
 	if (i == 0 || i > DISPLAY_COUNT || DisplayList == NULL) {
 		return NULL;
 	}
 	return &DisplayList[i - 1];
 }
 // Counts from ONE
-DisplayInfo* getCurrentDisplayInfo() {
+DisplayInfo_Legacy* getCurrentDisplayInfo() {
 	return getDisplayInfo((size_t)CURRENT_DISPLAY);
 }
 
@@ -1356,27 +1357,27 @@ int setupDisplayInfo(const User_Display_Preferences& display_config,int32_t* ini
 		printError("Unable to get Display Info, NULL parameters");
 		return -1;
 	}
-	using namespace Display_Bootup;
+	using namespace Display_Bootup_Legacy;
 	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
 	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
 	if (DISPLAY_COUNT == 0) {
 		printError("No Displays Detected");
 		return -1;
 	}
-	DisplayList = (DisplayInfo*)calloc(DISPLAY_COUNT, sizeof(DisplayInfo));
+	DisplayList = (DisplayInfo_Legacy*)calloc(DISPLAY_COUNT, sizeof(DisplayInfo_Legacy));
 	if (DisplayList == nullptr) {
 		FREE(DisplayList);
 		printError("Unable to allocate memory for DisplayList");
 		return -1;
 	}
-	for (size_t d = 0; d < Display_Bootup::Length; d++) {
+	for (size_t d = 0; d < Display_Bootup_Legacy::Length; d++) {
 		Display_Match[d] = 1; // Set to first monitor
 	}
-	Display_Match[Display_Bootup::Automatic] = 1;
-	Display_Match[Display_Bootup::First] = 1;
-	Display_Match[Display_Bootup::Last] = DISPLAY_COUNT;
+	Display_Match[Display_Bootup_Legacy::Automatic] = 1;
+	Display_Match[Display_Bootup_Legacy::First] = 1;
+	Display_Match[Display_Bootup_Legacy::Last] = DISPLAY_COUNT;
 	int Specific_Bootup_Display = display_config.Specific_Bootup_Display;
-	Display_Match[Display_Bootup::Specific] = valueLimit(Specific_Bootup_Display,1,(int32_t)DISPLAY_COUNT);
+	Display_Match[Display_Bootup_Legacy::Specific] = valueLimit(Specific_Bootup_Display,1,(int32_t)DISPLAY_COUNT);
 	#define Display(match) DisplayList[Display_Match[(match)] - 1]
 	for (size_t i = 0; i < DISPLAY_COUNT; i++) {
 		SDL_DisplayMode mode;
@@ -1390,18 +1391,17 @@ int setupDisplayInfo(const User_Display_Preferences& display_config,int32_t* ini
 		DisplayList[i].refreshRate = mode.refresh_rate;
 		DisplayList[i].bbp = SDL_BITSPERPIXEL(mode.format);
 		DisplayList[i].name = SDL_GetDisplayName(i);
-		printf("\n\tDisplay[%zu]: %dx%d at %dHz (%d,%d) | %s",i+1,mode.w,mode.h,mode.refresh_rate,rect.x,rect.y,SDL_GetDisplayName(i)); //SDL_GetPixelFormatName(mode.format)
 		/* Orthagonal */
-		if (DisplayList[i].posX < Display(Display_Bootup::Left).posX) { Display_Match[Display_Bootup::Left] = i + 1; }
-		if (DisplayList[i].posX + DisplayList[i].resX > Display(Display_Bootup::Right).posX + Display(Display_Bootup::Right).resX) { Display_Match[Display_Bootup::Right] = i + 1; }
-		if (DisplayList[i].posY < Display(Display_Bootup::Top).posY) { Display_Match[Display_Bootup::Top] = i + 1; }
-		if (DisplayList[i].posY + DisplayList[i].resY > Display(Display_Bootup::Bottom).posY + Display(Display_Bootup::Bottom).resY) { Display_Match[Display_Bootup::Bottom] = i + 1; }
+		if (DisplayList[i].posX < Display(Display_Bootup_Legacy::Left).posX) { Display_Match[Display_Bootup_Legacy::Left] = i + 1; }
+		if (DisplayList[i].posX + DisplayList[i].resX > Display(Display_Bootup_Legacy::Right).posX + Display(Display_Bootup_Legacy::Right).resX) { Display_Match[Display_Bootup_Legacy::Right] = i + 1; }
+		if (DisplayList[i].posY < Display(Display_Bootup_Legacy::Top).posY) { Display_Match[Display_Bootup_Legacy::Top] = i + 1; }
+		if (DisplayList[i].posY + DisplayList[i].resY > Display(Display_Bootup_Legacy::Bottom).posY + Display(Display_Bootup_Legacy::Bottom).resY) { Display_Match[Display_Bootup_Legacy::Bottom] = i + 1; }
 		/* Diagonal */
 		/* Resolution and Refresh-Rate */
-		if (DisplayList[i].resX * DisplayList[i].resY > Display(Display_Bootup::HighResolution).resX * Display(Display_Bootup::HighResolution).resY) { Display_Match[Display_Bootup::HighResolution] = i + 1; }
-		if (DisplayList[i].refreshRate > Display(Display_Bootup::HighFrameRate).refreshRate) { Display_Match[Display_Bootup::HighFrameRate] = i + 1; }
-		if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup::LowResolution).resX * Display(Display_Bootup::LowResolution).resY) { Display_Match[Display_Bootup::LowResolution] = i + 1; }
-		if (DisplayList[i].refreshRate < Display(Display_Bootup::LowFrameRate).refreshRate) { Display_Match[Display_Bootup::LowFrameRate] = i + 1; }
+		if (DisplayList[i].resX * DisplayList[i].resY > Display(Display_Bootup_Legacy::HighResolution).resX * Display(Display_Bootup_Legacy::HighResolution).resY) { Display_Match[Display_Bootup_Legacy::HighResolution] = i + 1; }
+		if (DisplayList[i].refreshRate > Display(Display_Bootup_Legacy::HighFrameRate).refreshRate) { Display_Match[Display_Bootup_Legacy::HighFrameRate] = i + 1; }
+		if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup_Legacy::LowResolution).resX * Display(Display_Bootup_Legacy::LowResolution).resY) { Display_Match[Display_Bootup_Legacy::LowResolution] = i + 1; }
+		if (DisplayList[i].refreshRate < Display(Display_Bootup_Legacy::LowFrameRate).refreshRate) { Display_Match[Display_Bootup_Legacy::LowFrameRate] = i + 1; }
 	}
 	*initResX = Display(display_config.Display_Bootup_Type).resX;
 	*initResY = Display(display_config.Display_Bootup_Type).resY;
@@ -1426,6 +1426,21 @@ int setupDisplayInfo(const User_Display_Preferences& display_config,int32_t* ini
 		return 0;
 	}
 	fflush(stdout);
+	return 0;
+}
+
+int loadDisplayInformation(const User_Display_Preferences& display_config,int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
+	if (initResX == nullptr || initResY == nullptr || initPosX == nullptr || initPosY == nullptr) {
+		printError("loadDisplayInformation failed, nullptr parameters");
+		return -1;
+	}
+	using namespace Display_Bootup;
+	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
+	if (DISPLAY_COUNT <= 0) {
+		printError("SDL_GetNumVideoDisplays() raised an error:\n%s",SDL_GetError());
+		return -1;
+	}
+	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
 	return 0;
 }
 
@@ -1522,7 +1537,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	//printFlush("\nNew: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
-			DisplayInfo* disp = getCurrentDisplayInfo();
+			DisplayInfo_Legacy* disp = getCurrentDisplayInfo();
 			if (disp != nullptr) {
 				FRAME_RATE = disp->refreshRate * Default_Frame_Rate_Multiplier;
 			}

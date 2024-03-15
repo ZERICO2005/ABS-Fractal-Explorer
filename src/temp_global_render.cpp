@@ -182,17 +182,17 @@
 	// Amount of displays detected
 	uint32_t DISPLAY_COUNT = 0;
 	/* Display Bootup */
-		// namespace Display_Bootup {
-		// 	enum Display_Bootup_Enum {
+		// namespace Display_Bootup_Legacy {
+		// 	enum Display_Bootup_Enum_Legacy {
 		// 		Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 		// 	};
 		// };
 		//uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
-		uint32_t Display_Match[Display_Bootup::Length] = {0};
-		//Display_Bootup::Display_Bootup_Enum Display_Bootup_Type = Display_Bootup::Automatic;
+		uint32_t Display_Match[Display_Bootup_Legacy::Length] = {0};
+		//Display_Bootup_Legacy::Display_Bootup_Enum_Legacy Display_Bootup_Type = Display_Bootup_Legacy::Automatic;
 		bool useDefaultWindowSize = false;
 
-	// struct DisplayInfo {
+	// struct DisplayInfo_Legacy {
 	// 	uint32_t resX;
 	// 	uint32_t resY;
 	// 	int32_t posX;
@@ -200,8 +200,8 @@
 	// 	uint32_t refreshRate;
 	// 	uint8_t bbp;
 	// 	const char* name;
-	// }; typedef struct DisplayInfo DisplayInfo;
-	DisplayInfo* DisplayList = nullptr;
+	// }; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
+	DisplayInfo_Legacy* DisplayList = nullptr;
 
 	// Counts from ONE
 	uint32_t CURRENT_DISPLAY = 1;

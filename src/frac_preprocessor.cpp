@@ -14,8 +14,9 @@
 
 
 // Returns 0 on success, negative otherwise
+template <typename fpX, typename fpC>
 int preCalc_Frac_Param(
-	Frac_Param_PC& param_PC,
+	Frac_Param_PC<fpX,fpC>& param_PC,
 	const ABS_Mandelbrot& frac
 ) {
 	/* Type */
@@ -65,8 +66,9 @@ int preCalc_Frac_Render(
 }
 
 // Returns 0 on success, negative otherwise
+template <typename fpX, typename fpC>
 int preCalc_Frac_Task(
-	Frac_Task_PC& task_PC,
+	Frac_Task_PC<fpX, fpC>& task_PC,
 	const ABS_Mandelbrot& frac, const ABS_Mandelbrot& render_data,
 	nano64_t timeStamp
 ) {
@@ -74,9 +76,10 @@ int preCalc_Frac_Task(
 }
 
 // Returns 0 on success, negative otherwise
+template <typename fpX, typename fpC>
 int mergeTo_Frac_Task(
-	Frac_Task_PC& task_PC,
-	Frac_Param_PC& param_PC, Frac_Render_PC& render_PC,
+	Frac_Task_PC<fpX, fpC>& task_PC,
+	Frac_Param_PC<fpX, fpC>& param_PC, Frac_Render_PC& render_PC,
 	nano64_t timeStamp
 ) {
 	return 0;

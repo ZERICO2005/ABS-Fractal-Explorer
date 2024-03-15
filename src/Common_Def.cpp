@@ -52,6 +52,17 @@ int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize) {
 	return 0;
 }
 
+// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+uint64_t fnv1a_hash(const uint8_t* buf, size_t len) {
+	const uint64_t fnv1a_prime = 0x100000001B3; // FNV prime (64bit)
+	uint64_t fnv1a_hash = 0xCBF29CE484222325; // FNV offset basis (64bit)
+	for (size_t i = 0; i < len; i++) {
+		fnv1a_hash ^= buf[i];
+		fnv1a_hash *= fnv1a_prime;
+	}
+	return fnv1a_hash;
+}
+
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {
 	if (val < min) {
 		val = min;

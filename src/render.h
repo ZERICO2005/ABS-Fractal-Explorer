@@ -124,7 +124,7 @@ void correctUsernameText(char* buf, size_t len);
 
 /* Display */
 
-struct DisplayInfo {
+struct DisplayInfo_Legacy {
 	uint32_t resX;
 	uint32_t resY;
 	int32_t posX;
@@ -132,10 +132,10 @@ struct DisplayInfo {
 	uint32_t refreshRate;
 	uint8_t bbp;
 	const char* name;
-}; typedef struct DisplayInfo DisplayInfo;
+}; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
 
-DisplayInfo* getDisplayInfo(size_t i = 1);
-DisplayInfo* getCurrentDisplayInfo();
+DisplayInfo_Legacy* getDisplayInfo(size_t i = 1);
+DisplayInfo_Legacy* getCurrentDisplayInfo();
 
 /* Keys */
 

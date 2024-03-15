@@ -32,6 +32,20 @@
 		BitsPerPixel = bitsPerPixel;
 		Name = name;
 	}
+void DisplayInfo::retriveDisplayInfo(
+	int32_t* resX, int32_t* resY,
+	int32_t* posX, int32_t* posY,
+	fp64* refreshRate, uint8_t* bitsPerPixel,
+	std::string* name
+) const {
+	if (resX != nullptr) { *resX = ResX; }
+	if (resY != nullptr) { *resY = ResY; }
+	if (posX != nullptr) { *posX = PosX; }
+	if (posY != nullptr) { *posY = PosY; }
+	if (refreshRate != nullptr) { *refreshRate = RefreshRate; }
+	if (bitsPerPixel != nullptr) { *bitsPerPixel = BitsPerPixel; }
+	if (name != nullptr) { *name = Name; }
+}
 	void DisplayInfo::getPosition(int32_t& x, int32_t& y) const {
 		x = PosX;
 		y = PosY;
@@ -51,6 +65,7 @@
 		return (ResX != 0) ? ((fp64)ResY / (fp64)ResX) : 0.0;
 	}
 	fp64 DisplayInfo::getRefreshRate() const { return RefreshRate; }
+	uint8_t DisplayInfo::getBitsPerPixel() const { return BitsPerPixel; }
 	std::string DisplayInfo::getName() const { return Name; }
 
 	int32_t DisplayInfo::getLeftPosX() const { return PosX; }
@@ -297,4 +312,29 @@ int32_t matchDisplay(
 		return 0;
 	};
 	return bestDisplay;
+}
+
+uint64_t getDisplayConfigHash(const DisplayInfo*& displayArray, size_t displayCount) {
+	if (displayCount == 0) {
+		return 0;
+	}
+	uint64_t hashAcc = 0;
+	struct DisplayHash {
+		int32_t resX; int32_t resY;
+		int32_t posX; int32_t posY; 
+		uint64_t refreshRate; uint8_t bitsPerPixel;
+		size_t index; size_t count;
+	};
+	DisplayHash dispHash; memset(&dispHash,0,sizeof(DisplayHash));
+	for (size_t i = 0; i < displayCount; i++) {
+		displayArray[i].retriveDisplayInfo(
+			&dispHash.resX,&dispHash.resY,
+			&dispHash.posX,&dispHash.posY,
+			(fp64*)((void*)&dispHash.refreshRate),&dispHash.bitsPerPixel
+		);
+		dispHash.index = i;
+		dispHash.count = displayCount;
+		hashAcc += fnv1a_hash((uint8_t*)((void*)&dispHash),sizeof(DisplayHash));
+	}
+	return hashAcc;
 }

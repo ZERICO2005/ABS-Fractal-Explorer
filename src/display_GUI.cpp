@@ -639,7 +639,7 @@ void Menu_Settings() {
 
 	#define printDisplayInfo(displayNumber); \
 	{ \
-		DisplayInfo* DispI = getDisplayInfo(displayNumber); \
+		DisplayInfo_Legacy* DispI = getDisplayInfo(displayNumber); \
 		if (DispI == NULL) { \
 			ImGui::Text("Display %d is not detected",displayNumber); \
 		} else { \
@@ -703,16 +703,16 @@ void Menu_Settings() {
 				SELECT_DISPLAY = CURRENT_DISPLAY;
 			break;
 			case 1:
-				SELECT_DISPLAY = Display_Match[Display_Bootup::HighFrameRate];
+				SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::HighFrameRate];
 			break;
 			case 2:
-				SELECT_DISPLAY = Display_Match[Display_Bootup::LowFrameRate];
+				SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::LowFrameRate];
 			break;
 		}
 		printDisplayInfo(SELECT_DISPLAY);
 
-		//DisplayInfo* disp = getCurrentDisplayInfo();
-		DisplayInfo* disp = getDisplayInfo(SELECT_DISPLAY);
+		//DisplayInfo_Legacy* disp = getCurrentDisplayInfo();
+		DisplayInfo_Legacy* disp = getDisplayInfo(SELECT_DISPLAY);
 		static fp64 FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp64)(disp->refreshRate);
 		fp64 TEMP_FPS = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate); // Would normally be either the current, highest, or lowest refresh rate
 		if (Combo_initFrameRate == 3) { // Constant
