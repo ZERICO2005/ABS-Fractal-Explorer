@@ -93,7 +93,7 @@ void Bootup_initRenderData() {
 
 /* Keyboard and Scancodes */
 
-// const uint8_t* KEYS;
+// const uint8_t* SDL_Keyboard_State;
 
 // struct _Key_Status {
 // 	SDL_Scancode key;
@@ -180,9 +180,9 @@ void updateKeys() {
 	for (size_t t = 0; t < ARRAY_LENGTH(func_stat); t++) {
 		func_stat[t].triggered = false;
 	}
-	KEYS = SDL_GetKeyboardState(NULL);
+	SDL_Keyboard_State = SDL_GetKeyboardState(NULL);
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
-		if (KEYS[i] != 0) { // Key Pressed
+		if (SDL_Keyboard_State[i] != 0) { // Key Pressed
 			if (Key_List[i].pressed == false) {
 				Key_List[i].timePressed = getNanoTime();
 				Key_List[i].pressed = true;
@@ -1459,13 +1459,14 @@ void init_config_data() {
 			// WindowOpacity = config_data.GUI_Settings.WindowOpacity;
 			// WindowAutoScale = config_data.GUI_Settings.WindowAutoScale;
 		/* Screenshot Settings */
-		int temp_screenshotFileType = config_data.Screenshot_Settings.screenshotFileType;
+		int_enum temp_screenshotFileType = config_data.Screenshot_Settings.screenshotFileType;
 		if (temp_screenshotFileType < 0 || temp_screenshotFileType >= Image_File_Format::Image_File_Format_Count) {
 			temp_screenshotFileType = Image_File_Format::PNG;
 		}
-		screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
-		User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
-		User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
+		config_data.Screenshot_Settings.screenshotFileType = temp_screenshotFileType;
+		// screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
+		// User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
+		// User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
 	} else {
 		default_User_Configuration_Data(config_data, true);
 	}
@@ -1486,9 +1487,9 @@ void terminate_config_data() {
 		// config_data.GUI_Settings.WindowOpacity = WindowOpacity;
 		// config_data.GUI_Settings.WindowAutoScale = WindowAutoScale;
 	/* Screenshot Settings */
-		config_data.Screenshot_Settings.screenshotFileType = (int)screenshotFileType;
-		config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
-		config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
+		// config_data.Screenshot_Settings.screenshotFileType = (int)screenshotFileType;
+		// config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
+		// config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
 
 	export_config_data(config_data,"./config.fracExpConfig");
 }
@@ -1735,15 +1736,16 @@ int exportSuperScreenshot() {
 		superRenderData.sample = super_screenshot_super_sample;
 		superRenderData.subSample = 1;
 		superRenderData.CPU_Threads = super_screenshot_maxThreads * super_screenshot_threadMultiplier;
-		switch(screenshotFileType) {
+		const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
+		switch(screenshot_settings.screenshotFileType) {
 			case Image_File_Format::PNG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,User_PNG_Compression_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,screenshot_settings.PNG_Compression_Level);
 			break;
 			case Image_File_Format::JPG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,User_JPG_Quality_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,screenshot_settings.JPG_Quality_Level);
 			break;
 			default:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,User_PNG_Compression_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,screenshot_settings.PNG_Compression_Level);
 		}
 	}
 	return 0;
@@ -1950,12 +1952,13 @@ void newFrame() {
 			char* name = (char*)calloc(size + 1,sizeof(char));
 			snprintf(name,size,"%s_%llu",FractalTypeFileText[frac.type_value],curTime);
 			char path[] = "./";
-			switch(screenshotFileType) {
+			const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
+			switch(screenshot_settings.screenshotFileType) {
 				case Image_File_Format::PNG:
-					writePNGImage(&temp_primaryBox,path,name,User_PNG_Compression_Level);
+					writePNGImage(&temp_primaryBox,path,name,screenshot_settings.PNG_Compression_Level);
 				break;
 				case Image_File_Format::JPG:
-					writeJPGImage(&temp_primaryBox,path,name,User_JPG_Quality_Level);
+					writeJPGImage(&temp_primaryBox,path,name,screenshot_settings.JPG_Quality_Level);
 				break;
 				case Image_File_Format::TGA:
 					writeTGAImage(&temp_primaryBox,path,name);
@@ -1964,7 +1967,7 @@ void newFrame() {
 					writeBMPImage(&temp_primaryBox,path,name);
 				break;
 				default:
-				printError("Unknown screenshot file type: %d",screenshotFileType);
+				printError("Unknown screenshot file type: %d",screenshot_settings.screenshotFileType);
 			}
 			FREE(name);
 		}

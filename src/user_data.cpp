@@ -28,8 +28,10 @@ constexpr User_Configuration_Data Default_Config = {
 		.breakout_value = 1.0
 	},
 	.Display_Preferences = {
+		.Display_Config_Hash = 0x0,
 		.Display_Bootup_Type = 0, // 0 == Automatic (Enum)
 		.Specific_Bootup_Display = 1,
+		.Previous_Display_Used = 0,
 		.Bootup_Fullscreen = false,
 		.ScaleWindowToScreenSize = false,
 		.Bootup_Window_Scale = 0.7
@@ -74,6 +76,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 
 	void clean_Display_Preferences(User_Display_Preferences& config_data) {
 		const User_Display_Preferences& config_default = Default_Config.Display_Preferences;
+		// display_config_hash doesn't need to be cleaned
 		// clean_config_data(Display_Bootup_Type, 0, 0);
 		clean_config_data(Specific_Bootup_Display, 1, 144); // Does anyone even have 144 displays? Probably not.
 		clean_config_data(Bootup_Window_Scale, 0.01, 1.0);
@@ -81,6 +84,7 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 
 	void clean_GUI_Settings(User_GUI_Settings& config_data) {
 		const User_GUI_Settings& config_default = Default_Config.GUI_Settings;
+		clean_config_data(GUI_Theme, 0, 2);
 		clean_config_data(WindowOpacity, 0.2, 1.0);
 		clean_config_data(WindowAutoScale, 0.1, 1.0);
 	}
@@ -293,10 +297,14 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		textToFloat64(get_config_value(Config_Text,config_label,"breakout_value"));
 
 	config_label = User_Configuration_Labels[Display_Preferences];
+		config_data.Display_Preferences.Display_Config_Hash =
+		textToUint64(get_config_value(Config_Text,config_label,"Display_Config_Hash"));
 		config_data.Display_Preferences.Display_Bootup_Type =
 		textToEnum(get_config_value(Config_Text,config_label,"Display_Bootup_Type"));
 		config_data.Display_Preferences.Specific_Bootup_Display =
 		textToInt32(get_config_value(Config_Text,config_label,"Specific_Bootup_Display"));
+		config_data.Display_Preferences.Previous_Display_Used =
+		textToInt32(get_config_value(Config_Text,config_label,"Previous_Display_Used"));
 		config_data.Display_Preferences.Bootup_Fullscreen =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"Bootup_Fullscreen"));
 		config_data.Display_Preferences.ScaleWindowToScreenSize =
@@ -458,11 +466,17 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Display_Preferences]);
+		fprintf(file,"\n\tDisplay_Config_Hash: %llu",
+			config_data.Display_Preferences.Display_Config_Hash
+		);
 		fprintf(file,"\n\tDisplay_Bootup_Type: %d",
 			config_data.Display_Preferences.Display_Bootup_Type
 		);
 		fprintf(file,"\n\tSpecific_Bootup_Display: %d",
 			config_data.Display_Preferences.Specific_Bootup_Display
+		);
+		fprintf(file,"\n\tLast_Display_Used: %d",
+			config_data.Display_Preferences.Previous_Display_Used
 		);
 		fprintf(file,"\n\tBootup_Fullscreen: %s",
 			boolText(config_data.Display_Preferences.Bootup_Fullscreen)

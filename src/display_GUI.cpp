@@ -795,32 +795,33 @@ void Menu_Settings() {
 		ImGui::Text(" ");
 	}
 	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) {
-		static int Combo_ScreenshotFileType = screenshotFileType;
+		User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
+		static int Combo_ScreenshotFileType = screenshot_settings.screenshotFileType;
 		static const char* Text_ScreenshotFileType[] = {"PNG","JPG/JPEG","TGA","BMP"};
 		ImGui::Text("Screenshot File Type:");
 		if (ImGui::Combo("##Combo_ScreenshotFileType",&Combo_ScreenshotFileType,BufAndLen(Text_ScreenshotFileType))) {
-			screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
+			screenshot_settings.screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
 		}
-		if (screenshotFileType == Image_File_Format::PNG) {
-			int temp_User_PNG_Compression_Level = User_PNG_Compression_Level;
+		if (screenshot_settings.screenshotFileType == Image_File_Format::PNG) {
+			int temp_User_PNG_Compression_Level = screenshot_settings.PNG_Compression_Level;
 			ImGui::Text("PNG Compression Level (Default = 8)");
 			ImGui::SliderInt("##temp_User_PNG_Compression_Level",&temp_User_PNG_Compression_Level,1,9);
-			User_PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
-			if (User_PNG_Compression_Level < 3) { ImGui::Text("Fastest Saving (Large File Size)"); } else
-			if (User_PNG_Compression_Level < 5) { ImGui::Text("Faster Saving"); } else
-			if (User_PNG_Compression_Level < 7) { ImGui::Text("Balanced"); } else
-			if (User_PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
+			screenshot_settings.PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
+			if (screenshot_settings.PNG_Compression_Level < 3) { ImGui::Text("Fastest Saving (Large File Size)"); } else
+			if (screenshot_settings.PNG_Compression_Level < 5) { ImGui::Text("Faster Saving"); } else
+			if (screenshot_settings.PNG_Compression_Level < 7) { ImGui::Text("Balanced"); } else
+			if (screenshot_settings.PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
 			{ ImGui::Text("Smallest File Size"); }
-		} else if (screenshotFileType == Image_File_Format::JPG) {
-			int temp_User_JPG_Quality_Level = User_JPG_Quality_Level;
+		} else if (screenshot_settings.screenshotFileType == Image_File_Format::JPG) {
+			int temp_User_JPG_Quality_Level = screenshot_settings.JPG_Quality_Level;
 			ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
 			ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
-			User_JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
-			if (User_JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
-			if (User_JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
-			if (User_JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
+			screenshot_settings.JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
+			if (screenshot_settings.JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
+			if (screenshot_settings.JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
+			if (screenshot_settings.JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
 			{ ImGui::Text("Very High Quality (Recommended)"); }
-		} else if (screenshotFileType == Image_File_Format::TGA || screenshotFileType == Image_File_Format::BMP) {
+		} else if (screenshot_settings.screenshotFileType == Image_File_Format::TGA || screenshot_settings.screenshotFileType == Image_File_Format::BMP) {
 			ImGui::Text("Note: Super Screenshots only support PNG and JPG.");
 		}
 
