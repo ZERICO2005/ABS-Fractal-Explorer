@@ -35,8 +35,10 @@
 
 /* Display Settings */
 	struct User_Display_Preferences {
+		uint64_t Display_Config_Hash;
 		int_enum Display_Bootup_Type;
 		int Specific_Bootup_Display;
+		int Previous_Display_Used;
 		bool Bootup_Fullscreen;
 		bool ScaleWindowToScreenSize;
 		fp64 Bootup_Window_Scale;

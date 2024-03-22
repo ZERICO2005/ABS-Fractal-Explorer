@@ -16,10 +16,10 @@
 
 /* Includes */
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
+#include <cstdint>
+#include <cstdlib>
+#include <cmath>
+#include <cstring>
 
 #include <stdio.h>
 #include <iostream>
@@ -72,12 +72,14 @@ typedef int int_enum;
 
 /* Macros */
 
-#define STR_M(x) #x
-#define STR_N(x) STR_M(x)
+	// Macro to String
+	#define STR_M(x) #x
+	// Macro to Number
+	#define STR_N(x) STR_M(x)
 
-#define ARRAY_LENGTH(x) ( (sizeof(x[0]) != 0) ? (sizeof(x) / sizeof(x[0])) : 0 )
-#define TEXT_LENGTH(x) ( (sizeof(x[0]) != 0) ? ( ((sizeof(x) / sizeof(x[0])) != 0) ? ((sizeof(x) / sizeof(x[0])) - 1) : 0 ) : 0 )
-#define FREE(x) free(x); x = nullptr
+	#define ARRAY_LENGTH(x) ( (sizeof(x[0]) != 0) ? (sizeof(x) / sizeof(x[0])) : 0 )
+	#define TEXT_LENGTH(x) ( (sizeof(x[0]) != 0) ? ( ((sizeof(x) / sizeof(x[0])) != 0) ? ((sizeof(x) / sizeof(x[0])) - 1) : 0 ) : 0 )
+	#define FREE(x) free(x); x = nullptr
 
 /* Functions */
 	// Left Circular Shift
@@ -105,9 +107,12 @@ typedef int int_enum;
 
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);
+	int32_t calcMinMaxRatio(int32_t val, int32_t min, int32_t max, fp64 ratio);
 	uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio);
+	
 	fp64 calcMinRatioMax(fp64 val, fp64 min, fp64 ratio, fp64 max);
 	fp32 calcMinRatioMax(fp32 val, fp32 min, fp32 ratio, fp32 max);
+	int32_t calcMinRatioMax(int32_t val, int32_t min, fp64 ratio, int32_t max);
 	uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max);
 
 	#define linearInterpolation(x,x0,x1,y0,y1) ( (y0) + ( (((y1) - (y0)) * ((x) - (x0))) / ((x1) - (x0)) ) )

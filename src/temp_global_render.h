@@ -133,13 +133,13 @@
 
 /* Images */
 
-	extern Image_File_Format::Image_File_Format_Enum screenshotFileType;
-	extern uint32_t User_PNG_Compression_Level;
-	extern uint32_t User_JPG_Quality_Level;
+	// extern Image_File_Format::Image_File_Format_Enum screenshotFileType;
+	// extern uint32_t User_PNG_Compression_Level;
+	// extern uint32_t User_JPG_Quality_Level;
 
 /* Keyboard */
 
-	extern const uint8_t* KEYS;
+	extern const uint8_t* SDL_Keyboard_State;
 
 	struct Key_Status {
 		SDL_Scancode key;

@@ -131,13 +131,13 @@
 
 /* Images */
 
-	Image_File_Format::Image_File_Format_Enum screenshotFileType = Image_File_Format::PNG;
-	uint32_t User_PNG_Compression_Level = 8;
-	uint32_t User_JPG_Quality_Level = 95;
+	// Image_File_Format::Image_File_Format_Enum screenshotFileType = Image_File_Format::PNG;
+	// uint32_t User_PNG_Compression_Level = 8;
+	// uint32_t User_JPG_Quality_Level = 95;
 
 /* Keyboard */
 
-	const uint8_t* KEYS = nullptr;
+	const uint8_t* SDL_Keyboard_State = nullptr;
 
 	// struct Key_Status {
 	// 	SDL_Scancode key;

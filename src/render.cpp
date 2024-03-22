@@ -93,7 +93,7 @@ void Bootup_initRenderData() {
 
 /* Keyboard and Scancodes */
 
-// const uint8_t* KEYS;
+// const uint8_t* SDL_Keyboard_State;
 
 // struct _Key_Status {
 // 	SDL_Scancode key;
@@ -180,9 +180,9 @@ void updateKeys() {
 	for (size_t t = 0; t < ARRAY_LENGTH(func_stat); t++) {
 		func_stat[t].triggered = false;
 	}
-	KEYS = SDL_GetKeyboardState(NULL);
+	SDL_Keyboard_State = SDL_GetKeyboardState(NULL);
 	for (size_t i = 0; i < SDL_NUM_SCANCODES; i++) {
-		if (KEYS[i] != 0) { // Key Pressed
+		if (SDL_Keyboard_State[i] != 0) { // Key Pressed
 			if (Key_List[i].pressed == false) {
 				Key_List[i].timePressed = getNanoTime();
 				Key_List[i].pressed = true;
@@ -234,7 +234,7 @@ void recolorKeyboard() {
 		// if (currentKBPreset->kList.size() <= 0) {
 		// 	currentKBPreset->kList = defaultKeyBind;
 		// }
-		for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
+		for (size_t s = SDL_SCANCODE_UNKNOWN + 1; s < SDL_NUM_SCANCODES; s++) {
 			size_t keyColorSet = 0;
 			for (const auto& bind : currentKBPreset->kList) {
 				if (bind.key == (SDL_Scancode)s) {
@@ -242,7 +242,7 @@ void recolorKeyboard() {
 						setRGB_Scancode(0xFF,0xFF,0xFF,(SDL_Scancode)s);
 						break; // Idempotent
 					} 
-					for (size_t r = SDL_SCANCODE_UNKNOWN + 1; r < ARRAY_LENGTH(Key_Function_Map); r++) {
+					for (size_t r = Key_Function::NONE + 1; r < ARRAY_LENGTH(Key_Function_Map); r++) {
 						if (bind.func <= Key_Function_Map[r] && bind.func != Key_Function::NONE) {
 							setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
 							keyColorSet = r;
@@ -695,7 +695,10 @@ int updateFractalParameters() {
 				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
 				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
 			} else {
-				pixel_to_coordinate(ImGui::GetMousePos().x,ImGui::GetMousePos().y - RESY_UI,&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData);
+				pixel_to_coordinate(
+					(int32_t)(ImGui::GetMousePos().x),(int32_t)(ImGui::GetMousePos().y - RESY_UI),
+					&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData
+				);
 			}
 		}
 	/* Zoom */
@@ -1459,13 +1462,14 @@ void init_config_data() {
 			// WindowOpacity = config_data.GUI_Settings.WindowOpacity;
 			// WindowAutoScale = config_data.GUI_Settings.WindowAutoScale;
 		/* Screenshot Settings */
-		int temp_screenshotFileType = config_data.Screenshot_Settings.screenshotFileType;
+		int_enum temp_screenshotFileType = config_data.Screenshot_Settings.screenshotFileType;
 		if (temp_screenshotFileType < 0 || temp_screenshotFileType >= Image_File_Format::Image_File_Format_Count) {
 			temp_screenshotFileType = Image_File_Format::PNG;
 		}
-		screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
-		User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
-		User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
+		config_data.Screenshot_Settings.screenshotFileType = temp_screenshotFileType;
+		// screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
+		// User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
+		// User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
 	} else {
 		default_User_Configuration_Data(config_data, true);
 	}
@@ -1475,7 +1479,7 @@ void terminate_config_data() {
 	if (config_data.Automatic_Behaviour.AutoSave_Config_File == false) {
 		return;
 	}
-
+	export_config_data(config_data,"./config.fracExpConfig");
 	// char filePath[320]; memset(filePath,'\0',sizeof(filePath));
 	// saveFileInterface(filePath,ARRAY_LENGTH(filePath));
 	// User_Configuration_Data config_data = {0};
@@ -1486,11 +1490,11 @@ void terminate_config_data() {
 		// config_data.GUI_Settings.WindowOpacity = WindowOpacity;
 		// config_data.GUI_Settings.WindowAutoScale = WindowAutoScale;
 	/* Screenshot Settings */
-		config_data.Screenshot_Settings.screenshotFileType = (int)screenshotFileType;
-		config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
-		config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
+		// config_data.Screenshot_Settings.screenshotFileType = (int)screenshotFileType;
+		// config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
+		// config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
 
-	export_config_data(config_data,"./config.fracExpConfig");
+	//export_config_data(config_data,"./config.fracExpConfig");
 }
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
@@ -1523,11 +1527,11 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			initResY = RESY_Minimum;
 		}
 	} else {
-		initResX = calcMinMaxRatio((uint32_t)initResX,RESX_Minimum,RESX_Default,0.6);
+		initResX = calcMinMaxRatio(initResX,RESX_Minimum,RESX_Default,0.6);
 		if (initResX > RESX_Maximum) {
 			initResX = RESX_Maximum;
 		}
-		initResY = calcMinMaxRatio((uint32_t)initResY,RESY_Minimum,RESY_Default,0.6);
+		initResY = calcMinMaxRatio(initResY,RESY_Minimum,RESY_Default,0.6);
 		if (initResY > RESX_Maximum) {
 			initResY = RESX_Maximum;
 		}
@@ -1735,15 +1739,16 @@ int exportSuperScreenshot() {
 		superRenderData.sample = super_screenshot_super_sample;
 		superRenderData.subSample = 1;
 		superRenderData.CPU_Threads = super_screenshot_maxThreads * super_screenshot_threadMultiplier;
-		switch(screenshotFileType) {
+		const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
+		switch(screenshot_settings.screenshotFileType) {
 			case Image_File_Format::PNG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,User_PNG_Compression_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,screenshot_settings.PNG_Compression_Level);
 			break;
 			case Image_File_Format::JPG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,User_JPG_Quality_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,screenshot_settings.JPG_Quality_Level);
 			break;
 			default:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,User_PNG_Compression_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,screenshot_settings.PNG_Compression_Level);
 		}
 	}
 	return 0;
@@ -1950,12 +1955,13 @@ void newFrame() {
 			char* name = (char*)calloc(size + 1,sizeof(char));
 			snprintf(name,size,"%s_%llu",FractalTypeFileText[frac.type_value],curTime);
 			char path[] = "./";
-			switch(screenshotFileType) {
+			const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
+			switch(screenshot_settings.screenshotFileType) {
 				case Image_File_Format::PNG:
-					writePNGImage(&temp_primaryBox,path,name,User_PNG_Compression_Level);
+					writePNGImage(&temp_primaryBox,path,name,screenshot_settings.PNG_Compression_Level);
 				break;
 				case Image_File_Format::JPG:
-					writeJPGImage(&temp_primaryBox,path,name,User_JPG_Quality_Level);
+					writeJPGImage(&temp_primaryBox,path,name,screenshot_settings.JPG_Quality_Level);
 				break;
 				case Image_File_Format::TGA:
 					writeTGAImage(&temp_primaryBox,path,name);
@@ -1964,7 +1970,7 @@ void newFrame() {
 					writeBMPImage(&temp_primaryBox,path,name);
 				break;
 				default:
-				printError("Unknown screenshot file type: %d",screenshotFileType);
+				printError("Unknown screenshot file type: %d",screenshot_settings.screenshotFileType);
 			}
 			FREE(name);
 		}

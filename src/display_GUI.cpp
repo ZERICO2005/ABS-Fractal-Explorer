@@ -34,37 +34,45 @@
 // #include "user_data.h"
 
 // /* Sets defualt window size and position along with size constraints */
-#define ImGui_DefaultWindowSize(valX,bufX,minX,maxX,ratioX,valY,bufY,minY,maxY,ratioY); \
-	uint32_t WINDOW_RESX = calcMinMaxRatio(valX-bufX,minX,maxX,ratioX); \
-	uint32_t WINDOW_RESY = calcMinMaxRatio(valY-bufY,minY,maxY,ratioY); \
-	ImGui::SetNextWindowPos({(fp32)((valX - WINDOW_RESX) / 2),(fp32)((valY - WINDOW_RESY) / 2)}, ImGuiCond_Once); \
-	ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}, ImGuiCond_Once); \
-	if (config_data.GUI_Settings.AutoResizeWindows == true) { \
-		ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}); \
-	} \
-	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY}); \
-	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX; \
-	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY; \
-	ImGui::SetNextWindowBgAlpha(config_data.GUI_Settings.WindowOpacity);
-
-#define ImGui_BoundWindowPosition(); \
-	if (config_data.GUI_Settings.PreventOutOfBoundsWindows == true) { \
-		int32_t WINDOW_POSX = ImGui::GetWindowPos().x; \
-		int32_t WINDOW_POSY = ImGui::GetWindowPos().y; \
-		valueLimit(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN); \
-		valueLimit(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN); \
-		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)}); \
+void ImGui_DefaultWindowSize(
+	const User_GUI_Settings& GUI_Settings,
+	int32_t valX, int32_t bufX, int32_t minX, int32_t maxX,
+	int32_t valY, int32_t bufY, int32_t minY, int32_t maxY
+) {
+	fp64 ratioX = GUI_Settings.WindowAutoScale;
+	fp64 ratioY = GUI_Settings.WindowAutoScale;
+	int32_t WINDOW_RESX = calcMinMaxRatio(valX - bufX,minX,maxX,ratioX);
+	int32_t WINDOW_RESY = calcMinMaxRatio(valY - bufY,minY,maxY,ratioY);
+	ImGui::SetNextWindowPos({(fp32)((valX - WINDOW_RESX) / 2),(fp32)((valY - WINDOW_RESY) / 2)}, ImGuiCond_Once);
+	ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY}, ImGuiCond_Once);
+	if (GUI_Settings.AutoResizeWindows == true) {
+		ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY});
 	}
+	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY});
+	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX;
+	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY;
+	ImGui::SetNextWindowBgAlpha(GUI_Settings.WindowOpacity);
+}
+
+void ImGui_BoundWindowPosition(const User_GUI_Settings& GUI_Settings) {
+	if (GUI_Settings.PreventOutOfBoundsWindows == true) {
+		int32_t WINDOW_POSX = ImGui::GetWindowPos().x;
+		int32_t WINDOW_POSY = ImGui::GetWindowPos().y;
+		valueLimit(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN);
+		valueLimit(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN);
+		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)});
+	}
+}
 
 void set_IMGUI_Theme(int_enum theme) {
 	switch(theme) {
-		case 0:
+		case Display_GUI::IMGUI_Theme_Classic:
 			ImGui::StyleColorsClassic();
 		break;
-		case 1:
+		case Display_GUI::IMGUI_Theme_Dark:
 			ImGui::StyleColorsDark();
 		break;
-		case 2:
+		case Display_GUI::IMGUI_Theme_Light:
 			ImGui::StyleColorsLight();
 		break;
 		default:
@@ -137,10 +145,13 @@ int render_IMGUI() {
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
     ImGui::Begin("Horizontal Button Page", NULL, window_flags);
 
+	const User_GUI_Settings& GUI_Settings = config_data.GUI_Settings;
+
 	static ImVec4 GUI_FrameRateColor;
 	static ImVec4 Render_FrameRateColor;
 	fp64 Frame_FPS_Display = 1.0 / Frame_Time_Display;
 	fp64 Render_FPS_Display = 1.0 / Render_Time_Display;
+	
 	GUI_FrameRateColor = {
 		(fp32)linearInterpolationClamp(Frame_FPS_Display,59.0,119.0,1.0,0.0),
 		(fp32)linearInterpolationClamp(Frame_FPS_Display,0.0,29.0,0.0,1.0),
@@ -153,6 +164,14 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 		(fp32)linearInterpolationClamp(Render_FPS_Display,29.0,59.0,0.0,1.0),
 		1.0
 	};
+	if (GUI_Settings.GUI_Theme == Display_GUI::IMGUI_Theme_Light) {
+		GUI_FrameRateColor.x = 1.0f - GUI_FrameRateColor.x;
+		GUI_FrameRateColor.y = 1.0f - GUI_FrameRateColor.y;
+		GUI_FrameRateColor.z = 1.0f - GUI_FrameRateColor.z;
+		Render_FrameRateColor.x = 1.0f - Render_FrameRateColor.x;
+		Render_FrameRateColor.y = 1.0f - Render_FrameRateColor.y;
+		Render_FrameRateColor.z = 1.0f - Render_FrameRateColor.z;
+	}
 	
 	ImGui::Text("GUI:"); ImGui::SameLine();
 	ImGui::TextColored(GUI_FrameRateColor,"%.2lf",Frame_FPS_Display); ImGui::SameLine(0.0,1.0);
@@ -277,9 +296,13 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 }
 
 void Menu_Coordinates() {
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
+	ImGui_DefaultWindowSize(
+		config_data.GUI_Settings,
+		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+	);
 	ImGui::Begin("Coordinates Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
-	ImGui_BoundWindowPosition();
+	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
 		#define FRAC frac.type.abs_mandelbrot
@@ -352,7 +375,11 @@ void Menu_Coordinates() {
 }
 
 void Menu_Fractal() {
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
+	ImGui_DefaultWindowSize(
+		config_data.GUI_Settings,
+		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+	);
 	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
 	static bool juliaSet = false;
 	static bool startingZ = false;
@@ -364,7 +391,7 @@ void Menu_Fractal() {
 	static bool lockToCardioid = false;
 	static bool flipCardioidSide = false;
 	ImGui::Begin("Fractal Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
-	ImGui_BoundWindowPosition();
+	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 	static int Combo_FractalType = 0;
 	ImGui::Text("Fractal Type:");
     if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
@@ -427,6 +454,7 @@ void Menu_Fractal() {
 		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
 		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
 		if (FRAC.cursorZValue) { ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue); }
+		if (ImGui::IsItemHovered()) { ImGui::SetTooltip("Ignores the zoom value when calculating cursor Z values"); }
 		ImGui::Separator();
 		#ifndef BUILD_RELEASE
 			static int Combo_JuliaSplit = 1;
@@ -491,7 +519,12 @@ void Menu_Fractal() {
 }
 
 void Menu_Rendering() {
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
+	ImGui_DefaultWindowSize(
+		config_data.GUI_Settings,
+		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+	);
+	
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
 	#ifndef BUILD_RELEASE
 		static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
@@ -512,7 +545,7 @@ void Menu_Rendering() {
 	
 
 	ImGui::Begin("Rendering Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
-	ImGui_BoundWindowPosition();
+	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	ImGui::Text("CPU Rendering Mode:");
 	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
@@ -624,6 +657,15 @@ void Menu_Rendering() {
 	ImGui::End();
 }
 
+void printDisplayInfo(int displayNumber) {
+	DisplayInfo_Legacy* DispI = getDisplayInfo(displayNumber);
+	if (DispI == nullptr) {
+		ImGui::Text("Display %d is not detected",displayNumber);
+	} else {
+		ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name); \
+	}
+}
+
 void Menu_Settings() {
 	static const char* initFrameRate[] = {
 		"Current Monitor","Highest Refresh-Rate","Lowest Refresh-Rate","Constant Value"
@@ -637,18 +679,14 @@ void Menu_Settings() {
 	static int Combo_initMonitorLocation = config_data.Display_Preferences.Display_Bootup_Type;
 	int& specificMonitor = config_data.Display_Preferences.Specific_Bootup_Display;
 
-	#define printDisplayInfo(displayNumber); \
-	{ \
-		DisplayInfo_Legacy* DispI = getDisplayInfo(displayNumber); \
-		if (DispI == NULL) { \
-			ImGui::Text("Display %d is not detected",displayNumber); \
-		} else { \
-			ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name); \
-		} \
-	}
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,240,400,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,160,320,config_data.GUI_Settings.WindowAutoScale);
+	ImGui_DefaultWindowSize(
+		config_data.GUI_Settings,
+		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+	);
+
 	ImGui::Begin("Settings Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
-	ImGui_BoundWindowPosition();
+	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	User_GUI_Settings& config_GUI_Settings = config_data.GUI_Settings;
 	User_Display_Preferences& config_Display = config_data.Display_Preferences;
@@ -657,16 +695,33 @@ void Menu_Settings() {
 	ImGui::Separator();
 	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
 	ImGui::Text(" ");
+	ImGui::TextWrapped("Warning: Due to a bug, importing/exporting files through the windows file dialog changes where \"./config.fracExpConfig\" is saved to, which may overwrite files");
 	if(ImGui::Button("Import fracExpConfig")) {
 		static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
-		openFileInterface(filePath,sizeof(filePath));
+		openFileInterface(
+			filePath,sizeof(filePath),
+			"Select a FracExp Configuration File",
+			"Config Files (*.fracExpConfig)\0*.fracExpConfig\0"\
+			"All Files (*.*)\0*.*\0"
+		);
 		import_config_data(config_data,filePath);
 		refresh_IMGUI(config_data);
+		/* TEMPORARY BUG PREVENTION */
+			config_data.Automatic_Behaviour.AutoSave_Config_File = false;
+		/* TEMPORARY BUG PREVENTION */
 	}
 	if(ImGui::Button("Export fracExpConfig")) {
 		static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
-		saveFileInterface(filePath,sizeof(filePath));
+		saveFileInterface(
+			filePath,sizeof(filePath),
+			"Save FracExp-Configuration File",
+			"Config Files (*.fracExpConfig)\0*.fracExpConfig\0"\
+			"All Files (*.*)\0*.*\0"
+		);
 		export_config_data(config_data,filePath);
+		/* TEMPORARY BUG PREVENTION */
+			config_data.Automatic_Behaviour.AutoSave_Config_File = false;
+		/* TEMPORARY BUG PREVENTION */
 	}
 	ImGui::Checkbox("Automatically load fracExpConfig File",&config_data.Automatic_Behaviour.AutoLoad_Config_File);
 	ImGui::Checkbox("Automatically save fracExpConfig File",&config_data.Automatic_Behaviour.AutoSave_Config_File);
@@ -675,7 +730,7 @@ void Menu_Settings() {
 	if (ImGui::CollapsingHeader("MENU WINDOW SETTINGS")) {
 		{
 			static const char* GUI_Theme_Options[] = {
-				"Classic","Dark-mode (Default)","Light-mode (Unsupported)"
+				"Classic","Dark-mode (Default)","Light-mode"
 			};
 			ImGui::Text("ImGui Theme:");
 			if (ImGui::Combo("##IMGUI_Theme",&config_GUI_Settings.GUI_Theme,BufAndLen(GUI_Theme_Options))) {
@@ -688,7 +743,7 @@ void Menu_Settings() {
 		fp32 temp_WindowAutoScale = (fp32)config_data.GUI_Settings.WindowAutoScale;
 		ImGui::SliderFloat("##WindowAutoScale",&temp_WindowAutoScale,0.3f,1.0f,"%.3f");
 		config_data.GUI_Settings.WindowAutoScale = (fp64)temp_WindowAutoScale;
-		ImGui::Text("Window Opacity:");
+		ImGui::Text("Window Opacity: (0.95 default)");
 		ImGui::SliderFloat("##WindowOpacity",&config_data.GUI_Settings.WindowOpacity,0.3f,1.0f,"%.3f");
 		ImGui::Text(" ");
 	}
@@ -795,32 +850,33 @@ void Menu_Settings() {
 		ImGui::Text(" ");
 	}
 	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) {
-		static int Combo_ScreenshotFileType = screenshotFileType;
+		User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
+		static int Combo_ScreenshotFileType = screenshot_settings.screenshotFileType;
 		static const char* Text_ScreenshotFileType[] = {"PNG","JPG/JPEG","TGA","BMP"};
 		ImGui::Text("Screenshot File Type:");
 		if (ImGui::Combo("##Combo_ScreenshotFileType",&Combo_ScreenshotFileType,BufAndLen(Text_ScreenshotFileType))) {
-			screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
+			screenshot_settings.screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
 		}
-		if (screenshotFileType == Image_File_Format::PNG) {
-			int temp_User_PNG_Compression_Level = User_PNG_Compression_Level;
+		if (screenshot_settings.screenshotFileType == Image_File_Format::PNG) {
+			int temp_User_PNG_Compression_Level = screenshot_settings.PNG_Compression_Level;
 			ImGui::Text("PNG Compression Level (Default = 8)");
 			ImGui::SliderInt("##temp_User_PNG_Compression_Level",&temp_User_PNG_Compression_Level,1,9);
-			User_PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
-			if (User_PNG_Compression_Level < 3) { ImGui::Text("Fastest Saving (Large File Size)"); } else
-			if (User_PNG_Compression_Level < 5) { ImGui::Text("Faster Saving"); } else
-			if (User_PNG_Compression_Level < 7) { ImGui::Text("Balanced"); } else
-			if (User_PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
+			screenshot_settings.PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
+			if (screenshot_settings.PNG_Compression_Level < 3) { ImGui::Text("Fastest Saving (Large File Size)"); } else
+			if (screenshot_settings.PNG_Compression_Level < 5) { ImGui::Text("Faster Saving"); } else
+			if (screenshot_settings.PNG_Compression_Level < 7) { ImGui::Text("Balanced"); } else
+			if (screenshot_settings.PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
 			{ ImGui::Text("Smallest File Size"); }
-		} else if (screenshotFileType == Image_File_Format::JPG) {
-			int temp_User_JPG_Quality_Level = User_JPG_Quality_Level;
+		} else if (screenshot_settings.screenshotFileType == Image_File_Format::JPG) {
+			int temp_User_JPG_Quality_Level = screenshot_settings.JPG_Quality_Level;
 			ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
 			ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
-			User_JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
-			if (User_JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
-			if (User_JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
-			if (User_JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
+			screenshot_settings.JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
+			if (screenshot_settings.JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
+			if (screenshot_settings.JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
+			if (screenshot_settings.JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
 			{ ImGui::Text("Very High Quality (Recommended)"); }
-		} else if (screenshotFileType == Image_File_Format::TGA || screenshotFileType == Image_File_Format::BMP) {
+		} else if (screenshot_settings.screenshotFileType == Image_File_Format::TGA || screenshot_settings.screenshotFileType == Image_File_Format::BMP) {
 			ImGui::Text("Note: Super Screenshots only support PNG and JPG.");
 		}
 
@@ -908,9 +964,13 @@ void Menu_Keybinds() {
 		"ANSI (Default)","Extended (Contains some FN keys)","Complete (All 242 SDL Scancodes)"
 	};
 	static bool displayNumpad = true;
-	ImGui_DefaultWindowSize(Master.resX,ImGui_WINDOW_MARGIN * 2,320,480,config_data.GUI_Settings.WindowAutoScale,Master.resY,ImGui_WINDOW_MARGIN * 2,240,360,config_data.GUI_Settings.WindowAutoScale);
+	ImGui_DefaultWindowSize(
+		config_data.GUI_Settings,
+		Master.resX, ImGui_WINDOW_MARGIN * 2, 320, 480,
+		Master.resY, ImGui_WINDOW_MARGIN * 2, 240, 360
+	);
 	ImGui::Begin("Keybinds Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
-	ImGui_BoundWindowPosition();
+	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
 	ImGui::Text("Keyboard Type:");
 	if (ImGui::Combo("##keyboardSize", &Combo_keyboardSize, BufAndLen(keyboardSizeText))) {
@@ -996,45 +1056,70 @@ void Menu_Keybinds() {
 
 		ImGui::Separator();
 
-		static int Combo_functionSelect;
-		ImGui::Text("Select Function to bind:");
-		if (ImGui::Combo("##Combo_functionSelect",&Combo_functionSelect,BufAndLen(Key_Function::Key_Function_Text))) {
-			if (Combo_functionSelect == Key_Function::Parameter_Function_Count) {
-				Combo_functionSelect = Key_Function::NONE;
-			} else {
-				for (size_t i = 0; i < ARRAY_LENGTH(Key_Function::Key_Function_Map); i++) {
-					if (Combo_functionSelect == (int)Key_Function::Key_Function_Map[i]) {
-						Combo_functionSelect = Key_Function::NONE;
+		static int Combo_function_Select = 0;
+		// static int Combo_function_category_Select = 0;
+		// ImGui::Text("Select Function Category:");
+		// if (ImGui::Combo("##Combo_function_category_Select",&Combo_function_category_Select,
+		// 	Key_Function::Key_Function_Category_Text, ARRAY_LENGTH(Key_Function::Key_Function_Category_Text)
+		// )) {
+			
+		// }
+
+		//if (Combo_function_category_Select != Key_Function::Category_NONE) {
+			// size_t key_func_offset = Key_Function::Key_Function_Map[Combo_function_category_Select];
+			// size_t key_func_previous = Key_Function::Key_Function_Map[Combo_function_category_Select - 1];
+			// const char* key_func_start = Key_Function::Key_Function_Text[key_func_previous];
+			// const char* key_func_end = Key_Function::Key_Function_Text[key_func_offset];
+			// size_t key_func_length = key_func_end - key_func_start;
+			// ImGui::Text("Select Function to bind:");
+			// if (ImGui::Combo("##Combo_functionSelect",&Combo_function_Select,
+			// 	key_func_start, key_func_length
+			// )) {
+
+			ImGui::Text("Select Function to bind:");
+			if (ImGui::Combo("##Combo_functionSelect",&Combo_function_Select,
+					Key_Function::Key_Function_Text, ARRAY_LENGTH(Key_Function::Key_Function_Text)
+			)) {
+				if (Combo_function_Select == Key_Function::Parameter_Function_Count) {
+					Combo_function_Select = Key_Function::NONE;
+				} else {
+					for (size_t i = 0; i < ARRAY_LENGTH(Key_Function::Key_Function_Map); i++) {
+						if (Combo_function_Select == (int)Key_Function::Key_Function_Map[i]) {
+							Combo_function_Select = Key_Function::NONE;
+						}
 					}
 				}
 			}
-		}
-		
-		if (Combo_functionSelect != Key_Function::NONE && keyClick != SDL_SCANCODE_UNKNOWN) {
+		//}
+
+		bool useLightThemeColors = (config_data.GUI_Settings.GUI_Theme == Display_GUI::IMGUI_Theme_Light) ? true : false;
+		ImVec4 bind_select_color = useLightThemeColors ? ImVec4{1.0,0.0,0.0,1.0} : ImVec4{0.0,1.0,1.0,1.0};
+
+		if (Combo_function_Select != Key_Function::NONE && keyClick != SDL_SCANCODE_UNKNOWN) {
 			//ImGui::Text("Bind key %s to function %s",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
 
 			ImGui::Text("Bind key "); ImGui::SameLine(0.0,1.0);
-			ImGui::TextColored({0.0,1.0,1.0,1.0},"%s",Scancode_Name[keyClick]); ImGui::SameLine(0.0,1.0);
+			ImGui::TextColored(bind_select_color,"%s",Scancode_Name[keyClick]); ImGui::SameLine(0.0,1.0);
 			ImGui::Text(" to function "); ImGui::SameLine(0.0,1.0);
-			ImGui::TextColored({0.0,1.0,1.0,1.0},"%s",Key_Function::Key_Function_Text[Combo_functionSelect]);
+			ImGui::TextColored(bind_select_color,"%s",Key_Function::Key_Function_Text[Combo_function_Select]);
 
 			if(ImGui::Button("Set Key-Bind")) {
-				if (addKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
+				if (addKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_function_Select,keyClick) >= 0) {
 					recolorKeyboard();
-					Combo_functionSelect = Key_Function::NONE;
+					Combo_function_Select = Key_Function::NONE;
 					keyClick = SDL_SCANCODE_UNKNOWN;
 				} else {
-					printError("addKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
+					printError("addKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_function_Select]);
 				}
 			}
 			if (funcCount != 0) {
 				ImGui::SameLine();
 				if(ImGui::Button("Clear Key-bind")) {
-					if (removeKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_functionSelect,keyClick) >= 0) {
+					if (removeKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_function_Select,keyClick) >= 0) {
 						recolorKeyboard();
-						Combo_functionSelect = Key_Function::NONE;
+						Combo_function_Select = Key_Function::NONE;
 					} else {
-						printError("removeKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
+						printError("removeKeyBind(%s,%s) failed",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_function_Select]);
 					}
 				}
 			}
@@ -1056,22 +1141,22 @@ void Menu_Keybinds() {
 		} else {
 			ImGui::Button("Click on a Key");
 		}
-		if (Combo_functionSelect != Key_Function::NONE) {
+		if (Combo_function_Select != Key_Function::NONE) {
 			if(ImGui::Button("Clear Function bindings")) {
-				if (removeKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_functionSelect) >= 0) {
+				if (removeKeyBind(&currentKBPreset->kList,(Key_Function::Key_Function_Enum)Combo_function_Select) >= 0) {
 					recolorKeyboard();
 				} else {
-					printError("removeKeyBind(%s) failed",Key_Function::Key_Function_Text[Combo_functionSelect]);
+					printError("removeKeyBind(%s) failed",Key_Function::Key_Function_Text[Combo_function_Select]);
 				}
 			}
 			ImGui::SameLine();
-			ImGui::Text("%s",Key_Function::Key_Function_Text[Combo_functionSelect]);
+			ImGui::Text("%s",Key_Function::Key_Function_Text[Combo_function_Select]);
 		} else {
 			ImGui::Button("Select a Function");
 		}
 		ImGui::Text(" ");
 		if (ImGui::Button("Reset current key-bind to defaults")) {
-			Combo_functionSelect = Key_Function::NONE;
+			Combo_function_Select = Key_Function::NONE;
 			keyClick = SDL_SCANCODE_UNKNOWN;
 			currentKBPreset->kList = defaultKeyBind;
 			recolorKeyboard();
@@ -1098,7 +1183,7 @@ void Menu_Keybinds() {
 			for (auto iterKB = KeyBind_PresetList.begin(); iterKB != KeyBind_PresetList.end(); iterKB++) {
 				bool is_selected = (currentKBPreset == &(*iterKB));
 				if (ImGui::Selectable(iterKB->name.c_str(), is_selected)) {
-					Combo_functionSelect = Key_Function::NONE;
+					Combo_function_Select = Key_Function::NONE;
 					keyClick = SDL_SCANCODE_UNKNOWN;
 					currentKBPreset = &(*iterKB);
 					recolorKeyboard();
@@ -1113,7 +1198,7 @@ void Menu_Keybinds() {
 		ImGui::Text(" ");
 		static uint32_t name_count = 1;
 		if (ImGui::Button("Create key-bind")) {
-			Combo_functionSelect = Key_Function::NONE;
+			Combo_function_Select = Key_Function::NONE;
 			keyClick = SDL_SCANCODE_UNKNOWN;
 			KeyBind_Preset temp_KeyBind;
 			temp_KeyBind = *currentKBPreset;
@@ -1125,13 +1210,13 @@ void Menu_Keybinds() {
 			recolorKeyboard();
 		}
 		if (KeyBind_PresetList.size() > 1 && ImGui::Button("Remove current key-bind preset")) {
-			Combo_functionSelect = Key_Function::NONE;
+			Combo_function_Select = Key_Function::NONE;
 			keyClick = SDL_SCANCODE_UNKNOWN;
 			remove_currentKBPreset();
 			recolorKeyboard();
 		}
 		if (ImGui::Button("Clear all key-binds")) {
-			Combo_functionSelect = Key_Function::NONE;
+			Combo_function_Select = Key_Function::NONE;
 			keyClick = SDL_SCANCODE_UNKNOWN;
 			clearKeyBind(&currentKBPreset->kList);
 			recolorKeyboard();
@@ -1141,13 +1226,14 @@ void Menu_Keybinds() {
 		if (ImGui::Button("Import Key-bind (.FracExpKB)")) {
 			static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',sizeof(importKeyBindFile));
 			int openFileState = openFileInterface(
-				importKeyBindFile,sizeof(importKeyBindFile),"Select a FracExpKB file",
+				importKeyBindFile,sizeof(importKeyBindFile),
+				"Select a FracExpKB file",
 				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
 				"FracExp Files (*.fracExp)\0*.fracExp\0"\
 				"All Files (*.*)\0*.*\0"
 			);
 			if (openFileState == 0) {
-				Combo_functionSelect = Key_Function::NONE;
+				Combo_function_Select = Key_Function::NONE;
 				keyClick = SDL_SCANCODE_UNKNOWN;
 				import_KeyBindPresets(&KeyBind_PresetList,&currentKBPreset,importKeyBindFile);
 				recolorKeyboard();

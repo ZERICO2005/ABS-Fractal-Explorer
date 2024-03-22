@@ -93,6 +93,21 @@ fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio) {
 	return val;
 }
 
+int32_t calcMinMaxRatio(int32_t val, int32_t min, int32_t max, fp64 ratio) {
+	if (val < min) {
+		val = min;
+		return val;
+	}
+	if (val <= max) {
+		return val;
+	}
+	val = (uint32_t)((fp64)val * ratio);
+	if (val < max) {
+		val = max;
+	}
+	return val;
+}
+
 uint32_t calcMinMaxRatio(uint32_t val, uint32_t min, uint32_t max, fp64 ratio) {
 	if (val < min) {
 		val = min;
@@ -130,6 +145,17 @@ fp32 calcMinRatioMax(fp32 val, fp32 min, fp32 ratio, fp32 max) {
 	return val;
 }
 
+int32_t calcMinRatioMax(int32_t val, int32_t min, fp64 ratio, int32_t max) {
+	val = (int32_t)((fp64)val * ratio);
+	if (val < min) {
+		return min;
+	}
+	if (val > max) {
+		return max;
+	}
+	return val;
+}
+
 uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max) {
 	val = (uint32_t)((fp64)val * ratio);
 	if (val < min) {
@@ -143,15 +169,15 @@ uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max) {
 
 /* Time */
 
-nano64_t getNanoTime() { // Returns the time in nanoseconds
-	using nanoseconds = std::chrono::duration<nano64_t, std::nano>;
-	auto now = std::chrono::high_resolution_clock::now();
-	return std::chrono::duration_cast<nanoseconds>(now.time_since_epoch()).count();
-}
+	nano64_t getNanoTime() { // Returns the time in nanoseconds
+		using nanoseconds = std::chrono::duration<nano64_t, std::nano>;
+		auto now = std::chrono::high_resolution_clock::now();
+		return std::chrono::duration_cast<nanoseconds>(now.time_since_epoch()).count();
+	}
 
-fp64 getDecimalTime() { // Returns the time in seconds
-	return (fp64)getNanoTime() / 1.0e9;
-}
+	fp64 getDecimalTime() { // Returns the time in seconds
+		return NANO_TO_SECONDS(getNanoTime());
+	}
 
 // const char* getDateAndTimeUTC(
 // 	char DateDelimiter, char DateSeparator, char TimeDelimiter
