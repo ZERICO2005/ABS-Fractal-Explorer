@@ -26,6 +26,12 @@ void refresh_IMGUI(User_Configuration_Data& config);
 // 0 Classic, 1 Dark, 2 Light
 void set_IMGUI_Theme(int_enum theme);
 
+namespace Display_GUI {
+	enum IMGUI_Theme {
+		IMGUI_Theme_Classic, IMGUI_Theme_Dark, IMGUI_Theme_Light, IMGUI_Theme_Count
+	};
+}
+
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags);
 
 void Menu_Coordinates();

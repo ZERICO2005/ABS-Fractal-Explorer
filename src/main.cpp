@@ -64,6 +64,7 @@ int init_Fractal_Engine(int argc, char* argv[]) {
 //#define print_pointer_sizes
 
 int main(int argc, char* argv[]) {
+	printFlush("%s",argv[0]);
 	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
 	#ifdef print_pointer_sizes
 		printf("\nCHAR_BIT: %2d bits",CHAR_BIT);

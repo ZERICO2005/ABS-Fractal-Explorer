@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -19,6 +19,7 @@
 	fp128 atan(fp128 x) { return atanq(x); }
 	fp128 atan2(fp128 y, fp128 x) { return atan2q(y,x); }
 	fp128 log(fp128 x) { return logq(x); }
+	fp128 log1p(fp128 x) { return log1pq(x); }
 	fp128 log2(fp128 x) { return log2q(x); }
 	fp128 log10(fp128 x) { return log10q(x); }
 	fp128 pow(fp128 x, fp128 y) { return powq(x,y); }

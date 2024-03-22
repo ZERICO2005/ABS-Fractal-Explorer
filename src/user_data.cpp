@@ -218,7 +218,8 @@ bool textToBool_TrueDefault(const char* Text) {
 	(strncmp(Text,"FALSE",strlen("FALSE")) == 0) ? false : true;
 }
 
-void compare_Versions(int32_t version_major, int32_t version_minor, int32_t version_patch) {
+void compare_Versions(int32_t version_major, int32_t version_minor, int32_t version_patch, bool warnPatch) {
+	// Out of date Software
 	if (
 		(PROGRAM_V_MAJOR < version_major) ||
 		(PROGRAM_V_MAJOR == version_major && PROGRAM_V_MINOR < version_minor)
@@ -226,19 +227,31 @@ void compare_Versions(int32_t version_major, int32_t version_minor, int32_t vers
 		printFlush(
 			"\nWarning: Config-File might not be backwards compatible:"\
 			"\n(Current) v%d.%d.%d < (Config-File) v%d.%d.%d",
-			version_major,version_minor,version_patch,
-			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH
+			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,
+			version_major,version_minor,version_patch
 		);
 	}
+	// Out of date Config-File
 	if (
-		(PROGRAM_V_MAJOR < version_major) ||
-		(PROGRAM_V_MAJOR == version_major && PROGRAM_V_MINOR < version_minor)
+		(PROGRAM_V_MAJOR > version_major) ||
+		(PROGRAM_V_MAJOR == version_major && PROGRAM_V_MINOR > version_minor)
 	) {
 		printFlush(
 			"\nWarning: Config-File might not be fully supported:"\
 			"\n(Current) v%d.%d.%d > (Config-File) v%d.%d.%d",
-			version_major,version_minor,version_patch,
-			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH
+			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,
+			version_major,version_minor,version_patch
+		);
+	}
+	if (warnPatch == false) {
+		return;
+	}
+	if (PROGRAM_V_PATCH != version_patch) {
+		printFlush(
+			"\nNote: Config-File doesn't match current software version:"\
+			"\n(Current) v%d.%d.%d != (Config-File) v%d.%d.%d",
+			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,
+			version_major,version_minor,version_patch
 		);
 	}
 }
@@ -262,7 +275,7 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 	int32_t version_major = textToInt32(get_config_value(Config_Text,config_label,"Major"));
 	int32_t version_minor = textToInt32(get_config_value(Config_Text,config_label,"Minor"));
 	int32_t version_patch = textToInt32(get_config_value(Config_Text,config_label,"Patch"));
-	compare_Versions(version_major,version_minor,version_patch);
+	compare_Versions(version_major,version_minor,version_patch,true);
 
 	config_label = User_Configuration_Labels[Automatic_Behaviour];
 		// if (textToBool_TrueDefault(get_config_value(Config_Text,config_label,"AutoLoad_Config_File")) == false) {
@@ -339,7 +352,7 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 	if (path == nullptr) { printError("import_config_data has nullptr path"); return -1; }
 	FILE* file = fopen(path, "rb");
 	if (file == nullptr) {
-		printError("Unable to import_config_data from %s", path);
+		printError("Unable to import_config_data from: \"%s\"", path);
 		return -1;
 	}
 
@@ -404,9 +417,12 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 	// if (config_data.Automatic_Behaviour.AutoSave_Config_File == false) { return 0; }
 	FILE* file = fopen(path, "w");
 	if (file == nullptr) {
-		printError("Unable to export_config_data to %s", path);
+		printError("Unable to export_config_data to: \"%s\"", path);
 		return -1;
 	}
+	//char buf_fullpath[1024]; memset(buf_fullpath,'\0',sizeof(buf_fullpath));
+	//_fullpath(buf_fullpath,path,1024);
+	//printFlush("\nFull-Path: %s",buf_fullpath);
 
 	fprintf(file,"%s Config File",PROGRAM_NAME);
 	fprintf(file,"\n\nVersion:");

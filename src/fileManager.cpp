@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -40,8 +40,9 @@
 		ofn.lpstrTitle = title;
 		ofn.Flags = OFN_FILEMUSTEXIST;
 		if (GetOpenFileName(&ofn)) {
-			printFlush("\nOpened File: %s",filePath);
+			printFlush("\nOpened File: \"%s\"",filePath);
 		} else {
+			printWarning("Unable to Open File from: \"%s\"",filePath);
 			return 1;
 		}
 		return 0;
@@ -79,8 +80,9 @@
 		FREE(defaultName_copy);
 
 		if (fileSaved == true) {
-			printf("\nFile Saved: %s", filePath);
+			printFlush("\nFile Saved: \"%s\"", filePath);
 		} else {
+			printWarning("Unable to Save File to: \"%s\"",filePath);
 			return 1;
 		}
 		return 0;

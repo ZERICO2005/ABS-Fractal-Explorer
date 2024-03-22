@@ -234,7 +234,7 @@ void recolorKeyboard() {
 		// if (currentKBPreset->kList.size() <= 0) {
 		// 	currentKBPreset->kList = defaultKeyBind;
 		// }
-		for (size_t s = 0; s < SDL_NUM_SCANCODES; s++) {
+		for (size_t s = SDL_SCANCODE_UNKNOWN + 1; s < SDL_NUM_SCANCODES; s++) {
 			size_t keyColorSet = 0;
 			for (const auto& bind : currentKBPreset->kList) {
 				if (bind.key == (SDL_Scancode)s) {
@@ -242,7 +242,7 @@ void recolorKeyboard() {
 						setRGB_Scancode(0xFF,0xFF,0xFF,(SDL_Scancode)s);
 						break; // Idempotent
 					} 
-					for (size_t r = SDL_SCANCODE_UNKNOWN + 1; r < ARRAY_LENGTH(Key_Function_Map); r++) {
+					for (size_t r = Key_Function::NONE + 1; r < ARRAY_LENGTH(Key_Function_Map); r++) {
 						if (bind.func <= Key_Function_Map[r] && bind.func != Key_Function::NONE) {
 							setRGB_Scancode(InitKeyRGB[r].r,InitKeyRGB[r].g,InitKeyRGB[r].b,(SDL_Scancode)s);
 							keyColorSet = r;
@@ -695,7 +695,10 @@ int updateFractalParameters() {
 				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
 				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
 			} else {
-				pixel_to_coordinate(ImGui::GetMousePos().x,ImGui::GetMousePos().y - RESY_UI,&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData);
+				pixel_to_coordinate(
+					(int32_t)(ImGui::GetMousePos().x),(int32_t)(ImGui::GetMousePos().y - RESY_UI),
+					&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData
+				);
 			}
 		}
 	/* Zoom */
@@ -1476,7 +1479,7 @@ void terminate_config_data() {
 	if (config_data.Automatic_Behaviour.AutoSave_Config_File == false) {
 		return;
 	}
-
+	export_config_data(config_data,"./config.fracExpConfig");
 	// char filePath[320]; memset(filePath,'\0',sizeof(filePath));
 	// saveFileInterface(filePath,ARRAY_LENGTH(filePath));
 	// User_Configuration_Data config_data = {0};
@@ -1491,7 +1494,7 @@ void terminate_config_data() {
 		// config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
 		// config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
 
-	export_config_data(config_data,"./config.fracExpConfig");
+	//export_config_data(config_data,"./config.fracExpConfig");
 }
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
@@ -1524,11 +1527,11 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			initResY = RESY_Minimum;
 		}
 	} else {
-		initResX = calcMinMaxRatio((uint32_t)initResX,RESX_Minimum,RESX_Default,0.6);
+		initResX = calcMinMaxRatio(initResX,RESX_Minimum,RESX_Default,0.6);
 		if (initResX > RESX_Maximum) {
 			initResX = RESX_Maximum;
 		}
-		initResY = calcMinMaxRatio((uint32_t)initResY,RESY_Minimum,RESY_Default,0.6);
+		initResY = calcMinMaxRatio(initResY,RESY_Minimum,RESY_Default,0.6);
 		if (initResY > RESX_Maximum) {
 			initResY = RESX_Maximum;
 		}
