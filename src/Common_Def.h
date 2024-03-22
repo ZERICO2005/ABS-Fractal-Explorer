@@ -177,10 +177,9 @@ typedef int int_enum;
 	}
 	
 	// Waits for a duration in seconds
-	#define BurnTime(s) \
-	{\
-		nano64_t BURN_TIME_NANOSECONDS = getNanoTime();\
-		while (getNanoTime() - BURN_TIME_NANOSECONDS < SECONDS_TO_NANO(s)) {};\
+	inline void BurnTime(fp64 s) {
+		nano64_t BURN_TIME_NANOSECONDS = getNanoTime();
+		while (getNanoTime() - BURN_TIME_NANOSECONDS < SECONDS_TO_NANO(s)) {};
 	}
 
 /* Color */

@@ -64,7 +64,7 @@ void ImGui_BoundWindowPosition(const User_GUI_Settings& GUI_Settings) {
 	}
 }
 
-void set_IMGUI_Theme(int_enum theme) {
+void set_IMGUI_Theme(Display_GUI::IMGUI_Theme theme) {
 	switch(theme) {
 		case Display_GUI::IMGUI_Theme_Classic:
 			ImGui::StyleColorsClassic();
@@ -81,7 +81,7 @@ void set_IMGUI_Theme(int_enum theme) {
 }
 
 void refresh_IMGUI(User_Configuration_Data& config) {
-	set_IMGUI_Theme(config.GUI_Settings.GUI_Theme);
+	set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config.GUI_Settings.GUI_Theme);
 }
 
 int render_IMGUI() {
@@ -734,7 +734,7 @@ void Menu_Settings() {
 			};
 			ImGui::Text("ImGui Theme:");
 			if (ImGui::Combo("##IMGUI_Theme",&config_GUI_Settings.GUI_Theme,BufAndLen(GUI_Theme_Options))) {
-				set_IMGUI_Theme(config_GUI_Settings.GUI_Theme);
+				set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_GUI_Settings.GUI_Theme);
 			}
 		}
 		ImGui::Checkbox("Prevent out of bounds menu windows",&config_data.GUI_Settings.PreventOutOfBoundsWindows);

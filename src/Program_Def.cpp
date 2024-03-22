@@ -9,29 +9,6 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 
-/* FP128 functions */
-#ifdef enableFP80andFP128
-	fp128 sin(fp128 x) { return sinq(x); }
-	fp128 cos(fp128 x) { return cosq(x); }
-	fp128 tan(fp128 x) { return tanq(x); }
-	fp128 asin(fp128 x) { return asinq(x); }
-	fp128 acos(fp128 x) { return acosq(x); }
-	fp128 atan(fp128 x) { return atanq(x); }
-	fp128 atan2(fp128 y, fp128 x) { return atan2q(y,x); }
-	fp128 log(fp128 x) { return logq(x); }
-	fp128 log1p(fp128 x) { return log1pq(x); }
-	fp128 log2(fp128 x) { return log2q(x); }
-	fp128 log10(fp128 x) { return log10q(x); }
-	fp128 pow(fp128 x, fp128 y) { return powq(x,y); }
-	fp128 floor(fp128 x) { return floorq(x); }
-	fp128 ceil(fp128 x) { return ceilq(x); }
-	fp128 fmax(fp128 x, fp128 y) { return fmaxq(x,y); }
-	fp128 fmin(fp128 x, fp128 y) { return fminq(x,y); }
-	fp128 fmod(fp128 x, fp128 y) { return fmodq(x,y); }
-	fp128 fabs(fp128 x) { return fabsq(x); }
-	fp128 copysign(fp128 x, fp128 y) { return copysignq(x,y); }
-#endif
-
 /* TimerBox */
 	/* Constructors */
 		TimerBox::TimerBox() {

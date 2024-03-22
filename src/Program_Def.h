@@ -24,7 +24,7 @@
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 7
-#define PROGRAM_V_TAG "Rev-4 Alpha"
+#define PROGRAM_V_TAG "Rev-5 Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* float80 and float128 */
@@ -49,24 +49,26 @@
 		typedef __float128 fp80;
 	#endif
 
-	fp128 sin(fp128 x);
-	fp128 cos(fp128 x);
-	fp128 tan(fp128 x);
-	fp128 asin(fp128 x);
-	fp128 acos(fp128 x);
-	fp128 atan(fp128 x);
-	fp128 atan2(fp128 y, fp128 x);
-	fp128 log(fp128 x);
-	fp128 log2(fp128 x);
-	fp128 log10(fp128 x);
-	fp128 pow(fp128 x, fp128 y);
-	fp128 floor(fp128 x);
-	fp128 ceil(fp128 x);
-	fp128 fmax(fp128 x, fp128 y);
-	fp128 fmin(fp128 x, fp128 y);
-	fp128 fmod(fp128 x, fp128 y);
-	fp128 fabs(fp128 x);
-	fp128 copysign(fp128 x, fp128 y);
+	inline fp128 sin(fp128 x) { return sinq(x); }
+	inline fp128 cos(fp128 x) { return cosq(x); }
+	inline fp128 tan(fp128 x) { return tanq(x); }
+	inline fp128 asin(fp128 x) { return asinq(x); }
+	inline fp128 acos(fp128 x) { return acosq(x); }
+	inline fp128 atan(fp128 x) { return atanq(x); }
+	inline fp128 atan2(fp128 y, fp128 x) { return atan2q(y,x); }
+	inline fp128 log(fp128 x) { return logq(x); }
+	inline fp128 log1p(fp128 x) { return log1pq(x); }
+	inline fp128 log2(fp128 x) { return log2q(x); }
+	inline fp128 log10(fp128 x) { return log10q(x); }
+	inline fp128 pow(fp128 x, fp128 y) { return powq(x,y); }
+	inline fp128 floor(fp128 x) { return floorq(x); }
+	inline fp128 ceil(fp128 x) { return ceilq(x); }
+	inline fp128 fmax(fp128 x, fp128 y) { return fmaxq(x,y); }
+	inline fp128 fmin(fp128 x, fp128 y) { return fminq(x,y); }
+	inline fp128 fmod(fp128 x, fp128 y) { return fmodq(x,y); }
+	inline fp128 fabs(fp128 x) { return fabsq(x); }
+	inline fp128 copysign(fp128 x, fp128 y) { return copysignq(x,y); }
+
 #else
 	#define quadmath_snprintf snprintf
 	#define strtoflt128 strtod

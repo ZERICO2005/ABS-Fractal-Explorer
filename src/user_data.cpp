@@ -10,6 +10,11 @@
 #include "Program_Def.h"
 #include "User_Data.h"
 
+/* Headers containing enums for default values */
+	#include "Display_GUI.h"
+	#include "render.h"
+	#include "displayInfo.h"
+
 constexpr User_Configuration_Data Default_Config = {
 	.Automatic_Behaviour = {
 		.AutoLoad_Config_File = true,
@@ -29,7 +34,7 @@ constexpr User_Configuration_Data Default_Config = {
 	},
 	.Display_Preferences = {
 		.Display_Config_Hash = 0x0,
-		.Display_Bootup_Type = 0, // 0 == Automatic (Enum)
+		.Display_Bootup_Type = Display_Bootup::Automatic,
 		.Specific_Bootup_Display = 1,
 		.Previous_Display_Used = 0,
 		.Bootup_Fullscreen = false,
@@ -40,21 +45,22 @@ constexpr User_Configuration_Data Default_Config = {
 		.LockKeyInputsInMenus = true,
 		.AutoResizeWindows = false,
 		.PreventOutOfBoundsWindows = false,
-		.GUI_Theme = 1, // 0 == Dark Theme (Enum)
+		.GUI_Theme = Display_GUI::IMGUI_Theme_Dark,
 		.WindowOpacity = 0.95f,
 		.WindowAutoScale = 0.7
 	},
 	.Screenshot_Settings = {
-		.screenshotFileType = 0, // 0 == PNG (Enum)
+		.screenshotFileType = Image_File_Format::PNG,
 		.PNG_Compression_Level = 8,
 		.JPG_Quality_Level = 95
 	}
 };
 
-#define clean_config_data(value,min,max)\
-valueRestore(config_data.value,config_default.value,(min),(max))
+
 
 /* clean_config_data */
+	#define clean_config_data(value,min,max)\
+	valueRestore(config_data.value,config_default.value,(min),(max))
 
 	void clean_Automatic_Behaviour(User_Automatic_Behaviour& config_data) {
 		const User_Automatic_Behaviour& config_default = Default_Config.Automatic_Behaviour;
@@ -77,21 +83,21 @@ valueRestore(config_data.value,config_default.value,(min),(max))
 	void clean_Display_Preferences(User_Display_Preferences& config_data) {
 		const User_Display_Preferences& config_default = Default_Config.Display_Preferences;
 		// display_config_hash doesn't need to be cleaned
-		// clean_config_data(Display_Bootup_Type, 0, 0);
+		clean_config_data(Display_Bootup_Type, 0, Display_Bootup::Length - 1);
 		clean_config_data(Specific_Bootup_Display, 1, 144); // Does anyone even have 144 displays? Probably not.
 		clean_config_data(Bootup_Window_Scale, 0.01, 1.0);
 	}
 
 	void clean_GUI_Settings(User_GUI_Settings& config_data) {
 		const User_GUI_Settings& config_default = Default_Config.GUI_Settings;
-		clean_config_data(GUI_Theme, 0, 2);
+		clean_config_data(GUI_Theme, 0, Display_GUI::IMGUI_Theme_Count - 1);
 		clean_config_data(WindowOpacity, 0.2, 1.0);
 		clean_config_data(WindowAutoScale, 0.1, 1.0);
 	}
 
 	void clean_Screenshot_Settings(User_Screenshot_Settings& config_data) {
 		const User_Screenshot_Settings& config_default = Default_Config.Screenshot_Settings;
-		// valueRestore(config_data.screenshotFileType, 0, 0, 0);
+		clean_config_data(screenshotFileType, 0, Image_File_Format::Image_File_Format_Count - 1);
 		clean_config_data(PNG_Compression_Level, 1, 9);
 		clean_config_data(JPG_Quality_Level, 20, 100);
 	}

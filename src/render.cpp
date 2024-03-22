@@ -1576,7 +1576,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io_IMGUI->IniFilename = nullptr;
-    set_IMGUI_Theme(config_data.GUI_Settings.GUI_Theme);
+    set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
 	ImGui_ImplSDLRenderer2_Init(renderer);
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
 	
