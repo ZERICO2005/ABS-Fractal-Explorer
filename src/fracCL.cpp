@@ -178,6 +178,13 @@ u32 rY = 0;
 //#define printChange(f,x); {static int CHANGE; if (CHANGE != x) { printFlush(f, x); } CHANGE = x;}
 #define printErrorChange(f,x); { static int CHANGE; if (CHANGE != x) { printFlush(f, x); printOpenCLError(err); } CHANGE = x; }
 
+void getGlobalAndLocalSize(size_t* globalSize, size_t* localSize, size_t kernelWorkGroupSize, size_t pixelCount) {
+	size_t cor = (pixelCount) % kernelWorkGroupSize; // Calculates the correction factor to ensure divisibility
+	cor = (cor == 0) ? 0 : (kernelWorkGroupSize - cor);
+	if (localSize != nullptr) { *localSize = kernelWorkGroupSize; }
+	if (globalSize != nullptr) { *globalSize = pixelCount + cor; } // Number of total work items - localSize must be devisor
+}
+
 int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING) {
 	if (validateBufferBox(buf) == false) {
 		printError("BufferBox* buf is NULL or has invalid data in renderOpenCL_ABS_Mandelbrot()");
@@ -187,7 +194,9 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	uint32_t resY = buf->resY;
 	if (((rX != buf->resX || rY != buf->resY) && (rX != 0 || rY != 0)) || initialized_OpenCL == false || deviceResultBuf == NULL) {
 		// printf("\nr: %d %d",rX,rY); fflush(stdout);
-		cl_mem tempBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, getBufferBoxSize(buf), NULL, NULL);
+		size_t global_pixels = 0;
+		getGlobalAndLocalSize(&global_pixels,nullptr,KernelWorkGroupSize,(size_t)resX * (size_t)resY);
+		cl_mem tempBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, global_pixels * buf->channels, NULL, NULL);
 		clReleaseMemObject(deviceResultBuf);
 		deviceResultBuf = tempBuf;
 	}
@@ -298,11 +307,8 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	// } else {
 	// 	printFlush("\nSafe Return");
 	// }
-
-	uint32_t cor = (resX * resY) % KernelWorkGroupSize; // Calculates the correction factor to ensure divisibility
-	cor = (cor == 0) ? 0 : (KernelWorkGroupSize - cor);
-	local_size = KernelWorkGroupSize;
-	global_size = resX * resY + cor; // Number of total work items - localSize must be devisor
+	getGlobalAndLocalSize(&global_size,&local_size,KernelWorkGroupSize,(size_t)resX * (size_t)resY);
+	//printfInterval(0.25,"\n%ux%u == %u | kernel %zu |cor %u --> %u\n\tSize: %zu",resX,resY,resX*resY,KernelWorkGroupSize,cor,resX*resY+cor,getBufferBoxSize(buf));
 	err = clEnqueueNDRangeKernel(engine.queue, engine.kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
 	printErrorChange("\nclEnqueueNDRangeKernel: %d",err);
 

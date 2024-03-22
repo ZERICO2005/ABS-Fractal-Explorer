@@ -83,10 +83,32 @@
 	## ScaleWindowToScreenSize
 	*(true)*<br>
 	When `true`, the initial window size will be determined dynamically from `Bootup_Window_Scale`. When `false`, the initial window size will be set to between the Default and Minimum window size.
+	
 	## Bootup_Window_Scale
 	*(0.700)
 	Determines how much of the display the window will initially take up if `ScaleWindowToScreenSize` is `true`.
 	
+	## Display_RefreshRate_Type
+	*(0 Automatic)*
+	Determines how the maximum refresh-rate is determined
+	
+	0. Automatic (Currently does `1 Current Display`)
+	1. Current Display
+	2. Highest Refresh-Rate
+	3. Lowest Refresh-Rate
+	4. Constant Value
+	
+	## Constant_RefreshRate_Value
+	*(60.0)*
+	If `Display_RefreshRate_Type` is set to `4 COnstant Value`, it will use the `Constant_RefreshRate_Value` for the maximum refresh-rate.
+	
+	## Maximum_FPS_Multiplier
+	*(1)*
+	If `Display_RefreshRate_Type` is *Not* set to `4 Constant Value`, the maximum refresh-rate will be multiplied by a value derived from `Maximum_FPS_Multiplier`
+	
+	`N == 0`: Multiplied by `1` 
+	`N > 0`: Multiplied `(N + 1)` times
+	`N < 0`: Multiplied `(1 / (-N + 1))` times
 
 # GUI_Settings
 	## LockKeyInputsInMenus

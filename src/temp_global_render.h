@@ -128,8 +128,6 @@
 	extern Fractal_Data frac;
 	extern Render_Data primaryRenderData;
 	extern Render_Data secondaryRenderData;
-	
-	#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
 
 /* Images */
 
@@ -159,10 +157,7 @@
 /* Menus */
 
 	enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
-
-	#define stretchValue(s) pow(2.0,-abs(s))
-	#define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
-
+	
 	extern bool Lock_Key_Inputs;
 
 	#define BufAndLen(x) x,ARRAY_LENGTH(x)

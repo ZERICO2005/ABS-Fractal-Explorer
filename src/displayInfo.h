@@ -76,6 +76,15 @@ namespace Display_Bootup {
 		Length
 	};
 };
+namespace Display_RefreshRate {
+	enum Display_RefreshRate_Enum {
+		Automatic,CurrentMonitor,HighestRefreshRate,LowestRefreshRate,ConstantValue,
+		Length
+	};
+	const char* const Display_RefreshRate_Text[] = {
+		"Automatic","Current Monitor","Highest Refresh-Rate","Lowest Refresh-Rate","Constant Value"
+	};
+};
 
 void getDisplayAreaBounds(
 	const DisplayInfo*& displayArray, size_t displayCount,

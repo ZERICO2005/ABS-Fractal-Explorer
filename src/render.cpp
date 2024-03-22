@@ -500,8 +500,11 @@ bool funcTimeDelay(Key_Function::Key_Function_Enum func, fp64 freq) {
 	return false;
 }
 
-//#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
-int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren, int update_level = Change_Level::Nothing) {
+inline void Update_Level(int_enum& update_level, int_enum level) {
+	update_level = (level > update_level) ? level : update_level;
+}
+
+int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren, int_enum update_level = Change_Level::Nothing) {
 	if (frac_data == nullptr) { return update_level; }
 	if (ren == nullptr) { return update_level; }
 	static ABS_Mandelbrot frac0 = *frac_data;
@@ -510,10 +513,10 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 	
 	/* Render_Data */
 	if (ren->resX != ren0.resX || ren->resY != ren0.resY) {
-		Update_Level(Change_Level::Resolution);
+		Update_Level(update_level, Change_Level::Resolution);
 	}
 	if (ren->rendering_method != ren0.rendering_method) {
-		Update_Level(Change_Level::Method_of_Rendering);
+		Update_Level(update_level, Change_Level::Method_of_Rendering);
 	} else if (
 		(
 			(ren->rendering_method == Rendering_Method::CPU_Rendering) &&
@@ -523,38 +526,38 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 			(ren->GPU_Precision != ren0.GPU_Precision)
 		)
 	) {
-		Update_Level(Change_Level::Method_of_Rendering);
+		Update_Level(update_level, Change_Level::Method_of_Rendering);
 	}
 	if (ren->sample != ren0.sample) {
-		Update_Level(Change_Level::Super_Sample);
+		Update_Level(update_level, Change_Level::Super_Sample);
 	}
 	if (ren->subSample != ren0.subSample) {
-		Update_Level(Change_Level::Resolution);
+		Update_Level(update_level, Change_Level::Resolution);
 	}
 	if (ren->flip != ren0.flip) {
-		Update_Level(Change_Level::Rotation);
+		Update_Level(update_level, Change_Level::Rotation);
 	}
 	/* ABS_Mandelbrot */
 	if (frac_data->r != frac0.r || frac_data->i != frac0.i) {
-		Update_Level(Change_Level::Translation);
+		Update_Level(update_level, Change_Level::Translation);
 	}
 	if (frac_data->zoom != frac0.zoom) {
-		Update_Level(Change_Level::Zoom);
+		Update_Level(update_level, Change_Level::Zoom);
 	}
 	if (frac_data->zr != frac0.zr || frac_data->zi != frac0.zi) {
-		Update_Level(Change_Level::Julia);
+		Update_Level(update_level, Change_Level::Julia);
 	}
 	if (frac_data->maxItr != frac0.maxItr || frac_data->maxItr_Log2 != frac0.maxItr_Log2) {
-		Update_Level(Change_Level::Iterations);
+		Update_Level(update_level, Change_Level::Iterations);
 	}
 	if (frac_data->rot != frac0.rot) {
-		Update_Level(Change_Level::Rotation);
+		Update_Level(update_level, Change_Level::Rotation);
 	}
 	if (frac_data->stretch != frac0.stretch) {
-		Update_Level(Change_Level::Stretch);
+		Update_Level(update_level, Change_Level::Stretch);
 	}
 	if (frac_data->breakoutValue != frac0.breakoutValue) {
-		Update_Level(Change_Level::Breakout);
+		Update_Level(update_level, Change_Level::Breakout);
 	}
 	if (
 		(frac_data->rA != frac0.rA || frac_data->rF != frac0.rF || frac_data->rP != frac0.rP) ||
@@ -562,25 +565,25 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 		(frac_data->bA != frac0.bA || frac_data->bF != frac0.bF || frac_data->bP != frac0.bP) ||
 		(frac_data->iA != frac0.iA || frac_data->iF != frac0.iF || frac_data->iP != frac0.iP)
 	) {
-		Update_Level(Change_Level::Coloring);
+		Update_Level(update_level, Change_Level::Coloring);
 	}
 	if (frac_data->smoothColoring != frac0.smoothColoring) {
-		Update_Level(Change_Level::Coloring);
+		Update_Level(update_level, Change_Level::Coloring);
 	}
 	if (frac_data->power != frac0.power) {
-		Update_Level(Change_Level::Power_Change);
+		Update_Level(update_level, Change_Level::Power_Change);
 	}
 	if (frac_data->polarPower != frac0.polarPower) {
-		Update_Level(Change_Level::Polar_Power);
+		Update_Level(update_level, Change_Level::Polar_Power);
 	}
 	if (frac_data->formula != frac0.formula) {
-		Update_Level(Change_Level::Formula_Change);
+		Update_Level(update_level, Change_Level::Formula_Change);
 	}
 	if (frac_data->polarMandelbrot != frac0.polarMandelbrot) {
-		Update_Level(Change_Level::Fractal_Change);
+		Update_Level(update_level, Change_Level::Fractal_Change);
 	}
 	if (frac_data->juliaSet != frac0.juliaSet) {
-		Update_Level(Change_Level::Fractal_Change);
+		Update_Level(update_level, Change_Level::Fractal_Change);
 	}
 	frac0 = *frac_data;
 	ren0 = *ren;
@@ -614,7 +617,7 @@ int updateFractalParameters() {
 		#define Polar_Mandelbrot_Default_Power 3.0
 	/* Boolean toggles */
 		#define paramToggle(func,toggle,freq) if (funcTimeDelay(func,freq)) { toggle = !toggle; }
-		#define paramToggleUpdate(func,toggle,freq,level) if (funcTimeDelay(func,freq)) { toggle = !toggle; Update_Level(level); }
+		#define paramToggleUpdate(func,toggle,freq,level) if (funcTimeDelay(func,freq)) { toggle = !toggle; Update_Level(update_level, level); }
 		paramToggle(toggleAdjustZoomToPower,FRAC.adjustZoomToPower,0.4);
 		paramToggleUpdate(toggleJulia,FRAC.juliaSet,0.4,Major_Reset);
 		paramToggleUpdate(toggleABSandPolarMandelbrot,FRAC.polarMandelbrot,0.4,Major_Reset);
@@ -650,11 +653,11 @@ int updateFractalParameters() {
 		}
 		if (funcTimeDelay(resetRealPos,0.2)) {
 			FRAC.r = 0.0;
-			Update_Level(Jump);
+			Update_Level(update_level, Jump);
 		}
 		if (funcTimeDelay(resetImagPos,0.2)) {
 			FRAC.i = 0.0;
-			Update_Level(Jump);
+			Update_Level(update_level, Jump);
 		}
 	/* Real and Imaginary Julia Z Coordinates */
 		if (func_stat[incZReal].triggered == true) {
@@ -683,11 +686,11 @@ int updateFractalParameters() {
 		}
 		if (funcTimeDelay(resetZReal,0.2)) {
 			FRAC.zr = 0.0;
-			Update_Level(Jump);
+			Update_Level(update_level, Jump);
 		}
 		if (funcTimeDelay(resetZImag,0.2)) {
 			FRAC.zi = 0.0;
-			Update_Level(Jump);
+			Update_Level(update_level, Jump);
 		}
 		if (FRAC.cursorZValue == true) {
 			if (FRAC.relativeZValue == true) {
@@ -710,7 +713,7 @@ int updateFractalParameters() {
 		}
 		if (funcTimeDelay(resetZoom,0.2)) {
 			FRAC.zoom = zoomDefault(FRAC.power);
-			Update_Level(Jump);
+			Update_Level(update_level, Jump);
 		}
 		if (funcTimeDelay(resetCoordinates,0.2)) {
 			FRAC.r = 0.0; FRAC.i = 0.0;
@@ -721,7 +724,7 @@ int updateFractalParameters() {
 				FRAC.zoom = zoomDefault((fp64)FRAC.power);
 			}
 			valueLimit(FRAC.zoom,-0.4,0.4);
-			Update_Level(Jump);
+			Update_Level(update_level, Jump);
 		}
 	/* maxItr */
 		if (func_stat[incMaxItr].triggered) {
@@ -797,10 +800,10 @@ int updateFractalParameters() {
 		}
 	/* Rotations */
 		if (func_stat[counterclockwiseRot].triggered) {
-			FRAC.rot -= (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * config_sensitivity.rotation;
+			FRAC.rot -= (TAU/3.0) * moveDelta * getStretchValue(FRAC.stretch) * config_sensitivity.rotation;
 		}
 		if (func_stat[clockwiseRot].triggered) {
-			FRAC.rot += (TAU/3.0) * moveDelta * stretchValue(FRAC.stretch) * config_sensitivity.rotation;
+			FRAC.rot += (TAU/3.0) * moveDelta * getStretchValue(FRAC.stretch) * config_sensitivity.rotation;
 		}
 		if (funcTimeDelay(clockwiseRot90,0.3)) {
 			FRAC.rot += (TAU * (90.0/360.0));

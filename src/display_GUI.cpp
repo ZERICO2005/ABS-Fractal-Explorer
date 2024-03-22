@@ -19,6 +19,8 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
+#include "displayInfo.h"
+
 #include "render.h"
 
 // #include "copyBuffer.h"
@@ -667,10 +669,10 @@ void printDisplayInfo(int displayNumber) {
 }
 
 void Menu_Settings() {
-	static const char* initFrameRate[] = {
-		"Current Monitor","Highest Refresh-Rate","Lowest Refresh-Rate","Constant Value"
-	};
-	static int Combo_initFrameRate = 0;
+	// static const char* initFrameRate[] = {
+	// 	"Current Monitor","Highest Refresh-Rate","Lowest Refresh-Rate","Constant Value"
+	// };
+	User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
 	static const char* initMonitorLocations[] = {
 		"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
 		"Left","Right","Center (Placeholder)","Top","Bottom","Top-Left (Placeholder)","Top-Right (Placeholder)","Bottom-Left (Placeholder)","Bottom-Right (Placeholder)",
@@ -749,40 +751,47 @@ void Menu_Settings() {
 	}
 	if (ImGui::CollapsingHeader("DISPLAY AND FRAME-RATE")) {
 		ImGui::Text("Base maximum frame-rate off of:");
-		if (ImGui::Combo("##initFrameRate", &Combo_initFrameRate, BufAndLen(initFrameRate))) {
-		
+		if (ImGui::Combo("##initFrameRate", &Display_Preferences.Display_RefreshRate_Type,
+			Display_RefreshRate::Display_RefreshRate_Text, ARRAY_LENGTH(Display_RefreshRate::Display_RefreshRate_Text)
+		)) {
+
 		}
 		uint32_t SELECT_DISPLAY = CURRENT_DISPLAY;
-		switch(Combo_initFrameRate) {
-			case 0:
-				SELECT_DISPLAY = CURRENT_DISPLAY;
-			break;
-			case 1:
+		switch(Display_Preferences.Display_RefreshRate_Type) {
+			case Display_RefreshRate::HighestRefreshRate:
 				SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::HighFrameRate];
 			break;
-			case 2:
+			case Display_RefreshRate::LowestRefreshRate:
 				SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::LowFrameRate];
 			break;
+			case Display_RefreshRate::Automatic:
+			case Display_RefreshRate::CurrentMonitor:
+			default:
+				SELECT_DISPLAY = CURRENT_DISPLAY;
 		}
 		printDisplayInfo(SELECT_DISPLAY);
 
 		//DisplayInfo_Legacy* disp = getCurrentDisplayInfo();
 		DisplayInfo_Legacy* disp = getDisplayInfo(SELECT_DISPLAY);
-		static fp64 FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp64)(disp->refreshRate);
+		static fp64 FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
 		fp64 TEMP_FPS = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate); // Would normally be either the current, highest, or lowest refresh rate
-		if (Combo_initFrameRate == 3) { // Constant
-			static fp32 temp_FPS_Constant_Value = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate);
+		
+		if (Display_Preferences.Display_RefreshRate_Type == Display_RefreshRate::ConstantValue) { // Constant
+			static fp32 temp_FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
 			ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
 			ImGui::Text(" ");
 			ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,6.0,1200.0);
 			FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
 			if (ImGui::Button("Apply FPS")) {
-				updateFrameRate(FPS_Constant_Value + FRAME_RATE_OFFSET);
+				Display_Preferences.Constant_RefreshRate_Value = FPS_Constant_Value;
+				updateFrameRate(Display_Preferences.Constant_RefreshRate_Value + FRAME_RATE_OFFSET);
 			}
 		} else { // Relative
 			ImGui::Text(" "); // Blank Line
-			static int temp_frameMultiplier = (Default_Frame_Rate_Multiplier >= 0.0) ? (int)(Default_Frame_Rate_Multiplier - 1.0) : (int)(1.0 - 1.0);
-			static fp64 frameMultiplier = Default_Frame_Rate_Multiplier;
+			static int32_t temp_frameMultiplier = Display_Preferences.Maximum_FPS_Multiplier;
+			fp64 frameMultiplier;
+			//int temp_frameMultiplier = (Default_Frame_Rate_Multiplier >= 0.0) ? (int)(Default_Frame_Rate_Multiplier - 1.0) : (int)(1.0 - 1.0);
+			//static fp64 frameMultiplier = Default_Frame_Rate_Multiplier;
 			if (temp_frameMultiplier >= 0) {
 				frameMultiplier = (fp64)(temp_frameMultiplier + 1);
 				ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
@@ -793,8 +802,9 @@ void Menu_Settings() {
 			fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
 			valueLimit(calculatedFPS,6.0,1200.0);
 			ImGui::Text("%.2lffps %.2lfms", calculatedFPS, (1.0 / (calculatedFPS)) * 1000.0);
-			ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,-6 + 1,6 - 1,"");
+			ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
 			if (ImGui::Button("Apply FPS")) {
+				Display_Preferences.Maximum_FPS_Multiplier = temp_frameMultiplier;
 				updateFrameRate(calculatedFPS + FRAME_RATE_OFFSET);
 			}
 		}
@@ -872,9 +882,9 @@ void Menu_Settings() {
 			ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
 			ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
 			screenshot_settings.JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
-			if (screenshot_settings.JPG_Quality_Level < 50) { ImGui::Text("Low Quality"); } else
-			if (screenshot_settings.JPG_Quality_Level < 80) { ImGui::Text("Medium Quality"); } else
-			if (screenshot_settings.JPG_Quality_Level < 90) { ImGui::Text("High Quality"); } else
+			if (screenshot_settings.JPG_Quality_Level < 60) { ImGui::Text("Low Quality (Not Recommended)"); } else
+			if (screenshot_settings.JPG_Quality_Level < 85) { ImGui::Text("Medium Quality"); } else
+			if (screenshot_settings.JPG_Quality_Level < 95) { ImGui::Text("High Quality"); } else
 			{ ImGui::Text("Very High Quality (Recommended)"); }
 		} else if (screenshot_settings.screenshotFileType == Image_File_Format::TGA || screenshot_settings.screenshotFileType == Image_File_Format::BMP) {
 			ImGui::Text("Note: Super Screenshots only support PNG and JPG.");

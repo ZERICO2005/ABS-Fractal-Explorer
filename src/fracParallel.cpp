@@ -13,7 +13,7 @@
 #include "copyBuffer.h"
 #include "frac_preprocessor.h"
 
-#include "omp.h"
+//#include "omp.h"
 
 template<typename fpX, typename fpC>
 void colorExterior(

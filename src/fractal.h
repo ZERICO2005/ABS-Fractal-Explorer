@@ -27,24 +27,42 @@ enum FractalTypeEnum {
 #endif
 
 const char* const PowerText[] = {
-	"Constant","Linear","Quadratic","Cubic","Quartic","Quintic","Sextic","Septic","Octic","Nonic",
-	"Decic","Undecic","Dodecic","Tridecic","Tetradecic","Pentadecic","Hexadecic","Heptadecic","Octadecic","Nonadecic",
-    "Icosic", "Unicosic", "Duocosic", "Triacosic", "Tetraicosic","Pentacosic", "Hexacosic", "Heptacosic", "Octacosic", "Nonacosic"
+	"Constant", "Linear"  , "Quadratic", "Cubic"    , "Quartic"    , "Quintic"   , "Sextic"   , "Septic"    , "Octic"    , "Nonic"    ,
+	"Decic"   , "Undecic" , "Dodecic"  , "Tridecic" , "Tetradecic" , "Pentadecic", "Hexadecic", "Heptadecic", "Octadecic", "Nonadecic",
+    "Icosic"  , "Unicosic", "Duocosic" , "Triacosic", "Tetraicosic", "Pentacosic", "Hexacosic", "Heptacosic", "Octacosic", "Nonacosic"
 };
  /* Safe Method of accessing PowerText */
 const char* getPowerText(int32_t p);
 const char* getPowerText(fp64 p);
 
-fp64 getABSFractalMinRadius(fp64 power);
-fp64 getABSFractalMinRadius(uint32_t power);
+inline fp64 getABSFractalMinRadius(fp64 power) {
+	return (power - 1.0) / (pow(power, power / (power - 1.0)));
+}
+inline fp64 getABSFractalMinRadius(uint32_t power) {
+	return getABSFractalMinRadius((fp64)power);
+}
 
-fp64 getABSFractalMaxRadius(fp64 power);
-fp64 getABSFractalMaxRadius(uint32_t power);
+inline fp64 getABSFractalMaxRadius(fp64 power) {
+	return pow(2.0,1.0 / (power - 1.0));
+}
+inline fp64 getABSFractalMaxRadius(uint32_t power) {
+	return getABSFractalMaxRadius((fp64)power);
+}
 
 uint64_t limitFormulaID(uint32_t power, uint64_t formula);
 uint64_t getABSValue(uint32_t power);
-fp64 getStretchValue(fp64 s);
-fp64 getZoomDefault(fp64 p);
+
+inline fp64 getStretchValue(fp64 stretch) {
+	return pow(2.0,-abs(stretch));
+}
+
+inline fp64 zoomDefault(fp64 power) {
+	return -log10(getABSFractalMaxRadius(power) - 0.01);
+}
+inline fp64 zoomDefault(uint32_t power) {
+	return -log10(getABSFractalMaxRadius((fp64)power) - 0.01);
+}
+
 
 struct _ABS_Mandelbrot {
 	/* Parameters */
@@ -129,32 +147,32 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type);
 
 /* Cordinates */
 
-void coordinate_to_pixel(fp32 xI, fp32 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
-void coordinate_to_pixel(fp64 xI, fp64 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
+void coordinate_to_pixel(fp32 xI, fp32 yI, int32_t* xO, int32_t* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
+void coordinate_to_pixel(fp64 xI, fp64 yI, int32_t* xO, int32_t* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
 #ifdef enableFP80andFP128
-	void coordinate_to_pixel(fp80 xI, fp80 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
-	void coordinate_to_pixel(fp128 xI, fp128 yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren);
+	void coordinate_to_pixel(fp80 xI, fp80 yI, int32_t* xO, int32_t* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
+	void coordinate_to_pixel(fp128 xI, fp128 yI, int32_t* xO, int32_t* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
 #endif
 
-void coordinate_to_image_cordinate(fp32 xI, fp32 yI, fp32* xO ,fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
-void coordinate_to_image_cordinate(fp64 xI, fp64 yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+void coordinate_to_image_cordinate(fp32 xI, fp32 yI, fp32* xO ,fp32* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
+void coordinate_to_image_cordinate(fp64 xI, fp64 yI, fp32* xO, fp32* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
 #ifdef enableFP80andFP128
-	void coordinate_to_image_cordinate(fp80 xI, fp80 yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
-	void coordinate_to_image_cordinate(fp128 xI, fp128 yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+	void coordinate_to_image_cordinate(fp80 xI, fp80 yI, fp32* xO, fp32* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
+	void coordinate_to_image_cordinate(fp128 xI, fp128 yI, fp32* xO, fp32* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
 #endif
 
-void pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, ABS_Mandelbrot* param, Render_Data* ren);
-void pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren);
+void pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
+void pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
 #ifdef enableFP80andFP128
-	void pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, ABS_Mandelbrot* param, Render_Data* ren);
-	void pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, ABS_Mandelbrot* param, Render_Data* ren);
+	void pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
+	void pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, const ABS_Mandelbrot* param, const Render_Data* ren);
 #endif
 
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, fp32 zoomVal, fp32 rotSin, fp32 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, fp64 zoomVal, fp64 rotSin, fp64 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp32* xO, fp32* yO, fp32 zoomVal, fp32 rotSin, fp32 rotCos, const ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, fp64 zoomVal, fp64 rotSin, fp64 rotCos, const ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
 #ifdef enableFP80andFP128
-	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, fp80 zoomVal, fp80 rotSin, fp80 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
-	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, fp128 zoomVal, fp128 rotSin, fp128 rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp80* xO, fp80* yO, fp80 zoomVal, fp80 rotSin, fp80 rotCos, const ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
+	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, fp128 zoomVal, fp128 rotSin, fp128 rotCos, const ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
 #endif
 
 #define POLAR_POWER_MINIMUM (1.0100)

@@ -34,7 +34,10 @@ Bit_Graphics Text_Graphic;
 #define rktX 62 // 9 coloumns
 #define rktY 17 // 2 rows
 
-void renderKeyText(char* text, uint8_t cR, uint8_t cG, uint8_t cB, uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1) {
+void renderKeyText(
+	char* text, uint8_t cR, uint8_t cG, uint8_t cB, 
+	uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1
+) {
 	if (Text_Graphic.isInitialized() == false) { return; }
 	Text_Graphic.gColor_RGB(cR,cG,cB);
 	Text_Graphic.fillScreen();
@@ -213,20 +216,6 @@ void renderKeyboard(
 	int32_t maxDimY = INT32_MIN;
 
 	size_t keyCount = 0;
-
-	// #define calcBoardBounds(b); \
-	// 	for (size_t i = 0; i < Keyboard_Len[b]; i++) { \
-	// 		int32_t minPosX = Keyboard_List[b][i].posX; \
-	// 		int32_t maxPosX = Keyboard_List[b][i].posX + Keyboard_List[b][i].sizeX; \
-	// 		int32_t minPosY = Keyboard_List[b][i].posY; \
-	// 		int32_t maxPosY = Keyboard_List[b][i].posY + Keyboard_List[b][i].sizeY; \
-	// 		minDimX = (minPosX < minDimX) ? minPosX : minDimX; \
-	// 		maxDimX = (maxPosX > maxDimX) ? maxPosX : maxDimX; \
-	// 		minDimY = (minPosY < minDimY) ? minPosY : minDimY; \
-	// 		maxDimY = (maxPosY > maxDimY) ? maxPosY : maxDimY; \
-	// 		keyCount++; \
-	// 	}
-	/* calcBoardBounds() */
 
 	/* Calculate the size of the keyboard */
 	calcBoardBounds(

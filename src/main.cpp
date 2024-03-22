@@ -64,7 +64,6 @@ int init_Fractal_Engine(int argc, char* argv[]) {
 //#define print_pointer_sizes
 
 int main(int argc, char* argv[]) {
-	printFlush("%s",argv[0]);
 	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
 	#ifdef print_pointer_sizes
 		printf("\nCHAR_BIT: %2d bits",CHAR_BIT);
@@ -75,7 +74,7 @@ int main(int argc, char* argv[]) {
 		printf("\nsizeof(short)       = %3zu | %3zub",sizeof(short),sizeof(short) * CHAR_BIT);
 		printf("\nsizeof(int)         = %3zu | %3zub",sizeof(int),sizeof(int) * CHAR_BIT);
 		printf("\nsizeof(long)        = %3zu | %3zub",sizeof(long),sizeof(long) * CHAR_BIT);
-		printf("\nsizeof(long long)   = %3zu | %3zub",sizeof(long long),sizeof(long long) * CHAR_BIT);\
+		printf("\nsizeof(long long)   = %3zu | %3zub",sizeof(long long),sizeof(long long) * CHAR_BIT);
 		printf("\nsizeof(float)       = %3zu | %3zub",sizeof(float),sizeof(float) * CHAR_BIT);
 		printf("\nsizeof(bool)        = %3zu | %3zub",sizeof(bool),sizeof(bool) * CHAR_BIT);
 		printf("\nsizeof(double)      = %3zu | %3zub",sizeof(double),sizeof(double) * CHAR_BIT);

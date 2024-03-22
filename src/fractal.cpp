@@ -13,24 +13,14 @@
 
 /* Safe Method of accessing PowerText */
 const char* getPowerText(int32_t p) {
-    if (p >= 0 && p <= (int32_t)ARRAY_LENGTH(PowerText)) {
-        return PowerText[p];
-    }
-    return NULL;
+	if (p >= 0 && p <= (int32_t)ARRAY_LENGTH(PowerText)) {
+		return PowerText[p];
+	}
+	return NULL;
 }
 const char* getPowerText(fp64 p) {
-    return getPowerText((int32_t)p);
+	return getPowerText((int32_t)p);
 }
-
-fp64 getABSFractalMinRadius(fp64 power) {
-	return (power - 1.0) / (pow(power, power / (power - 1.0)));
-}
-fp64 getABSFractalMinRadius(uint32_t power) { return getABSFractalMinRadius((fp64)power); }
-
-fp64 getABSFractalMaxRadius(fp64 power) {
-	return pow(2.0,1.0 / (power - 1.0));
-}
-fp64 getABSFractalMaxRadius(uint32_t power) { return getABSFractalMaxRadius((fp64)power); }
 
 uint64_t limitFormulaID(uint32_t power, uint64_t formula) {
 	switch(power) {
@@ -64,13 +54,6 @@ uint64_t getABSValue(uint32_t power) {
 		return 1;
 	};
 	return 1; // Unknown
-}
-
-fp64 getStretchValue(fp64 s) {
-	return pow(2.0,-abs(s));
-}
-fp64 getZoomDefault(fp64 p) {
-	return (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01);
 }
 
 void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
@@ -187,7 +170,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 /* Coordinates */
 
 #define pixel_to_coordinate_template(fpX); \
-void pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, ABS_Mandelbrot* param, Render_Data* ren) { \
+void pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, const ABS_Mandelbrot* param, const Render_Data* ren) { \
 	/* Normalizes Coordinates */\
 	uint32_t resX = ren->resX - 1;\
 	uint32_t resY = ren->resY - 1;\
@@ -208,7 +191,7 @@ pixel_to_coordinate_template(fp64);
 #endif
 
 #define coordinate_to_pixel_template(fpX); \
-void coordinate_to_pixel(fpX xI, fpX yI, int32_t* xO, int32_t* yO, ABS_Mandelbrot* param, Render_Data* ren) {\
+void coordinate_to_pixel(fpX xI, fpX yI, int32_t* xO, int32_t* yO, const ABS_Mandelbrot* param, const Render_Data* ren) {\
 	/* Reverses Transformations */\
 	fpX xC = xI * cos(-(fpX)param->rot) - yI * sin(-(fpX)param->rot);\
 	fpX yC = yI * cos(-(fpX)param->rot) + xI * sin(-(fpX)param->rot);\
@@ -229,7 +212,7 @@ coordinate_to_pixel_template(fp64);
 #endif
 
 #define coordinate_to_image_cordinate_template(fpX); \
-void coordinate_to_image_cordinate(fpX xI, fpX yI, fp32* xO, fp32* yO, ABS_Mandelbrot* param, Render_Data* ren) {\
+void coordinate_to_image_cordinate(fpX xI, fpX yI, fp32* xO, fp32* yO, const ABS_Mandelbrot* param, const Render_Data* ren) {\
 	/* Reverses Transformations */\
 	fpX xC = xI * cos(-(fpX)param->rot) - yI * sin(-(fpX)param->rot);\
 	fpX yC = yI * cos(-(fpX)param->rot) + xI * sin(-(fpX)param->rot);\
@@ -250,7 +233,7 @@ coordinate_to_image_cordinate_template(fp64);
 #endif
 
 #define cpu_pixel_to_coordinate_template(fpX); \
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, fpX zoomVal, fpX rotSin, fpX rotCos, ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample) { \
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, fpX zoomVal, fpX rotSin, fpX rotCos, const ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample) { \
 	/* Normalizes Coordinates */\
 	uint32_t resX = ResX - 1;\
 	uint32_t resY = ResY - 1;\

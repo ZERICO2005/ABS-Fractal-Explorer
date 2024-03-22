@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -36,8 +36,9 @@ size_t getBufferBoxSize(BufferBox* box) {
 	if (box == NULL) {
 		return 0;
 	}
-	uint32_t pitch = getBufferBoxPitch(box);
-	return (size_t)(pitch * box->resY);
+	return box->resX * box->resY * box->channels;
+	//uint32_t pitch = getBufferBoxPitch(box);
+	//return (size_t)(pitch * box->resY);
 }
 
 bool validateBufferBox(BufferBox* box) {
