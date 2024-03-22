@@ -70,26 +70,24 @@ u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 u32 maxItr = param.maxItr;\
 fpX r = param.r;\
 fpX i = param.i;\
-fpX zoom = param.zoom;\
+fpX zoom_PC = pow((fp128)10.0, (fp128)param.zoom);\
 u32 y = p0 / resX;\
 u32 x = p0 % resX;\
 u32 sample = ren.sample;\
-fpX cr = (fpX)0.0;\
-fpX ci = (fpX)0.0;\
-fpX zr = (fpX)0.0;\
-fpX zi = (fpX)0.0;\
+fpX rotSin_PC = (fpX)sin((fp128)param.rot);\
+fpX rotCos_PC = (fpX)cos((fp128)param.rot);\
 resX *= sample;\
 resY *= sample;\
 x *= sample;\
 y *= sample;\
 uint32_t sResX = resX - 1;\
 uint32_t sResY = resY - 1;\
-fpX zoomVal = pow((fpX)10.0, zoom);\
-fpX rotSin = sin((fpX)param.rot);\
-fpX rotCos = cos((fpX)param.rot);\
 fpX numY = ((fpX)sResY / (fpX)2.0);\
 fpX numX = ((fpX)sResX / (fpX)2.0);\
-fpX numZ = (sResX >= sResY) ? numY * pow((fpX)10.0, zoom) : numX * pow((fpX)10.0, zoom);
+fpX numT = (sResX >= sResY) ? numY * zoom_PC : numX * zoom_PC;\
+fpX recip_numZ = (fpX)((fpX)param.sX / numT);\
+fpX neg_recip_numW = (fpX)(-((fpX)param.sY / numT));
+
 
 #define Block1(fpX) for (; y < resY; y += sample) {\
 for (; x < resX; x += sample) {\
@@ -102,15 +100,13 @@ for (; x < resX; x += sample) {\
 		uint32_t outA = 0;\
 		for (u32 v = 0; v < sample; v++) {\
 			for (u32 u = 0; u < sample; u++) {\
-				if (param.juliaSet == true) {\
-					cpu_pixel_to_coordinate(x, y, &zr, &zi, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
-					cr = param.zr;\
-					ci = param.zi;\
-				} else {\
-					cpu_pixel_to_coordinate(x, y, &cr, &ci, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
-					zr = (param.startingZ == false) ? (fpX)0.0 : param.zr;\
-					zi = (param.startingZ == false) ? (fpX)0.0 : param.zi;\
-				}\
+				fpX xCord = (((fpX)x - numX) * recip_numZ);\
+				fpX yCord = (((fpX)y - numY) * neg_recip_numW);\
+				fpX cr = (!param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + param.r) : param.zr;\
+				fpX ci = (!param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + param.i) : param.zi;\
+				fpX zr = (param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + param.r) : param.zr;\
+				fpX zi = (param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + param.i) : param.zi;\
+\
 				fpX low = (fpX)4.0;\
 				fpX temp = (fpX)0.0;\
 				fpX zs = (fpX)0.0;\

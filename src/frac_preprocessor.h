@@ -26,12 +26,16 @@ struct Frac_Param_PC {
 		fpX zr;
 		fpX zi;
 		fpX zoom_PC;
+		fpX zr0;
+		fpX zi0;
 	/* Transformation */
 		fpX rotSin_PC;
 		fpX rotCos_PC;
 		fpX sX;
 		fpX sY;
 	/* Values */
+		fpX numX;
+		fpX numY;
 		fpX recip_numZ;
 		fpX neg_recip_numW;
 	/* Parameters */
@@ -41,8 +45,8 @@ struct Frac_Param_PC {
 			uint32_t power;
 			fpX polarPower;
 			fpX recip_log2_Power;
-			size_t mult_count;
-			size_t bool_count;
+			size_t mult_Count;
+			size_t bool_Count;
 	/* Coloring */
 		// Phase and Freq are pre-multiplied by TAU
 		fpC r_Amp;
@@ -108,7 +112,7 @@ int preCalc_Frac_Param(
 // Returns 0 on success, negative otherwise
 int preCalc_Frac_Render(
 	Frac_Render_PC& render_PC,
-	const ABS_Mandelbrot& render_data
+	const Render_Data& render_data
 );
 
 // Returns 0 on success, negative otherwise
