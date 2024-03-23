@@ -54,6 +54,12 @@ namespace Rendering_Method {
 	};
 }
 
+namespace OPENCV_Interpolation {
+	enum OPENCV_Interpolation_Enum {
+		OPENCV_INTER_NEAREST, OPENCV_INTER_LINEAR, OPENCV_INTER_CUBIC, OPENCV_INTER_AREA, OPENCV_INTER_LANCZOS4, OPENCV_INTER_COUNT
+	};		
+}
+
 int setup_fracExpKB(int argc, char* argv[]);
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex);

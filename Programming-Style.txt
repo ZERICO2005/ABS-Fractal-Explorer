@@ -1,0 +1,156 @@
+# Programming Style:
+	
+Based off a document written on 2023/09/30 by zerico2005.
+
+This document outlines some of the coding conventions/standards used in this project, and can help you better understand the intentions behind bits of code.
+If you want to contribute to the code, following some of the standards outlined can ensure consistency.
+	
+## Terminology:
+* ***Prefered***: The recommended convetion to use.
+* ***Acceptable***: An allowed convention. No changes are needed.
+* ***Discouraged***: An allowed, but not recommended convention. Could be changed/improved.
+* ***Unacceptable***: A convention that is not allowed, and ***MUST*** be fixed/corrected.
+
+# Tab Spacing
+* Tabs for indenting with a spacing of 4 is *prefered*.
+* Spacing of 8 is *acceptable*.
+* Using spaces to indent is *acceptable*, but *discouraged*.
+* Spacing of 2 is *unacceptable*, hinders readability, and can cause confusion. It ***MUST*** be immediately corrected.
+
+# If statements
+* If statements are *prefered* to be written of the style in `Annex A1`.
+* The styles shown in `Annex A2` or `Annex A3` are also *acceptable* if it improves readability.
+* `Annex A4` is also *acceptable*.
+* `Annex A5` is can hinder readability and is *Discouraged*.
+* The style shown in `Annex A6` can be used to write long If statements
+
+# Data Types (# symbol refers to bitwidth)
+* Integers:
+	* Prefer using fixed width types such as `int#_t` and `uint#_t` (`Annex B1`)
+	* The use of `u#` and `i#` is deprecated, and should be changed to `int#_t` and `uint#_t`; otherwise, the convention on the use of `u#` and `i#` is only for local/temporary variables (`Annex B2`).
+* Floats:
+	* Prefer using `fp16`, `fp32`, `fp64`, etc over `half`, `float`, `double`, etc.
+		
+# Name and Casing
+
+## Length
+* Singular/one letter names are prohibited from being in the global scope, no expections.
+* Generally speaking, anything placed in the global scope is *recommended* be at least **5** letters long. Otherwise naming conflicts or shadowing can occur.
+
+## Casing
+* Casing Styles:
+	* `camelCase` and `PascalCase` are *acceptable*.
+	* `camel_Snake_Case` and `Pascal_Snake_Case` are *acceptable*.
+	* `snake_case` and `ALL_CAPS` are *acceptable*.
+	* `flatcase` and `UPPERCASE` don't have a way of separating individual words hidering readability, and are *unacceptable*.
+* Casing Useage:
+	* camelCasing is commonly used for variables, functions and macros.
+	* PascalCasing is commonly used for variables, functions, macros and constants.
+	* ALL_CAPS is commonly used for functions, macros and constants.
+* *Prefered* groups/pairs of letters to use:
+	* 2 Dimensions: `xy`, `zw`, `uv`, `pq`, `nm` *Discouraged*: `ab`, `cd`, `ef`, `ij`
+	* 3 Dimesnions: `xyz`, `uvw` *Discouraged*: `abc`, `def`, `ijk`, `pqr`
+	* 4 Dimesnions: `xyzw` *Discouraged*: `abcd`, `pqrs`
+
+# Function Parameters
+* Function Parameters should be laid out in the format described in `Annex C1`.
+* `Annex C2` can used if the function declaration is hard to read or is too long. It groups variables together chronologically.
+	
+# Comments
+* Notes: `// Lorem Ipsum`
+* Headers and Titles: `/* Lorem Ipsum */`
+* Paragraphs: See `Annex D1`. Each line consists of two Asterisks followed by a Tab character.
+* Include Guards: See `Annex D2`.
+		
+# Date and Time
+* Date and time should generally follow one of the following formats:
+	* Text: `YYYY/MM/DD HH:MM:SS.FFF Example: 2023/06/30 20:34:48.765`
+	* File: `YYYY-MM-DD_HH-MM-SS.FFF Example: 2023-06-30_20-34-48.765`
+* If the month is spelled out, then any format *may* be used.
+
+# Annex List
+
+## ANNEX A
+
+### Annex A1
+	if (condition) {
+		code;
+	} else {
+		code;
+	}
+
+### Annex A2
+	if (condition) { code; } else { code; }
+
+### Annex A3
+	if (condition) { code; } else
+	{ code; }
+
+### Annex A4
+	if (condition)
+	{
+		code;
+	}
+
+### Annex A5
+	if (condition)
+		code;
+
+### Annex A6
+	if (
+		conditionA ||
+		conditionB &&
+		conditionC
+	) {
+
+## ANNEX B
+
+### Annex B1
+	int8_t,int16_t,int32_t,int64_t,uint8_t,uint16_t,uint32_t,uint64_t
+
+### Annex B2
+	i8,i16,i32,i64,u8,u16,u32,u64
+
+## ANNEX C
+
+### Annex C1
+	void function(ptr,x,y,z,p,q,var,foo,bar);
+	void function(ptr,x,y,z,p,q,var,foo,bar) {
+		code;
+	}
+
+### Annex C2
+	void function(
+		ptr,
+		x,y,z,
+		p,q,
+		var,
+		foo,
+		bar
+	);
+
+### Annex C3
+	void function(
+		ptr,
+		x,y,z,
+		p,q,
+		var,
+		foo,
+		bar
+	) {
+		code;
+	}
+
+## ANNEX D
+
+### Annex D1
+	/*
+	**	The quick brown
+	**	fox jumped over
+	**	the lazy dog
+	*/
+
+### Annex D2
+	#ifndef HEADER_H
+	#define HEADER_H
+	#endif /* HEADER_H */

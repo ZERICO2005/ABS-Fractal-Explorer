@@ -64,12 +64,18 @@
 		uint32_t JPG_Quality_Level;
 	}; typedef struct User_Screenshot_Settings User_Screenshot_Settings;
 
+/* Rendering Settings */
+	struct User_Rendering_Settings {
+		uint64_t Hardware_Hash;
+		int_enum Image_Interpolation_Mode;
+	}; typedef struct User_Rendering_Settings User_Rendering_Settings;
+
 /* User Data Configuration */
 	enum User_Configuration_Enum {
-		Automatic_Behaviour,Parameter_Sensitivity,Display_Preferences,GUI_Settings,Screenshot_Settings,User_Configuration_Enum_Count
+		Automatic_Behaviour,Parameter_Sensitivity,Display_Preferences,GUI_Settings,Screenshot_Settings,Rendering_Settings,User_Configuration_Enum_Count
 	};
 	const char* const User_Configuration_Labels[] = {
-		"Automatic_Behaviour","Parameter_Sensitivity","Display_Preferences","GUI_Settings","Screenshot_Settings"
+		"Automatic_Behaviour","Parameter_Sensitivity","Display_Preferences","GUI_Settings","Screenshot_Settings","Rendering_Settings"
 	};
 	struct User_Configuration_Data {
 		User_Automatic_Behaviour Automatic_Behaviour;
@@ -77,6 +83,7 @@
 		User_Display_Preferences Display_Preferences;
 		User_GUI_Settings GUI_Settings;
 		User_Screenshot_Settings Screenshot_Settings;
+		User_Rendering_Settings Rendering_Settings;
 	}; typedef struct User_Configuration_Data User_Configuration_Data;
 
 // Import from file-path
@@ -94,6 +101,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path);
 	void clean_Display_Preferences(User_Display_Preferences& config_data);
 	void clean_GUI_Settings(User_GUI_Settings& config_data);
 	void clean_Screenshot_Settings(User_Screenshot_Settings& config_data);
+	void clean_Rendering_Settings(User_Rendering_Settings& config_data);
 
 /* default_config_data */
 	// Sets everything to default values
@@ -104,6 +112,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path);
 	void default_Display_Preferences(User_Display_Preferences& config_data);
 	void default_GUI_Settings(User_GUI_Settings& config_data, bool reset_GUI_Theme = false, bool reset_LockKeyInputsInMenus = false);
 	void default_Screenshot_Settings(User_Screenshot_Settings& config_data);
+	void default_Rendering_Settings(User_Rendering_Settings& config_data);
 
 
 // Legacy

@@ -56,6 +56,10 @@ constexpr User_Configuration_Data Default_Config = {
 		.screenshotFileType = Image_File_Format::PNG,
 		.PNG_Compression_Level = 8,
 		.JPG_Quality_Level = 95
+	},
+	.Rendering_Settings = {
+		.Hardware_Hash = 0x0,
+		.Image_Interpolation_Mode = OPENCV_Interpolation::OPENCV_INTER_NEAREST
 	}
 };
 
@@ -108,6 +112,11 @@ constexpr User_Configuration_Data Default_Config = {
 		clean_config_data(JPG_Quality_Level, 20, 100);
 	}
 
+	void clean_Rendering_Settings(User_Rendering_Settings& config_data) {
+		const User_Rendering_Settings& config_default = Default_Config.Rendering_Settings;
+		clean_config_data(Image_Interpolation_Mode, 0, OPENCV_Interpolation::OPENCV_INTER_COUNT);
+	}
+
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data) {
 		clean_Automatic_Behaviour(config_data.Automatic_Behaviour);
 		clean_Parameter_Sensitivity(config_data.Parameter_Sensitivity);
@@ -139,6 +148,7 @@ constexpr User_Configuration_Data Default_Config = {
 		}
 	}
 	void default_Screenshot_Settings(User_Screenshot_Settings& config_data) { config_data = Default_Config.Screenshot_Settings; }
+	void default_Rendering_Settings(User_Rendering_Settings& config_data) { config_data = Default_Config.Rendering_Settings; }
 
 	void default_User_Configuration_Data(User_Configuration_Data& config_data, bool reset_Extra) {
 		default_Automatic_Behaviour(config_data.Automatic_Behaviour);
@@ -146,8 +156,8 @@ constexpr User_Configuration_Data Default_Config = {
 		default_Display_Preferences(config_data.Display_Preferences);
 		default_GUI_Settings(config_data.GUI_Settings, reset_Extra, reset_Extra);
 		default_Screenshot_Settings(config_data.Screenshot_Settings);
+		default_Rendering_Settings(config_data.Rendering_Settings);
 	}
-
 
 const char* get_config_value(const char* Config_Text, const char* Header, const char* Value) {
 	if (Config_Text == nullptr || Header == nullptr || Value == nullptr) { return nullptr; }
@@ -364,6 +374,12 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		textToUint32(get_config_value(Config_Text,config_label,"PNG_Compression_Level"));
 		config_data.Screenshot_Settings.JPG_Quality_Level =
 		textToUint32(get_config_value(Config_Text,config_label,"JPG_Quality_Level"));
+
+	config_label = User_Configuration_Labels[Rendering_Settings];
+		config_data.Rendering_Settings.Hardware_Hash =
+		textToUint64(get_config_value(Config_Text,config_label,"Hardware_Hash"));
+		config_data.Rendering_Settings.Image_Interpolation_Mode =
+		textToEnum(get_config_value(Config_Text,config_label,"Image_Interpolation_Mode"));
 }
 
 int import_config_data(User_Configuration_Data& config_data, const char* path) {
@@ -561,7 +577,15 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		fprintf(file,"\n\tJPG_Quality_Level: %u",
 			config_data.Screenshot_Settings.JPG_Quality_Level
 		);
-		
+
+	fprintf(file,"\n\n%s:",User_Configuration_Labels[Rendering_Settings]);
+		fprintf(file,"\n\tHardware_Hash: %llu",
+			config_data.Rendering_Settings.Hardware_Hash
+		);
+		fprintf(file,"\n\tImage_Interpolation_Mode: %d",
+			config_data.Rendering_Settings.Image_Interpolation_Mode
+		);
+
 	fclose(file);
 	return 0;
 }

@@ -85,11 +85,11 @@
 	When `true`, the initial window size will be determined dynamically from `Bootup_Window_Scale`. When `false`, the initial window size will be set to between the Default and Minimum window size.
 	
 	## Bootup_Window_Scale
-	*(0.700)
+	*(0.700)*<br>
 	Determines how much of the display the window will initially take up if `ScaleWindowToScreenSize` is `true`.
 	
 	## Display_RefreshRate_Type
-	*(0 Automatic)*
+	*(0 Automatic)*<br>
 	Determines how the maximum refresh-rate is determined
 	
 	0. Automatic (Currently does `1 Current Display`)
@@ -99,16 +99,16 @@
 	4. Constant Value
 	
 	## Constant_RefreshRate_Value
-	*(60.0)*
+	*(60.0)*<br>
 	If `Display_RefreshRate_Type` is set to `4 COnstant Value`, it will use the `Constant_RefreshRate_Value` for the maximum refresh-rate.
 	
 	## Maximum_FPS_Multiplier
-	*(1)*
+	*(1)*<br>
 	If `Display_RefreshRate_Type` is *Not* set to `4 Constant Value`, the maximum refresh-rate will be multiplied by a value derived from `Maximum_FPS_Multiplier`
 	
-	`N == 0`: Multiplied by `1` 
-	`N > 0`: Multiplied `(N + 1)` times
-	`N < 0`: Multiplied `(1 / (-N + 1))` times
+	`N == 0`: Multiplied by `1`<br>
+	`N > 0`: Multiplied `(N + 1)` times<br>
+	`N < 0`: Multiplied `(1 / (-N + 1))` times<br>
 
 # GUI_Settings
 	## LockKeyInputsInMenus
@@ -129,7 +129,7 @@
 	
 	0. Classic Theme
 	1. Dark Theme
-	2. Light Theme (Not fully supported, may cause white-on-white text)
+	2. Light Theme
 	
 	## WindowOpacity:
 	*(0.950)*<br>
