@@ -83,6 +83,8 @@ namespace Image_File_Format {
 	};
 }
 
+uint64_t get_Hardware_Hash();
+
 /* ================ */
 
 // #include "copyBuffer.h"
@@ -156,6 +158,5 @@ void clear_KeyBind_PresetList();
 int get_currentKBPreset_Pos();
 void set_currentKBPreset_Pos(int pos);
 void remove_currentKBPreset();
-
 
 #endif /* RENDER_H */

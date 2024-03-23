@@ -48,6 +48,34 @@ cl_ulong KernelLocalMemSize;
 size_t KernelPreferredWorkGroupSizeMultiple;
 cl_ulong KernelPrivateMemSize;
 
+void calculate_GPU_Hardware_Hash(uint64_t& hash) {
+	if (initialized_OpenCL == false) { return; }
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		DeviceMaxComputeUnits,sizeof(DeviceMaxComputeUnits)
+	);
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		DeviceMaxWorkGroupSize,sizeof(DeviceMaxWorkGroupSize)
+	);
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		DeviceGlobalMemSize,sizeof(DeviceGlobalMemSize)
+	);
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		DeviceLocalMemSize,sizeof(DeviceLocalMemSize)
+	);
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		DeviceFP32Config,sizeof(DeviceFP32Config)
+	);
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		DeviceFP64Config,sizeof(DeviceFP64Config)
+	);
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		KernelWorkGroupSize,sizeof(KernelWorkGroupSize)
+	);
+	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
+		KernelLocalMemSize,sizeof(KernelLocalMemSize)
+	);
+}
+
 int32_t init_OpenCL() {
 	if (initialized_OpenCL == true) {
 		printFlush("\nError: OpenCL is already initialized");

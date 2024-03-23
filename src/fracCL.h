@@ -21,4 +21,6 @@ void queryOpenCL_GPU();
 
 #define writefToLog(...) //printFlush(__VA_ARGS__)
 
+void calculate_GPU_Hardware_Hash(uint64_t& hash);
+
 #endif /* FRAC_CL_H */

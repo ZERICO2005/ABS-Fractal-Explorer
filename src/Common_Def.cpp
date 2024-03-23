@@ -55,13 +55,24 @@ int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize) {
 // NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
 uint64_t fnv1a_hash(const uint8_t* buf, size_t len) {
 	if (buf == nullptr) { return 0; }
-	constexpr uint64_t fnv1a_prime = 0x100000001B3; // FNV prime (64bit)
-	uint64_t fnv1a_hash = 0xCBF29CE484222325; // FNV offset basis (64bit)
+	constexpr uint64_t fnv1a_Prime = 0x100000001B3; // FNV prime (64bit)
+	uint64_t fnv1a_Hash = 0xCBF29CE484222325; // FNV offset basis (64bit)
 	for (size_t i = 0; i < len; i++) {
-		fnv1a_hash ^= buf[i];
-		fnv1a_hash *= fnv1a_prime;
+		fnv1a_Hash ^= buf[i];
+		fnv1a_Hash *= fnv1a_Prime;
 	}
-	return fnv1a_hash;
+	return fnv1a_Hash;
+}
+
+// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len) {
+	if (buf == nullptr) { return; }
+	constexpr uint64_t fnv1a_Prime = 0x100000001B3; // FNV prime (64bit)
+	hash = (hash == 0x0) ? 0xCBF29CE484222325 : hash; // FNV offset basis (64bit)
+	for (size_t i = 0; i < len; i++) {
+		hash ^= buf[i];
+		hash *= fnv1a_Prime;
+	}
 }
 
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {

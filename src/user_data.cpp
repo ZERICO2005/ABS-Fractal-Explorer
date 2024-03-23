@@ -59,7 +59,7 @@ constexpr User_Configuration_Data Default_Config = {
 	},
 	.Rendering_Settings = {
 		.Hardware_Hash = 0x0,
-		.Image_Interpolation_Mode = OPENCV_Interpolation::OPENCV_INTER_NEAREST
+		.Frame_Interpolation_Method = OPENCV_Interpolation::OPENCV_INTER_NEAREST
 	}
 };
 
@@ -114,7 +114,7 @@ constexpr User_Configuration_Data Default_Config = {
 
 	void clean_Rendering_Settings(User_Rendering_Settings& config_data) {
 		const User_Rendering_Settings& config_default = Default_Config.Rendering_Settings;
-		clean_config_data(Image_Interpolation_Mode, 0, OPENCV_Interpolation::OPENCV_INTER_COUNT);
+		clean_config_data(Frame_Interpolation_Method, 0, OPENCV_Interpolation::OPENCV_INTER_COUNT);
 	}
 
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data) {
@@ -378,8 +378,8 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 	config_label = User_Configuration_Labels[Rendering_Settings];
 		config_data.Rendering_Settings.Hardware_Hash =
 		textToUint64(get_config_value(Config_Text,config_label,"Hardware_Hash"));
-		config_data.Rendering_Settings.Image_Interpolation_Mode =
-		textToEnum(get_config_value(Config_Text,config_label,"Image_Interpolation_Mode"));
+		config_data.Rendering_Settings.Frame_Interpolation_Method =
+		textToEnum(get_config_value(Config_Text,config_label,"Frame_Interpolation_Method"));
 }
 
 int import_config_data(User_Configuration_Data& config_data, const char* path) {
@@ -582,8 +582,8 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		fprintf(file,"\n\tHardware_Hash: %llu",
 			config_data.Rendering_Settings.Hardware_Hash
 		);
-		fprintf(file,"\n\tImage_Interpolation_Mode: %d",
-			config_data.Rendering_Settings.Image_Interpolation_Mode
+		fprintf(file,"\n\tFrame_Interpolation_Method: %d",
+			config_data.Rendering_Settings.Frame_Interpolation_Method
 		);
 
 	fclose(file);

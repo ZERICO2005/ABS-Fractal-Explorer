@@ -99,7 +99,6 @@
 	extern ImageBuffer* Secondary_Image;
 	extern ImageBuffer* Secondary_Image_Preview;
 
-	extern int Frame_Interpolation_Method;
 	//#define MANUAL_FRAME_RATE_OVERRIDE
 	extern fp64 FRAME_RATE; // Double the max screen refresh rate
 	extern const fp64 FRAME_RATE_OFFSET;

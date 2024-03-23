@@ -97,7 +97,6 @@
 	ImageBuffer* Secondary_Image = nullptr;
 	ImageBuffer* Secondary_Image_Preview = nullptr;
 
-	int Frame_Interpolation_Method;
 	//#define MANUAL_FRAME_RATE_OVERRIDE
 	fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
 	const fp64 FRAME_RATE_OFFSET = 0.01;

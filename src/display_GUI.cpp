@@ -634,28 +634,29 @@ void Menu_Rendering() {
 	ImGui::Text("Total Pixels Rendered: %ux%u %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
 	ImGui::Separator();
 	static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
-	int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Image_Interpolation_Mode;
+	int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;
 	ImGui::Text("Frame Interpolation Method:");
 	if (ImGui::Combo("##Frame_Interpolation_Method", &OpenCV_interpolation_mode, BufAndLen(OpenCV_interpolation_mode_list))) {
-		switch (OpenCV_interpolation_mode) {
-			case OPENCV_Interpolation::OPENCV_INTER_NEAREST:
-				Frame_Interpolation_Method = cv::INTER_NEAREST;
-			break;
-			case OPENCV_Interpolation::OPENCV_INTER_LINEAR:
-				Frame_Interpolation_Method = cv::INTER_LINEAR;
-			break;
-			case OPENCV_Interpolation::OPENCV_INTER_CUBIC:
-				Frame_Interpolation_Method = cv::INTER_CUBIC;
-			break;
-			case OPENCV_Interpolation::OPENCV_INTER_AREA:
-				Frame_Interpolation_Method = cv::INTER_AREA;
-			break;
-			case OPENCV_Interpolation::OPENCV_INTER_LANCZOS4:
-				Frame_Interpolation_Method = cv::INTER_LANCZOS4;
-			break;
-			default:
-				Frame_Interpolation_Method = cv::INTER_NEAREST;
-		};
+		// Should probably be replaced with a Map instead.
+		// switch (OpenCV_interpolation_mode) {
+		// 	case OPENCV_Interpolation::OPENCV_INTER_NEAREST:
+		// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
+		// 	break;
+		// 	case OPENCV_Interpolation::OPENCV_INTER_LINEAR:
+		// 		Frame_Interpolation_Method = cv::INTER_LINEAR;
+		// 	break;
+		// 	case OPENCV_Interpolation::OPENCV_INTER_CUBIC:
+		// 		Frame_Interpolation_Method = cv::INTER_CUBIC;
+		// 	break;
+		// 	case OPENCV_Interpolation::OPENCV_INTER_AREA:
+		// 		Frame_Interpolation_Method = cv::INTER_AREA;
+		// 	break;
+		// 	case OPENCV_Interpolation::OPENCV_INTER_LANCZOS4:
+		// 		Frame_Interpolation_Method = cv::INTER_LANCZOS4;
+		// 	break;
+		// 	default:
+		// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
+		// };
 	}
 	ImGui::Text("Nearest Neighbor is the fastest method. Other methods might not be able to hit 60.0fps at higher resolutions.");
 

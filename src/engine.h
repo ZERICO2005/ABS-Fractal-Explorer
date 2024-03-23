@@ -18,6 +18,8 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 int terminate_Engine();
 
+void get_GPU_Hardware_Hash(uint64_t& hash);
+
 /* Enum of Functions that can be activated by a KeyboardScancode */
 namespace Key_Function {
 	const char* const Key_Function_Text[] = {

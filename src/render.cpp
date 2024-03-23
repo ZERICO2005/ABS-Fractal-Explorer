@@ -1608,7 +1608,23 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	return 0;
 }
 
+uint64_t get_Hardware_Hash() {
+	uint64_t hardwareHash = 0x0;
+	int8_t value8 = 0x0; int32_t value32 = 0x0;
+	value8 = PROGRAM_V_MAJOR;
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value8,sizeof(int32_t));
+	value32 = (int32_t)std::thread::hardware_concurrency();
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	value32 = SDL_GetCPUCacheLineSize();
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	value32 = SDL_GetSystemRAM();
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	get_GPU_Hardware_Hash(hardwareHash);
+	return hardwareHash;
+}
+
 int terminate_Render() {
+	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
 	terminate_config_data();
 	terminateKeyboardGraphics();
 	clear_KeyBind_PresetList();
@@ -1815,6 +1831,8 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 		return -1;
 	}
 
+	const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
+
 	fp32 dx00 = 0.0f; fp32 dy00 = 0.0f; fp32 dx11 = 0.0f; fp32 dy11 = 0.0f;
 	fp32 dx01 = 0.0f; fp32 dy01 = 0.0f; fp32 dx10 = 0.0f; fp32 dy10 = 0.0f;
 	coordinate_to_image_cordinate(image->x00 - FRAC.r,image->y00 - FRAC.i,&dx00,&dy00,&FRAC,ren);
@@ -1850,7 +1868,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 			&blit, image, ren,
 			backgroundColor,
 			nullptr, nullptr,
-			Frame_Interpolation_Method,
+			Rendering_Settings.Frame_Interpolation_Method,
 			sx00, sy00,
 			sx01, sy01, sx10, sy10,
 			dx00, dy00,
@@ -1863,7 +1881,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// if (
 	// 	Image_Scaler_Quadrilateral(
 	// 		&blit, image, ren,
-	// 		Frame_Interpolation_Method,
+	// 		Rendering_Settings.Frame_Interpolation_Method,
 	// 		sx00, sy00, sx11, sy11,
 	// 		sx01, sy01, sx10, sy10,
 	// 		dx00, dy00, dx11, dy11,

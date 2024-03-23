@@ -104,6 +104,8 @@ typedef int int_enum;
 
 	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
 	uint64_t fnv1a_hash(const uint8_t* buf, size_t len);
+	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+	void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len);
 
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);

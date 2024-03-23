@@ -67,7 +67,7 @@
 /* Rendering Settings */
 	struct User_Rendering_Settings {
 		uint64_t Hardware_Hash;
-		int_enum Image_Interpolation_Mode;
+		int_enum Frame_Interpolation_Method;
 	}; typedef struct User_Rendering_Settings User_Rendering_Settings;
 
 /* User Data Configuration */
