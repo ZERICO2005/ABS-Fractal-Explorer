@@ -595,7 +595,7 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 // bool bootup_Fractal_Frame_Rendered = false;
 
 // TimerBox GUI_FrameTimer;
-// uint64_t GUI_FrameTimeNano = SECONDS_TO_NANO(1.0/60.0);
+// nano64_t GUI_FrameTimeNano = SECONDS_TO_NANO(1.0/60.0);
 // fp64 GUI_FrameTime = 1.0/60.0;
 // fp64 GUI_FrameRate = 60.0;
 
@@ -1177,7 +1177,7 @@ void correctFrameTime() {
 	GUI_FrameTimer.setFreq(GUI_FrameTime);
 }
 
-void updateFrameTimeNano(uint64_t frameTime) {
+void updateFrameTimeNano(nano64_t frameTime) {
 	GUI_FrameTimeNano = frameTime;
 	GUI_FrameTime = NANO_TO_SECONDS(frameTime);
 	GUI_FrameRate = 1.0 / NANO_TO_SECONDS(frameTime);
@@ -1435,19 +1435,32 @@ int setupDisplayInfo(const User_Display_Preferences& display_config,int32_t* ini
 	return 0;
 }
 
-int loadDisplayInformation(const User_Display_Preferences& display_config,int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
-	if (initResX == nullptr || initResY == nullptr || initPosX == nullptr || initPosY == nullptr) {
-		printError("loadDisplayInformation failed, nullptr parameters");
-		return -1;
+// Returns the index of the display to be used. Returns 0 on failure
+int32_t loadDisplayInformation(
+	const User_Display_Preferences& display_config,
+	int32_t& initResX, int32_t& initResY,
+	int32_t& initPosX, int32_t& initPosY
+) {
+	int32_t displayCount = reloadDisplays();
+	if (displayCount <= 0) {
+		printError("Failed to detect displays");
+		return 0;
 	}
-	using namespace Display_Bootup;
-	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
-	if (DISPLAY_COUNT <= 0) {
-		printError("SDL_GetNumVideoDisplays() raised an error:\n%s",SDL_GetError());
-		return -1;
+	printf("\n\tDisplay Count: %d",displayCount);
+	int32_t cursorPosX, cursorPosY;
+	SDL_GetMouseState(&cursorPosX, &cursorPosY);
+	const DisplayInfo* disp = getBootupDisplay(
+		display_config,
+		cursorPosX, cursorPosY,
+		RESX_Minimum, RESY_Minimum
+	);
+	if (disp == nullptr) {
+		printError("unable to getBootupDisplay");
+		return 0;
 	}
-	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
-	return 0;
+	disp->getResolution(initResX,initResY);
+	disp->getCornerNW(initPosX,initPosY);
+	return disp->getIndex();
 }
 
 void init_config_data() {
@@ -1510,8 +1523,12 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	printf("\nSystem Information:");
 	int32_t dispResX, dispResY;
 	int32_t initResX, initResY, initPosX, initPosY;
-	if (setupDisplayInfo(config_data.Display_Preferences,&initResX,&initResY,&initPosX,&initPosY) < 0) {
-		printCriticalError("init_Render failed to setup Display Info");
+	// if (setupDisplayInfo(config_data.Display_Preferences,&initResX,&initResY,&initPosX,&initPosY) < 0) {
+	// 	printCriticalError("init_Render failed to setupDisplayInfo");
+	// }
+	int32_t initDisplayIndex = loadDisplayInformation(config_data.Display_Preferences,initResX,initResY,initPosX,initPosY);
+	if (initDisplayIndex == 0) {
+		printCriticalError("init_Render failed to loadDisplayInformation");
 	}
 	//printFlush("\nOld: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
 	dispResX = initResX;
@@ -1604,6 +1621,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
+	ABORT_RENDERING = true;
 	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	return 0;
 }
@@ -1733,7 +1751,7 @@ void renderLoadingGraphic(fp64 speed) {
 
 
 int exportScreenshot() {
-	static uint64_t resetTime = 0;
+	static nano64_t resetTime = 0;
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportFractalBuffer == false) {
 		resetTime = getNanoTime();
 		exportFractalBuffer = true;
@@ -1742,7 +1760,7 @@ int exportScreenshot() {
 	return 0;
 }
 int exportSuperScreenshot() {
-	static uint64_t resetTime = 0;
+	static nano64_t resetTime = 0;
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportSuperFractalBuffer == false) {
 		resetTime = getNanoTime();
 		exportSuperFractalBuffer = true;

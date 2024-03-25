@@ -679,7 +679,7 @@ void Menu_Settings() {
 	User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
 	static const char* initMonitorLocations[] = {
 		"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
-		"Left","Right","Center (Placeholder)","Top","Bottom","Top-Left (Placeholder)","Top-Right (Placeholder)","Bottom-Left (Placeholder)","Bottom-Right (Placeholder)",
+		"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
 		"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
 	};
 	static int Combo_initMonitorLocation = config_data.Display_Preferences.Display_Bootup_Type;

@@ -11,27 +11,39 @@
 
 #include "Common_Def.h"
 
+#include "user_data.h"
+
 class DisplayInfo {
 	public:
+		DisplayInfo();
+		~DisplayInfo();
 		DisplayInfo(
+			int32_t index,
 			int32_t resX, int32_t resY,
 			int32_t posX, int32_t posY,
-			fp64 refreshRate, uint8_t bitsPerPixel,
+			fp64 refreshRate,
+			uint8_t bitsPerPixel,
 			std::string name
 		);
+		// Doesn't do anything
 		void updateDisplayInfo(
+			int32_t index,
 			int32_t resX, int32_t resY,
 			int32_t posX, int32_t posY,
-			fp64 refreshRate, uint8_t bitsPerPixel,
+			fp64 refreshRate,
+			uint8_t bitsPerPixel,
 			std::string name
 		);
 		// Writes to any non nullptr parameters
 		void retriveDisplayInfo(
+			int32_t* index,
 			int32_t* resX, int32_t* resY,
 			int32_t* posX, int32_t* posY,
-			fp64* refreshRate = nullptr, uint8_t* bitsPerPixel = nullptr,
+			fp64* refreshRate = nullptr,
+			uint8_t* bitsPerPixel = nullptr,
 			std::string* name = nullptr
 		) const;
+		int32_t getIndex() const;
 		void getPosition(int32_t& x, int32_t& y) const;
 		int64_t getSquaredDistanceFromPoint(int32_t x, int32_t y) const;
 		void getResolution(int32_t& x, int32_t& y) const;
@@ -59,6 +71,8 @@ class DisplayInfo {
 		bool pointInBounds(int32_t x, int32_t y) const;
 
 	private:
+		void clearDisplayInfo();
+		int32_t Index;
 		int32_t ResX;
 		int32_t ResY;
 		int32_t PosX; // Top left corner
@@ -86,28 +100,34 @@ namespace Display_RefreshRate {
 	};
 };
 
+const std::vector<DisplayInfo>& getDisplayList();
+
+int32_t getDisplayCount();
+
+// Returns the number of displays (0 on failure)
+int32_t reloadDisplays();
+
 void getDisplayAreaBounds(
-	const DisplayInfo*& displayArray, size_t displayCount,
 	int32_t& leftBound, int32_t& rightBound,
 	int32_t& topBound, int32_t& bottomBound
 );
 
-// Returns 0 if no matches were found
-int32_t getDisplayFromPosition(
-	const DisplayInfo*& displayArray, size_t displayCount,
+// index >= 1, returns nullptr on out of bounds
+const DisplayInfo* getDisplayFromIndex(int32_t index);
+
+// Returns nullptr if no matches were found
+const DisplayInfo* getDisplayFromPosition(
 	int32_t posX, int32_t posY
 );
 
 // Returns 0 if no matches were found
-int32_t matchDisplay(
-	const DisplayInfo*& displayArray, size_t displayCount,
-	Display_Bootup::Display_Bootup_Enum bootupType,
-	int32_t specificDisplay,
-	int32_t cursorPosX, int32_t cursorPosY,
-	int32_t minResX, int32_t minResY
+const DisplayInfo* getBootupDisplay(
+	const User_Display_Preferences& Display_Config,
+	int32_t cursorPosX = INT32_MIN, int32_t cursorPosY = INT32_MIN,
+	int32_t minResX = 0, int32_t minResY = 0
 );
 
 // Used to determine if the display configuration has changed. Returns 0 if parameters are invalid
-uint64_t getDisplayConfigHash(const DisplayInfo*& displayArray, size_t displayCount);
+uint64_t getDisplayConfigHash();
 
 #endif /* DISPLAY_INFO_H */

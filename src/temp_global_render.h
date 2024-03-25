@@ -102,23 +102,23 @@
 	//#define MANUAL_FRAME_RATE_OVERRIDE
 	extern fp64 FRAME_RATE; // Double the max screen refresh rate
 	extern const fp64 FRAME_RATE_OFFSET;
-	extern uint64_t FRAME_RATE_NANO;
+	extern nano64_t FRAME_RATE_NANO;
 	#define  Default_Frame_Rate_Multiplier 1.0
 	extern const uint8_t color_square_divider; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 	extern fp64 DeltaTime;
-	extern uint64_t END_SLEEP_HEADROOM;
+	extern nano64_t END_SLEEP_HEADROOM;
 
 	extern fp64 Frame_Time_Display;
 	extern fp64 Render_Time_Display;
 
 	extern uint32_t RESY_UI;
 
-	extern uint64_t abortTimer; // How long it is taking to abort the rendering jobs
+	extern nano64_t abortTimer; // How long it is taking to abort the rendering jobs
 
 	extern bool bootup_Fractal_Frame_Rendered;
 
 	extern TimerBox GUI_FrameTimer;
-	extern uint64_t GUI_FrameTimeNano;
+	extern nano64_t GUI_FrameTimeNano;
 	extern fp64 GUI_FrameTime;
 	extern fp64 GUI_FrameRate;
 

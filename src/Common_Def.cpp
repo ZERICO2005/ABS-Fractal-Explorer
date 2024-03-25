@@ -10,47 +10,49 @@
 
 /* Functions */
 
-/*
-Fills Dst with a repeating pattern from Src 
-*/
+	// Fills a buffer with a repeating pattern of N bytes
+	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize) {
+		if (buf == nullptr || PatternData == nullptr || PatternSize == 0) { return nullptr; }
+		if (bufSize == 0) { return buf; } // 0 Bytes to copy
+		if (PatternSize == 1) {
+			memset(buf,((uint8_t*)PatternData)[0],bufSize);
+			return buf;
+		}
+		if (bufSize <= PatternSize) {
+			memcpy(buf,PatternData,bufSize);
+			return buf;
+		}
+		memcpy(buf,PatternData,PatternSize); // Initial Copy
+		size_t len = PatternSize;
+		size_t pos = PatternSize;
+		
+		while (pos + len <= bufSize) {
+			memcpy((uint8_t*)buf + pos,buf,len); 
+			pos += len;
+			len *= 2; // Doubles copy size each iteration
+		}
+		memcpy((uint8_t*)buf + pos,buf,bufSize - len); // Copies the remaining portion
+		return buf;
+	}
 
-// Fills a buffer with a repeating pattern of N bytes
-int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize) {
-	if (buf == nullptr || PatternData == nullptr) { return -1; }
-	if (bufSize == 0 || PatternSize == 0) { return 0; } // 0 Bytes to copy
-	if (bufSize <= PatternSize) {
-		memcpy(buf,PatternData,bufSize);
+	// Assumes the pattern is set in the first N bytes in buf
+	void* inPlacePatternMemcpy(void* __restrict__ buf, size_t bufSize, size_t PatternSize) {
+		if (buf == nullptr || PatternSize == 0) { return nullptr; }
+		if (bufSize <= PatternSize) { return buf; }
+		if (PatternSize == 1) {
+			memset(buf,((uint8_t*)buf)[0],bufSize);
+			return buf;
+		}
+		size_t len = PatternSize;
+		size_t pos = PatternSize;
+		while (pos + len <= bufSize) {
+			memcpy((uint8_t*)buf + pos,buf,len); 
+			pos += len;
+			len *= 2; // Doubles copy size each iteration
+		}
+		memcpy((uint8_t*)buf + pos,buf,bufSize - len); // Copies the remaining portion
 		return 0;
 	}
-	memcpy(buf,PatternData,PatternSize); // Initial Copy
-	size_t len = PatternSize;
-	size_t pos = PatternSize;
-	
-	while (pos + len <= bufSize) {
-		memcpy(buf + pos,buf,len); 
-		pos += len;
-		len *= 2; // Doubles copy size each iteration
-	}
-	memcpy(buf + pos,buf,bufSize - len); // Copies the remaining portion
-	return 0;
-}
-
-// Assumes the pattern is set in the first N bytes in buf
-int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize) {
-	if (buf == nullptr) { return -1; }
-	if (bufSize == 0 || PatternSize == 0) { return 0; } // 0 Bytes to copy
-	if (bufSize <= PatternSize) { return 0; }
-	size_t len = PatternSize;
-	size_t pos = PatternSize;
-
-	while (pos + len <= bufSize) {
-		memcpy(buf + pos,buf,len); 
-		pos += len;
-		len *= 2; // Doubles copy size each iteration
-	}
-	memcpy(buf + pos,buf,bufSize - len); // Copies the remaining portion
-	return 0;
-}
 
 // NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
 uint64_t fnv1a_hash(const uint8_t* buf, size_t len) {
@@ -65,6 +67,7 @@ uint64_t fnv1a_hash(const uint8_t* buf, size_t len) {
 }
 
 // NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+// Set hash to 0x0 to start. Allows multiple arrays to be used in the hash
 void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len) {
 	if (buf == nullptr) { return; }
 	constexpr uint64_t fnv1a_Prime = 0x100000001B3; // FNV prime (64bit)

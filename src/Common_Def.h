@@ -87,24 +87,23 @@ typedef int int_enum;
 	// Right Circular Shift
 	#define ROR(n,b) (((n) >> (b)) | ((n) << ((sizeof(n) * CHAR_BIT) - (b))))
 
-	#define boolText(bool) ((bool) ? "true" : "false")
-	#define BoolText(bool) ((bool) ? "True" : "False")
+	inline const char* boolText(bool b) { return b ? "true" : "false"; }
+	inline const char* BoolText(bool b) { return b ? "True" : "False"; }
+	inline const char* BOOLText(bool b) { return b ? "TRUE" : "FALSE"; }
 
 	#define valueLimit(value,minimum,maximum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) ) )
 	#define valueMinimum(value,minimum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ((value) = (value)) )
 	#define valueMaximum(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
 	#define valueRestore(value,restore,minimum,maximum) ( ((value) >= (minimum) && (value) <= (maximum)) ? ((value) = (value)) : ((value) = (restore)) )
+	
+	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* PatternData, size_t PatternSize);
 
-	#define BASE_0_TO_1_INDEXING(i) ((i) + 1)
-	#define BASE_1_TO_0_INDEXING(i) ((i) - 1)
-
-	int patternMemcpy(uint8_t* buf, size_t bufSize, const uint8_t* PatternData, size_t PatternSize);
-
-	int inPlacePatternMemcpy(uint8_t* buf, size_t bufSize, size_t PatternSize);
+	void* inPlacePatternMemcpu(void* buf, size_t bufSize, size_t PatternSize);
 
 	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
 	uint64_t fnv1a_hash(const uint8_t* buf, size_t len);
 	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+	// Set hash to 0x0 to start. Allows multiple arrays to be used in the hash
 	void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len);
 
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
@@ -126,8 +125,8 @@ typedef int int_enum;
 	// Returns the time in seconds 
 	fp64 getDecimalTime();
 
-	#define SECONDS_TO_NANO(t) (nano64_t)((t) * 1.0e9)
-	#define NANO_TO_SECONDS(t) ((fp64)(t) / 1.0e9)
+	inline nano64_t SECONDS_TO_NANO(fp64 t) { return (nano64_t)((t) * 1.0e9); }
+	inline fp64 NANO_TO_SECONDS(nano64_t t) { return ((fp64)(t) / 1.0e9); }
 
 	// // Callocs the date and time in UTC
 	// const char* getDateAndTimeUTC(

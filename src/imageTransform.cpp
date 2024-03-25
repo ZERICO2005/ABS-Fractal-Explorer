@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -96,7 +96,6 @@ int Image_Scaler_Parallelogram(
 	if (buf == nullptr || img == nullptr || img->vram == nullptr || img->allocated() == false || ren == nullptr) {
 		return -1;
 	}
-	uint64_t stopWatch = getNanoTime();
 	cv::Mat Mat_Render = Image_Place_Parallelogram(
 		img,ren,
 		interpolation_mode,
