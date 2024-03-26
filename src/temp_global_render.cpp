@@ -13,6 +13,7 @@
 
 #include "render.h"
 
+#include "programData.h"
 #include "copyBuffer.h"
 #include "fractal.h"
 #include "keybind.h"
@@ -28,7 +29,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
-#include "programData.h"
+
 #include "user_data.h"
 
 #include "display_GUI.h"
@@ -64,7 +65,6 @@
 /* ImGui Stuff */
 	ImGuiIO* io_IMGUI = nullptr;
 	int32_t ImGui_WINDOW_MARGIN = 8;
-	ImGuiWindowFlags ImGui_WINDOW_FLAGS = 0;
 
 /* SDL2 */
 	SDL_Renderer* renderer = nullptr;
@@ -89,8 +89,6 @@
 	ImageBuffer Master;
 	
 	BufferBox TestGraphic = {0};
-	//#define fullColorTestGraphic
-	fp64 TestGraphicSpeed = 0.4;
 	
 	ImageBuffer* Primary_Image = nullptr;
 	ImageBuffer* Primary_Image_Preview = nullptr;
@@ -102,7 +100,6 @@
 	const fp64 FRAME_RATE_OFFSET = 0.01;
 	nano64_t FRAME_RATE_NANO = 0;
 	//#define  Default_Frame_Rate_Multiplier 1.0
-	const uint8_t color_square_divider = 2; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 	fp64 DeltaTime = 0.0;
 	nano64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
@@ -128,12 +125,6 @@
 	
 	//#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
 
-/* Images */
-
-	// Image_File_Format::Image_File_Format_Enum screenshotFileType = Image_File_Format::PNG;
-	// uint32_t User_PNG_Compression_Level = 8;
-	// uint32_t User_JPG_Quality_Level = 95;
-
 /* Keyboard */
 
 	const uint8_t* SDL_Keyboard_State = nullptr;
@@ -157,9 +148,6 @@
 
 	//enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
 
-	//#define stretchValue(s) pow(2.0,-abs(s))
-	//#define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
-
 	bool Lock_Key_Inputs = false;
 
 	//#define BufAndLen(x) x,ARRAY_LENGTH(x)
@@ -175,35 +163,6 @@
 	// #else
 	// 	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
 	// #endif
-
-/* Displays */
-
-	// Amount of displays detected
-	//uint32_t DISPLAY_COUNT = 0;
-	/* Display Bootup */
-		// namespace Display_Bootup_Legacy {
-		// 	enum Display_Bootup_Enum_Legacy {
-		// 		Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
-		// 	};
-		// };
-		//uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
-		// uint32_t Display_Match[Display_Bootup_Legacy::Length] = {0};
-		//Display_Bootup_Legacy::Display_Bootup_Enum_Legacy Display_Bootup_Type = Display_Bootup_Legacy::Automatic;
-		//bool useDefaultWindowSize = false;
-
-	// struct DisplayInfo_Legacy {
-	// 	uint32_t resX;
-	// 	uint32_t resY;
-	// 	int32_t posX;
-	// 	int32_t posY;
-	// 	uint32_t refreshRate;
-	// 	uint8_t bbp;
-	// 	const char* name;
-	// }; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
-	//DisplayInfo_Legacy* DisplayList = nullptr;
-
-	// Counts from ONE
-	//uint32_t CURRENT_DISPLAY = 1;
 
 /* Other */
 

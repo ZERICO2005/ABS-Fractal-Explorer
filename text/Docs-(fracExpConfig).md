@@ -171,7 +171,7 @@
 	With a quality level of 95-100, JPG/JPEG images can take up only 25-60% the size of a PNG image. It is strongly advised that you use quality level 90 or above to reduce compression artifacts in fractal images.
 	
 	* 95-100: Very high quality (Recommended)
-	* 85-94: High quality
-	* 60-84: Medium quality
-	* 25-59: Low quality (Not recommended)
+	* 90-94: High quality
+	* 75-84: Medium quality
+	* 25-74: Low quality (Not recommended)
 	

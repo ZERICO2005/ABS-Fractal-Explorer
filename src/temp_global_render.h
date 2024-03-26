@@ -13,7 +13,6 @@
 #include "Program_Def.h"
 #include "render.h"
 
-
 #include "programData.h"
 #include "copyBuffer.h"
 #include "fractal.h"
@@ -66,7 +65,6 @@
 /* ImGui Stuff */
 	extern ImGuiIO* io_IMGUI;
 	extern int32_t ImGui_WINDOW_MARGIN;
-	extern ImGuiWindowFlags ImGui_WINDOW_FLAGS;
 
 /* SDL2 */
 	extern SDL_Renderer* renderer;
@@ -91,8 +89,6 @@
 	extern ImageBuffer Master;
 	
 	extern BufferBox TestGraphic;
-	#define fullColorTestGraphic
-	extern fp64 TestGraphicSpeed;
 	
 	extern ImageBuffer* Primary_Image;
 	extern ImageBuffer* Primary_Image_Preview;
@@ -104,7 +100,6 @@
 	extern const fp64 FRAME_RATE_OFFSET;
 	extern nano64_t FRAME_RATE_NANO;
 	#define  Default_Frame_Rate_Multiplier 1.0
-	extern const uint8_t color_square_divider; //5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 	extern fp64 DeltaTime;
 	extern nano64_t END_SLEEP_HEADROOM;
 
@@ -127,12 +122,6 @@
 	extern Fractal_Data frac;
 	extern Render_Data primaryRenderData;
 	extern Render_Data secondaryRenderData;
-
-/* Images */
-
-	// extern Image_File_Format::Image_File_Format_Enum screenshotFileType;
-	// extern uint32_t User_PNG_Compression_Level;
-	// extern uint32_t User_JPG_Quality_Level;
 
 /* Keyboard */
 
@@ -172,35 +161,6 @@
 	#else
 		static const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
 	#endif
-
-/* Displays */
-
-	// Amount of displays detected
-	//extern uint32_t DISPLAY_COUNT;
-	/* Display Bootup */
-		// namespace Display_Bootup_Legacy {
-		// 	enum Display_Bootup_Enum_Legacy {
-		// 		Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
-		// 	};
-		// };
-		//extern uint32_t SPECIFIC_BOOTUP_DISPLAY; // Supposed to be save data
-		// extern uint32_t Display_Match[Display_Bootup_Legacy::Length];
-		//extern Display_Bootup_Legacy::Display_Bootup_Enum_Legacy Display_Bootup_Type;
-		// extern bool useDefaultWindowSize;
-
-	// struct DisplayInfo_Legacy {
-	// 	uint32_t resX;
-	// 	uint32_t resY;
-	// 	int32_t posX;
-	// 	int32_t posY;
-	// 	uint32_t refreshRate;
-	// 	uint8_t bbp;
-	// 	const char* name;
-	// }; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
-	//extern DisplayInfo_Legacy* DisplayList;
-
-	// Counts from ONE
-	// extern uint32_t CURRENT_DISPLAY;
 
 /* Other */
 

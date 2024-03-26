@@ -35,6 +35,8 @@
 // #include "programData.h"
 // #include "user_data.h"
 
+ImGuiWindowFlags ImGui_WINDOW_FLAGS = 0;
+
 // /* Sets defualt window size and position along with size constraints */
 void ImGui_DefaultWindowSize(
 	const User_GUI_Settings& GUI_Settings,
@@ -632,6 +634,19 @@ void Menu_Rendering() {
 	uint32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
 	uint32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
 	ImGui::Text("Total Pixels Rendered: %ux%u %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+	
+	// { // Doesn't work
+	// 	int32_t resX, resY, dimX, dimY;
+	// 	SDL_GetWindowSize(window,&resX,&resY);
+	// 	SDL_GetWindowSizeInPixels(window,&dimX,&dimY);
+	// 	if (resX != dimX || resY != dimY) {
+	// 		ImGui::Text(
+	// 			"Warning: Window is rendering in high dpi mode, and may have scaling artifacts %dx%d != %dx%d",
+	// 			resX, resY, dimX, dimY
+	// 		);
+	// 	}
+	// }
+
 	ImGui::Separator();
 	static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
 	int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;
@@ -663,15 +678,6 @@ void Menu_Rendering() {
 	ImGui::End();
 }
 
-// void printDisplayInfo(int displayNumber) {
-// 	DisplayInfo_Legacy* DispI = getDisplayInfo(displayNumber);
-// 	if (DispI == nullptr) {
-// 		ImGui::Text("Display %d is not detected",displayNumber);
-// 	} else {
-// 		ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name);
-// 	}
-// }
-
 void printDisplayInfo(const DisplayInfo* Disp, bool printWarning = true) {
 	if (Disp == nullptr) {
 		if (printWarning == true) {
@@ -697,12 +703,11 @@ void Menu_Settings() {
 	// 	"Current Monitor","Highest Refresh-Rate","Lowest Refresh-Rate","Constant Value"
 	// };
 	User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
-	static const char* initMonitorLocations[] = {
-		"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
-		"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
-		"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
-	};
-	static int Combo_initMonitorLocation = config_data.Display_Preferences.Display_Bootup_Type;
+	// static const char* initMonitorLocations[] = {
+	// 	"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
+	// 	"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
+	// 	"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
+	// };
 	int& specificMonitor = config_data.Display_Preferences.Specific_Bootup_Display;
 
 	ImGui_DefaultWindowSize(
@@ -773,142 +778,181 @@ void Menu_Settings() {
 		ImGui::SliderFloat("##WindowOpacity",&config_data.GUI_Settings.WindowOpacity,0.3f,1.0f,"%.3f");
 		ImGui::Text(" ");
 	}
-	if (ImGui::CollapsingHeader("DISPLAY AND FRAME-RATE")) {
+	if (ImGui::CollapsingHeader("DISPLAYS AND FRAME-RATE")) {
 		int32_t cursorPosX, cursorPosY; SDL_GetMouseState(&cursorPosX, &cursorPosY);
 		int32_t windowPosX, windowPosY; SDL_GetWindowPosition(window, &windowPosX, &windowPosY);
 		int32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
-
-		ImGui::Text("Base maximum frame-rate off of:");
-		if (ImGui::Combo("##initFrameRate", &Display_Preferences.Display_RefreshRate_Type,
-			Display_RefreshRate::Display_RefreshRate_Text, ARRAY_LENGTH(Display_RefreshRate::Display_RefreshRate_Text)
-		)) {
-
-		}
-		const DisplayInfo* Select_Display = getDisplayFromPosition(
-			windowPosX + (windowResX / 2),
-			windowPosY + (windowResY / 2)
-		);
-		// uint32_t SELECT_DISPLAY = CURRENT_DISPLAY;
-
-		switch(Display_Preferences.Display_RefreshRate_Type) {
-			case Display_RefreshRate::HighestRefreshRate:
-				Select_Display = matchDisplayAttribute(
-					Display_Bootup::HighFrameRate, config_Display,
-					RESX_Minimum, RESY_Minimum
-				);
-				// SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::HighFrameRate];
-			break;
-			case Display_RefreshRate::LowestRefreshRate:
-				Select_Display = matchDisplayAttribute(
-					Display_Bootup::LowFrameRate, config_Display,
-					RESX_Minimum, RESY_Minimum
-				);
-			break;
-			case Display_RefreshRate::ConstantValue:
-				Select_Display = nullptr;
-			break;
-			case Display_RefreshRate::Automatic:
-			case Display_RefreshRate::CurrentMonitor:
-			default:
-				Select_Display = getDisplayFromPosition(
-					windowPosX + (windowResX / 2),
-					windowPosY + (windowResY / 2)
-				);
-		}
-		printDisplayInfo(Select_Display,false);
-		//printDisplayInfo(SELECT_DISPLAY);
-
-		//DisplayInfo_Legacy* disp = getCurrentDisplayInfo();
-		//DisplayInfo_Legacy* disp = getDisplayInfo(SELECT_DISPLAY);
-		static fp64 FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
-		fp64 TEMP_FPS = (Select_Display == nullptr) ? Display_Preferences.Constant_RefreshRate_Value : Select_Display->getRefreshRate();
+		ImGui::Text("Display Count: %d",getDisplayCount());
 		
-		if (Display_Preferences.Display_RefreshRate_Type == Display_RefreshRate::ConstantValue) { // Constant
-			static fp32 temp_FPS_Constant_Value = (fp32)Display_Preferences.Constant_RefreshRate_Value;
-			ImGui::Text(" ");
-			ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
-			ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,12.0,1200.0);
-			FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
-			if (ImGui::Button("Apply FPS")) {
-				Display_Preferences.Constant_RefreshRate_Value = FPS_Constant_Value;
-				updateFrameRate(Display_Preferences.Constant_RefreshRate_Value + FRAME_RATE_OFFSET);
-			}
-		} else { // Relative
-			ImGui::Text(" "); // Blank Line
-			static int32_t temp_frameMultiplier = Display_Preferences.Maximum_FPS_Multiplier;
-			fp64 frameMultiplier;
-			//int temp_frameMultiplier = (Default_Frame_Rate_Multiplier >= 0.0) ? (int)(Default_Frame_Rate_Multiplier - 1.0) : (int)(1.0 - 1.0);
-			//static fp64 frameMultiplier = Default_Frame_Rate_Multiplier;
-			if (temp_frameMultiplier >= 0) {
-				frameMultiplier = (fp64)(temp_frameMultiplier + 1);
-				ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
+		static bool changesToDisplayList = false;
+		static nano64_t displayTimer = 0;
+		static nano64_t displayDuration = SECONDS_TO_NANO(1.0);
+		if (getNanoTime() - displayTimer < displayDuration) {
+			if (changesToDisplayList == true) {
+				ImGui::Button("Detected changes to display configuration");
 			} else {
-				frameMultiplier = 1.0 / (fp64)(1 - temp_frameMultiplier);
-				ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
-			}
-			fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
-			valueLimit(calculatedFPS,12.0,1200.0);
-			ImGui::Text("%.2lffps %.2lfms", calculatedFPS, (1.0 / (calculatedFPS)) * 1000.0);
-			ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
-			if (ImGui::Button("Apply FPS")) {
-				Display_Preferences.Maximum_FPS_Multiplier = temp_frameMultiplier;
-				updateFrameRate(calculatedFPS + FRAME_RATE_OFFSET);
-			}
-		}
-
-		ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
-		ImGui::Text("Which monitor should the application open to:");
-		if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation,
-			Display_Bootup::Display_Bootup_Text, ARRAY_LENGTH(Display_Bootup::Display_Bootup_Text)
-		)) {
-			config_data.Display_Preferences.Display_Bootup_Type = Combo_initMonitorLocation;
-		}
-		if (Combo_initMonitorLocation == Display_Bootup::Specific) { // Specific Monitor
-			static bool overrideDisplayCount = false;
-			// if (overrideDisplayCount == false && specificMonitor > getDisplayCount()) {
-			// 	config_Display.Specific_Bootup_Display = getDisplayCount();
-			// }
-			if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
-				overrideDisplayCount = true;
-			}
-			int32_t limitDisplayCount = (overrideDisplayCount == false || getDisplayCount() > 144) ? getDisplayCount() : 144;
-			if (getDisplayCount() != 1 || overrideDisplayCount == true) {
-				if(ImGui::InputInt("##specificMonitor",&config_Display.Specific_Bootup_Display,1,1)) {
-					valueLimit(config_Display.Specific_Bootup_Display,1,limitDisplayCount);
-				} 
-			} else {
-				ImGui::Text("Only 1 display detected");
-			}
-			const DisplayInfo* specificDisp = getDisplayFromIndex(config_Display.Specific_Bootup_Display);
-			if (specificDisp == nullptr) {
-				ImGui::Text("Display %d is not detected",config_Display.Specific_Bootup_Display);
-			} else {
-				printDisplayInfo(specificDisp);
-			}
-			//printDisplayInfo(specificMonitor);
-			if (ImGui::Checkbox("Override Display Count",&overrideDisplayCount)) {
-				if (overrideDisplayCount == false) {
-					valueLimit(config_Display.Specific_Bootup_Display,1,getDisplayCount());
-				}
-			}
-			if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
-				ImGui::Text(
-					"Note: Display %d will be used if Display %d is not detected",
-					getDisplayCount(),
-					config_Display.Specific_Bootup_Display
-				);
+				ImGui::Button("No changes detected");
 			}
 		} else {
-			const DisplayInfo* initDisp = matchDisplayAttribute(
-				(Display_Bootup::Display_Bootup_Enum)Combo_initMonitorLocation,
-				config_Display,
-				RESX_Minimum, RESY_Minimum,
-				cursorPosX, cursorPosY
+			if (ImGui::Button("Reload/Update Displays")) {
+				reloadDisplays();
+				uint64_t newDisplayHash = getDisplayConfigHash();
+				changesToDisplayList =
+				(config_data.Display_Preferences.Display_Config_Hash == newDisplayHash) ? false : true;
+				config_data.Display_Preferences.Display_Config_Hash = newDisplayHash;
+				displayTimer = getNanoTime();
+				displayDuration = (changesToDisplayList == true) ? SECONDS_TO_NANO(2.5) : SECONDS_TO_NANO(1.0);
+			}
+		}
+
+		if (getDisplayCount() != 0) {
+			int32_t displayListWidth = (int32_t)ImGui::GetWindowContentRegionWidth();
+			displayListWidth = calcMinRatioMax(displayListWidth, 384, 0.8, 768);
+			int32_t displayListHeight = (getDisplayCount() > 3) ? 120 : 64;
+			ImGui::BeginChild(
+				"DisplayList", ImVec2(displayListWidth, displayListHeight), true
 			);
-			printDisplayInfo(initDisp);
-			//printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
+			const std::vector<DisplayInfo> &DisplayList = getDisplayList();
+			for (int32_t i = 0; i < getDisplayCount(); i++) {
+				printDisplayInfo(&DisplayList[i], false);
+			}
+			ImGui::EndChild();
+			
 		}
 		ImGui::Text(" ");
+		ImGui::SeparatorText("Bootup-Diplay");
+		{ /* Bootup Display */
+
+			ImGui::Text("Which monitor should the application open to:");
+			if (ImGui::Combo("##initMonitorLocation", &config_data.Display_Preferences.Display_Bootup_Type,
+				Display_Bootup::Display_Bootup_Text, ARRAY_LENGTH(Display_Bootup::Display_Bootup_Text)
+			)) {
+
+			}
+			if (config_data.Display_Preferences.Display_Bootup_Type == Display_Bootup::Specific) { // Specific Monitor
+				static bool overrideDisplayCount = false;
+				// if (overrideDisplayCount == false && config_Display.Specific_Bootup_Display > getDisplayCount()) {
+				// 	config_Display.Specific_Bootup_Display = getDisplayCount();
+				// }
+				if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
+					overrideDisplayCount = true;
+				}
+				int32_t limitDisplayCount = (overrideDisplayCount == false || getDisplayCount() > 144) ? getDisplayCount() : 144;
+				if (getDisplayCount() != 1 || overrideDisplayCount == true) {
+					if(ImGui::InputInt("##specificMonitor",&config_Display.Specific_Bootup_Display,1,1)) {
+						valueLimit(config_Display.Specific_Bootup_Display,1,limitDisplayCount);
+					} 
+				} else {
+					ImGui::Text("Only 1 display detected");
+				}
+				const DisplayInfo* specificDisp = getDisplayFromIndex(config_Display.Specific_Bootup_Display);
+				if (specificDisp == nullptr) {
+					ImGui::Text("Display %d is not detected",config_Display.Specific_Bootup_Display);
+				} else {
+					printDisplayInfo(specificDisp);
+				}
+				if (ImGui::Checkbox("Override Display Count",&overrideDisplayCount)) {
+					if (overrideDisplayCount == false) {
+						valueLimit(config_Display.Specific_Bootup_Display,1,getDisplayCount());
+					}
+				}
+				if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
+					ImGui::Text(
+						"Note: Display %d will be used if Display %d is not detected",
+						getDisplayCount(),
+						config_Display.Specific_Bootup_Display
+					);
+				}
+			} else if (
+				(config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::Automatic) &&
+				(config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::CursorPosition)
+			) {
+				const DisplayInfo* initDisp = matchDisplayAttribute(
+					(Display_Bootup::Display_Bootup_Enum)config_data.Display_Preferences.Display_Bootup_Type,
+					config_Display,
+					RESX_Minimum, RESY_Minimum,
+					cursorPosX, cursorPosY
+				);
+				printDisplayInfo(initDisp);
+			}
+			ImGui::Text(" ");
+		}
+		ImGui::SeparatorText("Frame-Rate");
+		{ /* Frame-Rate */
+			ImGui::Text("Base maximum frame-rate off of:");
+			if (ImGui::Combo("##initFrameRate", &Display_Preferences.Display_RefreshRate_Type,
+				Display_RefreshRate::Display_RefreshRate_Text, ARRAY_LENGTH(Display_RefreshRate::Display_RefreshRate_Text)
+			)) {
+
+			}
+			const DisplayInfo* Select_Display = getDisplayFromPosition(
+				windowPosX + (windowResX / 2),
+				windowPosY + (windowResY / 2)
+			);
+
+			switch(Display_Preferences.Display_RefreshRate_Type) {
+				case Display_RefreshRate::HighestRefreshRate:
+					Select_Display = matchDisplayAttribute(
+						Display_Bootup::HighFrameRate, config_Display,
+						RESX_Minimum, RESY_Minimum
+					);
+				break;
+				case Display_RefreshRate::LowestRefreshRate:
+					Select_Display = matchDisplayAttribute(
+						Display_Bootup::LowFrameRate, config_Display,
+						RESX_Minimum, RESY_Minimum
+					);
+				break;
+				case Display_RefreshRate::ConstantValue:
+					Select_Display = nullptr;
+				break;
+				case Display_RefreshRate::Automatic:
+				case Display_RefreshRate::CurrentMonitor:
+				default:
+					Select_Display = getDisplayFromPosition(
+						windowPosX + (windowResX / 2),
+						windowPosY + (windowResY / 2)
+					);
+			}
+			printDisplayInfo(Select_Display,false);
+
+			static fp64 FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
+			fp64 TEMP_FPS = (Select_Display == nullptr) ? Display_Preferences.Constant_RefreshRate_Value : Select_Display->getRefreshRate();
+			
+			if (Display_Preferences.Display_RefreshRate_Type == Display_RefreshRate::ConstantValue) { // Constant
+				static fp32 temp_FPS_Constant_Value = (fp32)Display_Preferences.Constant_RefreshRate_Value;
+				ImGui::Text(" ");
+				ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
+				ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,12.0,1200.0);
+				FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
+				if (ImGui::Button("Apply FPS")) {
+					Display_Preferences.Constant_RefreshRate_Value = FPS_Constant_Value;
+					updateFrameRate(Display_Preferences.Constant_RefreshRate_Value + FRAME_RATE_OFFSET);
+				}
+			} else { // Relative
+				ImGui::Text(" "); // Blank Line
+				static int32_t temp_frameMultiplier = Display_Preferences.Maximum_FPS_Multiplier;
+				fp64 frameMultiplier;
+				//int temp_frameMultiplier = (Default_Frame_Rate_Multiplier >= 0.0) ? (int)(Default_Frame_Rate_Multiplier - 1.0) : (int)(1.0 - 1.0);
+				//static fp64 frameMultiplier = Default_Frame_Rate_Multiplier;
+				if (temp_frameMultiplier >= 0) {
+					frameMultiplier = (fp64)(temp_frameMultiplier + 1);
+					ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
+				} else {
+					frameMultiplier = 1.0 / (fp64)(1 - temp_frameMultiplier);
+					ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
+				}
+				fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
+				valueLimit(calculatedFPS,12.0,1200.0);
+				ImGui::Text("%.2lffps %.2lfms", calculatedFPS, (1.0 / (calculatedFPS)) * 1000.0);
+				ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
+				if (ImGui::Button("Apply FPS")) {
+					Display_Preferences.Maximum_FPS_Multiplier = temp_frameMultiplier;
+					updateFrameRate(calculatedFPS + FRAME_RATE_OFFSET);
+				}
+			}
+			ImGui::Text(" "); 
+		}
 	}
 	if (ImGui::CollapsingHeader("FRACEXP FILES")) {
 		ImGui::Checkbox("Save username in files",&SaveUsernameInFiles);
@@ -948,8 +992,8 @@ void Menu_Settings() {
 			ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
 			ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
 			screenshot_settings.JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
-			if (screenshot_settings.JPG_Quality_Level < 60) { ImGui::Text("Low Quality (Not Recommended)"); } else
-			if (screenshot_settings.JPG_Quality_Level < 85) { ImGui::Text("Medium Quality"); } else
+			if (screenshot_settings.JPG_Quality_Level < 75) { ImGui::Text("Low Quality (Not Recommended)"); } else
+			if (screenshot_settings.JPG_Quality_Level < 90) { ImGui::Text("Medium Quality"); } else
 			if (screenshot_settings.JPG_Quality_Level < 95) { ImGui::Text("High Quality"); } else
 			{ ImGui::Text("Very High Quality (Recommended)"); }
 		} else if (screenshot_settings.screenshotFileType == Image_File_Format::TGA || screenshot_settings.screenshotFileType == Image_File_Format::BMP) {
@@ -1011,26 +1055,29 @@ void Menu_Settings() {
 		}
 		ImGui::Text(" ");
 	}
-	#ifndef BUILD_RELEASE
-		if (ImGui::CollapsingHeader("CONFIGURATION MANAGER")) {
+	
+
+		if (ImGui::CollapsingHeader("RESET DATA")) {
 			ImGui::SeparatorText("Reset Configurations");
 			if(ImGui::Button("Default Configuration Data")) {
 				default_User_Configuration_Data(config_data, false);
-				set_IMGUI_Theme(config_data.GUI_Settings.GUI_Theme);
+				set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
 			}
-			ImGui::Text(" ");
 			if(ImGui::Button("Reset Parameter Sensitivity")) { default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, false); }
-			if(ImGui::Button("Reset Display Preferences")) { default_Display_Preferences(config_data.Display_Preferences); }
-			if(ImGui::Button("Reset GUI Settings")) { default_GUI_Settings(config_data.GUI_Settings, false, false); }
-			if(ImGui::Button("Reset Screenshot")) { default_Screenshot_Settings(config_data.Screenshot_Settings); }
-			ImGui::Text(" ");
-			if(ImGui::Button("Full Reset")) { 
-				default_User_Configuration_Data(config_data, true);
-				set_IMGUI_Theme(config_data.GUI_Settings.GUI_Theme);
-			}
+			#ifndef BUILD_RELEASE
+				if(ImGui::Button("Reset Display Preferences")) { default_Display_Preferences(config_data.Display_Preferences); }
+				if(ImGui::Button("Reset GUI Settings")) { default_GUI_Settings(config_data.GUI_Settings, false, false); }
+				if(ImGui::Button("Reset Screenshot")) { default_Screenshot_Settings(config_data.Screenshot_Settings); }
+				
+				ImGui::Text(" ");
+				if(ImGui::Button("Full Reset")) { 
+					default_User_Configuration_Data(config_data, true);
+					set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
+				}
+			#endif
 			ImGui::Text(" ");
 		}
-	#endif
+	
 	ImGui::End();
 }
 
