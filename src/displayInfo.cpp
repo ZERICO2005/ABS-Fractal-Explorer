@@ -215,6 +215,20 @@ const DisplayInfo* getDisplayFromPosition(
 	return nullptr;
 }
 
+const DisplayInfo* getDisplayFromWindowPosition(SDL_Window* window) {
+	if (window == nullptr) { return nullptr; }
+	int32_t posX, posY, resX, resY;
+	SDL_GetWindowPosition(window, &posX, &posY);
+	SDL_GetWindowSize(window, &resX, &resY);
+	return getDisplayFromPosition(posX + (resX / 2), posY + (resY / 2));
+}
+
+const DisplayInfo* getDisplayFromCursorPosition() {
+	int32_t posX, posY;
+	SDL_GetGlobalMouseState(&posX, &posY);
+	return getDisplayFromPosition(posX,posY);
+}
+
 bool displayAboveMinimumResolution(const DisplayInfo& disp, int32_t minResX, int32_t minResY) {
 	int32_t resX; int32_t resY;
 	disp.getResolution(resX,resY);

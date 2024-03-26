@@ -16,6 +16,7 @@
 #include <SDL2/SDL_scancode.h>
 
 #include "display_GUI.h"
+#include "displayInfo.h"
 
 /* Holds resolution, sampling, precision and rendering method */
 struct Render_Data {
@@ -73,7 +74,7 @@ bool keyPressed(uint32_t key);
 
 /* Framerate stuff */
 
-void updateFrameTimeNano(uint64_t frameTime);
+void updateFrameTimeNano(nano64_t frameTime);
 void updateFrameTime(fp64 frameTime);
 void updateFrameRate(fp64 frameRate);
 
@@ -84,6 +85,10 @@ namespace Image_File_Format {
 }
 
 uint64_t get_Hardware_Hash();
+
+/* Window Configuration */
+
+void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode);
 
 /* ================ */
 
@@ -118,7 +123,7 @@ int exportSuperScreenshot();
 
 // void correctFrameTime();
 
-// void updateFrameTimeNano(uint64_t frameTime);
+// void updateFrameTimeNano(nano64_t frameTime);
 
 // void updateFrameTime(fp64 frameTime);
 

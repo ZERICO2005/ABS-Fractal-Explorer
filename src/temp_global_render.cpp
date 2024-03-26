@@ -109,7 +109,7 @@
 	uint32_t RESY_UI = 128;
 
 	nano64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
-
+	
 	bool bootup_Fractal_Frame_Rendered = false;
 
 	TimerBox GUI_FrameTimer;

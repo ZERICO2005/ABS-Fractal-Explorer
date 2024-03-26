@@ -13,6 +13,8 @@
 
 #include "user_data.h"
 
+#include <SDL2/SDL.h>
+
 class DisplayInfo {
 	public:
 		DisplayInfo();
@@ -97,6 +99,17 @@ namespace Display_Bootup {
 		"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
 	};
 };
+
+namespace Display_Fullscreen {
+	enum Display_Fullscreen_Enum {
+		Windowed, Windowed_Fullscreen, Borderless_Fullscreen, Fullscreen,
+		Length
+	};
+	static const char* const Display_Fullscreen_Text[] {
+		"Windowed", "Windowed-Fullscreen", "Borderless-Fullscreen", "Fullscreen"
+	};
+};
+
 namespace Display_RefreshRate {
 	enum Display_RefreshRate_Enum {
 		Automatic,CurrentMonitor,HighestRefreshRate,LowestRefreshRate,ConstantValue,
@@ -124,6 +137,10 @@ const DisplayInfo* getDisplayFromIndex(int32_t index);
 
 // Returns nullptr if no matches were found
 const DisplayInfo* getDisplayFromPosition(int32_t posX, int32_t posY);
+
+const DisplayInfo* getDisplayFromWindowPosition(SDL_Window* window);
+
+const DisplayInfo* getDisplayFromCursorPosition();
 
 const DisplayInfo* matchDisplayAttribute(
 	Display_Bootup::Display_Bootup_Enum type,

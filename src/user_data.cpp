@@ -37,7 +37,7 @@ constexpr User_Configuration_Data Default_Config = {
 		.Display_Bootup_Type = Display_Bootup::Automatic,
 		.Specific_Bootup_Display = 1,
 		.Previous_Display_Used = 0,
-		.Bootup_Fullscreen = false,
+		.Bootup_Fullscreen = Display_Fullscreen::Windowed,
 		.ScaleWindowToScreenSize = false,
 		.Bootup_Window_Scale = 0.7,
 		.Display_RefreshRate_Type = Display_RefreshRate::Automatic,
@@ -94,6 +94,7 @@ constexpr User_Configuration_Data Default_Config = {
 		clean_config_data(Display_Bootup_Type, 0, Display_Bootup::Length - 1);
 		clean_config_data(Specific_Bootup_Display, 1, 144); // Does anyone even have 144 displays? Probably not.
 		clean_config_data(Bootup_Window_Scale, 0.01, 1.0);
+		clean_config_data(Bootup_Fullscreen, 0, Display_Fullscreen::Length - 1);
 		clean_config_data(Display_RefreshRate_Type, 0, Display_RefreshRate::Length - 1);
 		clean_config_data(Constant_RefreshRate_Value, 12.0, 1200.0);
 		clean_config_data(Maximum_FPS_Multiplier, (-6) + 1, (6) - 1);
@@ -125,6 +126,7 @@ constexpr User_Configuration_Data Default_Config = {
 		clean_GUI_Settings(config_data.GUI_Settings);
 		clean_Screenshot_Settings(config_data.Screenshot_Settings);
 	}
+	#undef clean_config_data
 
 /* default_config_data */
 
@@ -342,7 +344,7 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		config_data.Display_Preferences.Previous_Display_Used =
 		textToInt32(get_config_value(Config_Text,config_label,"Previous_Display_Used"));
 		config_data.Display_Preferences.Bootup_Fullscreen =
-		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"Bootup_Fullscreen"));
+		textToEnum(get_config_value(Config_Text,config_label,"Bootup_Fullscreen"));
 		config_data.Display_Preferences.ScaleWindowToScreenSize =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"ScaleWindowToScreenSize"));
 		config_data.Display_Preferences.Bootup_Window_Scale =
@@ -531,8 +533,8 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		fprintf(file,"\n\tLast_Display_Used: %d",
 			config_data.Display_Preferences.Previous_Display_Used
 		);
-		fprintf(file,"\n\tBootup_Fullscreen: %s",
-			boolText(config_data.Display_Preferences.Bootup_Fullscreen)
+		fprintf(file,"\n\tBootup_Fullscreen: %d",
+			config_data.Display_Preferences.Bootup_Fullscreen
 		);
 		fprintf(file,"\n\tScaleWindowToScreenSize: %s",
 			boolText(config_data.Display_Preferences.ScaleWindowToScreenSize)

@@ -776,10 +776,11 @@ void Menu_Settings() {
 		config_data.GUI_Settings.WindowAutoScale = (fp64)temp_WindowAutoScale;
 		ImGui::Text("Window Opacity: (0.95 default)");
 		ImGui::SliderFloat("##WindowOpacity",&config_data.GUI_Settings.WindowOpacity,0.3f,1.0f,"%.3f");
+		
 		ImGui::Text(" ");
 	}
 	if (ImGui::CollapsingHeader("DISPLAYS AND FRAME-RATE")) {
-		int32_t cursorPosX, cursorPosY; SDL_GetMouseState(&cursorPosX, &cursorPosY);
+		int32_t cursorPosX, cursorPosY; SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
 		int32_t windowPosX, windowPosY; SDL_GetWindowPosition(window, &windowPosX, &windowPosY);
 		int32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
 		ImGui::Text("Display Count: %d",getDisplayCount());
@@ -820,14 +821,12 @@ void Menu_Settings() {
 			
 		}
 		ImGui::Text(" ");
-		ImGui::SeparatorText("Bootup-Diplay");
-		{ /* Bootup Display */
+		ImGui::SeparatorText("Bootup-Diplay"); {
 
 			ImGui::Text("Which monitor should the application open to:");
 			if (ImGui::Combo("##initMonitorLocation", &config_data.Display_Preferences.Display_Bootup_Type,
 				Display_Bootup::Display_Bootup_Text, ARRAY_LENGTH(Display_Bootup::Display_Bootup_Text)
 			)) {
-
 			}
 			if (config_data.Display_Preferences.Display_Bootup_Type == Display_Bootup::Specific) { // Specific Monitor
 				static bool overrideDisplayCount = false;
@@ -863,9 +862,9 @@ void Menu_Settings() {
 						config_Display.Specific_Bootup_Display
 					);
 				}
-			} else if (
-				(config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::Automatic) &&
-				(config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::CursorPosition)
+			} else if (true
+				// (config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::Automatic) &&
+				// (config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::CursorPosition)
 			) {
 				const DisplayInfo* initDisp = matchDisplayAttribute(
 					(Display_Bootup::Display_Bootup_Enum)config_data.Display_Preferences.Display_Bootup_Type,
@@ -877,18 +876,24 @@ void Menu_Settings() {
 			}
 			ImGui::Text(" ");
 		}
-		ImGui::SeparatorText("Frame-Rate");
-		{ /* Frame-Rate */
+		ImGui::SeparatorText("Windowed/Fullscreen"); {
+			using namespace Display_Fullscreen;
+			ImGui::Combo("##Bootup_Fullscreen",&config_Display.Bootup_Fullscreen,
+				Display_Fullscreen_Text, ARRAY_LENGTH(Display_Fullscreen_Text)
+			);
+			if (ImGui::Button("Update Window")) {
+				set_Window_Fullscreen_Mode((Display_Fullscreen_Enum)config_Display.Bootup_Fullscreen);
+			}
+			ImGui::Text(" ");
+		}
+		ImGui::SeparatorText("Frame-Rate"); {
 			ImGui::Text("Base maximum frame-rate off of:");
 			if (ImGui::Combo("##initFrameRate", &Display_Preferences.Display_RefreshRate_Type,
 				Display_RefreshRate::Display_RefreshRate_Text, ARRAY_LENGTH(Display_RefreshRate::Display_RefreshRate_Text)
 			)) {
 
 			}
-			const DisplayInfo* Select_Display = getDisplayFromPosition(
-				windowPosX + (windowResX / 2),
-				windowPosY + (windowResY / 2)
-			);
+			const DisplayInfo* Select_Display = getDisplayFromWindowPosition(window);
 
 			switch(Display_Preferences.Display_RefreshRate_Type) {
 				case Display_RefreshRate::HighestRefreshRate:
@@ -909,10 +914,7 @@ void Menu_Settings() {
 				case Display_RefreshRate::Automatic:
 				case Display_RefreshRate::CurrentMonitor:
 				default:
-					Select_Display = getDisplayFromPosition(
-						windowPosX + (windowResX / 2),
-						windowPosY + (windowResY / 2)
-					);
+					Select_Display = getDisplayFromWindowPosition(window);
 			}
 			printDisplayInfo(Select_Display,false);
 

@@ -39,7 +39,7 @@
 		int_enum Display_Bootup_Type;
 		int32_t Specific_Bootup_Display;
 		int32_t Previous_Display_Used;
-		bool Bootup_Fullscreen;
+		int_enum Bootup_Fullscreen;
 		bool ScaleWindowToScreenSize;
 		fp64 Bootup_Window_Scale;
 		int_enum Display_RefreshRate_Type;

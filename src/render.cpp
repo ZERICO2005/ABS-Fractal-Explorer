@@ -383,6 +383,24 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 	return reVal;
 }
 
+void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode) {
+	switch (fullscreen_mode) {
+		case Display_Fullscreen::Fullscreen:
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+			break;
+		case Display_Fullscreen::Windowed_Fullscreen:
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+			break;
+		case Display_Fullscreen::Borderless_Fullscreen:
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
+			break;
+		case Display_Fullscreen::Windowed:
+		default:
+			SDL_SetWindowFullscreen(window, 0);
+			break;
+	};
+}
+
 void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characters */
 	size_t p = 0;
 	for (size_t i = 0; i < strnlen(buf,len); i++) {
@@ -1143,7 +1161,7 @@ int32_t loadDisplayInformation(
 	}
 	printf("\n\tDisplay Count: %d",displayCount);
 	int32_t cursorPosX, cursorPosY;
-	SDL_GetMouseState(&cursorPosX, &cursorPosY);
+	SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
 	const DisplayInfo* disp = getBootupDisplay(
 		display_config,
 		RESX_Minimum, RESY_Minimum,
@@ -1303,7 +1321,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 	config_data.Display_Preferences.Display_Config_Hash = getDisplayConfigHash();
 	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
-
+	ABORT_RENDERING = true;
 	bootup_Fractal_Frame_Rendered = false;
 	printFlush("\n");
 	write_Render_Ready(true);
