@@ -41,6 +41,7 @@ constexpr User_Configuration_Data Default_Config = {
 		.ScaleWindowToScreenSize = false,
 		.Bootup_Window_Scale = 0.7,
 		.Display_RefreshRate_Type = Display_RefreshRate::Automatic,
+		.Automatically_Update_RefreshRate = true,
 		.Constant_RefreshRate_Value = 60.0,
 		.Maximum_FPS_Multiplier = (1) - 1
 	},
@@ -94,7 +95,7 @@ constexpr User_Configuration_Data Default_Config = {
 		clean_config_data(Specific_Bootup_Display, 1, 144); // Does anyone even have 144 displays? Probably not.
 		clean_config_data(Bootup_Window_Scale, 0.01, 1.0);
 		clean_config_data(Display_RefreshRate_Type, 0, Display_RefreshRate::Length - 1);
-		clean_config_data(Constant_RefreshRate_Value, 6.0, 1200.0);
+		clean_config_data(Constant_RefreshRate_Value, 12.0, 1200.0);
 		clean_config_data(Maximum_FPS_Multiplier, (-6) + 1, (6) - 1);
 	}
 
@@ -348,6 +349,8 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		textToFloat64(get_config_value(Config_Text,config_label,"Bootup_Window_Scale"));
 		config_data.Display_Preferences.Display_RefreshRate_Type =
 		textToEnum(get_config_value(Config_Text,config_label,"Display_RefreshRate_Type"));
+		config_data.Display_Preferences.Automatically_Update_RefreshRate =
+		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"Automatically_Update_RefreshRate"));
 		config_data.Display_Preferences.Constant_RefreshRate_Value =
 		textToFloat64(get_config_value(Config_Text,config_label,"Constant_RefreshRate_Value"));
 		config_data.Display_Preferences.Maximum_FPS_Multiplier =
@@ -539,6 +542,9 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 		fprintf(file,"\n\tDisplay_RefreshRate_Type: %d",
 			config_data.Display_Preferences.Display_RefreshRate_Type
+		);
+		fprintf(file,"\n\tAutomatically_Update_RefreshRate: %d",
+			config_data.Display_Preferences.Automatically_Update_RefreshRate
 		);
 		fprintf(file,"\n\tConstant_RefreshRate_Value: %.6lf",
 			config_data.Display_Preferences.Constant_RefreshRate_Value

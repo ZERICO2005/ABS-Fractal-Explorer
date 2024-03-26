@@ -43,6 +43,7 @@
 		bool ScaleWindowToScreenSize;
 		fp64 Bootup_Window_Scale;
 		int_enum Display_RefreshRate_Type;
+		bool Automatically_Update_RefreshRate;
 		fp64 Constant_RefreshRate_Value;
 		int32_t Maximum_FPS_Multiplier;
 	}; typedef struct User_Display_Preferences User_Display_Preferences;

@@ -325,16 +325,16 @@ int setup_fracExpKB(int argc, char* argv[]) {
 // // Counts from ONE
 // uint32_t CURRENT_DISPLAY = 1;
 // Counts from ONE
-DisplayInfo_Legacy* getDisplayInfo(size_t i) { // size_t i = 1
-	if (i == 0 || i > DISPLAY_COUNT || DisplayList == NULL) {
-		return NULL;
-	}
-	return &DisplayList[i - 1];
-}
+// DisplayInfo_Legacy* getDisplayInfo(size_t i) { // size_t i = 1
+// 	if (i == 0 || i > (size_t)getDisplayCount() || DisplayList == NULL) {
+// 		return NULL;
+// 	}
+// 	return &DisplayList[i - 1];
+// }
 // Counts from ONE
-DisplayInfo_Legacy* getCurrentDisplayInfo() {
-	return getDisplayInfo((size_t)CURRENT_DISPLAY);
-}
+// DisplayInfo_Legacy* getCurrentDisplayInfo() {
+// 	return getDisplayInfo((size_t)CURRENT_DISPLAY);
+// }
 
 // static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
@@ -1358,82 +1358,82 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 
 // Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
 
-int setupDisplayInfo(const User_Display_Preferences& display_config,int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
-	if (initResX == nullptr || initResY == nullptr || initPosX == nullptr || initPosY == nullptr) {
-		printError("Unable to get Display Info, NULL parameters");
-		return -1;
-	}
-	using namespace Display_Bootup_Legacy;
-	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
-	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
-	if (DISPLAY_COUNT == 0) {
-		printError("No Displays Detected");
-		return -1;
-	}
-	DisplayList = (DisplayInfo_Legacy*)calloc(DISPLAY_COUNT, sizeof(DisplayInfo_Legacy));
-	if (DisplayList == nullptr) {
-		FREE(DisplayList);
-		printError("Unable to allocate memory for DisplayList");
-		return -1;
-	}
-	for (size_t d = 0; d < Display_Bootup_Legacy::Length; d++) {
-		Display_Match[d] = 1; // Set to first monitor
-	}
-	Display_Match[Display_Bootup_Legacy::Automatic] = 1;
-	Display_Match[Display_Bootup_Legacy::First] = 1;
-	Display_Match[Display_Bootup_Legacy::Last] = DISPLAY_COUNT;
-	int Specific_Bootup_Display = display_config.Specific_Bootup_Display;
-	Display_Match[Display_Bootup_Legacy::Specific] = valueLimit(Specific_Bootup_Display,1,(int32_t)DISPLAY_COUNT);
-	#define Display(match) DisplayList[Display_Match[(match)] - 1]
-	for (size_t i = 0; i < DISPLAY_COUNT; i++) {
-		SDL_DisplayMode mode;
-		SDL_Rect rect;
-		SDL_GetDesktopDisplayMode(i,&mode);
-		SDL_GetDisplayBounds(i, &rect);
-		DisplayList[i].resX = mode.w;
-		DisplayList[i].resY = mode.h;
-		DisplayList[i].posX = rect.x;
-		DisplayList[i].posY = rect.y;
-		DisplayList[i].refreshRate = mode.refresh_rate;
-		DisplayList[i].bbp = SDL_BITSPERPIXEL(mode.format);
-		DisplayList[i].name = SDL_GetDisplayName(i);
-		/* Orthagonal */
-		if (DisplayList[i].posX < Display(Display_Bootup_Legacy::Left).posX) { Display_Match[Display_Bootup_Legacy::Left] = i + 1; }
-		if (DisplayList[i].posX + DisplayList[i].resX > Display(Display_Bootup_Legacy::Right).posX + Display(Display_Bootup_Legacy::Right).resX) { Display_Match[Display_Bootup_Legacy::Right] = i + 1; }
-		if (DisplayList[i].posY < Display(Display_Bootup_Legacy::Top).posY) { Display_Match[Display_Bootup_Legacy::Top] = i + 1; }
-		if (DisplayList[i].posY + DisplayList[i].resY > Display(Display_Bootup_Legacy::Bottom).posY + Display(Display_Bootup_Legacy::Bottom).resY) { Display_Match[Display_Bootup_Legacy::Bottom] = i + 1; }
-		/* Diagonal */
-		/* Resolution and Refresh-Rate */
-		if (DisplayList[i].resX * DisplayList[i].resY > Display(Display_Bootup_Legacy::HighResolution).resX * Display(Display_Bootup_Legacy::HighResolution).resY) { Display_Match[Display_Bootup_Legacy::HighResolution] = i + 1; }
-		if (DisplayList[i].refreshRate > Display(Display_Bootup_Legacy::HighFrameRate).refreshRate) { Display_Match[Display_Bootup_Legacy::HighFrameRate] = i + 1; }
-		if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup_Legacy::LowResolution).resX * Display(Display_Bootup_Legacy::LowResolution).resY) { Display_Match[Display_Bootup_Legacy::LowResolution] = i + 1; }
-		if (DisplayList[i].refreshRate < Display(Display_Bootup_Legacy::LowFrameRate).refreshRate) { Display_Match[Display_Bootup_Legacy::LowFrameRate] = i + 1; }
-	}
-	*initResX = Display(display_config.Display_Bootup_Type).resX;
-	*initResY = Display(display_config.Display_Bootup_Type).resY;
-	*initPosX = Display(display_config.Display_Bootup_Type).posX;
-	*initPosY = Display(display_config.Display_Bootup_Type).posY;
-	if (Display(display_config.Display_Bootup_Type).resX < RESX_Minimum || Display(display_config.Display_Bootup_Type).resY < RESY_Minimum) {
-		if (DISPLAY_COUNT == 1) {
-			printWarning("This display does not meet the minimum screen resolution");
-			return 0;
-		}
-		for (size_t i = 0; i < DISPLAY_COUNT; i++) {
-			if (Display(display_config.Display_Bootup_Type).resX >= RESX_Minimum && Display(display_config.Display_Bootup_Type).resY >= RESY_Minimum) {
-				*initResX = DisplayList[i].resX;
-				*initResY = DisplayList[i].resX;
-				*initPosX = DisplayList[i].resX;
-				*initPosY = DisplayList[display_config.Display_Bootup_Type].resX;
-				printWarning("Display %u does not meet the minimum screen resolution, switching to display %zu",Display_Match[display_config.Display_Bootup_Type],i + 1);
-				return 0;
-			}
-		}
-		printWarning("None of the available displays support the minimum screen resolution");
-		return 0;
-	}
-	fflush(stdout);
-	return 0;
-}
+// int setupDisplayInfo(const User_Display_Preferences& display_config,int32_t* initResX, int32_t* initResY, int32_t* initPosX, int32_t* initPosY) {
+// 	if (initResX == nullptr || initResY == nullptr || initPosX == nullptr || initPosY == nullptr) {
+// 		printError("Unable to get Display Info, NULL parameters");
+// 		return -1;
+// 	}
+// 	using namespace Display_Bootup_Legacy;
+// 	DISPLAY_COUNT = SDL_GetNumVideoDisplays();
+// 	printf("\n\tDisplay Count: %d",DISPLAY_COUNT);
+// 	if (DISPLAY_COUNT == 0) {
+// 		printError("No Displays Detected");
+// 		return -1;
+// 	}
+// 	DisplayList = (DisplayInfo_Legacy*)calloc(DISPLAY_COUNT, sizeof(DisplayInfo_Legacy));
+// 	if (DisplayList == nullptr) {
+// 		FREE(DisplayList);
+// 		printError("Unable to allocate memory for DisplayList");
+// 		return -1;
+// 	}
+// 	for (size_t d = 0; d < Display_Bootup_Legacy::Length; d++) {
+// 		Display_Match[d] = 1; // Set to first monitor
+// 	}
+// 	Display_Match[Display_Bootup_Legacy::Automatic] = 1;
+// 	Display_Match[Display_Bootup_Legacy::First] = 1;
+// 	Display_Match[Display_Bootup_Legacy::Last] = DISPLAY_COUNT;
+// 	int Specific_Bootup_Display = display_config.Specific_Bootup_Display;
+// 	Display_Match[Display_Bootup_Legacy::Specific] = valueLimit(Specific_Bootup_Display,1,(int32_t)DISPLAY_COUNT);
+// 	#define Display(match) DisplayList[Display_Match[(match)] - 1]
+// 	for (size_t i = 0; i < DISPLAY_COUNT; i++) {
+// 		SDL_DisplayMode mode;
+// 		SDL_Rect rect;
+// 		SDL_GetDesktopDisplayMode(i,&mode);
+// 		SDL_GetDisplayBounds(i, &rect);
+// 		DisplayList[i].resX = mode.w;
+// 		DisplayList[i].resY = mode.h;
+// 		DisplayList[i].posX = rect.x;
+// 		DisplayList[i].posY = rect.y;
+// 		DisplayList[i].refreshRate = mode.refresh_rate;
+// 		DisplayList[i].bbp = SDL_BITSPERPIXEL(mode.format);
+// 		DisplayList[i].name = SDL_GetDisplayName(i);
+// 		/* Orthagonal */
+// 		if (DisplayList[i].posX < Display(Display_Bootup_Legacy::Left).posX) { Display_Match[Display_Bootup_Legacy::Left] = i + 1; }
+// 		if (DisplayList[i].posX + DisplayList[i].resX > Display(Display_Bootup_Legacy::Right).posX + Display(Display_Bootup_Legacy::Right).resX) { Display_Match[Display_Bootup_Legacy::Right] = i + 1; }
+// 		if (DisplayList[i].posY < Display(Display_Bootup_Legacy::Top).posY) { Display_Match[Display_Bootup_Legacy::Top] = i + 1; }
+// 		if (DisplayList[i].posY + DisplayList[i].resY > Display(Display_Bootup_Legacy::Bottom).posY + Display(Display_Bootup_Legacy::Bottom).resY) { Display_Match[Display_Bootup_Legacy::Bottom] = i + 1; }
+// 		/* Diagonal */
+// 		/* Resolution and Refresh-Rate */
+// 		if (DisplayList[i].resX * DisplayList[i].resY > Display(Display_Bootup_Legacy::HighResolution).resX * Display(Display_Bootup_Legacy::HighResolution).resY) { Display_Match[Display_Bootup_Legacy::HighResolution] = i + 1; }
+// 		if (DisplayList[i].refreshRate > Display(Display_Bootup_Legacy::HighFrameRate).refreshRate) { Display_Match[Display_Bootup_Legacy::HighFrameRate] = i + 1; }
+// 		if (DisplayList[i].resX * DisplayList[i].resY < Display(Display_Bootup_Legacy::LowResolution).resX * Display(Display_Bootup_Legacy::LowResolution).resY) { Display_Match[Display_Bootup_Legacy::LowResolution] = i + 1; }
+// 		if (DisplayList[i].refreshRate < Display(Display_Bootup_Legacy::LowFrameRate).refreshRate) { Display_Match[Display_Bootup_Legacy::LowFrameRate] = i + 1; }
+// 	}
+// 	*initResX = Display(display_config.Display_Bootup_Type).resX;
+// 	*initResY = Display(display_config.Display_Bootup_Type).resY;
+// 	*initPosX = Display(display_config.Display_Bootup_Type).posX;
+// 	*initPosY = Display(display_config.Display_Bootup_Type).posY;
+// 	if (Display(display_config.Display_Bootup_Type).resX < RESX_Minimum || Display(display_config.Display_Bootup_Type).resY < RESY_Minimum) {
+// 		if (DISPLAY_COUNT == 1) {
+// 			printWarning("This display does not meet the minimum screen resolution");
+// 			return 0;
+// 		}
+// 		for (size_t i = 0; i < DISPLAY_COUNT; i++) {
+// 			if (Display(display_config.Display_Bootup_Type).resX >= RESX_Minimum && Display(display_config.Display_Bootup_Type).resY >= RESY_Minimum) {
+// 				*initResX = DisplayList[i].resX;
+// 				*initResY = DisplayList[i].resX;
+// 				*initPosX = DisplayList[i].resX;
+// 				*initPosY = DisplayList[display_config.Display_Bootup_Type].resX;
+// 				printWarning("Display %u does not meet the minimum screen resolution, switching to display %zu",Display_Match[display_config.Display_Bootup_Type],i + 1);
+// 				return 0;
+// 			}
+// 		}
+// 		printWarning("None of the available displays support the minimum screen resolution");
+// 		return 0;
+// 	}
+// 	fflush(stdout);
+// 	return 0;
+// }
 
 // Returns the index of the display to be used. Returns 0 on failure
 int32_t loadDisplayInformation(
@@ -1451,8 +1451,8 @@ int32_t loadDisplayInformation(
 	SDL_GetMouseState(&cursorPosX, &cursorPosY);
 	const DisplayInfo* disp = getBootupDisplay(
 		display_config,
-		cursorPosX, cursorPosY,
-		RESX_Minimum, RESY_Minimum
+		RESX_Minimum, RESY_Minimum,
+		cursorPosX, cursorPosY
 	);
 	if (disp == nullptr) {
 		printError("unable to getBootupDisplay");
@@ -1470,22 +1470,6 @@ void init_config_data() {
 			return;
 		}
 		clean_User_Configuration_Data(config_data);
-
-		/* GUI Settings */
-			// LockKeyInputsInMenus = config_data.GUI_Settings.LockKeyInputsInMenus;
-			// AutoResizeWindows = config_data.GUI_Settings.AutoResizeWindows;
-			// PreventOutOfBoundsWindows = config_data.GUI_Settings.AutoResizeWindows;
-			// WindowOpacity = config_data.GUI_Settings.WindowOpacity;
-			// WindowAutoScale = config_data.GUI_Settings.WindowAutoScale;
-		/* Screenshot Settings */
-		int_enum temp_screenshotFileType = config_data.Screenshot_Settings.screenshotFileType;
-		if (temp_screenshotFileType < 0 || temp_screenshotFileType >= Image_File_Format::Image_File_Format_Count) {
-			temp_screenshotFileType = Image_File_Format::PNG;
-		}
-		config_data.Screenshot_Settings.screenshotFileType = temp_screenshotFileType;
-		// screenshotFileType = (Image_File_Format::Image_File_Format_Enum)temp_screenshotFileType;
-		// User_PNG_Compression_Level = config_data.Screenshot_Settings.PNG_Compression_Level;
-		// User_JPG_Quality_Level = config_data.Screenshot_Settings.JPG_Quality_Level;
 	} else {
 		default_User_Configuration_Data(config_data, true);
 	}
@@ -1496,21 +1480,9 @@ void terminate_config_data() {
 		return;
 	}
 	export_config_data(config_data,"./config.fracExpConfig");
-	// char filePath[320]; memset(filePath,'\0',sizeof(filePath));
+	// char filePath[324]; memset(filePath,'\0',sizeof(filePath));
 	// saveFileInterface(filePath,ARRAY_LENGTH(filePath));
-	// User_Configuration_Data config_data = {0};
-	/* GUI Settings */
-		// config_data.GUI_Settings.LockKeyInputsInMenus = LockKeyInputsInMenus;
-		// config_data.GUI_Settings.AutoResizeWindows = AutoResizeWindows;
-		// config_data.GUI_Settings.PreventOutOfBoundsWindows = AutoResizeWindows;
-		// config_data.GUI_Settings.WindowOpacity = WindowOpacity;
-		// config_data.GUI_Settings.WindowAutoScale = WindowAutoScale;
-	/* Screenshot Settings */
-		// config_data.Screenshot_Settings.screenshotFileType = (int)screenshotFileType;
-		// config_data.Screenshot_Settings.PNG_Compression_Level = User_PNG_Compression_Level;
-		// config_data.Screenshot_Settings.JPG_Quality_Level = User_JPG_Quality_Level;
-
-	//export_config_data(config_data,"./config.fracExpConfig");
+	// export_config_data(config_data,"./config.fracExpConfig");
 }
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
@@ -1535,7 +1507,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	dispResY = initResY;
 	initResX -= RESX_Margin;
 	initResY -= RESY_Margin;
-	if (useDefaultWindowSize == true) {
+	if (config_data.Display_Preferences.ScaleWindowToScreenSize == true) {
 		if (initResX > RESX_Default) {
 			initResX = RESX_Default;
 		} else if (initResX < RESX_Minimum) {
@@ -1561,9 +1533,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	//printFlush("\nNew: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
-			DisplayInfo_Legacy* disp = getCurrentDisplayInfo();
+			const DisplayInfo* disp = getDisplayFromIndex(initDisplayIndex);
 			if (disp != nullptr) {
-				FRAME_RATE = disp->refreshRate * Default_Frame_Rate_Multiplier;
+				FRAME_RATE = disp->getRefreshRate() * Default_Frame_Rate_Multiplier;
 			}
 		#endif
 		FRAME_RATE += FRAME_RATE_OFFSET;
@@ -1582,24 +1554,24 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		Master.resX, Master.resY,
 		SDL_WINDOW_RESIZABLE
 	);
-    SDL_SetWindowMinimumSize(window, RESX_Minimum, RESY_Minimum);
+	SDL_SetWindowMinimumSize(window, RESX_Minimum, RESY_Minimum);
 	SDL_SetWindowMaximumSize(window, RESX_Maximum, RESY_Maximum);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
-	
+
 	super_screenshot_maxThreads = std::thread::hardware_concurrency();
 	// IMGUI
 	IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    io_IMGUI = &ImGui::GetIO();
-    io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+	ImGui::CreateContext();
+	io_IMGUI = &ImGui::GetIO();
+	io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io_IMGUI->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io_IMGUI->IniFilename = nullptr;
-    set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
+	set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
 	ImGui_ImplSDLRenderer2_Init(renderer);
-    ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-	
+	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+
 	setDefaultParameters(&frac,Fractal_ABS_Mandelbrot);
 	Bootup_initRenderData();
 	if (texture != nullptr) {
@@ -1610,7 +1582,10 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	init_KeyBind_PresetList();
 	initKeys();
 	//cleanKeyBind(&currentKeyBind);
-		
+
+	config_data.Display_Preferences.Display_Config_Hash = getDisplayConfigHash();
+	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
+
 	bootup_Fractal_Frame_Rendered = false;
 	printFlush("\n");
 	write_Render_Ready(true);
@@ -1621,7 +1596,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
-	ABORT_RENDERING = true;
 	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
 	return 0;
 }
@@ -1642,14 +1616,12 @@ uint64_t get_Hardware_Hash() {
 }
 
 int terminate_Render() {
-	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
 	terminate_config_data();
 	terminateKeyboardGraphics();
 	clear_KeyBind_PresetList();
 	ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
-	FREE(DisplayList);
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -1666,14 +1638,24 @@ void setRenderedBufferBox(BufferBox* box) {
 
 
 void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
+	// nano64_t startTimer = getNanoTime();
 	static fp64 f = 0.0;
 	fp64 halfDiff = (maxSpeed - minSpeed) / 2.0;
 	fp64 speed = halfDiff * sin(cycleSpeed * TAU * getDecimalTime()) + minSpeed + halfDiff;
 	f += DeltaTime * speed;
-	uint32_t w = (uint32_t)(f * (256.0));
+	size_t w = (size_t)(f * (256.0));
 	size_t z = 0;
-	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
-		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
+
+	static constexpr size_t patternLength = 256;
+	static constexpr size_t patternSize = patternLength * IMAGE_BUFFER_CHANNELS;
+
+	size_t dimX = ((size_t)TestGraphic.resX > patternLength) ? patternLength : TestGraphic.resX;
+	size_t dimY = ((size_t)TestGraphic.resY > patternLength) ? patternLength : TestGraphic.resY;
+	size_t pitch = (TestGraphic.resX * IMAGE_BUFFER_CHANNELS);
+	size_t offset = 0;
+	for (size_t y = 0; y < dimY; y++) {
+		z = offset;
+		for (size_t x = 0; x < dimX; x++) {
 			#ifdef fullColorTestGraphic
 				TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 				TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
@@ -1684,68 +1666,85 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
 			TestGraphic.vram[z] = 0xFF; z++;
 		}
+		inPlacePatternMemcpy(&TestGraphic.vram[offset], pitch, (dimX * IMAGE_BUFFER_CHANNELS));
+		offset += pitch;
 	}
+	if ((size_t)TestGraphic.resY > patternLength) {
+		inPlacePatternMemcpy(
+			TestGraphic.vram,
+			TestGraphic.resX * TestGraphic.resY * TestGraphic.channels,
+			patternLength * TestGraphic.resX * TestGraphic.channels
+		);
+	}
+	// nano64_t finishTimer = getNanoTime();
+	// printfInterval(0.2,"\nGRAPHIC: %.3lf",(fp64)(finishTimer - startTimer) / 1.0e6);
 }
 
-void renderAbortGraphic(fp64 speed) {
+namespace Status_Graphic {
+	enum Status_Graphic_Enum {Graphic_Abort, Graphic_Pause, Graphic_Loading, Graphic_Count};
+}
+
+void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp64 speed) {
 	if (printValidateBufferBox(&TestGraphic) == false) {
-		printError("renderAbortGraphic() failed");
+		printError("renderStatusGraphic() failed");
 		return;
 	}
 	static fp64 f = 0.0;
 	f += DeltaTime * speed;
 	uint32_t w = (uint32_t)(f * (256.0));
+
+	static constexpr size_t patternLength = 256;
+	static constexpr size_t patternSize = patternLength * IMAGE_BUFFER_CHANNELS;
+	static uint8_t pattern[patternSize];
 	size_t z = 0;
-	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
-		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
-			TestGraphic.vram[z] = ((w + x + y) % 256) / 4; TestGraphic.vram[z] /= color_square_divider; z++;
-			TestGraphic.vram[z] = 0; z++;
-			TestGraphic.vram[z] = 0xFF; z++;
+	switch (status_graphic) {
+		case Status_Graphic::Graphic_Abort:
+			for (uint32_t p = 0; p < patternLength; p++) {
+				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
+				pattern[z] = ((w + p) % 256) / 4; pattern[z] /= color_square_divider; z++;
+				pattern[z] = 0; z++;
+				pattern[z] = 0xFF; z++;
+			}
+			break;
+		case Status_Graphic::Graphic_Pause:
+			for (uint32_t p = 0; p < patternLength; p++) {
+				pattern[z] = 0; z++;
+				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
+				pattern[z] = 0; z++;
+				pattern[z] = 0xFF; z++;
+			}
+			break;
+		case Status_Graphic::Graphic_Loading:
+		default:
+			for (uint32_t p = 0; p < patternLength; p++) {
+				pattern[z] = 0; z++;
+				pattern[z] = 0; z++;
+				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
+				pattern[z] = 0xFF; z++;
+			}
+			break;
+	};
+	size_t offset = 0;
+	size_t shift = 0;
+	size_t pitch = ((size_t)TestGraphic.resX * (size_t)TestGraphic.channels);
+	size_t dimY = ((size_t)TestGraphic.resY > patternLength) ? patternLength : (size_t)TestGraphic.resY;
+	for (size_t y = 0; y < dimY; y++) {
+		size_t dimX = (pitch > shift) ? shift : pitch;
+		memcpy(&TestGraphic.vram[offset], &pattern[patternSize - shift], dimX);
+		if (shift <= pitch) {
+			patternMemcpy(&TestGraphic.vram[offset + shift], pitch - shift, pattern, patternSize);
 		}
+		offset += pitch;
+		shift += IMAGE_BUFFER_CHANNELS;
+		shift %= patternSize;
 	}
-}
-
-void renderPauseGraphic(fp64 speed) {
-	if (printValidateBufferBox(&TestGraphic) == false) {
-		printError("renderPauseGraphic() failed");
-		return;
+	if ((size_t)TestGraphic.resY > patternLength) {
+		inPlacePatternMemcpy(
+			TestGraphic.vram,
+			TestGraphic.resX * TestGraphic.resY * TestGraphic.channels,
+			patternLength * TestGraphic.resX * TestGraphic.channels
+		);
 	}
-	static fp64 f = 0.0;
-	f += DeltaTime * speed;
-	uint32_t w = (uint32_t)(f * (256.0));
-	size_t z = 0;
-	for (uint32_t y = 0; y < TestGraphic.resY; y++) {
-		for (uint32_t x = 0; x < TestGraphic.resX; x++) {
-			TestGraphic.vram[z] = 0; z++;
-			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
-			TestGraphic.vram[z] = 0; z++;
-			TestGraphic.vram[z] = 0xFF; z++;
-		}
-	}
-}
-
-void renderLoadingGraphic(fp64 speed) {
-	if (printValidateBufferBox(&TestGraphic) == false) {
-		printError("renderLoadingGraphic() failed");
-		return;
-	}
-	static fp64 f = 0.0;
-	f += DeltaTime * speed;
-	uint32_t w = (uint32_t)(f * (256.0));
-	size_t z = 0;
-	uint32_t dimX = MIN(TestGraphic.resX,256);
-	uint32_t dimY = MIN(TestGraphic.resY,256);
-	// for (uint32_t y = 0; y < dimY; y++) {
-	// 	for (uint32_t x = 0; x < dimX; x++) {
-	// 		TestGraphic.vram[z] = 0; z++;
-	// 		TestGraphic.vram[z] = 0; z++;
-	// 		TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
-	// 		TestGraphic.vram[z] = 0xFF; z++;
-	// 	}
-	// 	inPlacePatternMemcpy(&TestGraphic.vram[0],TestGraphic.resX * TestGraphic.channels,dimX);
-	// }
-	// inPlacePatternMemcpy(&TestGraphic.vram[z],TestGraphic.resY * (TestGraphic.resX * TestGraphic.channels),dimX * (dimY * TestGraphic.channels));
 }
 
 
@@ -1759,6 +1758,7 @@ int exportScreenshot() {
 	}
 	return 0;
 }
+
 int exportSuperScreenshot() {
 	static nano64_t resetTime = 0;
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportSuperFractalBuffer == false) {
@@ -1790,8 +1790,6 @@ int exportSuperScreenshot() {
 	}
 	return 0;
 }
-
-
 
 
 
@@ -1950,19 +1948,20 @@ void newFrame() {
 	}
 
 	if (Abort_Rendering_Flag == true) {
-		primaryBufferValid = false;
+		//primaryBufferValid = false;
 		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
 		if (Waiting_To_Abort_Rendering == true) {
-			renderAbortGraphic(0.3);
+			renderStatusGraphic(Status_Graphic::Graphic_Abort, 0.3);
 		} else {
-			renderPauseGraphic(0.4);
+			renderStatusGraphic(Status_Graphic::Graphic_Pause, 0.4);
+			//renderTestGraphic(0.2,0.4,1.0);
 		}
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
 		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
 		exportFractalBuffer = false;
 	} else if (primaryBufferValid == false) {
-		renderLoadingGraphic(1.0); // Renders a loading screen if Fractal buffers are unavailable
+		renderStatusGraphic(Status_Graphic::Graphic_Loading,1.0); // Renders a loading screen if Fractal buffers are unavailable
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
 		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
@@ -2015,6 +2014,7 @@ void newFrame() {
 		}
 		exportFractalBuffer = false;
 	}
+	
 	render_IMGUI();
 	SDL_RenderPresent(renderer);
 	SDL_DestroyTexture(kTexture); // From render_IMGUI

@@ -53,6 +53,8 @@ class DisplayInfo {
 		fp64 getRefreshRate() const;
 		uint8_t getBitsPerPixel() const;
 		std::string getName() const;
+
+		void printInfo() const;
 	
 		int32_t getLeftPosX() const;
 		int32_t getRightPosX() const;
@@ -89,6 +91,11 @@ namespace Display_Bootup {
 		HighResolution,LowResolution,HighFrameRate,LowFrameRate,WideAspectRatio,TallAspectRatio,
 		Length
 	};
+	static const char* Display_Bootup_Text[] = {
+		"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
+		"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
+		"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
+	};
 };
 namespace Display_RefreshRate {
 	enum Display_RefreshRate_Enum {
@@ -116,15 +123,20 @@ void getDisplayAreaBounds(
 const DisplayInfo* getDisplayFromIndex(int32_t index);
 
 // Returns nullptr if no matches were found
-const DisplayInfo* getDisplayFromPosition(
-	int32_t posX, int32_t posY
+const DisplayInfo* getDisplayFromPosition(int32_t posX, int32_t posY);
+
+const DisplayInfo* matchDisplayAttribute(
+	Display_Bootup::Display_Bootup_Enum type,
+	const User_Display_Preferences& Display_Config,
+	int32_t minResX = 0, int32_t minResY = 0,
+	int32_t cursorPosX = INT32_MIN, int32_t cursorPosY = INT32_MIN
 );
 
 // Returns 0 if no matches were found
 const DisplayInfo* getBootupDisplay(
 	const User_Display_Preferences& Display_Config,
-	int32_t cursorPosX = INT32_MIN, int32_t cursorPosY = INT32_MIN,
-	int32_t minResX = 0, int32_t minResY = 0
+	int32_t minResX = 0, int32_t minResY = 0,
+	int32_t cursorPosX = INT32_MIN, int32_t cursorPosY = INT32_MIN
 );
 
 // Used to determine if the display configuration has changed. Returns 0 if parameters are invalid

@@ -176,17 +176,17 @@
 /* Displays */
 
 	// Amount of displays detected
-	extern uint32_t DISPLAY_COUNT;
+	//extern uint32_t DISPLAY_COUNT;
 	/* Display Bootup */
-		namespace Display_Bootup_Legacy {
-			enum Display_Bootup_Enum_Legacy {
-				Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
-			};
-		};
+		// namespace Display_Bootup_Legacy {
+		// 	enum Display_Bootup_Enum_Legacy {
+		// 		Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
+		// 	};
+		// };
 		//extern uint32_t SPECIFIC_BOOTUP_DISPLAY; // Supposed to be save data
-		extern uint32_t Display_Match[Display_Bootup_Legacy::Length];
+		// extern uint32_t Display_Match[Display_Bootup_Legacy::Length];
 		//extern Display_Bootup_Legacy::Display_Bootup_Enum_Legacy Display_Bootup_Type;
-		extern bool useDefaultWindowSize;
+		// extern bool useDefaultWindowSize;
 
 	// struct DisplayInfo_Legacy {
 	// 	uint32_t resX;
@@ -197,10 +197,10 @@
 	// 	uint8_t bbp;
 	// 	const char* name;
 	// }; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
-	extern DisplayInfo_Legacy* DisplayList;
+	//extern DisplayInfo_Legacy* DisplayList;
 
 	// Counts from ONE
-	extern uint32_t CURRENT_DISPLAY;
+	// extern uint32_t CURRENT_DISPLAY;
 
 /* Other */
 

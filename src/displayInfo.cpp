@@ -97,6 +97,10 @@
 	uint8_t DisplayInfo::getBitsPerPixel() const { return BitsPerPixel; }
 	std::string DisplayInfo::getName() const { return Name; }
 
+	void DisplayInfo::printInfo() const {
+
+	}
+
 	int32_t DisplayInfo::getLeftPosX() const { return PosX; }
 	int32_t DisplayInfo::getRightPosX() const { return PosX + ResX; }
 	int32_t DisplayInfo::getTopPosY() const { return PosY; }
@@ -235,7 +239,6 @@ const DisplayInfo* matchFirstDisplay(
 ) {
 	const std::vector<DisplayInfo>& DisplayList = getDisplayList();
 	for (size_t i = 0; i < DisplayList.size(); i++) {
-		printf("\n%p",&DisplayList[i]);
 		if (displayAboveMinimumResolution(DisplayList[i],minResX,minResY)) {
 			return &DisplayList[i];
 		}
@@ -257,8 +260,8 @@ const DisplayInfo* matchLastDisplay(
 
 const DisplayInfo* matchAutomaticDisplay(
 	const User_Display_Preferences& Display_Config,
-	int32_t cursorPosX, int32_t cursorPosY,
-	int32_t minResX, int32_t minResY
+	int32_t minResX, int32_t minResY,
+	int32_t cursorPosX, int32_t cursorPosY
 ) {
 	const std::vector<DisplayInfo>& DisplayList = getDisplayList();
 	if (DisplayList.size() == 0) { return nullptr; }
@@ -277,8 +280,8 @@ const DisplayInfo* matchAutomaticDisplay(
 
 const DisplayInfo* getBootupDisplay(
 	const User_Display_Preferences& Display_Config,
-	int32_t cursorPosX, int32_t cursorPosY,
-	int32_t minResX, int32_t minResY
+	int32_t minResX, int32_t minResY,
+	int32_t cursorPosX, int32_t cursorPosY
 ) {
 	const std::vector<DisplayInfo>& DisplayList = getDisplayList();
 	if (DisplayList.size() == 0) { return nullptr; }
@@ -312,13 +315,20 @@ const DisplayInfo* getBootupDisplay(
 		case Display_Bootup::Automatic:
 			return matchAutomaticDisplay(
 				Display_Config,
-				cursorPosX, cursorPosY,
-				minResX, minResY
+				minResX, minResY,
+				cursorPosX, cursorPosY
 			);
 		case Display_Bootup::CursorPosition:
 			{
 				const DisplayInfo* disp = getDisplayFromPosition(cursorPosX,cursorPosY);
-				if (disp == nullptr) {
+				if (disp != nullptr) {
+					return disp;
+				}
+			}
+		case Display_Bootup::Specific:
+			{
+				const DisplayInfo* disp = getDisplayFromIndex(Display_Config.Specific_Bootup_Display);
+				if (disp != nullptr) {
 					return disp;
 				}
 			}
@@ -326,8 +336,6 @@ const DisplayInfo* getBootupDisplay(
 			return matchFirstDisplay(minResX,minResY);
 		case Display_Bootup::Last:
 			return matchLastDisplay(minResX,minResY);
-		case Display_Bootup::Specific:
-		return getDisplayFromIndex(Display_Config.Specific_Bootup_Display);
 		case Display_Bootup::Left:
 			for (size_t i = searchStart; i < DisplayList.size(); i++) {
 				if (DisplayList[i].getCenterPosX() < DisplayList[bestDisplay].getCenterPosX() &&
@@ -452,6 +460,17 @@ const DisplayInfo* getBootupDisplay(
 		return nullptr;
 	};
 	return &DisplayList[bestDisplay];
+}
+
+const DisplayInfo* matchDisplayAttribute(
+	Display_Bootup::Display_Bootup_Enum type,
+	const User_Display_Preferences& Display_Config,
+	int32_t minResX, int32_t minResY,
+	int32_t cursorPosX, int32_t cursorPosY
+) {
+	User_Display_Preferences Display_Config_Copy = Display_Config;
+	Display_Config_Copy.Display_Bootup_Type = type;
+	return getBootupDisplay(Display_Config_Copy,minResX,minResY,cursorPosX,cursorPosY);
 }
 
 uint64_t getDisplayConfigHash() {

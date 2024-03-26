@@ -73,7 +73,6 @@
 	Generates a unique hash value for your display configuration. When `Display_Bootup_Type` is set to  `0 Automatic`, this hash value is used to detect if the display configuration has changed.
 	
 	## Specific_Bootup_Display
-	
 	Determines what display the program will open on if Display_Bootup_Type is set to `Specific Display`.
 	
 	## Bootup_Fullscreen (Not Implemented)
@@ -98,9 +97,13 @@
 	3. Lowest Refresh-Rate
 	4. Constant Value
 	
+	## Automatically_Update_RefreshRate (Not Implemented)
+	*(True)*<br>
+	If Display_RefreshRate_Type is set to `0 Automatic` or `1 Current Display`, the refresh-rate will automatically update when the window is moved to another monitor.
+	
 	## Constant_RefreshRate_Value
 	*(60.0)*<br>
-	If `Display_RefreshRate_Type` is set to `4 COnstant Value`, it will use the `Constant_RefreshRate_Value` for the maximum refresh-rate.
+	If `Display_RefreshRate_Type` is set to `4 Constant Value`, it will use the `Constant_RefreshRate_Value` for the maximum refresh-rate.
 	
 	## Maximum_FPS_Multiplier
 	*(1)*<br>

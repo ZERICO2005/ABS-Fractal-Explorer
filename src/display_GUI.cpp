@@ -663,13 +663,33 @@ void Menu_Rendering() {
 	ImGui::End();
 }
 
-void printDisplayInfo(int displayNumber) {
-	DisplayInfo_Legacy* DispI = getDisplayInfo(displayNumber);
-	if (DispI == nullptr) {
-		ImGui::Text("Display %d is not detected",displayNumber);
-	} else {
-		ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name); \
+// void printDisplayInfo(int displayNumber) {
+// 	DisplayInfo_Legacy* DispI = getDisplayInfo(displayNumber);
+// 	if (DispI == nullptr) {
+// 		ImGui::Text("Display %d is not detected",displayNumber);
+// 	} else {
+// 		ImGui::Text("Display[%d]: %ux%u at %uHz (%d,%d) | %s",displayNumber,DispI->resX,DispI->resY,DispI->refreshRate,DispI->posX,DispI->posY,DispI->name);
+// 	}
+// }
+
+void printDisplayInfo(const DisplayInfo* Disp, bool printWarning = true) {
+	if (Disp == nullptr) {
+		if (printWarning == true) {
+			ImGui::Text("<Unable to print display information>");
+		}
+		return;
 	}
+	int32_t resX, resY, posX, posY;
+	Disp->getResolution(resX,resY);
+	Disp->getPosition(posX,posY);
+	ImGui::Text(
+		"Display[%d]: %dx%d at %dHz (%d,%d) | %s",
+		Disp->getIndex(),
+		resX, resY,
+		(int32_t)Disp->getRefreshRate(),
+		posX, posY,
+		Disp->getName().c_str()
+	);
 }
 
 void Menu_Settings() {
@@ -754,37 +774,60 @@ void Menu_Settings() {
 		ImGui::Text(" ");
 	}
 	if (ImGui::CollapsingHeader("DISPLAY AND FRAME-RATE")) {
+		int32_t cursorPosX, cursorPosY; SDL_GetMouseState(&cursorPosX, &cursorPosY);
+		int32_t windowPosX, windowPosY; SDL_GetWindowPosition(window, &windowPosX, &windowPosY);
+		int32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
+
 		ImGui::Text("Base maximum frame-rate off of:");
 		if (ImGui::Combo("##initFrameRate", &Display_Preferences.Display_RefreshRate_Type,
 			Display_RefreshRate::Display_RefreshRate_Text, ARRAY_LENGTH(Display_RefreshRate::Display_RefreshRate_Text)
 		)) {
 
 		}
-		uint32_t SELECT_DISPLAY = CURRENT_DISPLAY;
+		const DisplayInfo* Select_Display = getDisplayFromPosition(
+			windowPosX + (windowResX / 2),
+			windowPosY + (windowResY / 2)
+		);
+		// uint32_t SELECT_DISPLAY = CURRENT_DISPLAY;
+
 		switch(Display_Preferences.Display_RefreshRate_Type) {
 			case Display_RefreshRate::HighestRefreshRate:
-				SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::HighFrameRate];
+				Select_Display = matchDisplayAttribute(
+					Display_Bootup::HighFrameRate, config_Display,
+					RESX_Minimum, RESY_Minimum
+				);
+				// SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::HighFrameRate];
 			break;
 			case Display_RefreshRate::LowestRefreshRate:
-				SELECT_DISPLAY = Display_Match[Display_Bootup_Legacy::LowFrameRate];
+				Select_Display = matchDisplayAttribute(
+					Display_Bootup::LowFrameRate, config_Display,
+					RESX_Minimum, RESY_Minimum
+				);
+			break;
+			case Display_RefreshRate::ConstantValue:
+				Select_Display = nullptr;
 			break;
 			case Display_RefreshRate::Automatic:
 			case Display_RefreshRate::CurrentMonitor:
 			default:
-				SELECT_DISPLAY = CURRENT_DISPLAY;
+				Select_Display = getDisplayFromPosition(
+					windowPosX + (windowResX / 2),
+					windowPosY + (windowResY / 2)
+				);
 		}
-		printDisplayInfo(SELECT_DISPLAY);
+		printDisplayInfo(Select_Display,false);
+		//printDisplayInfo(SELECT_DISPLAY);
 
 		//DisplayInfo_Legacy* disp = getCurrentDisplayInfo();
-		DisplayInfo_Legacy* disp = getDisplayInfo(SELECT_DISPLAY);
+		//DisplayInfo_Legacy* disp = getDisplayInfo(SELECT_DISPLAY);
 		static fp64 FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
-		fp64 TEMP_FPS = (disp == NULL) ? 60.0 : (fp32)(disp->refreshRate); // Would normally be either the current, highest, or lowest refresh rate
+		fp64 TEMP_FPS = (Select_Display == nullptr) ? Display_Preferences.Constant_RefreshRate_Value : Select_Display->getRefreshRate();
 		
 		if (Display_Preferences.Display_RefreshRate_Type == Display_RefreshRate::ConstantValue) { // Constant
-			static fp32 temp_FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
-			ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
+			static fp32 temp_FPS_Constant_Value = (fp32)Display_Preferences.Constant_RefreshRate_Value;
 			ImGui::Text(" ");
-			ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,6.0,1200.0);
+			ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
+			ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,12.0,1200.0);
 			FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
 			if (ImGui::Button("Apply FPS")) {
 				Display_Preferences.Constant_RefreshRate_Value = FPS_Constant_Value;
@@ -804,7 +847,7 @@ void Menu_Settings() {
 				ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
 			}
 			fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
-			valueLimit(calculatedFPS,6.0,1200.0);
+			valueLimit(calculatedFPS,12.0,1200.0);
 			ImGui::Text("%.2lffps %.2lfms", calculatedFPS, (1.0 / (calculatedFPS)) * 1000.0);
 			ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
 			if (ImGui::Button("Apply FPS")) {
@@ -815,36 +858,55 @@ void Menu_Settings() {
 
 		ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
 		ImGui::Text("Which monitor should the application open to:");
-		if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation, BufAndLen(initMonitorLocations))) {
+		if (ImGui::Combo("##initMonitorLocation", &Combo_initMonitorLocation,
+			Display_Bootup::Display_Bootup_Text, ARRAY_LENGTH(Display_Bootup::Display_Bootup_Text)
+		)) {
 			config_data.Display_Preferences.Display_Bootup_Type = Combo_initMonitorLocation;
 		}
-		if (Combo_initMonitorLocation == 3) { // Specific Monitor
+		if (Combo_initMonitorLocation == Display_Bootup::Specific) { // Specific Monitor
 			static bool overrideDisplayCount = false;
-			// if (overrideDisplayCount == false && specificMonitor > (int)DISPLAY_COUNT) {
-			// 	specificMonitor = DISPLAY_COUNT;
+			// if (overrideDisplayCount == false && specificMonitor > getDisplayCount()) {
+			// 	config_Display.Specific_Bootup_Display = getDisplayCount();
 			// }
-			if (specificMonitor > (int)DISPLAY_COUNT) {
+			if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
 				overrideDisplayCount = true;
 			}
-			int limitDisplayCount = (overrideDisplayCount == false || DISPLAY_COUNT > 144) ? DISPLAY_COUNT : 144;
-			if (DISPLAY_COUNT != 1 || overrideDisplayCount == true) {
-				if(ImGui::InputInt("##specificMonitor",&specificMonitor,1,1)) {
-					valueLimit(specificMonitor,1,limitDisplayCount);
+			int32_t limitDisplayCount = (overrideDisplayCount == false || getDisplayCount() > 144) ? getDisplayCount() : 144;
+			if (getDisplayCount() != 1 || overrideDisplayCount == true) {
+				if(ImGui::InputInt("##specificMonitor",&config_Display.Specific_Bootup_Display,1,1)) {
+					valueLimit(config_Display.Specific_Bootup_Display,1,limitDisplayCount);
 				} 
 			} else {
 				ImGui::Text("Only 1 display detected");
 			}
-			printDisplayInfo(specificMonitor); 
+			const DisplayInfo* specificDisp = getDisplayFromIndex(config_Display.Specific_Bootup_Display);
+			if (specificDisp == nullptr) {
+				ImGui::Text("Display %d is not detected",config_Display.Specific_Bootup_Display);
+			} else {
+				printDisplayInfo(specificDisp);
+			}
+			//printDisplayInfo(specificMonitor);
 			if (ImGui::Checkbox("Override Display Count",&overrideDisplayCount)) {
 				if (overrideDisplayCount == false) {
-					valueLimit(specificMonitor,1,(int)DISPLAY_COUNT);
+					valueLimit(config_Display.Specific_Bootup_Display,1,getDisplayCount());
 				}
 			}
-			if (specificMonitor > (int)DISPLAY_COUNT) {
-				ImGui::Text("Note: Display %d will be used if Display %d is not detected",DISPLAY_COUNT,specificMonitor);
+			if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
+				ImGui::Text(
+					"Note: Display %d will be used if Display %d is not detected",
+					getDisplayCount(),
+					config_Display.Specific_Bootup_Display
+				);
 			}
 		} else {
-			printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
+			const DisplayInfo* initDisp = matchDisplayAttribute(
+				(Display_Bootup::Display_Bootup_Enum)Combo_initMonitorLocation,
+				config_Display,
+				RESX_Minimum, RESY_Minimum,
+				cursorPosX, cursorPosY
+			);
+			printDisplayInfo(initDisp);
+			//printDisplayInfo(Display_Match[Combo_initMonitorLocation]);
 		}
 		ImGui::Text(" ");
 	}

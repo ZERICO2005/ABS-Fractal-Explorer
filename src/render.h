@@ -142,8 +142,8 @@ struct DisplayInfo_Legacy {
 	const char* name;
 }; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
 
-DisplayInfo_Legacy* getDisplayInfo(size_t i = 1);
-DisplayInfo_Legacy* getCurrentDisplayInfo();
+// DisplayInfo_Legacy* getDisplayInfo(size_t i = 1);
+// DisplayInfo_Legacy* getCurrentDisplayInfo();
 
 /* Keys */
 

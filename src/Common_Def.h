@@ -96,9 +96,9 @@ typedef int int_enum;
 	#define valueMaximum(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
 	#define valueRestore(value,restore,minimum,maximum) ( ((value) >= (minimum) && (value) <= (maximum)) ? ((value) = (value)) : ((value) = (restore)) )
 	
-	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* PatternData, size_t PatternSize);
+	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize);
 
-	void* inPlacePatternMemcpu(void* buf, size_t bufSize, size_t PatternSize);
+	void* inPlacePatternMemcpy(void* __restrict__ buf, size_t bufSize, size_t PatternSize);
 
 	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
 	uint64_t fnv1a_hash(const uint8_t* buf, size_t len);

@@ -7,9 +7,9 @@
 */
 
 #include "Common_Def.h"
-
+#include <string.h>
+#include <stdlib.h>
 /* Functions */
-
 	// Fills a buffer with a repeating pattern of N bytes
 	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize) {
 		if (buf == nullptr || PatternData == nullptr || PatternSize == 0) { return nullptr; }

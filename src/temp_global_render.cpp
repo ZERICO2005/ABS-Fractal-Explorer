@@ -179,7 +179,7 @@
 /* Displays */
 
 	// Amount of displays detected
-	uint32_t DISPLAY_COUNT = 0;
+	//uint32_t DISPLAY_COUNT = 0;
 	/* Display Bootup */
 		// namespace Display_Bootup_Legacy {
 		// 	enum Display_Bootup_Enum_Legacy {
@@ -187,9 +187,9 @@
 		// 	};
 		// };
 		//uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
-		uint32_t Display_Match[Display_Bootup_Legacy::Length] = {0};
+		// uint32_t Display_Match[Display_Bootup_Legacy::Length] = {0};
 		//Display_Bootup_Legacy::Display_Bootup_Enum_Legacy Display_Bootup_Type = Display_Bootup_Legacy::Automatic;
-		bool useDefaultWindowSize = false;
+		//bool useDefaultWindowSize = false;
 
 	// struct DisplayInfo_Legacy {
 	// 	uint32_t resX;
@@ -200,10 +200,10 @@
 	// 	uint8_t bbp;
 	// 	const char* name;
 	// }; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
-	DisplayInfo_Legacy* DisplayList = nullptr;
+	//DisplayInfo_Legacy* DisplayList = nullptr;
 
 	// Counts from ONE
-	uint32_t CURRENT_DISPLAY = 1;
+	//uint32_t CURRENT_DISPLAY = 1;
 
 /* Other */
 
