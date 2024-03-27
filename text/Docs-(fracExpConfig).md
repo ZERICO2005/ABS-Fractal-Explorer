@@ -75,9 +75,14 @@
 	## Specific_Bootup_Display
 	Determines what display the program will open on if Display_Bootup_Type is set to `Specific Display`.
 	
-	## Bootup_Fullscreen (Not Implemented)
-	*(false)*<br>
-	Opens the application in windowed-fullscreen.
+	## Bootup_Fullscreen
+	*(0 Windowed)*<br>
+	Changes how the application will open.
+	
+	0. Windowed: A resizable and moveable window that can be moved around.
+	1. Windowed-Fullscreen: The window will take up the entire screen area.
+	
+	Fullscreen and/or Borderless may be added later on.
 	
 	## ScaleWindowToScreenSize
 	*(true)*<br>
@@ -174,4 +179,16 @@
 	* 90-94: High quality
 	* 75-84: Medium quality
 	* 25-74: Low quality (Not recommended)
+
+# Rendering_Settings
+	## Hardware_Hash
+	Generates a unique hash value for your hardware configuration. This hash is used to detect any changes to hardware, which can help prevent one's slow laptop from attempting to render at the same presets as a powerful desktop computer. If changes to the hardware configuration are detected, you will be prompted with a choice of loading the `Rendering_Settings` from the config file (Which may or may not perform well on another computer), or loading the default `Rendering_Settings`, which are designed to be able to run fine on most computers.
 	
+	## Frame_Interpolation_Method
+	*(0 Nearest Neighbor)*
+	
+	0. Nearest Neighbor: (Fastest) Doesn't blend/smear pixels but may look pixelated.
+	1. Linear: (Fast) Provides a smoother transition between pixels.
+	2. Bicubic: (Slow) Provides a higher quality transition between pixels.
+	3. Area Interpolation: (Fast) Supposively the same as Nearest Neighbor when zoomed in, but does a nicer job when zoomed out.
+	4. Lanczos4: (Slowest) Uses an advanced algorithm to interpolate between pixels.
