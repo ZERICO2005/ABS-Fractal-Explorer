@@ -266,7 +266,7 @@ void initKeys() {
 	updateKeys();
 }
 
-bool keyPressed(uint32_t key) {
+bool keyPressed(SDL_Scancode key) {
 	if (key > SDL_NUM_SCANCODES) {
 		return false;
 	}
@@ -1321,7 +1321,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 	config_data.Display_Preferences.Display_Config_Hash = getDisplayConfigHash();
 	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
-	ABORT_RENDERING = true;
 	bootup_Fractal_Frame_Rendered = false;
 	printFlush("\n");
 	write_Render_Ready(true);
