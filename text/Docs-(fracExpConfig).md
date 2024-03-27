@@ -190,5 +190,5 @@
 	0. Nearest Neighbor: (Fastest) Doesn't blend/smear pixels but may look pixelated.
 	1. Linear: (Fast) Provides a smoother transition between pixels.
 	2. Bicubic: (Slow) Provides a higher quality transition between pixels.
-	3. Area Interpolation: (Fast) Supposively the same as Nearest Neighbor when zoomed in, but does a nicer job when zoomed out.
+	3. Area Interpolation: (Fast) Supposedly the same as Nearest Neighbor when zoomed in, but does a nicer job when zoomed out.
 	4. Lanczos4: (Slowest) Uses an advanced algorithm to interpolate between pixels.
