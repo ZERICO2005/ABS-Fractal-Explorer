@@ -21,7 +21,7 @@
 #include <cmath>
 #include <cstring>
 
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 
 #include <chrono>
@@ -37,9 +37,8 @@
 #include <algorithm>
 
 #include <cstdarg>
-#include <stdarg.h>
 #include <stdexcept>
-#include <limits.h>
+#include <climits>
 
 /* Typedefs */
 
@@ -91,9 +90,9 @@ typedef int int_enum;
 	inline const char* BoolText(bool b) { return b ? "True" : "False"; }
 	inline const char* BOOLText(bool b) { return b ? "TRUE" : "FALSE"; }
 
-	#define valueLimit(value,minimum,maximum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) ) )
-	#define valueMinimum(value,minimum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ((value) = (value)) )
-	#define valueMaximum(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
+	#define valueClamp(value,minimum,maximum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) ) )
+	#define valueMinimumClamp(value,minimum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ((value) = (value)) )
+	#define valueMaximumClamp(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
 	#define valueRestore(value,restore,minimum,maximum) ( ((value) >= (minimum) && (value) <= (maximum)) ? ((value) = (value)) : ((value) = (restore)) )
 	
 	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize);
@@ -116,8 +115,17 @@ typedef int int_enum;
 	int32_t calcMinRatioMax(int32_t val, int32_t min, fp64 ratio, int32_t max);
 	uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max);
 
-	#define linearInterpolation(x,x0,x1,y0,y1) ( (y0) + ( (((y1) - (y0)) * ((x) - (x0))) / ((x1) - (x0)) ) )
-	#define linearInterpolationClamp(x,x0,x1,y0,y1) ( ((x) <= (x0)) ? (y0) : ( ((x) >= (x1)) ? (y1) : linearInterpolation((x),(x0),(x1),(y0),(y1)) ) )
+	template<typename T> T linearInterpolation(const T& x, const T& x0, const T& x1, const T& y0, const T& y1) {
+		return y0 + ( ((y1 - y0) * (x - x0)) / (x1 - x0) );
+	}
+
+	template<typename T> T linearInterpolationClamp(const T&  x, const T& x0, const T& x1, const T& y0, const T& y1) {
+		return (
+			(x <= x0) ? y0 : (
+				(x >= x1) ? y1 : linearInterpolation(x,x0,x1,y0,y1)
+			)
+		);
+	}
 
 /* Time */
 	// Returns the time in nanoseconds
@@ -184,10 +192,43 @@ typedef int int_enum;
 	}
 
 /* Color */
+
 	// (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
-	void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp64 hue, fp64 sat, fp64 val);
-	// (&R,&G,&B) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
-	void getRGBfromHSV(uint8_t* r, uint8_t* g, uint8_t* b, fp32 hue, fp32 sat, fp32 val);
+	template <typename T, typename fpX>
+	void getRGBfromHSV(T* r, T* g, T* b, fpX hue, fpX sat, fpX val) {
+		uint8_t hueIndex = (uint8_t)((fpX)hue / (fpX)60.0) % 6;
+		fpX f = ((fpX)hue / (fpX)60.0) - (fpX)floor((fpX)hue / (fpX)60.0);
+		val *= (fpX)255.0;
+		T vR = (T)val;
+		T pR = (T)(val * ((fpX)1.0 - sat));
+		T qR = (T)(val * ((fpX)1.0 - f * sat));
+		T tR = (T)(val * ((fpX)1.0 - ((fpX)1.0 - f) * sat));
+		T R = 0; T G = 0; T B = 0;
+		switch(hueIndex) {
+			case 0:
+			R = vR; G = tR; B = pR;
+			break;
+			case 1:
+			R = qR; G = vR; B = pR;
+			break;
+			case 2:
+			R = pR; G = vR; B = tR;
+			break;
+			case 3:
+			R = pR; G = qR; B = vR;
+			break;
+			case 4:
+			R = tR; G = pR; B = vR;
+			break;
+			case 5:
+			R = vR; G = pR; B = qR;
+			break;
+		}
+		if (r != nullptr) { *r = R; }
+		if (g != nullptr) { *g = G; }
+		if (b != nullptr) { *b = B; }
+	}
+
 	// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0
 	uint32_t getRGBfromHSV(fp64 hue, fp64 sat, fp64 val);
 	// H 0.0-360.0, S 0.0-1.0, V 0.0-1.0

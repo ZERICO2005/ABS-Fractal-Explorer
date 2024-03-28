@@ -396,7 +396,7 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 	}
 
 	fseek(file, 0, SEEK_END);
-	size_t fileSize = ftell(file);
+	size_t fileSize = (size_t)ftell(file);
 	rewind(file);
 	if (fileSize >= 250000) {
 		printError("config file is abnormally large (%zubytes)",fileSize);

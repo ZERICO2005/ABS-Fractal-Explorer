@@ -36,7 +36,7 @@
 		ofn.hwndOwner = nullptr;
 		ofn.lpstrFilter = filter;
 		ofn.lpstrFile = filePath;
-		ofn.nMaxFile = len;
+		ofn.nMaxFile = (DWORD)len;
 		ofn.lpstrTitle = title;
 		ofn.Flags = OFN_FILEMUSTEXIST;
 		if (GetOpenFileName(&ofn)) {
@@ -66,7 +66,7 @@
 		ofn.hwndOwner = nullptr;
 		ofn.lpstrFilter = filter;
 		ofn.lpstrFile = filePath;
-		ofn.nMaxFile = len;
+		ofn.nMaxFile = (DWORD)len;
 		ofn.lpstrTitle = title;
 		ofn.Flags = OFN_OVERWRITEPROMPT;
 
@@ -115,7 +115,7 @@
 
 /* Image Writers */
 
-int writePNGImage(BufferBox* buf, char* path, char* name, int compression_level) {
+int writePNGImage(const BufferBox* buf, char* path, char* name, int compression_level) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -133,12 +133,12 @@ int writePNGImage(BufferBox* buf, char* path, char* name, int compression_level)
 	sprintf(fileName,"%s%s.png",path,name);
 	printf("\nWriting File: %s",fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
-    ret = stbi_write_png(fileName, buf->resX, buf->resY, buf->channels, buf->vram, getBufferBoxPitch(buf));
+    ret = stbi_write_png(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram, (int32_t)getBufferBoxPitch(buf));
 	FREE(fileName);
 	return ret;
 }
 
-int writeJPGImage(BufferBox* buf, char* path, char* name, uint32_t quality) {
+int writeJPGImage(const BufferBox* buf, char* path, char* name, uint32_t quality) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -155,12 +155,12 @@ int writeJPGImage(BufferBox* buf, char* path, char* name, uint32_t quality) {
 	sprintf(fileName,"%s%s.jpg",path,name);
 	printf("\nWriting File: %s",fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
-    ret = stbi_write_jpg(fileName, buf->resX, buf->resY, buf->channels, buf->vram,quality);
+    ret = stbi_write_jpg(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram, (int32_t)quality);
 	FREE(fileName);
 	return ret;
 }
 
-int writeTGAImage(BufferBox* buf, char* path, char* name) {
+int writeTGAImage(const BufferBox* buf, char* path, char* name) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -177,12 +177,12 @@ int writeTGAImage(BufferBox* buf, char* path, char* name) {
 	sprintf(fileName,"%s%s.tga",path,name);
 	printf("\nWriting File: %s",fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
-    ret = stbi_write_tga(fileName, buf->resX, buf->resY, buf->channels, buf->vram);
+    ret = stbi_write_tga(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram);
 	FREE(fileName);
 	return ret;
 }
 
-int writeBMPImage(BufferBox* buf, char* path, char* name) {
+int writeBMPImage(const BufferBox* buf, char* path, char* name) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -199,12 +199,12 @@ int writeBMPImage(BufferBox* buf, char* path, char* name) {
 	sprintf(fileName,"%s%s.bmp",path,name);
 	printf("\nWriting File: %s",fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
-    ret = stbi_write_bmp(fileName, buf->resX, buf->resY, buf->channels, buf->vram);
+    ret = stbi_write_bmp(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram);
 	FREE(fileName);
 	return ret;
 }
 
-int writeHDRImage(float* buf, uint32_t resX, uint32_t resY, uint8_t channels, char* path, char* name) {
+int writeHDRImage(const float* buf, uint32_t resX, uint32_t resY, uint8_t channels, char* path, char* name) {
 	/* Trival Errors */
 		if (buf == NULL) { printError("float* buf is NULL"); return -1; }
 		if (resX == 0 || resY == 0) { printError("Invalid dimensions %ux%u == 0",resX,resY); return -1; }
@@ -220,7 +220,7 @@ int writeHDRImage(float* buf, uint32_t resX, uint32_t resY, uint8_t channels, ch
 	sprintf(fileName,"%s%s.hdr",path,name);
 	printf("\nWriting File: %s",fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
-    ret = stbi_write_hdr(fileName, resX, resY, channels, buf);
+    ret = stbi_write_hdr(fileName, (int32_t)resX, (int32_t)resY, (int32_t)channels, buf);
 	FREE(fileName);
 	return ret;
 }

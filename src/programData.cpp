@@ -36,14 +36,14 @@
 /* Update_Level */
 	std::mutex pDat_Update_Level_Mutex;
 	int pDat_Update_Level = Change_Level::Full_Reset;
-	uint64_t pDat_Update_Timecode = 0;
+	nano64_t pDat_Update_Timecode = 0;
 
 	// Used to deterimine if rendering should pause, continue, or reset
 	int read_Update_Level() {
 		std::lock_guard<std::mutex> lock(pDat_Update_Level_Mutex);
 		return pDat_Update_Level;
 	}
-	uint64_t read_Update_Timecode() {
+	nano64_t read_Update_Timecode() {
 		std::lock_guard<std::mutex> lock(pDat_Update_Level_Mutex);
 		return pDat_Update_Timecode;
 	}

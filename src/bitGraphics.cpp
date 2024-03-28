@@ -94,8 +94,8 @@ void Bit_Graphics::getDrawBufferBox(BufferBox* box) {
 		box->padding = 0;
 	}
 	box->vram = (buf == buf0) ? buf0 : buf1;
-	box->resX = ResX;
-	box->resY = ResY;
+	box->resX = (uint32_t)ResX;
+	box->resY = (uint32_t)ResY;
 	box->channels = Bit_Graphics_Channels;
 	box->padding = 0;
 }
@@ -220,7 +220,7 @@ void Bit_Graphics::drawLine0(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
 	int32_t dD = 2 * dY - dX;
 	int32_t y = y0;
 	for (int32_t x = x0; x < x1; x++) {
-		plot(x,y);
+		plot((size_t)x, (size_t)y);
 		if (dD > 0) {
 			y += yI;
 			dD += 2 * (dY - dX);
@@ -242,7 +242,7 @@ void Bit_Graphics::drawLine1(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
     int32_t x = x0;
 
     for (int32_t y = y0; y < y1; y++) {
-        plot(x, y);
+        plot((size_t)x, (size_t)y);
         if (dD > 0) {
             x = x + xI;
             dD = dD + (2 * (dX - dY));

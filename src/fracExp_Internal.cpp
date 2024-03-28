@@ -214,7 +214,7 @@ int64_t getNumberFromText(char* str, size_t len, uint8_t base) {
 	bool sign = (str[pos] == '-') ? true : false;
 	int64_t acc = 0;
 	while (pos < len && str[pos] != '\0') {
-		char c = str[pos];
+		unsigned char c = str[pos];
 		uint8_t val = 0xFF;
 		if (c >= '0' && c <= '9') {
 			val = c - '0';

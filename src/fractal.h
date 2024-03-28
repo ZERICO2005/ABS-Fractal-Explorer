@@ -175,9 +175,9 @@ void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp64* xO, fp64* yO, fp64 zo
 	void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fp128* xO, fp128* yO, fp128 zoomVal, fp128 rotSin, fp128 rotCos, const ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample);
 #endif
 
-#define POLAR_POWER_MINIMUM (1.0100)
-#define POLAR_POWER_MAXIMUM (20.0)
-#define MANDELBROT_POWER_MAXIMUM (6)
+#define POLAR_POWER_MINIMUM 1.0100
+#define POLAR_POWER_MAXIMUM 20.0
+#define MANDELBROT_POWER_MAXIMUM 6
 
 void setMaxItr(ABS_Mandelbrot* frac, fp64 val);
 void setMaxItr(ABS_Mandelbrot* frac, uint32_t val);

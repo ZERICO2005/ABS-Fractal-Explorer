@@ -111,7 +111,7 @@ uint8_t printOpenCLError(cl_int errorCode) {
 	}
 	return 0;
 }
-void printFloatingPointConfig(const char* headerText, uint32_t config) {
+void printFloatingPointConfig(const char* headerText, uint64_t config) {
 	/*
 	writefToLog("%s",headerText);
 	#define configPrint(x,y); if (config & x) { writefToLog(" | " y); }

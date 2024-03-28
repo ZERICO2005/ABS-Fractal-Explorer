@@ -144,14 +144,14 @@ void point_ABS_Mandelbrot(
 		x -= ren.super_sampleX;
 		y++;
 	}
-	uint32_t div_Color = (param.Div_Mult * ren.super_sampleX * ren.super_sampleY);
+	uint32_t div_Color = (param.Div_Mult * (uint32_t)(ren.super_sampleX * ren.super_sampleY));
 	*buf = (uint8_t)(outR / div_Color); buf++;
 	*buf = (uint8_t)(outG / div_Color); buf++;
 	*buf = (uint8_t)(outB / div_Color);
 	if (ren.channels == 4) {
 		buf++;
 		*buf = (uint8_t)(outA / div_Color);
-	} 
+	}
 }
 
 template<typename fpX, typename fpC>
@@ -209,7 +209,7 @@ void parallel_Thread_Generator_FP64(
 	param_PC.numX = (fp64)numX; param_PC.numY = (fp64)numY;
 	param_PC.recip_numZ = (fp64)recip_numZ; param_PC.neg_recip_numW = (fp64)neg_recip_numW;
 
-	size_t totalSections = (ren.total_ResX * ren.total_ResY > (int32_t)threadCount * 64) ? threadCount * 64 : ren.total_ResX * ren.total_ResY;
+	size_t totalSections = ((size_t)ren.total_ResX * (size_t)ren.total_ResY > (size_t)threadCount * 64) ? (size_t)threadCount * 64 : (size_t)ren.total_ResX * (size_t)ren.total_ResY;
 	//#pragma omp parallel for
 	for (size_t t = 0; t < totalSections; t++) {
 		size_t p0 = ((buf->resX * buf->resY * buf->channels) * t) / threadCount;

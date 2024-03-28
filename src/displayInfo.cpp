@@ -335,16 +335,12 @@ const DisplayInfo* getBootupDisplay(
 		case Display_Bootup::CursorPosition:
 			{
 				const DisplayInfo* disp = getDisplayFromPosition(cursorPosX,cursorPosY);
-				if (disp != nullptr) {
-					return disp;
-				}
+				return (disp != nullptr) ? disp : matchFirstDisplay(minResX,minResY);
 			}
 		case Display_Bootup::Specific:
 			{
 				const DisplayInfo* disp = getDisplayFromIndex(Display_Config.Specific_Bootup_Display);
-				if (disp != nullptr) {
-					return disp;
-				}
+				return (disp != nullptr) ? disp : matchFirstDisplay(minResX,minResY);
 			}
 		case Display_Bootup::First:
 			return matchFirstDisplay(minResX,minResY);

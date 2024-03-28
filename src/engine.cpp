@@ -56,7 +56,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		image_box.resX = image_render_data.resX;
 		image_box.resY = image_render_data.resY;
 		image_box.channels = image_render_data.channels;
-		image_box.padding = image_render_data.padding;
+		image_box.padding = (uint8_t)image_render_data.padding;
 		image_box.vram = nullptr;
 		size_t image_box_size = getBufferBoxSize(&image_box);
 		if (image_box_size < 16) {
@@ -90,7 +90,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		};
 		printf("\n\tClick \"Abort Rendering\" (or use task manager) to cancel.");
 		fflush(stdout);
-		uint64_t image_stopwatch = getNanoTime();
+		nano64_t image_stopwatch = getNanoTime();
 		switch(image_render_data.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
 				if (image_fractal_data.type.abs_mandelbrot.polarMandelbrot == true) {
@@ -106,15 +106,15 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 				printfInterval(0.5,"Error: Super Screenshot, unknown rendering method %u",image_render_data.rendering_method);
 				return -1;
 		};
-		uint64_t image_render_time = getNanoTime() - image_stopwatch;
-		uint32_t time_mili = (uint32_t)(image_render_time / (((uint64_t)1000000)) % (uint64_t)1000);
-		uint32_t time_seconds = (uint32_t)((image_render_time / ((uint64_t)1000000 * (uint64_t)1000)) % (uint64_t)60);
-		uint32_t time_minutes = (uint32_t)((image_render_time / ((uint64_t)1000000 * (uint64_t)1000 * (uint64_t)60)) % (uint64_t)60);
+		nano64_t image_render_time = getNanoTime() - image_stopwatch;
+		uint32_t time_mili = (uint32_t)((uint64_t)image_render_time / (((uint64_t)1000000)) % (uint64_t)1000);
+		uint32_t time_seconds = (uint32_t)((uint64_t)(image_render_time / ((uint64_t)1000000 * (uint64_t)1000)) % (uint64_t)60);
+		uint32_t time_minutes = (uint32_t)((uint64_t)(image_render_time / ((uint64_t)1000000 * (uint64_t)1000 * (uint64_t)60)) % (uint64_t)60);
 		uint32_t time_hours = (uint32_t)(image_render_time / ((uint64_t)1000000 * (uint64_t)1000 * (uint64_t)60 * (uint64_t)60));
 		printFlush("\n\tRendered in: %02u:%02u:%02u.%03u",time_hours,time_minutes,time_seconds,time_mili);		
 		printFlush("\n\tSaving Super Screenshot");
 		{
-			uint64_t curTime = getNanoTime();
+			nano64_t curTime = getNanoTime();
 			curTime /= 1000;
 			char id_number[64]; memset(id_number,'\0',sizeof(id_number));
 			if (image_fractal_data.type_value == Fractal_ABS_Mandelbrot) {
@@ -122,18 +122,18 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			} else if (image_fractal_data.type_value == Fractal_Polar_Mandelbrot) {
 				snprintf(id_number,sizeof(id_number),"_id-%llu",image_fractal_data.type.polar_mandelbrot.formula);
 			}
-			size_t size = snprintf(nullptr,0,"Super_%s%s_(%llu)",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
+			size_t size = (size_t)snprintf(nullptr,0,"Super_%s%s_(%lld)",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
 			size++;
 			char* name = (char*)calloc(size,sizeof(char));
 			snprintf(name,size,"Super_%s%s_(%llu)",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
 			char path[] = "./";
 			switch(image_file_format) {
 				case Image_File_Format::PNG:
-					valueLimit(image_quality,1,9);
+					valueClamp(image_quality,1,9);
 					writePNGImage(&image_box,path,name,image_quality);
 				break;
 				case Image_File_Format::JPG:
-					valueLimit(image_quality,30,100);
+					valueClamp(image_quality,30,100);
 					writeJPGImage(&image_box,path,name,image_quality);
 				break;
 				default:
@@ -204,7 +204,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	fp64 deltaTime = 0.0;
 
 	int render_update_level = Change_Level::Full_Reset;
-	uint64_t render_update_timecode = 0;
+	nano64_t render_update_timecode = 0;
 	while (QUIT_FLAG == false) {
 		/* Update things */
 		read_Parameters(&fracData,&primaryRender,&secondaryRender);

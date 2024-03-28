@@ -34,7 +34,7 @@
 struct Render_Item {
 	int priority;
 	int group;
-	uint64_t time_sent;
+	nano64_t time_sent;
 	Render_Data render_data;
 	Fractal_Data fractal_data;
 }; typedef Render_Item Render_Item;
@@ -44,7 +44,7 @@ enum Render_Queue_Enum { Queue_Primary, Queue_Secondary, Queue_Count};
 struct Render_Task {
 	int priority;
 	int group;
-	uint64_t time_sent;
+	nano64_t time_sent;
 	Render_Data render_data;
 	Fractal_Data fractal_data;
 }; typedef Render_Task Render_Task;
@@ -69,7 +69,7 @@ struct Render_Task {
 
 	// Used to deterimine if rendering should pause, continue, or reset
 	int read_Update_Level();
-	uint64_t read_Update_Timecode();
+	nano64_t read_Update_Timecode();
 	// Stores the highest update level
 	void write_Update_Level(int level);
 	// Used when render is complete

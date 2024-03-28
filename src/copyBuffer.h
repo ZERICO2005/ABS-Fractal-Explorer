@@ -20,14 +20,14 @@ struct _BufferBox {
 
 void initBufferBox(BufferBox* box, uint8_t* buf, uint32_t resX, uint32_t resY, uint8_t channels, uint8_t padding = 0);
 
-uint32_t getBufferBoxPitch(BufferBox* box);
+uint32_t getBufferBoxPitch(const BufferBox* box);
 
-size_t getBufferBoxSize(BufferBox* box);
+size_t getBufferBoxSize(const BufferBox* box);
 
 // Returns false in BufferBox should not be written to
-bool validateBufferBox(BufferBox* box);
+bool validateBufferBox(const BufferBox* box);
 // Prints Errors and returns false in BufferBox should not be written to
-bool printValidateBufferBox(BufferBox* box);
+bool printValidateBufferBox(const BufferBox* box);
 
 /* buf{src, dst}, src{cord, size}, dst{cord, size}, allowClipping | Copies a portion of Src buffer to a portion of Dst */
 void copyBuffer(

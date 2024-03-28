@@ -361,7 +361,7 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		Master.resX = x;
 		Master.resY = y;
 		TestGraphic.resX = x;
-		TestGraphic.resY = y - RESY_UI;
+		TestGraphic.resY = (uint32_t)y - RESY_UI;
 		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
 		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram),getBufferBoxSize(&TestGraphic));
 		if (resX != NULL) { *resX = x; }
@@ -714,10 +714,10 @@ int updateFractalParameters() {
 			if (FRAC.relativeZValue == true) {
 				fp64 resZ = (fp64)((Master.resX > Master.resY) ? Master.resY : Master.resX);
 				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
-				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
+				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - (fp64)RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
 			} else {
 				pixel_to_coordinate(
-					(int32_t)(ImGui::GetMousePos().x),(int32_t)(ImGui::GetMousePos().y - RESY_UI),
+					(int32_t)(ImGui::GetMousePos().x),(int32_t)ImGui::GetMousePos().y - (int32_t)RESY_UI,
 					&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData
 				);
 			}
@@ -741,7 +741,7 @@ int updateFractalParameters() {
 			} else {
 				FRAC.zoom = zoomDefault((fp64)FRAC.power);
 			}
-			valueLimit(FRAC.zoom,-0.4,0.4);
+			valueClamp(FRAC.zoom,-0.4,0.4);
 			Update_Level(update_level, Jump);
 		}
 	/* maxItr */
@@ -882,7 +882,7 @@ int updateFractalParameters() {
 		if (funcTimeDelay(resetSubSample,0.2)) {
 			primaryRenderData.subSample = 1;
 		}
-		valueLimit(primaryRenderData.subSample,1,24);
+		valueClamp(primaryRenderData.subSample,1,24);
 		if (funcTimeDelay(incSuperSample,1.0/6.0)) {
 			primaryRenderData.sample++;
 		}
@@ -892,7 +892,7 @@ int updateFractalParameters() {
 		if (funcTimeDelay(resetSuperSample,0.2)) {
 			primaryRenderData.sample = 1;
 		}
-		valueLimit(primaryRenderData.sample,1,24);
+		valueClamp(primaryRenderData.sample,1,24);
 	/* Rendering Method */
 	{
 		using namespace Rendering_Method;
@@ -963,9 +963,9 @@ int updateFractalParameters() {
 }
 
 void correctFrameTime() {
-	valueLimit(GUI_FrameTimeNano,SECONDS_TO_NANO(1.0/1200.0),SECONDS_TO_NANO(1.0/6.0));
-	valueLimit(GUI_FrameTime,1.0/1200.0,1.0/6.0);
-	valueLimit(GUI_FrameRate,6.0,1200.0);
+	valueClamp(GUI_FrameTimeNano,SECONDS_TO_NANO(1.0/1200.0),SECONDS_TO_NANO(1.0/6.0));
+	valueClamp(GUI_FrameTime,1.0/1200.0,1.0/6.0);
+	valueClamp(GUI_FrameRate,6.0,1200.0);
 	GUI_FrameTimer.setFreq(GUI_FrameTime);
 }
 
@@ -1263,7 +1263,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			}
 		#endif
 		FRAME_RATE += FRAME_RATE_OFFSET;
-		valueLimit(FRAME_RATE,12.0,1200.0);
+		valueClamp(FRAME_RATE,12.0,1200.0);
 	}
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %dMB",SDL_GetSystemRAM());
@@ -1644,7 +1644,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// }
 	//printfInterval(0.6,"\n%p: %ux%u %uC %uP",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
 	//uint64_t stopWatch = getNanoTime();
-	copyBuffer(blit,temp_MASTER,0,RESY_UI,true);
+	copyBuffer(blit,temp_MASTER,0,(int32_t)RESY_UI,true);
 	//printfInterval(0.6,"\nFunc: %.3lfms\n",NANO_TO_SECONDS(getNanoTime() - stopWatch) * 1000.0);
 	FREE(blit.vram);
 	#undef FRAC
@@ -1693,13 +1693,13 @@ void newFrame() {
 		}
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
-		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
+		copyBuffer(TestGraphic,temp_MASTER,0,(int32_t)RESY_UI,false);
 		exportFractalBuffer = false;
 	} else if (primaryBufferValid == false) {
 		renderStatusGraphic(Status_Graphic::Graphic_Loading,1.0); // Renders a loading screen if Fractal buffers are unavailable
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
-		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
+		copyBuffer(TestGraphic,temp_MASTER,0,(int32_t)RESY_UI,false);
 		exportFractalBuffer = false;
 	}
 	#ifdef Use_OpenCV_Scaler
