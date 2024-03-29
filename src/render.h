@@ -154,7 +154,7 @@ int setup_fracExpKB(int argc, char* argv[]);
 
 void init_KeyBind_PresetList();
 void clear_KeyBind_PresetList();
-int get_currentKBPreset_Pos();
+int32_t get_currentKBPreset_Pos();
 void set_currentKBPreset_Pos(int pos);
 void remove_currentKBPreset();
 

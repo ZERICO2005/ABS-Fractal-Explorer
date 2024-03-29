@@ -71,7 +71,7 @@ size_t clean_frac_raw(char* raw, size_t len) { // Removes comments and blank lin
 	prev = '\n';
 	posW = 0;
 	bool insideQuotes = false;
-	printfDebug("%s",boolText(insideQuotes));
+	printfDebug("%s",bool_Text(insideQuotes));
 	for (size_t posR = 0; posR < len; posR++) {
 		if ((raw[posR] == '#' && prev != '\\')) {
 			while (posR < len) {
@@ -207,6 +207,7 @@ bool strictCompareText(char* strA, size_t lenA, char* strB, size_t lenB) {
 }
 
 int64_t getNumberFromText(char* str, size_t len, uint8_t base) {
+	if (base < 2 || base > 36) { return 0; }
 	size_t pos = 0;
 	while (pos < len && str[pos] == ' ') { // Skips whitespace
 		pos++;
@@ -214,14 +215,14 @@ int64_t getNumberFromText(char* str, size_t len, uint8_t base) {
 	bool sign = (str[pos] == '-') ? true : false;
 	int64_t acc = 0;
 	while (pos < len && str[pos] != '\0') {
-		unsigned char c = str[pos];
-		uint8_t val = 0xFF;
+		char c = str[pos];
+		uint8_t val = UINT8_MAX;
 		if (c >= '0' && c <= '9') {
-			val = c - '0';
+			val = (uint8_t)(c - '0');
 		} else if (c >= 'A' && c <= 'Z') {
-			val = c - 'A' + 10;
+			val = (uint8_t)(c - 'A' + 10);
 		} else if (c >= 'a' && c <= 'z') {
-			val = c - 'a' + 10;
+			val = (uint8_t)(c - 'a' + 10);
 		}
 		if (val < base) {
 			acc *= base;
@@ -407,11 +408,11 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
 		for (size_t x = 0; x < 16; x++) {
 			uint8_t val = 0xFF;
 			if (*p >= '0' && *p <= '9') {
-				val = *p - '0';
+				val = (uint8_t)(*p - '0');
 			} else if (*p >= 'A' && *p <= 'F') {
-				val = *p - 'A' + 10;
+				val = (uint8_t)(*p - 'A' + 10);
 			} else if (*p >= 'a' && *p <= 'f') {
-				val = *p - 'a' + 10;
+				val = (uint8_t)(*p - 'a' + 10);
 			}
 			if (val == 0xFF) {
 				printFlushDebug("\nError: Invalid Hexadecimal Character\n");

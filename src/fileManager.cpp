@@ -115,7 +115,7 @@
 
 /* Image Writers */
 
-int writePNGImage(const BufferBox* buf, char* path, char* name, int compression_level) {
+int writePNGImage(const BufferBox* buf, char* path, char* name, uint32_t compression_level) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -123,7 +123,7 @@ int writePNGImage(const BufferBox* buf, char* path, char* name, int compression_
 		printError("Image size of %zubytes is too large, maximum size: %dbytes",getBufferBoxSize(buf),INT32_MAX);
 		return -1;
 	}
-	stbi_write_png_compression_level = compression_level;
+	stbi_write_png_compression_level = (int32_t)compression_level;
 	int ret = 0;
 	char* fileName = (char*)malloc(strlen(path) + strlen(name) + strlen(".png") + 1);
 	if (fileName == NULL) {

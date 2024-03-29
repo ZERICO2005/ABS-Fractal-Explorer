@@ -428,7 +428,7 @@ void Menu_Fractal() {
 		} else {
 			fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
 			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,POLAR_POWER_MINIMUM,POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
 			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
 			if (FRAC.lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
@@ -515,7 +515,7 @@ void Menu_Fractal() {
 		ImGui::Checkbox("Render out of bounds",&FRAC.renderOutOfBounds);
 		ImGui::Checkbox("Fixate on top-left corner",&FRAC.fixateOnCorner);
 		ImGui::Text("Square Size Multiplier:");
-		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4,1.0,"%.4f"); FRAC.squareSize = (fp64)temp_squareSize;
+		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4f,1.0f,"%.4f"); FRAC.squareSize = (fp64)temp_squareSize;
 		#undef FRAC
 	}
 
@@ -582,7 +582,7 @@ void Menu_Rendering() {
 		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
 		ImGui::Text(" ");
 	}
-	primaryRenderData.CPU_Threads = input_CPU_MaxThreads * input_CPU_ThreadMultiplier;
+	primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
 	super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
 	super_screenshot_maxThreads = input_CPU_MaxThreads;
 	ImGui::Separator();
@@ -625,11 +625,11 @@ void Menu_Rendering() {
 
 	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
 	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
-		primaryRenderData.subSample = (int32_t)input_subSample;
+		primaryRenderData.subSample = (uint32_t)input_subSample;
 	}
 	ImGui::Text("Samples per pixel: %d",input_superSample * input_superSample);
 	if (ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"")) {
-		primaryRenderData.sample = (int32_t)input_superSample;
+		primaryRenderData.sample = (uint32_t)input_superSample;
 	}
 	uint32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
 	uint32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
@@ -945,8 +945,15 @@ void Menu_Settings() {
 					ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
 				}
 				fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
-				valueClamp(calculatedFPS,12.0,1200.0);
+				valueClamp(calculatedFPS,FRAMERATE_MINIMUM,FRAMERATE_MAXIMUM);
 				ImGui::Text("%.2lffps %.2lfms", calculatedFPS, (1.0 / (calculatedFPS)) * 1000.0);
+				if (calculatedFPS <= FRAMERATE_MINIMUM) {
+					ImGui::SameLine();
+					ImGui::Text("(Minimum)");
+				} else if (calculatedFPS >= FRAMERATE_MAXIMUM) {
+					ImGui::Text("(Maximum)");
+				}
+				
 				ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
 				if (ImGui::Button("Apply FPS")) {
 					Display_Preferences.Maximum_FPS_Multiplier = temp_frameMultiplier;
@@ -1107,13 +1114,13 @@ void Menu_Keybinds() {
 	}
 	ImGui::Text(" ");
 	{
-		#define kMaxResX 1440
-		#define kMinResX 300
-		#define kMinResY 140
+		constexpr int32_t kMaxResX = 1440;
+		constexpr int32_t kMinResX = 300;
+		constexpr int32_t kMinResY = 140;
 		
 		//static uint32_t kX = kMargin;
 		//static uint32_t kY = 0;
-		uint32_t kResX = (uint32_t)ImGui::GetWindowContentRegionWidth();
+		int32_t kResX = (int32_t)ImGui::GetWindowContentRegionWidth();
 		if (kResX < kMinResX) {
 			kResX = kMinResX;
 		} else if (kResX > kMaxResX) {

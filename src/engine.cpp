@@ -107,11 +107,11 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 				return -1;
 		};
 		nano64_t image_render_time = getNanoTime() - image_stopwatch;
-		uint32_t time_mili = (uint32_t)((uint64_t)image_render_time / (((uint64_t)1000000)) % (uint64_t)1000);
-		uint32_t time_seconds = (uint32_t)((uint64_t)(image_render_time / ((uint64_t)1000000 * (uint64_t)1000)) % (uint64_t)60);
-		uint32_t time_minutes = (uint32_t)((uint64_t)(image_render_time / ((uint64_t)1000000 * (uint64_t)1000 * (uint64_t)60)) % (uint64_t)60);
-		uint32_t time_hours = (uint32_t)(image_render_time / ((uint64_t)1000000 * (uint64_t)1000 * (uint64_t)60 * (uint64_t)60));
-		printFlush("\n\tRendered in: %02u:%02u:%02u.%03u",time_hours,time_minutes,time_seconds,time_mili);		
+		int32_t time_mili = (int32_t)((nano64_t)image_render_time / (((nano64_t)1000000)) % (nano64_t)1000);
+		int32_t time_seconds = (int32_t)((nano64_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000)) % (nano64_t)60);
+		int32_t time_minutes = (int32_t)((nano64_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000 * (nano64_t)60)) % (nano64_t)60);
+		int32_t time_hours = (int32_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000 * (nano64_t)60 * (nano64_t)60));
+		printFlush("\n\tRendered in: %02d:%02d:%02d.%03d",time_hours,time_minutes,time_seconds,time_mili);		
 		printFlush("\n\tSaving Super Screenshot");
 		{
 			nano64_t curTime = getNanoTime();

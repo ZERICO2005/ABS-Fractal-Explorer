@@ -130,8 +130,8 @@
 	struct Key_Status {
 		SDL_Scancode key;
 		bool pressed;
-		uint64_t timePressed;
-		uint64_t timeReleased;
+		nano64_t timePressed;
+		nano64_t timeReleased;
 	}; typedef struct Key_Status Key_Status;
 
 	extern size_t KeyBind_PresetCount;

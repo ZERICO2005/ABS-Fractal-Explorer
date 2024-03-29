@@ -86,14 +86,40 @@ typedef int int_enum;
 	// Right Circular Shift
 	#define ROR(n,b) (((n) >> (b)) | ((n) << ((sizeof(n) * CHAR_BIT) - (b))))
 
-	inline const char* boolText(bool b) { return b ? "true" : "false"; }
-	inline const char* BoolText(bool b) { return b ? "True" : "False"; }
-	inline const char* BOOLText(bool b) { return b ? "TRUE" : "FALSE"; }
+	inline const char* bool_Text(const bool& b) { return b ? "true" : "false"; }
+	inline const char* Bool_Text(const bool& b) { return b ? "True" : "False"; }
+	inline const char* BOOL_Text(const bool& b) { return b ? "TRUE" : "FALSE"; }
 
-	#define valueClamp(value,minimum,maximum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) ) )
-	#define valueMinimumClamp(value,minimum) ( ((value) < (minimum)) ? ((value) = (minimum)) : ((value) = (value)) )
-	#define valueMaximumClamp(value,maximum) ( ((value) > (maximum)) ? ((value) = (maximum)) : ((value) = (value)) )
-	#define valueRestore(value,restore,minimum,maximum) ( ((value) >= (minimum) && (value) <= (maximum)) ? ((value) = (value)) : ((value) = (restore)) )
+	// Replace with valueClamp<cast, minimum, maximum>(value)
+
+	#define valueClamp(value,minimum,maximum)\
+	(\
+		((value) < (minimum)) ?\
+		((value) = (minimum)) :\
+		(\
+			((value) > (maximum)) ?\
+			((value) = (maximum)) :\
+			((value) = (value))\
+		)\
+	)
+	
+	#define valueMinimumClamp(value,minimum) (\
+		((value) < (minimum)) ?\
+		((value) = (minimum)) :\
+		((value) = (value))\
+	)
+	
+	#define valueMaximumClamp(value,maximum) (\
+		((value) > (maximum)) ?\
+		((value) = (maximum)) :\
+		((value) = (value))\
+	)
+
+	#define valueRestore(value,restore,minimum,maximum) (\
+		((value) >= (minimum) && (value) <= (maximum)) ?\
+		((value) = (value)) :\
+		((value) = (restore))\
+	)
 	
 	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize);
 

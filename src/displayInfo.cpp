@@ -86,7 +86,7 @@
 		x = ResX;
 		y = ResY;
 	}
-	size_t DisplayInfo::getPixelCount() const { return ResX * ResY; }
+	size_t DisplayInfo::getPixelCount() const { return (size_t)ResX * (size_t)ResY; }
 	fp64 DisplayInfo::getHorizontalAspectRatio() const {
 		return (ResY != 0) ? ((fp64)ResX / (fp64)ResY) : 0.0;
 	}
@@ -146,7 +146,7 @@ static std::vector<DisplayInfo> displayList;
 
 const std::vector<DisplayInfo>& getDisplayList() { return displayList; }
 
-int32_t getDisplayCount() { return displayList.size(); }
+int32_t getDisplayCount() { return (int32_t)displayList.size(); }
 
 int32_t reloadDisplays() {
 	displayList.clear();
@@ -155,7 +155,7 @@ int32_t reloadDisplays() {
 		printFlush("\n%s",SDL_GetError());
 		return 0;
 	}
-	displayList.resize(displayCount);
+	displayList.resize((size_t)displayCount);
 	SDL_DisplayMode mode;
 	SDL_Rect rect;
 	for (int32_t index = 0; index < displayCount; index++) {
@@ -164,11 +164,11 @@ int32_t reloadDisplays() {
 			printFlush("\n%s",SDL_GetError());
 		}
 		SDL_GetDisplayBounds(index, &rect);
-		displayList[index] = DisplayInfo(
+		displayList[(size_t)index] = DisplayInfo(
 			index + 1,
 			mode.w, mode.h,
 			rect.x, rect.y,
-			mode.refresh_rate, mode.format,
+			mode.refresh_rate, SDL_BITSPERPIXEL(mode.format),
 			SDL_GetDisplayName(index)
 		);
 	}
@@ -308,7 +308,7 @@ const DisplayInfo* getBootupDisplay(
 			break;
 		}
 	}
-	int32_t bestDisplay = 0;
+	size_t bestDisplay = 0;
 	if (searchStart == DisplayList.size()) { // Finding the highest resolution display if none met the minimum screen resolution
 		for (size_t i = 1; i < DisplayList.size(); i++) {
 			if (DisplayList[i].getPixelCount() > DisplayList[bestDisplay].getPixelCount()) {

@@ -309,7 +309,8 @@ uint32_t getRGBfromHSV(fp32 hue, fp32 sat, fp32 val) {
 // (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
 void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp64 hue, fp64 sat, fp64 val, fp64 alpha) {
 	if (a != nullptr) {
-		*a = (uint8_t)(valueClamp(alpha, 0.0, 1.0) * 255.0);
+		valueClamp(alpha, 0.0, 1.0);
+		*a = (uint8_t)(alpha * 255.0);
 	}
 	getRGBfromHSV(r,g,b,hue,sat,val);
 }
@@ -317,7 +318,8 @@ void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp64 hue, f
 // (&R,&G,&B,&A) H 0.0-360.0, S 0.0-1.0, V 0.0-1.0, A 0.0-1.0
 void getRGBAfromHSVA(uint8_t* r, uint8_t* g, uint8_t* b, uint8_t* a, fp32 hue, fp32 sat, fp32 val, fp32 alpha) {
 	if (a != nullptr) {
-		*a = (uint8_t)(valueClamp(alpha, 0.0f, 1.0f) * 255.0f);
+		valueClamp(alpha, 0.0f, 1.0f);
+		*a = (uint8_t)(alpha * 255.0f);
 	}
 	getRGBfromHSV(r,g,b,hue,sat,val);
 }

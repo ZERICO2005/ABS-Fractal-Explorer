@@ -11,7 +11,7 @@
 #include "bitGraphics.h"
 #include "bitGraphics_Font.h"
 
-#define Bit_Graphics_Channels 4
+constexpr size_t Bit_Graphics_Channels = 4;
 
 extern const uint8_t char6x8[1536]; // bitGraphics_Font.h
 
@@ -109,8 +109,8 @@ void Bit_Graphics::getDisplayBufferBox(BufferBox* box) {
 		box->padding = 0;
 	}
 	box->vram = (buf == buf0) ? buf1 : buf0;
-	box->resX = ResX;
-	box->resY = ResY;
+	box->resX = (uint32_t)ResX;
+	box->resY = (uint32_t)ResY;
 	box->channels = Bit_Graphics_Channels;
 	box->padding = 0;
 }

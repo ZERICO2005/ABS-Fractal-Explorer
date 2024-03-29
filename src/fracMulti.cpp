@@ -775,30 +775,23 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 	}
 }
 
-#define polarAngle_template(fpX) \
-fpX polarAngle(fpX zr, fpX zi) { \
-	fpX angle; \
-	if (zi == 0.0) { \
-		return 0.0; \
-	} \
-	if (zr > 0.0) { \
-		angle = (fpX)atan(zi / zr); \
-	} else { \
-		if (zi > 0.0) { \
-			angle = PI + (fpX)atan(zi / zr); \
-		} else { \
-			angle = (fpX)atan(zi / zr) - PI; \
-		} \
-	} \
-	return angle; \
+template <typename fpX>
+fpX polarAngle(fpX zr, fpX zi) {
+	fpX angle;
+	if (zi == (fpX)0.0) {
+		return (fpX)0.0;
+	}
+	if (zr > (fpX)0.0) {
+		angle = (fpX)atan(zi / zr);
+	} else {
+		if (zi > (fpX)0.0) {
+			angle = (fpX)PI + (fpX)atan(zi / zr);
+		} else {
+			angle = (fpX)atan(zi / zr) - (fpX)PI;
+		}
+	}
+	return angle;
 }
-
-polarAngle_template(fp32);
-polarAngle_template(fp64);
-#ifdef enableFP80andFP128
-	polarAngle_template(fp80);
-	polarAngle_template(fp128);
-#endif
 
 
 #define polarRender(fpX) \

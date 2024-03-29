@@ -32,7 +32,7 @@ int saveFileInterface(
 
 /* Images */
 
-int writePNGImage(const BufferBox* buf, char* path, char* name, int compression_level = 8);
+int writePNGImage(const BufferBox* buf, char* path, char* name, uint32_t compression_level = 8);
 int writeJPGImage(const BufferBox* buf, char* path, char* name, uint32_t quality = 95);
 int writeTGAImage(const BufferBox* buf, char* path, char* name);
 int writeBMPImage(const BufferBox* buf, char* path, char* name);

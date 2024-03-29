@@ -133,7 +133,7 @@ void copyBuffer(
 		}
 		if (sy1 > dy1) { sy1 = dy1; }
 	} else { 
-		if ((uint32_t)dx0 < 0 || (uint32_t)dy0 < 0) { return; } /* Negative Dst OOB */
+		if (dx0 < 0 || dy0 < 0) { return; } /* Negative Dst OOB */
 		if (sx0 + sx1 > bufSrc.resX || sy0 + sy1 > bufSrc.resY) { return; } /* Positive Src OOB */
 		if ((uint32_t)dx0 + dx1 > bufDst.resX || (uint32_t)dy0 + dy1 > bufDst.resY) { return; } /* Positive Dst OOB */
 		if (sx1 > dx1 || sy1 > dy1) { return; } /* Src is larger than Dst */

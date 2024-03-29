@@ -114,7 +114,8 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 			return -1;
 		}
 		fseek(ptrF, 0, SEEK_END);
-		size_t len = ftell(ptrF);
+		long ftell_len = ftell(ptrF);
+		size_t len = (ftell_len >= 0) ? (size_t)ftell_len : 0;
 		fseek(ptrF, 0, SEEK_SET);
 		char* fracExpKB_raw = (char*)calloc(len + 1,sizeof(char));
 		if (fracExpKB_raw == NULL) {
@@ -129,7 +130,7 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 	static char fileExtension[64];
 	//printFlush("\n\nRetriving Data\n");
 	Param_List* item = NULL;
-	#define integerFromParam(base) ((item != NULL) ? getNumberFromText(&fracExpKB_raw[item->pos], item->len,(base)) : 0)
+	#define integerFromParam(output,cast,base) output = (cast)((item != NULL) ? getNumberFromText(&fracExpKB_raw[item->pos], item->len,(base)) : 0)
 	#define stringFromParam(buf) getTextFromParam(fracExpKB_raw, item, (buf), ARRAY_LENGTH(buf))
 	#define getParam(data) getParameter(fracExpKB_raw,(char*)(data),param_list,param_len)
 	#define getHash(data) copyHex(fracExpKB_raw,item,(data),4)
@@ -139,44 +140,24 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		stringFromParam(fileExtension);
 	/* File_Header/FracExp_KeyBind/Version/ */
 		item = getParam("File_Header/FracExp_KeyBind/Version/Major");
-		integerFromParam(frac->FracExpKB_Version_Major);
+		integerFromParam(frac->FracExpKB_Version_Major, uint32_t, 10);
 		item = getParam("File_Header/FracExp_KeyBind/Version/Minor");
-		integerFromParam(frac->FracExpKB_Version_Minor);
+		integerFromParam(frac->FracExpKB_Version_Minor, uint32_t, 10);
 		item = getParam("File_Header/FracExp_KeyBind/Version/Patch");
-		integerFromParam(frac->FracExpKB_Version_Patch);
+		integerFromParam(frac->FracExpKB_Version_Patch, uint32_t, 10);
 		item = getParam("File_Header/FracExp_KeyBind/Version/Build");
-		integerFromParam(frac->FracExpKB_Version_Build);
-		item = getParam("File_Header/FracExp_KeyBind/Version/Tags");
-		stringFromParam(frac->FracExpKB_Version_Tags);
-		item = getParam("File_Header/FracExp_KeyBind/Version/Major");
-		integerFromParam(frac->FracExpKB_Version_Major);
-		item = getParam("File_Header/FracExp_KeyBind/Version/Minor");
-		integerFromParam(frac->FracExpKB_Version_Minor);
-		item = getParam("File_Header/FracExp_KeyBind/Version/Patch");
-		integerFromParam(frac->FracExpKB_Version_Patch);
-		item = getParam("File_Header/FracExp_KeyBind/Version/Build");
-		integerFromParam(frac->FracExpKB_Version_Build);
+		integerFromParam(frac->FracExpKB_Version_Build, uint32_t, 10);
 		item = getParam("File_Header/FracExp_KeyBind/Version/Tags");
 		stringFromParam(frac->FracExpKB_Version_Tags);
 	/* File_Header/ABS_Fractal_Explorer/Version/ */
 		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Major");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Major);
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Major, uint32_t, 10);
 		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Minor");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Minor);
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Minor, uint32_t, 10);
 		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Patch");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Patch);
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Patch, uint32_t, 10);
 		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Build");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Build);
-		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Tags");
-		stringFromParam(frac->ABS_Fractal_Explorer_Version_Tags);
-		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Major");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Major);
-		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Minor");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Minor);
-		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Patch");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Patch);
-		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Build");
-		integerFromParam(frac->ABS_Fractal_Explorer_Version_Build);
+		integerFromParam(frac->ABS_Fractal_Explorer_Version_Build, uint32_t, 10);
 		item = getParam("File_Header/ABS_Fractal_Explorer/Version/Tags");
 		stringFromParam(frac->ABS_Fractal_Explorer_Version_Tags);
 	/* File_Header/Hash/ */
@@ -341,7 +322,7 @@ int import_KeyBindPresets(std::list<KeyBind_Preset>* presetList, KeyBind_Preset*
 			for (const auto& checkPreset : *presetList) {
 				if (checkPreset.name == fPreset->name) {
 					uniqueName = false;
-					char rand_num = (uint8_t)((getNanoTime() / 1000) % 10) + '0';
+					char rand_num = (char)((getNanoTime() / 1000) % 10) + '0';
 					fPreset->name += rand_num;
 					break;
 				}

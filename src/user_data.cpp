@@ -396,7 +396,9 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 	}
 
 	fseek(file, 0, SEEK_END);
-	size_t fileSize = (size_t)ftell(file);
+
+	long ftell_len = ftell(file);
+	size_t fileSize = (ftell_len >= 0) ? (size_t)ftell_len : 0;
 	rewind(file);
 	if (fileSize >= 250000) {
 		printError("config file is abnormally large (%zubytes)",fileSize);
@@ -482,10 +484,10 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Automatic_Behaviour]);
 		fprintf(file,"\n\tAutoLoad_Config_File: %s",
-			boolText(config_data.Automatic_Behaviour.AutoLoad_Config_File)
+			bool_Text(config_data.Automatic_Behaviour.AutoLoad_Config_File)
 		);
 		fprintf(file,"\n\tAutoSave_Config_File: %s",
-			boolText(config_data.Automatic_Behaviour.AutoSave_Config_File)
+			bool_Text(config_data.Automatic_Behaviour.AutoSave_Config_File)
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Parameter_Sensitivity]);
@@ -499,7 +501,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 			config_data.Parameter_Sensitivity.zoom
 		);
 		fprintf(file,"\n\tinvert_zoom: %s",
-			boolText(config_data.Parameter_Sensitivity.invert_zoom)
+			bool_Text(config_data.Parameter_Sensitivity.invert_zoom)
 		);
 		fprintf(file,"\n\tmaxIter: %.6lf",
 			config_data.Parameter_Sensitivity.maxIter
@@ -537,7 +539,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 			config_data.Display_Preferences.Bootup_Fullscreen
 		);
 		fprintf(file,"\n\tScaleWindowToScreenSize: %s",
-			boolText(config_data.Display_Preferences.ScaleWindowToScreenSize)
+			bool_Text(config_data.Display_Preferences.ScaleWindowToScreenSize)
 		);
 		fprintf(file,"\n\tBootup_Window_Scale: %.6lf",
 			config_data.Display_Preferences.Bootup_Window_Scale
@@ -557,13 +559,13 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[GUI_Settings]);
 		fprintf(file,"\n\tLockKeyInputsInMenus: %s",
-			boolText(config_data.GUI_Settings.LockKeyInputsInMenus)
+			bool_Text(config_data.GUI_Settings.LockKeyInputsInMenus)
 		);
 		fprintf(file,"\n\tAutoResizeWindows: %s",
-			boolText(config_data.GUI_Settings.AutoResizeWindows)
+			bool_Text(config_data.GUI_Settings.AutoResizeWindows)
 		);
 		fprintf(file,"\n\tPreventOutOfBoundsWindows: %s",
-			boolText(config_data.GUI_Settings.PreventOutOfBoundsWindows)
+			bool_Text(config_data.GUI_Settings.PreventOutOfBoundsWindows)
 		);
 		fprintf(file,"\n\tGUI_Theme: %d",
 			config_data.GUI_Settings.GUI_Theme
