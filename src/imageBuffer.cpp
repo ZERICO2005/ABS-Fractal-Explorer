@@ -38,7 +38,13 @@
 		bytesAllocated = 0;
 		reallocateBuffer(ResX, ResY, Channels);
 	}
-
+	// Full Initialization
+	ImageBuffer::ImageBuffer(int32_t ResX, int32_t ResY, size_t Channels) {
+		vram = nullptr;
+		vramAllocated = false;
+		bytesAllocated = 0;
+		reallocateBuffer(ResX, ResY, Channels);
+	}
 	// Preallocated Buffer
 	ImageBuffer::ImageBuffer(uint8_t* Vram, uint32_t ResX, uint32_t ResY, uint8_t Channels) {
 		vram = Vram;
@@ -51,6 +57,20 @@
 		} else {
 			vramAllocated = true;
 			bytesAllocated = resX * resY * channels;
+		}
+	}
+	ImageBuffer::ImageBuffer(uint8_t* Vram, int32_t ResX, int32_t ResY, size_t Channels) {
+		if (ResX < 0) { ResX = 0; } if (ResY < 0) { ResY = 0; }
+		vram = Vram;
+		resX = (uint32_t)ResX;
+		resY = (uint32_t)ResY;
+		channels = (uint8_t)Channels;
+		if (vram == nullptr) {
+			vramAllocated = false;
+			bytesAllocated = 0;
+		} else {
+			vramAllocated = true;
+			bytesAllocated = (size_t)resX * (size_t)resY * channels;
 		}
 	}
 	
@@ -173,6 +193,10 @@
 			bytesAllocated = 0;
 		}
 	}
+	void ImageBuffer::reallocateBuffer(int32_t ResX, int32_t ResY, size_t Channels) {
+		if (ResX < 0) { ResX = 0; } if (ResY < 0) { ResY = 0; }
+		reallocateBuffer((uint32_t)ResX, (uint32_t)ResY, (uint8_t)Channels);
+	}
 
 	// Reallocates buffer only if more memory is needed
 	void ImageBuffer::resizeBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels) {
@@ -183,6 +207,11 @@
 		resX = ResX;
 		resY = ResY;
 		channels = Channels;
+	}
+	// Reallocates buffer only if more memory is needed
+	void ImageBuffer::resizeBuffer(int32_t ResX, int32_t ResY, size_t Channels) {
+		if (ResX < 0) { ResX = 0; } if (ResY < 0) { ResY = 0; }
+		resizeBuffer((uint32_t)ResX, (uint32_t)ResY, (uint8_t)Channels);
 	}
 
 	// Reallocates buffer to current image size

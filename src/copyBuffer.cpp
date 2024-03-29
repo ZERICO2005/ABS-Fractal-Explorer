@@ -20,7 +20,7 @@ void initBufferBox(BufferBox* box, uint8_t* vram, uint32_t resX, uint32_t resY, 
 	box->padding = padding;
 }
 
-uint32_t getBufferBoxPitch(BufferBox* box) {
+uint32_t getBufferBoxPitch(const BufferBox* box) {
 	if (box == NULL) {
 		return 0;
 	}
@@ -32,7 +32,7 @@ uint32_t getBufferBoxPitch(BufferBox* box) {
 	return pitch;
 }
 
-size_t getBufferBoxSize(BufferBox* box) {
+size_t getBufferBoxSize(const BufferBox* box) {
 	if (box == NULL) {
 		return 0;
 	}
@@ -41,7 +41,7 @@ size_t getBufferBoxSize(BufferBox* box) {
 	//return (size_t)(pitch * box->resY);
 }
 
-bool validateBufferBox(BufferBox* box) {
+bool validateBufferBox(const BufferBox* box) {
 	if (box == NULL) {  return false; }
 	if (box->vram == NULL) {  return false; }
 	if (box->resX == 0 || box->resY == 0) { return false; }
@@ -49,7 +49,7 @@ bool validateBufferBox(BufferBox* box) {
 	return true;
 }
 
-bool printValidateBufferBox(BufferBox* box) {
+bool printValidateBufferBox(const BufferBox* box) {
 	if (box == NULL) { printError("BufferBox is NULL"); return false; }
 	if (box->vram == NULL) { printError("BufferBox->vram is NULL"); return false; }
 	if (box->resX == 0 || box->resY == 0) { printError("Invalid BufferBox dimensions %ux%u == 0",box->resX,box->resY); return false; }
@@ -119,14 +119,14 @@ void copyBuffer(
 	if (allowClipping) { /* Corrects clipping values */
 		if ((dx0 + (int32_t)sx0 + (int32_t)sx1) < 0 || (dy0 + (int32_t)sy0 + (int32_t)sy1) < 0) { return; } /* Negative OOB */
 		/* Negative values */
-		if (dx0 < 0) { sx0 += abs(dx0); sx1 -= abs(dx0); dx0 = 0; }
-		if (dy0 < 0) { sy0 += abs(dy0); sy1 -= abs(dy0); dy0 = 0; }
+		if (dx0 < 0) { sx0 += (uint32_t)(-dx0); sx1 -= (uint32_t)(-dx0); dx0 = 0; }
+		if (dy0 < 0) { sy0 += (uint32_t)(-dy0); sy1 -= (uint32_t)(-dy0); dy0 = 0; }
 		/* Src dimension */
 		if (sx0 + sx1 > bufSrc.resX) { sx1 = bufSrc.resX - sx0; }
 		if (sy0 + sy1 > bufSrc.resY) { sy1 = bufSrc.resY - sy0; }
 		/* Dst dimension */
-		if (dx0 + dx1 > bufSrc.resX) { dx1 = bufDst.resX - dx0; }
-		if (dy0 + dy1 > bufSrc.resY) { dy1 = bufDst.resY - dy0; }
+		if ((uint32_t)dx0 + dx1 > bufSrc.resX) { dx1 = bufDst.resX - (uint32_t)dx0; }
+		if ((uint32_t)dy0 + dy1 > bufSrc.resY) { dy1 = bufDst.resY - (uint32_t)dy0; }
 		/* Copy size */
 		if (sx1 > dx1) {
 			sx1 = dx1;
@@ -135,7 +135,7 @@ void copyBuffer(
 	} else { 
 		if (dx0 < 0 || dy0 < 0) { return; } /* Negative Dst OOB */
 		if (sx0 + sx1 > bufSrc.resX || sy0 + sy1 > bufSrc.resY) { return; } /* Positive Src OOB */
-		if (dx0 + dx1 > bufDst.resX || dy0 + dy1 > bufDst.resY) { return; } /* Positive Dst OOB */
+		if ((uint32_t)dx0 + dx1 > bufDst.resX || (uint32_t)dy0 + dy1 > bufDst.resY) { return; } /* Positive Dst OOB */
 		if (sx1 > dx1 || sy1 > dy1) { return; } /* Src is larger than Dst */
 	}
 	
@@ -144,7 +144,7 @@ void copyBuffer(
 		getBufferBoxPitch(&bufSrc),getBufferBoxPitch(&bufDst),(uint32_t)bufDst.channels,
 		sx1,sy1,
 		sx0,sy0,
-		dx0,dy0
+		(uint32_t)dx0,(uint32_t)dy0
 	);
 }
 
@@ -156,7 +156,7 @@ void copyBuffer(BufferBox bufSrc, BufferBox bufDst, int32_t x, int32_t y, bool a
 	copyBuffer(
 		bufSrc,bufDst,
 		0, 0, bufSrc.resX, bufSrc.resY,
-		x, y, bufDst.resX - x, bufDst.resY - y,
+		x, y, bufDst.resX, bufDst.resY,
 		allowClipping
 	);
 }

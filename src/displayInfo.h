@@ -13,8 +13,6 @@
 
 #include "user_data.h"
 
-#include <SDL2/SDL.h>
-
 class DisplayInfo {
 	public:
 		DisplayInfo();
@@ -138,6 +136,7 @@ const DisplayInfo* getDisplayFromIndex(int32_t index);
 // Returns nullptr if no matches were found
 const DisplayInfo* getDisplayFromPosition(int32_t posX, int32_t posY);
 
+struct SDL_Window;
 const DisplayInfo* getDisplayFromWindowPosition(SDL_Window* window);
 
 const DisplayInfo* getDisplayFromCursorPosition();

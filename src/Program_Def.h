@@ -20,11 +20,11 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/03/26" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/03/29" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 8
-#define PROGRAM_V_TAG "Rev-1 Developer Alpha"
+#define PROGRAM_V_TAG "Rev-4 Developer Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* float80 and float128 */
@@ -70,6 +70,10 @@
 #endif
 
 constexpr size_t IMAGE_BUFFER_CHANNELS = 4;
+
+constexpr fp64 FRAMERATE_MINIMUM = 12.0;
+constexpr fp64 FRAMERATE_MAXIMUM = 1200.0;
+
 /* Use to correct any magic numbers
 (?<!\d\.)\b3\b
 */

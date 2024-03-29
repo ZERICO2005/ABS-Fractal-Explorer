@@ -12,11 +12,11 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_scancode.h>
-
 #include "display_GUI.h"
 #include "displayInfo.h"
+
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_scancode.h>
 
 /* Holds resolution, sampling, precision and rendering method */
 struct Render_Data {
@@ -68,9 +68,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 int terminate_Render();
 
 void newFrame();
-
-/* SDL_Scancode */
-bool keyPressed(uint32_t key);
 
 /* Framerate stuff */
 
@@ -153,20 +150,17 @@ struct DisplayInfo_Legacy {
 	const char* name;
 }; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
 
-// DisplayInfo_Legacy* getDisplayInfo(size_t i = 1);
-// DisplayInfo_Legacy* getCurrentDisplayInfo();
-
 /* Keys */
 
 void updateKeys();
 void recolorKeyboard();
 void initKeys();
-bool keyPressed(uint32_t key);
+bool keyPressed(SDL_Scancode key);
 int setup_fracExpKB(int argc, char* argv[]);
 
 void init_KeyBind_PresetList();
 void clear_KeyBind_PresetList();
-int get_currentKBPreset_Pos();
+int32_t get_currentKBPreset_Pos();
 void set_currentKBPreset_Pos(int pos);
 void remove_currentKBPreset();
 

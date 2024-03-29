@@ -52,7 +52,7 @@ void ImGui_DefaultWindowSize(
 	if (GUI_Settings.AutoResizeWindows == true) {
 		ImGui::SetNextWindowSize({(fp32)WINDOW_RESX,(fp32)WINDOW_RESY});
 	}
-	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)valX - bufX,(fp32)valY - bufY});
+	ImGui::SetNextWindowSizeConstraints({(fp32)minX,(fp32)minY},{(fp32)(valX - bufX),(fp32)(valY - bufY)});
 	WINDOW_RESX = (WINDOW_RESX > valX - bufX) ? (valX - bufX) : WINDOW_RESX;
 	WINDOW_RESY = (WINDOW_RESY > valY - bufY) ? (valY - bufY) : WINDOW_RESY;
 	ImGui::SetNextWindowBgAlpha(GUI_Settings.WindowOpacity);
@@ -60,10 +60,10 @@ void ImGui_DefaultWindowSize(
 
 void ImGui_BoundWindowPosition(const User_GUI_Settings& GUI_Settings) {
 	if (GUI_Settings.PreventOutOfBoundsWindows == true) {
-		int32_t WINDOW_POSX = ImGui::GetWindowPos().x;
-		int32_t WINDOW_POSY = ImGui::GetWindowPos().y;
-		valueLimit(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN);
-		valueLimit(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN);
+		int32_t WINDOW_POSX = (int32_t)ImGui::GetWindowPos().x;
+		int32_t WINDOW_POSY = (int32_t)ImGui::GetWindowPos().y;
+		valueClamp(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN);
+		valueClamp(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN);
 		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)});
 	}
 }
@@ -287,7 +287,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 		} else {
 			adjustedZoomValue += log10(getABSFractalMaxRadius((fp64)FRAC.power));
 		}
-		valueLimit(adjustedZoomValue,FRAC.zoom - 0.4, FRAC.zoom + 0.4);
+		valueClamp(adjustedZoomValue,FRAC.zoom - 0.4, FRAC.zoom + 0.4);
 	}
 	
 	ImGui::Text(
@@ -302,8 +302,8 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 void Menu_Coordinates() {
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
-		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
-		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
 	);
 	ImGui::Begin("Coordinates Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
@@ -381,8 +381,8 @@ void Menu_Coordinates() {
 void Menu_Fractal() {
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
-		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
-		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
 	);
 	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
 	static bool juliaSet = false;
@@ -424,11 +424,11 @@ void Menu_Fractal() {
 			ImGui::Text("Fractal Power: %s",getPowerText((int32_t)FRAC.power));
 			int temp_input_power = (int)FRAC.power;
 			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
-			valueLimit(FRAC.power,2,6); // Support up to Sextic
+			valueClamp(FRAC.power, 2, 6); // Support up to Sextic
 		} else {
 			fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
 			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,POLAR_POWER_MINIMUM,POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
 			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
 			if (FRAC.lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
@@ -440,7 +440,7 @@ void Menu_Fractal() {
 		// ImGui::Text("Maximum Iterations: %u",FRAC.maxItr);
 		// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
 		// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
-		// valueLimit(FRAC.maxItr,16,16777216); valueLimit(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
+		// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
 		
 		ImGui::Text(" ");
 		
@@ -515,7 +515,7 @@ void Menu_Fractal() {
 		ImGui::Checkbox("Render out of bounds",&FRAC.renderOutOfBounds);
 		ImGui::Checkbox("Fixate on top-left corner",&FRAC.fixateOnCorner);
 		ImGui::Text("Square Size Multiplier:");
-		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4,1.0,"%.4f"); FRAC.squareSize = (fp64)temp_squareSize;
+		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4f,1.0f,"%.4f"); FRAC.squareSize = (fp64)temp_squareSize;
 		#undef FRAC
 	}
 
@@ -525,8 +525,8 @@ void Menu_Fractal() {
 void Menu_Rendering() {
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
-		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
-		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
 	);
 	
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
@@ -537,15 +537,15 @@ void Menu_Rendering() {
 		static const char* GPU_RenderingModes[] = {"fp32 | 10^5.7 (Default)"};
 		static int Combo_GPU_RenderingMode = 0;
 	#endif
-	int input_subSample = primaryRenderData.subSample;
-	int input_superSample = primaryRenderData.sample;
-	int CPU_ThreadCount = (int)std::thread::hardware_concurrency();
-	static int input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
-	static int input_CPU_ThreadMultiplier = 1;
-	static int Combo_CPU_RenderingMode = 1;
+	int32_t input_subSample = (int32_t)primaryRenderData.subSample;
+	int32_t input_superSample = (int32_t)primaryRenderData.sample;
+	int32_t CPU_ThreadCount = (int32_t)std::thread::hardware_concurrency();
+	static int32_t input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
+	static int32_t input_CPU_ThreadMultiplier = 1;
+	static int32_t Combo_CPU_RenderingMode = 1;
 
-	static int input_super_CPU_MaxThreads = super_screenshot_maxThreads;
-	static int input_super_CPU_ThreadMultiplier = super_screenshot_threadMultiplier;
+	static int32_t input_super_CPU_MaxThreads = super_screenshot_maxThreads;
+	static int32_t input_super_CPU_ThreadMultiplier = super_screenshot_threadMultiplier;
 	
 
 	ImGui::Begin("Rendering Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
@@ -582,7 +582,7 @@ void Menu_Rendering() {
 		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
 		ImGui::Text(" ");
 	}
-	primaryRenderData.CPU_Threads = input_CPU_MaxThreads * input_CPU_ThreadMultiplier;
+	primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
 	super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
 	super_screenshot_maxThreads = input_CPU_MaxThreads;
 	ImGui::Separator();
@@ -611,7 +611,7 @@ void Menu_Rendering() {
 			ImGui::Text("Note: Only modify these settings if you know what you are doing.");
 			ImGui::Text("GPU Render Partitions: (Default = 1)");
 			ImGui::InputInt("##input_CPU_MaxThreads",(int32_t*)(&primaryRenderData.GPU_Partitions),1,16);
-			valueLimit(primaryRenderData.GPU_Partitions,1,1024);
+			valueClamp(primaryRenderData.GPU_Partitions,1,1024);
 			ImGui::TextWrapped(
 				"Increasing the amount of partitions can reduce the time it takes for the GPU to quit rendering when the Abort Rendering button is pressed. "\
 				"However, increasing the rendering paritions can cause some performance loss due to the overhead of rendering smaller chunks of the fractal at a time. "\
@@ -625,11 +625,11 @@ void Menu_Rendering() {
 
 	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
 	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
-		primaryRenderData.subSample = input_subSample;
+		primaryRenderData.subSample = (uint32_t)input_subSample;
 	}
 	ImGui::Text("Samples per pixel: %d",input_superSample * input_superSample);
 	if (ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"")) {
-		primaryRenderData.sample = input_superSample;
+		primaryRenderData.sample = (uint32_t)input_superSample;
 	}
 	uint32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
 	uint32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
@@ -712,8 +712,8 @@ void Menu_Settings() {
 
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
-		Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
-		Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
+		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
+		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
 	);
 
 	ImGui::Begin("Settings Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
@@ -807,15 +807,15 @@ void Menu_Settings() {
 		}
 
 		if (getDisplayCount() != 0) {
-			int32_t displayListWidth = (int32_t)ImGui::GetWindowContentRegionWidth();
-			displayListWidth = calcMinRatioMax(displayListWidth, 384, 0.8, 768);
-			int32_t displayListHeight = (getDisplayCount() > 3) ? 120 : 64;
+			fp32 displayListWidth = ImGui::GetWindowContentRegionWidth();
+			displayListWidth = calcMinRatioMax(displayListWidth, 384.0f, 0.8f, 768.0f);
+			fp32 displayListHeight = (getDisplayCount() > 3) ? 120.0f : 64.0f;
 			ImGui::BeginChild(
 				"DisplayList", ImVec2(displayListWidth, displayListHeight), true
 			);
 			const std::vector<DisplayInfo> &DisplayList = getDisplayList();
 			for (int32_t i = 0; i < getDisplayCount(); i++) {
-				printDisplayInfo(&DisplayList[i], false);
+				printDisplayInfo(&DisplayList[(size_t)i], false);
 			}
 			ImGui::EndChild();
 			
@@ -839,7 +839,7 @@ void Menu_Settings() {
 				int32_t limitDisplayCount = (overrideDisplayCount == false || getDisplayCount() > 144) ? getDisplayCount() : 144;
 				if (getDisplayCount() != 1 || overrideDisplayCount == true) {
 					if(ImGui::InputInt("##specificMonitor",&config_Display.Specific_Bootup_Display,1,1)) {
-						valueLimit(config_Display.Specific_Bootup_Display,1,limitDisplayCount);
+						valueClamp(config_Display.Specific_Bootup_Display,1,limitDisplayCount);
 					} 
 				} else {
 					ImGui::Text("Only 1 display detected");
@@ -852,7 +852,7 @@ void Menu_Settings() {
 				}
 				if (ImGui::Checkbox("Override Display Count",&overrideDisplayCount)) {
 					if (overrideDisplayCount == false) {
-						valueLimit(config_Display.Specific_Bootup_Display,1,getDisplayCount());
+						valueClamp(config_Display.Specific_Bootup_Display,1,getDisplayCount());
 					}
 				}
 				if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
@@ -925,7 +925,7 @@ void Menu_Settings() {
 				static fp32 temp_FPS_Constant_Value = (fp32)Display_Preferences.Constant_RefreshRate_Value;
 				ImGui::Text(" ");
 				ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
-				ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0,30.0,"%.3f"); valueLimit(temp_FPS_Constant_Value,12.0,1200.0);
+				ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0f,30.0f,"%.3f"); valueClamp(temp_FPS_Constant_Value,12.0f,1200.0f);
 				FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
 				if (ImGui::Button("Apply FPS")) {
 					Display_Preferences.Constant_RefreshRate_Value = FPS_Constant_Value;
@@ -945,8 +945,15 @@ void Menu_Settings() {
 					ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
 				}
 				fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
-				valueLimit(calculatedFPS,12.0,1200.0);
+				valueClamp(calculatedFPS,FRAMERATE_MINIMUM,FRAMERATE_MAXIMUM);
 				ImGui::Text("%.2lffps %.2lfms", calculatedFPS, (1.0 / (calculatedFPS)) * 1000.0);
+				if (calculatedFPS <= FRAMERATE_MINIMUM) {
+					ImGui::SameLine();
+					ImGui::Text("(Minimum)");
+				} else if (calculatedFPS >= FRAMERATE_MAXIMUM) {
+					ImGui::Text("(Maximum)");
+				}
+				
 				ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
 				if (ImGui::Button("Apply FPS")) {
 					Display_Preferences.Maximum_FPS_Multiplier = temp_frameMultiplier;
@@ -973,14 +980,14 @@ void Menu_Settings() {
 	}
 	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) {
 		User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
-		static int Combo_ScreenshotFileType = screenshot_settings.screenshotFileType;
+		static int_enum Combo_ScreenshotFileType = screenshot_settings.screenshotFileType;
 		static const char* Text_ScreenshotFileType[] = {"PNG","JPG/JPEG","TGA","BMP"};
 		ImGui::Text("Screenshot File Type:");
 		if (ImGui::Combo("##Combo_ScreenshotFileType",&Combo_ScreenshotFileType,BufAndLen(Text_ScreenshotFileType))) {
 			screenshot_settings.screenshotFileType = (Image_File_Format::Image_File_Format_Enum)Combo_ScreenshotFileType;
 		}
 		if (screenshot_settings.screenshotFileType == Image_File_Format::PNG) {
-			int temp_User_PNG_Compression_Level = screenshot_settings.PNG_Compression_Level;
+			int32_t temp_User_PNG_Compression_Level = (int32_t)screenshot_settings.PNG_Compression_Level;
 			ImGui::Text("PNG Compression Level (Default = 8)");
 			ImGui::SliderInt("##temp_User_PNG_Compression_Level",&temp_User_PNG_Compression_Level,1,9);
 			screenshot_settings.PNG_Compression_Level = (uint32_t)temp_User_PNG_Compression_Level;
@@ -990,7 +997,7 @@ void Menu_Settings() {
 			if (screenshot_settings.PNG_Compression_Level < 9) { ImGui::Text("Smaller File Size (Recommended)"); } else
 			{ ImGui::Text("Smallest File Size"); }
 		} else if (screenshot_settings.screenshotFileType == Image_File_Format::JPG) {
-			int temp_User_JPG_Quality_Level = screenshot_settings.JPG_Quality_Level;
+			int32_t temp_User_JPG_Quality_Level = (int32_t)screenshot_settings.JPG_Quality_Level;
 			ImGui::Text("JPG/JPEG Quality Level (Default = 95)");
 			ImGui::SliderInt("##temp_User_JPG_Quality_Level",&temp_User_JPG_Quality_Level,25,100);
 			screenshot_settings.JPG_Quality_Level = (uint32_t)temp_User_JPG_Quality_Level;
@@ -1010,7 +1017,7 @@ void Menu_Settings() {
 		ImGui::Text("Maximum Iterations: %d",super_screenshot_maxItr);
 		ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
 		super_screenshot_maxItr = (int32_t)(pow(2.0f,temp_super_screenshot_maxItr));
-		valueLimit(super_screenshot_maxItr,16,16777216); valueLimit(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
+		valueClamp(super_screenshot_maxItr,16,16777216); valueClamp(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
 
 		const uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
 
@@ -1028,17 +1035,17 @@ void Menu_Settings() {
 		};
 		ImGui::Text("Resolution Presets:");
 		if (ImGui::Combo("##Common_Resolutions",&Combo_Common_ResolutionPreset,BufAndLen(Common_ResolutionPreset))) {
-			super_screenshot_resX = Combo_Common_ResolutionPreset_RESX[Combo_Common_ResolutionPreset];
-			super_screenshot_resY = Combo_Common_ResolutionPreset_RESY[Combo_Common_ResolutionPreset];
+			super_screenshot_resX = (int32_t)Combo_Common_ResolutionPreset_RESX[Combo_Common_ResolutionPreset];
+			super_screenshot_resY = (int32_t)Combo_Common_ResolutionPreset_RESY[Combo_Common_ResolutionPreset];
 		}
 
 		ImGui::Text("Resolution X:");
 		ImGui::InputInt("##super_screenshot_resX",&super_screenshot_resX,16,64);
 		super_screenshot_resX &= 0x7FFFFFFC; // Multiple of 4
-		valueLimit(super_screenshot_resX,64,65536); valueMaximum(super_screenshot_resX,(int32_t)MaximumImageSize / super_screenshot_resY / 3);
+		valueClamp(super_screenshot_resX,64,65536); valueMaximumClamp(super_screenshot_resX,(int32_t)MaximumImageSize / super_screenshot_resY / 3);
 		ImGui::Text("Resolution Y:");
 		ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
-		valueLimit(super_screenshot_resY,64,65536); valueMaximum(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
+		valueClamp(super_screenshot_resY,64,65536); valueMaximumClamp(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
 		
 		ImGui::Text(" ");
 		ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
@@ -1091,8 +1098,8 @@ void Menu_Keybinds() {
 	static bool displayNumpad = true;
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
-		Master.resX, ImGui_WINDOW_MARGIN * 2, 320, 480,
-		Master.resY, ImGui_WINDOW_MARGIN * 2, 240, 360
+		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 320, 480,
+		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 240, 360
 	);
 	ImGui::Begin("Keybinds Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
@@ -1107,13 +1114,13 @@ void Menu_Keybinds() {
 	}
 	ImGui::Text(" ");
 	{
-		#define kMaxResX 1440
-		#define kMinResX 300
-		#define kMinResY 140
+		constexpr int32_t kMaxResX = 1440;
+		constexpr int32_t kMinResX = 300;
+		constexpr int32_t kMinResY = 140;
 		
 		//static uint32_t kX = kMargin;
 		//static uint32_t kY = 0;
-		uint32_t kResX = ImGui::GetWindowContentRegionWidth();
+		int32_t kResX = (int32_t)ImGui::GetWindowContentRegionWidth();
 		if (kResX < kMinResX) {
 			kResX = kMinResX;
 		} else if (kResX > kMaxResX) {
@@ -1137,7 +1144,7 @@ void Menu_Keybinds() {
 			(uint8_t)Combo_keyboardSize, displayNumpad,
 			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover, &hoverInBounds
 		);
-		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, kBuf.resX, kBuf.resY, IMAGE_BUFFER_CHANNELS * 8, IMAGE_BUFFER_CHANNELS * kBuf.resX, SDL_PIXELFORMAT_ABGR8888);
+		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, (int32_t)kBuf.resX, (int32_t)kBuf.resY, (int32_t)(IMAGE_BUFFER_CHANNELS * 8), (int32_t)(IMAGE_BUFFER_CHANNELS * kBuf.resX), SDL_PIXELFORMAT_ABGR8888);
 		if (kSurface == nullptr) {
 			fprintf(stderr, "Failed to create SDL surface: %s\n", SDL_GetError());
 		}
@@ -1146,14 +1153,14 @@ void Menu_Keybinds() {
 			fprintf(stderr, "Failed to create SDL texture: %s\n", SDL_GetError());
 		}
 		SDL_FreeSurface(kSurface);
-		kCurX = CursorPos.x;
-		kCurY = CursorPos.y;
+		kCurX = (int32_t)CursorPos.x;
+		kCurY = (int32_t)CursorPos.y;
 
 		ImGui::Text("Hover: %s",Scancode_Name[keyHover]);
 		if (clickState & 0x1 && hoverInBounds == true) {
 			keyClick = keyHover;
 		}
-		ImGui::Image((void*)kTexture, ImVec2(kBuf.resX, kBuf.resY));
+		ImGui::Image((void*)kTexture, ImVec2((fp32)kBuf.resX, (fp32)kBuf.resY));
 		// ImGui::Text("size = %d x %d", kBuf.resX, kBuf.resY);
 		// ImGui::Text("Cursor Position: %d,%d",kCurX,kCurY);
 		ImGui::Text("Clicked Key: %s",Scancode_Name[keyClick]);
@@ -1442,27 +1449,27 @@ void Menu_Keybinds() {
 
 	User_Parameter_Sensitivity& config_sensitivity = config_data.Parameter_Sensitivity;
 
-	sen_slider("##sen_global",config_sensitivity.global,0.4,2.5);
+	sen_slider("##sen_global",config_sensitivity.global,0.4f,2.5f);
 	if (ImGui::Button("Reset Sensitvity")) {
 		default_Parameter_Sensitivity(config_sensitivity);
 	}
 	ImGui::Text(" ");
 	ImGui::Text("Coordinate:");
-	sen_slider("##sen_coordinate",config_sensitivity.coordinate,0.4,2.5);
+	sen_slider("##sen_coordinate",config_sensitivity.coordinate,0.4f,2.5f);
 	ImGui::Text("Zoom:");
-	sen_slider("##sen_zoom",config_sensitivity.zoom,0.4,2.5);
+	sen_slider("##sen_zoom",config_sensitivity.zoom,0.4f,2.5f);
 	ImGui::Checkbox("Invert Zoom",&config_sensitivity.invert_zoom);
 	ImGui::Text("Maximum Iterations:");
-	sen_slider("##sen_maxIter",config_sensitivity.maxIter,0.4,2.5);
+	sen_slider("##sen_maxIter",config_sensitivity.maxIter,0.4f,2.5f);
 	ImGui::Text("Z-Value/Julia:");
-	sen_slider("##sen_julia",config_sensitivity.julia,0.4,2.5);
+	sen_slider("##sen_julia",config_sensitivity.julia,0.4f,2.5f);
 	ImGui::Text("Rotation:");
-	sen_slider("##sen_rotation",config_sensitivity.rotation,0.4,2.5);
+	sen_slider("##sen_rotation",config_sensitivity.rotation,0.4f,2.5f);
 	ImGui::Text("Stretch:");
-	sen_slider("##sen_stretch",config_sensitivity.stretch,0.4,2.5);
+	sen_slider("##sen_stretch",config_sensitivity.stretch,0.4f,2.5f);
 	ImGui::Text("Polar Power:");
-	sen_slider("##sen_polar_power",config_sensitivity.polar_power,0.4,2.5);
+	sen_slider("##sen_polar_power",config_sensitivity.polar_power,0.4f,2.5f);
 	ImGui::Text("Breakout Value:");
-	sen_slider("##sen_breakout_value",config_sensitivity.breakout_value,0.4,2.5);
+	sen_slider("##sen_breakout_value",config_sensitivity.breakout_value,0.4f,2.5f);
 	ImGui::End();
 }

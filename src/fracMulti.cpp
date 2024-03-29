@@ -63,17 +63,17 @@ uint64_t factorialLUT[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800
 
 #define Block0(fpX) \
 uint8_t* data = buf->vram;\
-u32 subSample = ren.subSample;\
-u32 resX = buf->resX;\
-u32 resY = buf->resY;\
-u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
-u32 maxItr = param.maxItr;\
-fpX r = param.r;\
-fpX i = param.i;\
-fpX zoom_PC = pow((fp128)10.0, (fp128)param.zoom);\
-u32 y = p0 / resX;\
-u32 x = p0 % resX;\
-u32 sample = ren.sample;\
+uint32_t subSample = ren.subSample;\
+uint32_t resX = buf->resX;\
+uint32_t resY = buf->resY;\
+uint32_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
+uint32_t maxItr = param.maxItr;\
+fpX r = (fpX)param.r;\
+fpX i = (fpX)param.i;\
+fpX zoom_PC = (fpX)pow((fp128)10.0, (fp128)param.zoom);\
+uint32_t y = p0 / resX;\
+uint32_t x = p0 % resX;\
+uint32_t sample = ren.sample;\
 fpX rotSin_PC = (fpX)sin((fp128)param.rot);\
 fpX rotCos_PC = (fpX)cos((fp128)param.rot);\
 resX *= sample;\
@@ -98,19 +98,19 @@ for (; x < resX; x += sample) {\
 		uint32_t outG = 0;\
 		uint32_t outB = 0;\
 		uint32_t outA = 0;\
-		for (u32 v = 0; v < sample; v++) {\
-			for (u32 u = 0; u < sample; u++) {\
+		for (uint32_t v = 0; v < sample; v++) {\
+			for (uint32_t u = 0; u < sample; u++) {\
 				fpX xCord = (((fpX)x - numX) * recip_numZ);\
 				fpX yCord = (((fpX)y - numY) * neg_recip_numW);\
-				fpX cr = (!param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + param.r) : param.zr;\
-				fpX ci = (!param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + param.i) : param.zi;\
-				fpX zr = (param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + param.r) : param.zr;\
-				fpX zi = (param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + param.i) : param.zi;\
+				fpX cr = (!param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + (fpX)param.r) : (fpX)param.zr;\
+				fpX ci = (!param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + (fpX)param.i) : (fpX)param.zi;\
+				fpX zr = (param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + (fpX)param.r) : (fpX)param.zr;\
+				fpX zi = (param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + (fpX)param.i) : (fpX)param.zi;\
 \
 				fpX low = (fpX)4.0;\
 				fpX temp = (fpX)0.0;\
 				fpX zs = (fpX)0.0;\
-				for (u32 itr = 0; itr < maxItr; itr++) {
+				for (uint32_t itr = 0; itr < maxItr; itr++) {
 
 #define Block2(fpX,l) zs = zr * zr + zi * zi;\
 					if (zs < low) {\
@@ -134,10 +134,10 @@ for (; x < resX; x += sample) {\
 		outG /= div;\
 		outB /= div;\
 		outA /= div;\
-		data[dataPtr] = outR; dataPtr++;\
-		data[dataPtr] = outG; dataPtr++;\
-		data[dataPtr] = outB; dataPtr++;\
-		data[dataPtr] = outA; dataPtr++;\
+		data[dataPtr] = (uint8_t)outR; dataPtr++;\
+		data[dataPtr] = (uint8_t)outG; dataPtr++;\
+		data[dataPtr] = (uint8_t)outB; dataPtr++;\
+		data[dataPtr] = (uint8_t)outA; dataPtr++;\
 		p0++;\
 	}\
 	x = 0;\
@@ -451,17 +451,17 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 
 // #define polynomialRender(fpX) \
 // 	uint8_t* data = buf->vram;\
-// 	u32 subSample = ren.subSample;\
-// 	u32 resX = buf->resX;\
-// 	u32 resY = buf->resY;\
-// 	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
-// 	u32 maxItr = param.maxItr;\
-// 	fpX r = param.r;\
-// 	fpX i = param.i;\
-// 	fpX zoom = param.zoom;\
-// 	u32 y = p0 / resX;\
-// 	u32 x = p0 % resX;\
-// 	u32 sample = ren.sample;\
+// 	uint32_t subSample = ren.subSample;\
+// 	uint32_t resX = buf->resX;\
+// 	uint32_t resY = buf->resY;\
+// 	uint32_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
+// 	uint32_t maxItr = param.maxItr;\
+// 	fpX r = (fpX)param.r;\
+// 	fpX i = (fpX)param.i;\
+// 	fpX zoom = (fpX)param.zoom;\
+// 	uint32_t y = p0 / resX;\
+// 	uint32_t x = p0 % resX;\
+// 	uint32_t sample = ren.sample;\
 // 	uint32_t power = param.power;\
 // 	fpX cr = (fpX)0.0;\
 // 	fpX ci = (fpX)0.0;\
@@ -521,12 +521,12 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 				for (uint32_t u = 0; u < sample; u++) {\
 // 					if (param.juliaSet == true) {\
 // 						cpu_pixel_to_coordinate(x, y, &zr, &zi, &param, resX, resY, subSample);\
-// 						cr = param.zr;\
-// 						ci = param.zi;\
+// 						cr = (fpX)param.zr;\
+// 						ci = (fpX)param.zi;\
 // 					} else {\
 // 						cpu_pixel_to_coordinate(x, y, &cr, &ci, &param, resX, resY, subSample);\
-// 						zr = (param.startingZ == false) ? (fpX)0.0 : param.zr;\
-// 						zi = (param.startingZ == false) ? (fpX)0.0 : param.zi;\
+// 						zr = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zr;\
+// 						zi = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zi;\
 // 					}\
 // 					fpX low = (fpX)4.0;\
 // 					fpX temp;\
@@ -616,16 +616,16 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // #endif
 
 void renderRow(ABS_Mandelbrot* param, uint8_t* data, uint32_t resX, uint32_t resY, uint8_t subSample, uint32_t p0, uint32_t p1) { // Deprecated
-	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS; // RGB
-	u32 maxItr = param->maxItr;
+	uint32_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS; // RGB
+	uint32_t maxItr = param->maxItr;
 	fp64 typeC = (fp64)param->power;
 	
-	fp64 r = param->r;
-	fp64 i = param->i;
-	fp64 zoom = param->zoom;
+	fp64 r = (fp64)param->r;
+	fp64 i = (fp64)param->i;
+	fp64 zoom = (fp64)param->zoom;
 	
-	u32 y = p0 / resX;
-	u32 x = p0 % resX;
+	uint32_t y = p0 / resX;
+	uint32_t x = p0 % resX;
 	
 	for (; y < resY; y++) {
 		fp64 ci = -((((fp64)y - (((fp64)resY - 1.0) / 2.0)) / (((fp64)resY - 1.0) / 2.0)) / pow(10.0, zoom)) + i;
@@ -635,13 +635,13 @@ void renderRow(ABS_Mandelbrot* param, uint8_t* data, uint32_t resX, uint32_t res
 			}
 			fp64 cr = ((((fp64)x - (((fp64)resX - 1.0) / 2.0)) / (((fp64)resY - 1.0) / 2.0)) / pow(10.0, zoom)) + r;
 			
-			fp64 zr = param->zr; // Default 0.0
-			fp64 zi = param->zi; // Default 0.0
+			fp64 zr = (fp64)param->zr; // Default 0.0
+			fp64 zi = (fp64)param->zi; // Default 0.0
 			fp64 low = 4.0; // Squared
 			fp64 temp;
 			fp64 zs = 0.0;
 			
-			for (u32 itr = 0; itr < maxItr; itr++) {
+			for (uint32_t itr = 0; itr < maxItr; itr++) {
 
 				temp = zr * zr - abs(zi) * zi + cr;
 				zi = zr * zi * 2 + ci;
@@ -681,14 +681,14 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 	}
 	uint32_t resX = buf->resX * ren.sample;
 	uint32_t resY =	buf->resY * ren.sample;
-	u32 dataPtr = 0;
+	uint32_t dataPtr = 0;
 	std::vector<std::thread> renderThread;
 	/* Thread Creation */
 		#define makeThread(k) renderThread.push_back(std::thread(k, buf, ren, param, p0, p1, std::ref(ABORT_RENDERING)))
 		#define generateThreads(k) \
-		for (u32 t = 0; t < tc; t++) { \
-			u32 p0 = ((buf->resX * buf->resY) * t) / tc;\
-			u32 p1 = ((buf->resX * buf->resY) * (t + 1)) / tc; \
+		for (uint32_t t = 0; t < tc; t++) { \
+			uint32_t p0 = ((buf->resX * buf->resY) * t) / tc;\
+			uint32_t p1 = ((buf->resX * buf->resY) * (t + 1)) / tc; \
 			makeThread(k); \
 		}
 	/* Thread Creation */
@@ -767,7 +767,7 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 			//generateThreads(renderRow); //Original Method
 	};
 
-	for (u32 t = 0; t < tc; t++) {
+	for (uint32_t t = 0; t < tc; t++) {
 		renderThread.at(t).join();
 	}
 	if (ABORT_RENDERING == true) {
@@ -775,45 +775,38 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 	}
 }
 
-#define polarAngle_template(fpX) \
-fpX polarAngle(fpX zr, fpX zi) { \
-	fpX angle; \
-	if (zi == 0.0) { \
-		return 0.0; \
-	} \
-	if (zr > 0.0) { \
-		angle = atan(zi / zr); \
-	} else { \
-		if (zi > 0.0) { \
-			angle = PI + atan(zi / zr); \
-		} else { \
-			angle = atan(zi / zr) - PI; \
-		} \
-	} \
-	return angle; \
+template <typename fpX>
+fpX polarAngle(fpX zr, fpX zi) {
+	fpX angle;
+	if (zi == (fpX)0.0) {
+		return (fpX)0.0;
+	}
+	if (zr > (fpX)0.0) {
+		angle = (fpX)atan(zi / zr);
+	} else {
+		if (zi > (fpX)0.0) {
+			angle = (fpX)PI + (fpX)atan(zi / zr);
+		} else {
+			angle = (fpX)atan(zi / zr) - (fpX)PI;
+		}
+	}
+	return angle;
 }
-
-polarAngle_template(fp32);
-polarAngle_template(fp64);
-#ifdef enableFP80andFP128
-	polarAngle_template(fp80);
-	polarAngle_template(fp128);
-#endif
 
 
 #define polarRender(fpX) \
 	uint8_t* data = buf->vram;\
-	u32 subSample = ren.subSample;\
-	u32 resX = buf->resX;\
-	u32 resY = buf->resY;\
-	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
-	u32 maxItr = param.maxItr;\
-	fpX r = param.r;\
-	fpX i = param.i;\
-	fpX zoom = param.zoom;\
-	u32 y = p0 / resX;\
-	u32 x = p0 % resX;\
-	u32 sample = ren.sample;\
+	uint32_t subSample = ren.subSample;\
+	uint32_t resX = buf->resX;\
+	uint32_t resY = buf->resY;\
+	uint32_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
+	uint32_t maxItr = param.maxItr;\
+	fpX r = (fpX)param.r;\
+	fpX i = (fpX)param.i;\
+	fpX zoom = (fpX)param.zoom;\
+	uint32_t y = p0 / resX;\
+	uint32_t x = p0 % resX;\
+	uint32_t sample = ren.sample;\
 	fpX cr = (fpX)0.0;\
 	fpX ci = (fpX)0.0;\
 	fpX zr = (fpX)0.0;\
@@ -824,9 +817,9 @@ polarAngle_template(fp64);
 	y *= sample;\
 	uint32_t sResX = resX - 1;\
 	uint32_t sResY = resY - 1;\
-	fpX zoomVal = pow((fpX)10.0, zoom);\
-	fpX rotSin = sin((fpX)param.rot);\
-	fpX rotCos = cos((fpX)param.rot);\
+	fpX zoomVal = (fpX)pow((fpX)10.0, zoom);\
+	fpX rotSin = (fpX)sin((fpX)param.rot);\
+	fpX rotCos = (fpX)cos((fpX)param.rot);\
 	fpX numY = ((fpX)sResY / (fpX)2.0);\
 	fpX numX = ((fpX)sResX / (fpX)2.0);\
 	fpX numZ = (sResX >= sResY) ? numY * zoomVal : numX * zoomVal;\
@@ -845,13 +838,13 @@ polarAngle_template(fp64);
 			for (uint32_t v = 0; v < sample; v++) {\
 				for (uint32_t u = 0; u < sample; u++) {\
 					if (param.juliaSet == true) {\
-						cpu_pixel_to_coordinate(x, y, &zr, &zi, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
-						cr = param.zr;\
-						ci = param.zi;\
+						cpu_pixel_to_coordinate((int32_t)x, (int32_t)y, &zr, &zi, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
+						cr = (fpX)param.zr;\
+						ci = (fpX)param.zi;\
 					} else {\
-						cpu_pixel_to_coordinate(x, y, &cr, &ci, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
-						zr = (param.startingZ == false) ? (fpX)0.0 : param.zr;\
-						zi = (param.startingZ == false) ? (fpX)0.0 : param.zi;\
+						cpu_pixel_to_coordinate((int32_t)x, (int32_t)y, &cr, &ci, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
+						zr = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zr;\
+						zi = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zi;\
 					}\
 					fpX low = (fpX)4.0;\
 					fpX temp;\
@@ -890,10 +883,10 @@ polarAngle_template(fp64);
 			outG /= div;\
 			outB /= div;\
 			outA /= div;\
-			data[dataPtr] = outR; dataPtr++;\
-			data[dataPtr] = outG; dataPtr++;\
-			data[dataPtr] = outB; dataPtr++;\
-			data[dataPtr] = outA; dataPtr++;\
+			data[dataPtr] = (uint8_t)outR; dataPtr++;\
+			data[dataPtr] = (uint8_t)outG; dataPtr++;\
+			data[dataPtr] = (uint8_t)outB; dataPtr++;\
+			data[dataPtr] = (uint8_t)outA; dataPtr++;\
 			p0++;\
 		}\
 		x = 0;\
@@ -913,14 +906,14 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 	}
 	uint32_t resX = buf->resX * ren.sample;
 	uint32_t resY =	buf->resY * ren.sample;
-	u32 dataPtr = 0;
+	uint32_t dataPtr = 0;
 	std::vector<std::thread> renderThread;
 	/* Thread Creation */
 		#define makeThread(k) renderThread.push_back(std::thread(k, buf, ren, param, p0, p1, std::ref(ABORT_RENDERING)))
 		#define generateThreads(k) \
-		for (u32 t = 0; t < tc; t++) { \
-			u32 p0 = ((buf->resX * buf->resY) * t) / tc;\
-			u32 p1 = ((buf->resX * buf->resY) * (t + 1)) / tc; \
+		for (uint32_t t = 0; t < tc; t++) { \
+			uint32_t p0 = ((buf->resX * buf->resY) * t) / tc;\
+			uint32_t p1 = ((buf->resX * buf->resY) * (t + 1)) / tc; \
 			makeThread(k); \
 		}
 	/* Thread Creation */
@@ -935,7 +928,7 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 		default: // 64
 		generateThreads(polarRenderFP64);
 	};
-	for (u32 t = 0; t < tc; t++) {
+	for (uint32_t t = 0; t < tc; t++) {
 		renderThread.at(t).join();
 	}
 	if (ABORT_RENDERING == true) {
@@ -947,17 +940,17 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 
 // #define carpetRender(fpX) \
 // 	uint8_t* data = buf->vram;\
-// 	u32 subSample = ren.subSample;\
-// 	u32 resX = buf->resX;\
-// 	u32 resY = buf->resY;\
-// 	u32 dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
-// 	u32 maxItr = param.maxItr;\
+// 	uint32_t subSample = ren.subSample;\
+// 	uint32_t resX = buf->resX;\
+// 	uint32_t resY = buf->resY;\
+// 	uint32_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
+// 	uint32_t maxItr = param.maxItr;\
 // 	fpX r = param.x;\
 // 	fpX i = param.y;\
 // 	fpX zoom = param.zoom;\
-// 	u32 y = p0 / resX;\
-// 	u32 x = p0 % resX;\
-// 	u32 sample = ren.sample;\
+// 	uint32_t y = p0 / resX;\
+// 	uint32_t x = p0 % resX;\
+// 	uint32_t sample = ren.sample;\
 // 	fpX cr = (fpX)0.0;\
 // 	fpX ci = (fpX)0.0;\
 // 	fpX zr = (fpX)0.0;\
@@ -1045,14 +1038,14 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 // 	}
 // 	uint32_t resX = buf->resX * ren.sample;
 // 	uint32_t resY =	buf->resY * ren.sample;
-// 	u32 dataPtr = 0;
+// 	uint32_t dataPtr = 0;
 // 	std::vector<std::thread> renderThread;
 // 	/* Thread Creation */
 // 		#define makeThread(k) renderThread.push_back(std::thread(k, buf, ren, param, p0, p1, std::ref(ABORT_RENDERING)))
 // 		#define generateThreads(k) \
-// 		for (u32 t = 0; t < tc; t++) { \
-// 			u32 p0 = ((buf->resX * buf->resY) * t) / tc;\
-// 			u32 p1 = ((buf->resX * buf->resY) * (t + 1)) / tc; \
+// 		for (uint32_t t = 0; t < tc; t++) { \
+// 			uint32_t p0 = ((buf->resX * buf->resY) * t) / tc;\
+// 			uint32_t p1 = ((buf->resX * buf->resY) * (t + 1)) / tc; \
 // 			makeThread(k); \
 // 		}
 // 	/* Thread Creation */
@@ -1064,7 +1057,7 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 // 			if (ren.CPU_Precision == 128) { generateThreads(carpetRenderFP128); } else
 // 		#endif
 // 		{ generateThreads(carpetRenderFP64); }
-// 	for (u32 t = 0; t < tc; t++) {
+// 	for (uint32_t t = 0; t < tc; t++) {
 // 		renderThread.at(t).join();
 // 	}
 // 	if (ABORT_RENDERING == true) {

@@ -171,7 +171,7 @@ void renderBoard(
 		x0 += KeyboardBorder; y0 += KeyboardBorder;
 		x1 -= KeySpacing; y1 -= KeySpacing;
 		if (x1 >= 3 && y1 >= 3) { /* Renders Key only if it is large enough */
-			size_t pos = k.Scancode * IMAGE_BUFFER_CHANNELS;
+			size_t pos = (size_t)k.Scancode * IMAGE_BUFFER_CHANNELS;
 			uint8_t* col = Scancode_Color_Key;
 			if ((curX >= x0 && curX <= x0 + x1) && (curY >= y0 && curY <= y0 + y1)) {
 				col = click ? Scancode_Color_Click : Scancode_Color_Hover;
@@ -181,10 +181,10 @@ void renderBoard(
 				col = Scancode_Color_Press;
 			}
 			Keyboard_Graphic.gColor_RGB(0x40,0x40,0x40);
-			Keyboard_Graphic.drawRect(x0,y0,x1,y1);
+			Keyboard_Graphic.drawRect((size_t)(int64_t)x0,(size_t)(int64_t)y0,(size_t)(int64_t)x1,(size_t)(int64_t)y1);
 			Keyboard_Graphic.gColor_RGB(col[pos],col[pos+1],col[pos+2]);
-			Keyboard_Graphic.fillRect(x0+1,y0+1,x1-2,y1-2);
-			renderKeyText((char*)Keyboard_List[board][i].name,col[pos],col[pos+1],col[pos+2],x0+2,y0+2,x1-4,y1-4);
+			Keyboard_Graphic.fillRect((size_t)(int64_t)(x0+1),(size_t)(int64_t)(y0+1),(size_t)(int64_t)(x1-2),(size_t)(int64_t)(y1-2));
+			renderKeyText((char*)Keyboard_List[board][i].name,col[pos],col[pos+1],col[pos+2],(uint32_t)(x0+2),(uint32_t)(y0+2),(uint32_t)(x1-4),(uint32_t)(y1-4));
 			/* Keyboard_Graphic.printText6x8(x0+2,y0+2,(char*)Keyboard_List[b][i].name); */
 		}
 	}
@@ -262,8 +262,8 @@ void renderKeyboard(
 	int32_t resY = (int32_t)((fp64)resX * ((fp64)dimY / (fp64)dimX));
 	fp64 keyScaleY = (fp64)(resY) / (fp64)dimY;
 
-	buf->resX = resX + offsetVal;
-	buf->resY = resY + offsetVal;
+	buf->resX = (uint32_t)(resX + offsetVal);
+	buf->resY = (uint32_t)(resY + offsetVal);
 
 	//printfInterval(0.6,"\nRes{%ux%u}\nScales: %.3lf %.3lf | %.3lf",buf->resX,buf->resY,keyScaleX,keyScaleY,keyScaleX/keyScaleY);
 	//printfInterval(0.5,"\n%zu dim{%d,%d} min{%d,%d} max{%d,%d} offset{%d,%d}",keyCount,dimX,dimY,minDimX,minDimY,maxDimX,maxDimY,offsetX,offsetY);
@@ -335,7 +335,7 @@ SDL_Scancode getHover_Scancode(uint32_t x, uint32_t y) {
 }
 
 void setRGB_Scancode(uint8_t r, uint8_t g, uint8_t b, SDL_Scancode code) {
-	size_t z = code * IMAGE_BUFFER_CHANNELS;
+	size_t z = (size_t)code * IMAGE_BUFFER_CHANNELS;
 	Scancode_Color_Key[z] = r;
 	Scancode_Color_Hover[z] = (uint8_t)((fp64)r * 0.8333);
 	Scancode_Color_Press[z] = (uint8_t)((fp64)r * 0.75);
@@ -357,7 +357,7 @@ void setRGB_Scancode(uint8_t r, uint8_t g, uint8_t b, SDL_Scancode code) {
 	Scancode_Color_Click[z] = 0xFF;
 }
 void setColor_Scancode(uint32_t color, SDL_Scancode code) {
-	uint8_t r,g,b;
+	uint8_t r, g, b;
 	r = color & 0xFF; color >>= 8;
 	g = color & 0xFF; color >>= 8;
 	b = color & 0xFF;
@@ -372,7 +372,7 @@ void setHSV_Scancode(fp64 h, fp64 s, fp64 v, SDL_Scancode code) {
 	getRGBfromHSV(&rH,&gH,&bH,h,s,v * 0.8333);
 	getRGBfromHSV(&rP,&gP,&bP,h,s,v * 0.75);
 	getRGBfromHSV(&rC,&gC,&bC,h,s,v * 0.6667);
-	size_t z = code * IMAGE_BUFFER_CHANNELS;
+	size_t z = (size_t)code * IMAGE_BUFFER_CHANNELS;
 	Scancode_Color_Key[z] = rK;
 	Scancode_Color_Hover[z] = rH;
 	Scancode_Color_Press[z] = rP;

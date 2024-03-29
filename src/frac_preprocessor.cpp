@@ -69,21 +69,21 @@ int preCalc_Frac_Render(
 	Frac_Render_PC& render_PC,
 	const Render_Data& render_data
 ) {
-	render_PC.total_ResX = render_data.resX;
-	render_PC.total_ResY = render_data.resY;
-	render_PC.sub_ResX = render_data.subResX;
-	render_PC.sub_ResY = render_data.subResY;
+	render_PC.total_ResX = (int32_t)render_data.resX;
+	render_PC.total_ResY = (int32_t)render_data.resY;
+	render_PC.sub_ResX = (int32_t)render_data.subResX;
+	render_PC.sub_ResY = (int32_t)render_data.subResY;
 	render_PC.start_PosX = render_data.offsetX;
 	render_PC.start_PosY = render_data.offsetY;
-	render_PC.end_PosX = render_data.offsetX + render_data.subResX;
-	render_PC.end_PosY = render_data.offsetY + render_data.subResY;
+	render_PC.end_PosX = render_data.offsetX + (int32_t)render_data.subResX;
+	render_PC.end_PosY = render_data.offsetY + (int32_t)render_data.subResY;
 
 	render_PC.total_Size = render_data.resX * render_data.resY * render_data.channels;
 	render_PC.pitch = render_data.resY * render_data.channels;
 	render_PC.channels = render_data.channels;
 
-	render_PC.super_sampleX = render_data.sample;
-	render_PC.super_sampleY = render_data.sample;
+	render_PC.super_sampleX = (int32_t)render_data.sample;
+	render_PC.super_sampleY = (int32_t)render_data.sample;
 
 	render_PC.export_Image = render_data.export_Image;
 	render_PC.rendering_method = render_data.rendering_method;

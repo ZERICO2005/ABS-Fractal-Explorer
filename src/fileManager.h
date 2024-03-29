@@ -32,10 +32,10 @@ int saveFileInterface(
 
 /* Images */
 
-int writePNGImage(BufferBox* buf, char* path, char* name, int compression_level = 8);
-int writeJPGImage(BufferBox* buf, char* path, char* name, uint32_t quality = 95);
-int writeTGAImage(BufferBox* buf, char* path, char* name);
-int writeBMPImage(BufferBox* buf, char* path, char* name);
-int writeHDRImage(float* buf, uint32_t resX, uint32_t resY, uint8_t channels, char* path, char* name);
+int writePNGImage(const BufferBox* buf, char* path, char* name, uint32_t compression_level = 8);
+int writeJPGImage(const BufferBox* buf, char* path, char* name, uint32_t quality = 95);
+int writeTGAImage(const BufferBox* buf, char* path, char* name);
+int writeBMPImage(const BufferBox* buf, char* path, char* name);
+int writeHDRImage(const float* buf, uint32_t resX, uint32_t resY, uint8_t channels, char* path, char* name);
 
 #endif /* FILEMANAGER_H */

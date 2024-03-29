@@ -26,13 +26,17 @@ class ImageBuffer {
 		ImageBuffer(uint8_t Channels);
 		// Full Initialization
 		ImageBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels);
+		ImageBuffer(int32_t ResX, int32_t ResY, size_t Channels);
 		// Preallocated Buffer
 		ImageBuffer(uint8_t* Vram, uint32_t ResX, uint32_t ResY, uint8_t Channels);
+		ImageBuffer(uint8_t* Vram, int32_t ResX, int32_t ResY, size_t Channels);
 		void deleteBuffer();
 		bool allocated(); // Returns if buffer is allocated
 		bool bufferSafe(); // Returns if the buffer is safe to write to
 		void reallocateBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels);
+		void reallocateBuffer(int32_t ResX, int32_t ResY, size_t Channels);
 		void resizeBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels); // Reallocates buffer only if more memory is needed
+		void resizeBuffer(int32_t ResX, int32_t ResY, size_t Channels); // Reallocates buffer only if more memory is needed
 		void trimBuffer(); // Reallocates buffer to current image size
 		void getBufferBox(BufferBox* buf);
 		void vramCopy(ImageBuffer* buf, bool reallocBuf = false);

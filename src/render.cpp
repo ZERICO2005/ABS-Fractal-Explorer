@@ -127,11 +127,11 @@ void Bootup_initRenderData() {
 	void clear_KeyBind_PresetList() {
 		KeyBind_PresetList.clear();
 	}
-	int get_currentKBPreset_Pos() {
+	int32_t get_currentKBPreset_Pos() {
 		std::size_t index = 0;
 		for (const auto& element : KeyBind_PresetList) {
 			if (&element == currentKBPreset) {
-				return index;
+				return (int32_t)index;
 			}
 			index++;
 		}
@@ -266,7 +266,7 @@ void initKeys() {
 	updateKeys();
 }
 
-bool keyPressed(uint32_t key) {
+bool keyPressed(SDL_Scancode key) {
 	if (key > SDL_NUM_SCANCODES) {
 		return false;
 	}
@@ -358,14 +358,14 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		
 		SDL_SetWindowSize(window,x,y);
 		SDL_RenderSetLogicalSize(renderer, x, y);
-		Master.resX = x;
-		Master.resY = y;
-		TestGraphic.resX = x;
-		TestGraphic.resY = y - RESY_UI;
+		Master.resX = (uint32_t)x;
+		Master.resY = (uint32_t)y;
+		TestGraphic.resX = (uint32_t)x;
+		TestGraphic.resY = (uint32_t)y - RESY_UI;
 		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
 		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram),getBufferBoxSize(&TestGraphic));
-		if (resX != NULL) { *resX = x; }
-		if (resY != NULL) { *resY = y; }
+		if (resX != NULL) { *resX = (uint32_t)x; }
+		if (resY != NULL) { *resY = (uint32_t)y; }
 		updateRenderData(&primaryRenderData);
 		updateRenderData(&secondaryRenderData);
 		write_Update_Level(Change_Level::Full_Reset);
@@ -373,7 +373,7 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		if (texture != NULL) {
 			SDL_DestroyTexture(texture);
 		}
-		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
+		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, (int32_t)Master.resX, (int32_t)Master.resY);
 
 		write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
 		reVal = true;
@@ -396,7 +396,11 @@ void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum full
 		// 	break;
 		case Display_Fullscreen::Windowed:
 		default:
-			SDL_SetWindowFullscreen(window, 0);
+			{
+				// int32_t initResX, initResY, initPosX, initPosY;
+				// calculate_init_window_size();
+				SDL_SetWindowFullscreen(window, 0);
+			}
 			break;
 	};
 }
@@ -447,7 +451,7 @@ void correctUsernameText(char* buf, size_t len) { /* Strips characters */
 	}
 }
 
-int utitledFileNameGenerator(char* buf, size_t maxLen) {
+int32_t utitledFileNameGenerator(char* buf, size_t maxLen) {
 	static const char* UntitledFile_Front[] = { // Easier to read atomic names
 		"Aluminum","Argon","Beryllium","Bismuth","Boron","Bromine","Calcium","Carbon","Cesium","Chlorine","Chromium","Cobalt","Copper","Fluorine","Gallium","Gold","Hafnium","Helium","Hydrogen","Iodine","Iridium","Iron","Krypton","Lithium","Magnesium","Neon","Neptunium","Nickel","Nitrogen","Osmium","Oxygen","Phosphorus","Platinum","Plutonium","Potassium","Rhodium","Silicon","Silver","Sodium","Sulfur","Technetium","Thorium","Titanium","Tungsten","Uranium","Vanadium","Xenon"
 	};
@@ -458,9 +462,9 @@ int utitledFileNameGenerator(char* buf, size_t maxLen) {
 		"Cardiod","Catenary","Circle","Cube","Cycloid","Cylinder","Diamond","Dodecagon","Ellispse","Exponential","Hexagon","Hyperbola","Icosahedron","Logarithm","Nephroid","Octogon","Parabola","Parallelogram","Pentagon","Polynomial","Rectangle","Rhombus","Sphere","Square","Star","Tangent","Tesseract","Tetreahedron","Trapozoid","Triangle","Vertex"
 	};
 	srand((unsigned int)getNanoTime());
-	uint32_t choice_front = rand() % ARRAY_LENGTH(UntitledFile_Front);
-	uint32_t choice_middle = rand() % ARRAY_LENGTH(UntitledFile_Middle);
-	uint32_t choice_end = rand() % ARRAY_LENGTH(UntitledFile_End);
+	uint32_t choice_front = (uint32_t)rand() % (uint32_t)ARRAY_LENGTH(UntitledFile_Front);
+	uint32_t choice_middle = (uint32_t)rand() % (uint32_t)ARRAY_LENGTH(UntitledFile_Middle);
+	uint32_t choice_end = (uint32_t)rand() % (uint32_t)ARRAY_LENGTH(UntitledFile_End);
 	return snprintf(buf,maxLen,"%s-%s-%s",UntitledFile_Front[choice_front],UntitledFile_Middle[choice_middle],UntitledFile_End[choice_end]);
 };
 /*
@@ -714,10 +718,10 @@ int updateFractalParameters() {
 			if (FRAC.relativeZValue == true) {
 				fp64 resZ = (fp64)((Master.resX > Master.resY) ? Master.resY : Master.resX);
 				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
-				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
+				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - (fp64)RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
 			} else {
 				pixel_to_coordinate(
-					(int32_t)(ImGui::GetMousePos().x),(int32_t)(ImGui::GetMousePos().y - RESY_UI),
+					(int32_t)(ImGui::GetMousePos().x),(int32_t)ImGui::GetMousePos().y - (int32_t)RESY_UI,
 					&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData
 				);
 			}
@@ -741,7 +745,7 @@ int updateFractalParameters() {
 			} else {
 				FRAC.zoom = zoomDefault((fp64)FRAC.power);
 			}
-			valueLimit(FRAC.zoom,-0.4,0.4);
+			valueClamp(FRAC.zoom,-0.4,0.4);
 			Update_Level(update_level, Jump);
 		}
 	/* maxItr */
@@ -882,7 +886,7 @@ int updateFractalParameters() {
 		if (funcTimeDelay(resetSubSample,0.2)) {
 			primaryRenderData.subSample = 1;
 		}
-		valueLimit(primaryRenderData.subSample,1,24);
+		valueClamp(primaryRenderData.subSample,1,24);
 		if (funcTimeDelay(incSuperSample,1.0/6.0)) {
 			primaryRenderData.sample++;
 		}
@@ -892,7 +896,7 @@ int updateFractalParameters() {
 		if (funcTimeDelay(resetSuperSample,0.2)) {
 			primaryRenderData.sample = 1;
 		}
-		valueLimit(primaryRenderData.sample,1,24);
+		valueClamp(primaryRenderData.sample,1,24);
 	/* Rendering Method */
 	{
 		using namespace Rendering_Method;
@@ -963,9 +967,9 @@ int updateFractalParameters() {
 }
 
 void correctFrameTime() {
-	valueLimit(GUI_FrameTimeNano,SECONDS_TO_NANO(1.0/1200.0),SECONDS_TO_NANO(1.0/6.0));
-	valueLimit(GUI_FrameTime,1.0/1200.0,1.0/6.0);
-	valueLimit(GUI_FrameRate,6.0,1200.0);
+	valueClamp(GUI_FrameTimeNano,SECONDS_TO_NANO(1.0/1200.0),SECONDS_TO_NANO(1.0/6.0));
+	valueClamp(GUI_FrameTime,1.0/1200.0,1.0/6.0);
+	valueClamp(GUI_FrameRate,6.0,1200.0);
 	GUI_FrameTimer.setFreq(GUI_FrameTime);
 }
 
@@ -1280,7 +1284,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			}
 		#endif
 		FRAME_RATE += FRAME_RATE_OFFSET;
-		valueLimit(FRAME_RATE,12.0,1200.0);
+		valueClamp(FRAME_RATE,12.0,1200.0);
 	}
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %dMB",SDL_GetSystemRAM());
@@ -1292,17 +1296,17 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	window = SDL_CreateWindow(
 		PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE,
 		initPosX, initPosY,
-		Master.resX, Master.resY,
+		(int32_t)Master.resX, (int32_t)Master.resY,
 		SDL_WINDOW_RESIZABLE
 	);
 	SDL_SetWindowMinimumSize(window, RESX_Minimum, RESY_Minimum);
 	SDL_SetWindowMaximumSize(window, RESX_Maximum, RESY_Maximum);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
+	SDL_RenderSetLogicalSize(renderer, (int32_t)Master.resX, (int32_t)Master.resY);
 	set_Window_Fullscreen_Mode((Display_Fullscreen::Display_Fullscreen_Enum)config_data.Display_Preferences.Bootup_Fullscreen);
 	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
 
-	super_screenshot_maxThreads = std::thread::hardware_concurrency();
+	super_screenshot_maxThreads = (int32_t)std::thread::hardware_concurrency();
 	// IMGUI
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -1521,25 +1525,25 @@ int exportSuperScreenshot() {
 		Fractal_Data superFrac = frac;
 		Render_Data superRenderData = primaryRenderData;
 		if (superFrac.type_value == Fractal_ABS_Mandelbrot) {
-			superFrac.type.abs_mandelbrot.maxItr = super_screenshot_maxItr;
+			superFrac.type.abs_mandelbrot.maxItr = (uint32_t)super_screenshot_maxItr;
 		} else if (superFrac.type_value == Fractal_Polar_Mandelbrot) {
-			superFrac.type.polar_mandelbrot.maxItr = super_screenshot_maxItr;
+			superFrac.type.polar_mandelbrot.maxItr = (uint32_t)super_screenshot_maxItr;
 		}
-		superRenderData.resX = super_screenshot_resX;
-		superRenderData.resY = super_screenshot_resY;
-		superRenderData.sample = super_screenshot_super_sample;
+		superRenderData.resX = (uint32_t)super_screenshot_resX;
+		superRenderData.resY = (uint32_t)super_screenshot_resY;
+		superRenderData.sample = (uint32_t)super_screenshot_super_sample;
 		superRenderData.subSample = 1;
-		superRenderData.CPU_Threads = super_screenshot_maxThreads * super_screenshot_threadMultiplier;
+		superRenderData.CPU_Threads = (uint32_t)super_screenshot_maxThreads * (uint32_t)super_screenshot_threadMultiplier;
 		const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
 		switch(screenshot_settings.screenshotFileType) {
 			case Image_File_Format::PNG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,screenshot_settings.PNG_Compression_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,(uint8_t)screenshot_settings.PNG_Compression_Level);
 			break;
 			case Image_File_Format::JPG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,screenshot_settings.JPG_Quality_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,(uint8_t)screenshot_settings.JPG_Quality_Level);
 			break;
 			default:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,screenshot_settings.PNG_Compression_Level);
+				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,(uint8_t)screenshot_settings.PNG_Compression_Level);
 		}
 	}
 	return 0;
@@ -1570,7 +1574,13 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 		return 1;
 	}
 	if ((image->rot != FRAC.rot) || ((fx0 < (i32)Master.resX) && (fy0 < (i32)(Master.resY - RESY_UI)))) {
-		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(image->vram, image->resX, image->resY, image->channels * 8, image->channels * image->resX, SDL_PIXELFORMAT_ABGR8888);
+		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
+			image->vram,
+			(int32_t)image->resX, (int32_t)image->resY,
+			(int32_t)image->channels * 8,
+			(int32_t)image->channels * (int32_t)image->resX,
+			SDL_PIXELFORMAT_ABGR8888
+		);
 		fx1 -= fx0;
 		fy1 -= fy0;
 		SDL_Rect srcRect = {0,0,(i32)image->resX,(i32)image->resY};
@@ -1663,7 +1673,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// }
 	//printfInterval(0.6,"\n%p: %ux%u %uC %uP",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
 	//uint64_t stopWatch = getNanoTime();
-	copyBuffer(blit,temp_MASTER,0,RESY_UI,true);
+	copyBuffer(blit,temp_MASTER,0,(int32_t)RESY_UI,true);
 	//printfInterval(0.6,"\nFunc: %.3lfms\n",NANO_TO_SECONDS(getNanoTime() - stopWatch) * 1000.0);
 	FREE(blit.vram);
 	#undef FRAC
@@ -1712,13 +1722,13 @@ void newFrame() {
 		}
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
-		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
+		copyBuffer(TestGraphic,temp_MASTER,0,(int32_t)RESY_UI,false);
 		exportFractalBuffer = false;
 	} else if (primaryBufferValid == false) {
 		renderStatusGraphic(Status_Graphic::Graphic_Loading,1.0); // Renders a loading screen if Fractal buffers are unavailable
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
-		copyBuffer(TestGraphic,temp_MASTER,0,RESY_UI,false);
+		copyBuffer(TestGraphic,temp_MASTER,0,(int32_t)RESY_UI,false);
 		exportFractalBuffer = false;
 	}
 	#ifdef Use_OpenCV_Scaler
@@ -1727,7 +1737,7 @@ void newFrame() {
 			printfChange(int,scaleRet,"\ntransformFracImage: %d",scaleRet);
 		}
 	#endif
-	SDL_UpdateTexture(texture, nullptr, Master.vram, Master.resX * Master.channels);
+	SDL_UpdateTexture(texture, nullptr, Master.vram, (int32_t)Master.resX * (int32_t)Master.channels);
 	{
 		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
 		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};
@@ -1742,8 +1752,8 @@ void newFrame() {
 			printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
 		#endif
 		if (exportFractalBuffer == true) {
-			uint64_t curTime = getNanoTime();
-			size_t size = snprintf(nullptr,0,"%s_%llu",frac.type_name,curTime);
+			nano64_t curTime = getNanoTime();
+			size_t size = (size_t)snprintf(nullptr,0,"%s_%llu",frac.type_name,curTime);
 			char* name = (char*)calloc(size + 1,sizeof(char));
 			snprintf(name,size,"%s_%llu",FractalTypeFileText[frac.type_value],curTime);
 			char path[] = "./";
