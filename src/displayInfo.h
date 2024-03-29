@@ -102,11 +102,11 @@ namespace Display_Bootup {
 
 namespace Display_Fullscreen {
 	enum Display_Fullscreen_Enum {
-		Windowed, Windowed_Fullscreen, Borderless_Fullscreen, Fullscreen,
+		Windowed, Windowed_Fullscreen, /* Fullscreen, */
 		Length
 	};
 	static const char* const Display_Fullscreen_Text[] {
-		"Windowed", "Windowed-Fullscreen", "Borderless-Fullscreen", "Fullscreen"
+		"Windowed", "Windowed-Fullscreen", /* "Fullscreen" */
 	};
 };
 

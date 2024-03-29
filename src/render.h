@@ -90,6 +90,12 @@ uint64_t get_Hardware_Hash();
 
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode);
 
+void calculate_init_window_size(
+	const int32_t& dispResX, const int32_t& dispResY,
+	int32_t& initResX, int32_t& initResY,
+	int32_t& initPosX, int32_t& initPosY
+);
+
 /* ================ */
 
 // #include "copyBuffer.h"

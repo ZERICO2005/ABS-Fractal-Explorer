@@ -6,8 +6,10 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#include "main_guard.h"
+#ifndef MAIN_GUARD_H
+#define MAIN_GUARD_H
 
-int main(int argc, char* argv[]) {
-	return main_guard(argc,argv);
-}
+// Prevents int main(int argc, char* argv[]) from being redefined by other libraries/headers
+int main_guard(int argc, char* argv[]);
+
+#endif /* MAIN_GUARD_H */

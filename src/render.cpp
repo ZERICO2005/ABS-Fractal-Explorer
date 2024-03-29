@@ -385,15 +385,15 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode) {
 	switch (fullscreen_mode) {
-		case Display_Fullscreen::Fullscreen:
-			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-			break;
+		// case Display_Fullscreen::Fullscreen:
+		// 	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+		// 	break;
 		case Display_Fullscreen::Windowed_Fullscreen:
 			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 			break;
-		case Display_Fullscreen::Borderless_Fullscreen:
-			SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
-			break;
+		// case Display_Fullscreen::Borderless_Fullscreen:
+		// 	SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
+		// 	break;
 		case Display_Fullscreen::Windowed:
 		default:
 			SDL_SetWindowFullscreen(window, 0);
@@ -1148,34 +1148,6 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 	return 0;
 // }
 
-// Returns the index of the display to be used. Returns 0 on failure
-int32_t loadDisplayInformation(
-	const User_Display_Preferences& display_config,
-	int32_t& initResX, int32_t& initResY,
-	int32_t& initPosX, int32_t& initPosY
-) {
-	int32_t displayCount = reloadDisplays();
-	if (displayCount <= 0) {
-		printError("Failed to detect displays");
-		return 0;
-	}
-	printf("\n\tDisplay Count: %d",displayCount);
-	int32_t cursorPosX, cursorPosY;
-	SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
-	const DisplayInfo* disp = getBootupDisplay(
-		display_config,
-		RESX_Minimum, RESY_Minimum,
-		cursorPosX, cursorPosY
-	);
-	if (disp == nullptr) {
-		printError("unable to getBootupDisplay");
-		return 0;
-	}
-	disp->getResolution(initResX,initResY);
-	disp->getCornerNW(initPosX,initPosY);
-	return disp->getIndex();
-}
-
 void init_config_data() {
 	if (import_config_data(config_data,"./config.fracExpConfig") == 0) {
 		if (config_data.Automatic_Behaviour.AutoLoad_Config_File == false) {
@@ -1209,26 +1181,39 @@ void terminate_config_data() {
 	// export_config_data(config_data,"./config.fracExpConfig");
 }
 
-int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
-	init_config_data();
-	//SDL_Init(SDL_INIT_VIDEO);
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
-		return -1;
+// Returns the index of the display to be used. Returns 0 on failure
+int32_t loadDisplayInformation(
+	const User_Display_Preferences& display_config,
+	int32_t& initResX, int32_t& initResY,
+	int32_t& initPosX, int32_t& initPosY
+) {
+	int32_t displayCount = reloadDisplays();
+	if (displayCount <= 0) {
+		printError("Failed to detect displays");
+		return 0;
 	}
-	printf("\nSystem Information:");
-	int32_t dispResX, dispResY;
-	int32_t initResX, initResY, initPosX, initPosY;
-	// if (setupDisplayInfo(config_data.Display_Preferences,&initResX,&initResY,&initPosX,&initPosY) < 0) {
-	// 	printCriticalError("init_Render failed to setupDisplayInfo");
-	// }
-	int32_t initDisplayIndex = loadDisplayInformation(config_data.Display_Preferences,initResX,initResY,initPosX,initPosY);
-	if (initDisplayIndex == 0) {
-		printCriticalError("init_Render failed to loadDisplayInformation");
+	printf("\n\tDisplay Count: %d",displayCount);
+	int32_t cursorPosX, cursorPosY;
+	SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
+	const DisplayInfo* disp = getBootupDisplay(
+		display_config,
+		RESX_Minimum, RESY_Minimum,
+		cursorPosX, cursorPosY
+	);
+	if (disp == nullptr) {
+		printError("unable to getBootupDisplay");
+		return 0;
 	}
-	//printFlush("\nOld: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
-	dispResX = initResX;
-	dispResY = initResY;
+	disp->getResolution(initResX,initResY);
+	disp->getCornerNW(initPosX,initPosY);
+	return disp->getIndex();
+}
+
+void calculate_init_window_size(
+	const int32_t& dispResX, const int32_t& dispResY,
+	int32_t& initResX, int32_t& initResY,
+	int32_t& initPosX, int32_t& initPosY
+) {
 	initResX -= RESX_Margin;
 	initResY -= RESY_Margin;
 	if (config_data.Display_Preferences.ScaleWindowToScreenSize == true) {
@@ -1254,6 +1239,38 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 	initPosX += (dispResX - initResX) / 2;
 	initPosY += (dispResY - initResY) / 2;
+}
+
+int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+	init_config_data();
+	//SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
+		return -1;
+	}
+	printf("\nSystem Information:");
+	int32_t dispResX, dispResY;
+	int32_t initResX, initResY, initPosX, initPosY;
+	int32_t initDisplayIndex = loadDisplayInformation(config_data.Display_Preferences,initResX,initResY,initPosX,initPosY);
+	if (initDisplayIndex == 0) {
+		printCriticalError("init_Render failed to loadDisplayInformation");
+	}
+	dispResX = initResX;
+	dispResY = initResY;
+
+	//printFlush("\nOld: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
+	switch (config_data.Display_Preferences.Bootup_Fullscreen) {
+		case Display_Fullscreen::Windowed_Fullscreen:
+			break;
+		case Display_Fullscreen::Windowed:
+		default:
+			calculate_init_window_size(
+				dispResX, dispResY,
+				initResX, initResY,
+				initPosX, initPosY
+			);
+	}
+
 	//printFlush("\nNew: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
@@ -1282,6 +1299,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	SDL_SetWindowMaximumSize(window, RESX_Maximum, RESY_Maximum);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
+	set_Window_Fullscreen_Mode((Display_Fullscreen::Display_Fullscreen_Enum)config_data.Display_Preferences.Bootup_Fullscreen);
 	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
 
 	super_screenshot_maxThreads = std::thread::hardware_concurrency();
@@ -1321,7 +1339,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 	config_data.Display_Preferences.Display_Config_Hash = getDisplayConfigHash();
 	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
-	ABORT_RENDERING = true;
+
 	bootup_Fractal_Frame_Rendered = false;
 	printFlush("\n");
 	write_Render_Ready(true);
