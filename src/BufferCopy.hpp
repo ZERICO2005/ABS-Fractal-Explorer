@@ -33,7 +33,7 @@ inline void set_Buffer_Data(
 /* buf{src, dst}, src{cord, size}, dst{cord, size}, allowClipping | Copies a portion of Src buffer to a portion of Dst */
 void BufferCopy(
 	uint8_t* __restrict__ dstBuf, const uint8_t* __restrict__ srcBuf,
-	const Buffer_Data& dstData, const Buffer_Data& srcData,
+	const Buffer_Data dstData, const Buffer_Data srcData,
 	int32_t dstPosX, int32_t dstPosY, uint32_t dstLenX, uint32_t dstLenY,
 	uint32_t srcPosX, uint32_t srcPosY, uint32_t srcLenX, uint32_t srcLenY,
 	bool allowClipping = true
@@ -42,7 +42,7 @@ void BufferCopy(
 /* buf{src, dst}, dst{cord} allowClipping | Copies Src buffer to a location on Dst */
 void BufferCopy(
 	uint8_t* __restrict__ dstBuf, const uint8_t* __restrict__ srcBuf,
-	const Buffer_Data& dstData, const Buffer_Data& srcData,
+	const Buffer_Data dstData, const Buffer_Data srcData,
 	int32_t dstPosX, int32_t dstPosY,
 	bool allowClipping = true
 );
@@ -50,7 +50,7 @@ void BufferCopy(
 /* buf{src, dst}, allowClipping | Copies Src buffer to Dst */
 void BufferCopy(
 	uint8_t* __restrict__ dstBuf, const uint8_t* __restrict__ srcBuf,
-	const Buffer_Data& dstData, const Buffer_Data& srcData,
+	const Buffer_Data dstData, const Buffer_Data srcData,
 	bool allowClipping = true
 );
 

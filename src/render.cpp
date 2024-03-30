@@ -12,6 +12,7 @@
 #include "temp_global_render.h"
 
 #include "copyBuffer.h"
+#include "BufferCopy.hpp"
 #include "fractal.h"
 #include "keybind.h"
 #include "engine.h"
@@ -298,43 +299,6 @@ int setup_fracExpKB(int argc, char* argv[]) {
 	return 0;
 }
 
-// // Amount of displays detected
-// uint32_t DISPLAY_COUNT = 0;
-// /* Display Bootup */
-// 	namespace Display_Bootup_Legacy {
-// 		enum Display_Bootup_Enum_Legacy {
-// 			Automatic,First,Last,Specific,Left,Right,Center,Top,Bottom,TopLeft,TopRight,BottomLeft,BottomRight,HighResolution,HighFrameRate,LowResolution,LowFrameRate,Length
-// 		};
-// 	};
-// 	uint32_t SPECIFIC_BOOTUP_DISPLAY = 1; // Supposed to be save data
-// 	uint32_t Display_Match[Display_Bootup_Legacy::Length];
-// 	Display_Bootup_Legacy::Display_Bootup_Enum_Legacy Display_Bootup_Type = Display_Bootup_Legacy::Automatic;
-// 	bool useDefaultWindowSize = false;
-
-// struct _DisplayInfo_Legacy {
-// 	uint32_t resX;
-// 	uint32_t resY;
-// 	int32_t posX;
-// 	int32_t posY;
-// 	uint32_t refreshRate;
-// 	uint8_t bbp;
-// 	const char* name;
-// }; typedef struct _DisplayInfo_Legacy DisplayInfo_Legacy;
-// DisplayInfo_Legacy* DisplayList;
-
-// // Counts from ONE
-// uint32_t CURRENT_DISPLAY = 1;
-// Counts from ONE
-// DisplayInfo_Legacy* getDisplayInfo(size_t i) { // size_t i = 1
-// 	if (i == 0 || i > (size_t)getDisplayCount() || DisplayList == NULL) {
-// 		return NULL;
-// 	}
-// 	return &DisplayList[i - 1];
-// }
-// Counts from ONE
-// DisplayInfo_Legacy* getCurrentDisplayInfo() {
-// 	return getDisplayInfo((size_t)CURRENT_DISPLAY);
-// }
 
 // static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
@@ -344,7 +308,7 @@ int setup_fracExpKB(int argc, char* argv[]) {
 // 	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
 // #endif
 
-bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
+bool windowResizingCode(uint32_t* resX = nullptr, uint32_t* resY = nullptr) {
 	bool reVal = false;
 	int32_t x = 0, y = 0;
 	static int32_t rX = 0, rY = 0;
@@ -364,13 +328,13 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 		TestGraphic.resY = (uint32_t)y - RESY_UI;
 		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
 		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram),getBufferBoxSize(&TestGraphic));
-		if (resX != NULL) { *resX = (uint32_t)x; }
-		if (resY != NULL) { *resY = (uint32_t)y; }
+		if (resX != nullptr) { *resX = (uint32_t)x; }
+		if (resY != nullptr) { *resY = (uint32_t)y; }
 		updateRenderData(&primaryRenderData);
 		updateRenderData(&secondaryRenderData);
 		write_Update_Level(Change_Level::Full_Reset);
 		Master.resizeBuffer(x,y,IMAGE_BUFFER_CHANNELS);
-		if (texture != NULL) {
+		if (texture != nullptr) {
 			SDL_DestroyTexture(texture);
 		}
 		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, (int32_t)Master.resX, (int32_t)Master.resY);
@@ -381,6 +345,11 @@ bool windowResizingCode(uint32_t* resX = NULL, uint32_t* resY = NULL) {
 	rX = x;
 	rY = y;
 	return reVal;
+}
+
+void force_resizeWindow(dim32_t resX, dim32_t resY) {
+	SDL_SetWindowSize(window, resX, resY);
+	windowResizingCode(nullptr, nullptr);
 }
 
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode) {
@@ -397,12 +366,32 @@ void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum full
 		case Display_Fullscreen::Windowed:
 		default:
 			{
-				// int32_t initResX, initResY, initPosX, initPosY;
-				// calculate_init_window_size();
-				SDL_SetWindowFullscreen(window, 0);
+				int32_t dispResX, dispResY, initResX, initResY, initPosX, initPosY;
+				const DisplayInfo* disp = getDisplayFromWindowPosition(window);
+				if (disp != nullptr) {
+					disp->getResolution(dispResX, dispResY);
+					disp->getResolution(initResX, initResY);
+					calculate_init_window_size(dispResX, dispResY, initResX, initResY, initPosX, initPosY);
+					force_resizeWindow(initResX, initResY);
+					SDL_SetWindowPosition(window, initPosX, initPosY);
+					SDL_SetWindowFullscreen(window, 0);
+				}
 			}
 			break;
 	};
+}
+
+void toggle_Window_Fullscreen_Mode() {
+	dim32_t resX, resY;
+	const DisplayInfo* disp = getDisplayFromWindowPosition(window);
+	if (disp != nullptr) {
+		disp->getResolution(resX, resY);
+		if ((dim32_t)Master.resX == resX && (dim32_t)Master.resY == resY) {
+			set_Window_Fullscreen_Mode(Display_Fullscreen::Windowed);
+			return;
+		}
+	}
+	set_Window_Fullscreen_Mode(Display_Fullscreen::Windowed_Fullscreen);
 }
 
 void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characters */
@@ -621,7 +610,7 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 // fp64 GUI_FrameTime = 1.0/60.0;
 // fp64 GUI_FrameRate = 60.0;
 
-int updateFractalParameters() {
+int_enum updateFractalParameters() {
 	using namespace Key_Function;
 	using namespace Change_Level;
 	#define FRAC frac.type.abs_mandelbrot
@@ -632,7 +621,7 @@ int updateFractalParameters() {
 
 	moveDelta *= config_sensitivity.global;
 
-	int update_level = Change_Level::Nothing;
+	int_enum update_level = Change_Level::Nothing;
 
 	/* Magic Constants */
 		#define ABS_Mandelbrot_Default_Power 2
@@ -936,7 +925,7 @@ int updateFractalParameters() {
 	/* ABS Mandelbrot */
 	/* Polar Mandelbrot */
 	/* Global Application Functions */
-		#define GUI_MENU_TOGGLE(m) buttonSelection = (buttonSelection == (m)) ? -1 : (m);
+	#define GUI_MENU_TOGGLE(m) buttonSelection = (buttonSelection == (m)) ? -1 : (m);
 		if (funcTimeDelay(inputFormula,0.4)) {
 			GUI_MENU_TOGGLE(GUI_Menu_Coordinates);
 		}
@@ -954,6 +943,13 @@ int updateFractalParameters() {
 		}
 		if (funcTimeDelay(openSettingsMenu,0.4)) {
 			GUI_MENU_TOGGLE(GUI_Menu_Settings);
+		}
+		if (funcTimeDelay(toggleFullscreen,0.4)) {
+			toggle_Window_Fullscreen_Mode();
+		}
+		if (funcTimeDelay(refreshFractal,0.4)) {
+			//write_Update_Level(Change_Level::Refresh);
+			write_Update_Level(Change_Level::Moderate_Reset);
 		}
 		if (funcTimeDelay(takeScreenshot,0.4)) {
 			exportScreenshot();
@@ -995,7 +991,7 @@ void updateFrameRate(fp64 frameRate) {
 }
 
 
-int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 	updateFrameRate(FRAME_RATE + FRAME_RATE_OFFSET);
 	GUI_FrameTimer = TimerBox(GUI_FrameTime);
 
@@ -1049,7 +1045,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	return 0;
 }
 
-// int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+// int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 // 	uint64_t yeildTimeNano = 80000; /* 80 micro seconds */
 // 	uint64_t FRAME_RATE_NANO = SECONDS_TO_NANO(1.0 / FRAME_RATE);
 // 	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
@@ -1218,6 +1214,8 @@ void calculate_init_window_size(
 	int32_t& initResX, int32_t& initResY,
 	int32_t& initPosX, int32_t& initPosY
 ) {
+	initPosX = 0;
+	initPosY = 0;
 	initResX -= RESX_Margin;
 	initResY -= RESY_Margin;
 	if (config_data.Display_Preferences.ScaleWindowToScreenSize == true) {
@@ -1245,7 +1243,7 @@ void calculate_init_window_size(
 	initPosY += (dispResY - initResY) / 2;
 }
 
-int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 	init_config_data();
 	//SDL_Init(SDL_INIT_VIDEO);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -1354,7 +1352,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
-	start_Render(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
+	start_Render(QUIT_FLAG,ABORT_RENDERING);
 	return 0;
 }
 
@@ -1461,7 +1459,7 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
 				pattern[z] = ((w + p) % 256) / 4; pattern[z] /= color_square_divider; z++;
 				pattern[z] = 0; z++;
-				pattern[z] = 0xFF; z++;
+				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
 			break;
 		case Status_Graphic::Graphic_Pause:
@@ -1469,7 +1467,7 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 				pattern[z] = 0; z++;
 				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
 				pattern[z] = 0; z++;
-				pattern[z] = 0xFF; z++;
+				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
 			break;
 		case Status_Graphic::Graphic_Loading:
@@ -1478,7 +1476,7 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 				pattern[z] = 0; z++;
 				pattern[z] = 0; z++;
 				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
-				pattern[z] = 0xFF; z++;
+				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
 			break;
 	};
@@ -1672,9 +1670,32 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// 	return -1;
 	// }
 	//printfInterval(0.6,"\n%p: %ux%u %uC %uP",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
-	//uint64_t stopWatch = getNanoTime();
-	copyBuffer(blit,temp_MASTER,0,(int32_t)RESY_UI,true);
-	//printfInterval(0.6,"\nFunc: %.3lfms\n",NANO_TO_SECONDS(getNanoTime() - stopWatch) * 1000.0);
+	
+
+	
+	// nano64_t startTime0 = getNanoTime();
+	copyBuffer_VeritcalOffset(temp_MASTER,blit,(size_t)RESY_UI);
+		// uint8_t* dstBuf = temp_MASTER.vram;
+		// Buffer_Data srcData; set_Buffer_Data(srcData,
+		// 	blit.resX, blit.resY,
+		// 	IMAGE_BUFFER_CHANNELS, (size_t)temp_MASTER.resX * IMAGE_BUFFER_CHANNELS
+		// );
+		// const uint8_t* srcBuf = blit.vram;
+		// Buffer_Data dstData; set_Buffer_Data(dstData,
+		// 	temp_MASTER.resX, temp_MASTER.resY,
+		// 	IMAGE_BUFFER_CHANNELS, (size_t)temp_MASTER.resX * IMAGE_BUFFER_CHANNELS
+		// );
+		// BufferCopy(dstBuf, srcBuf, dstData, srcData, 0, (int32_t)RESY_UI, true);
+	// nano64_t endTime0 = getNanoTime();
+	// nano64_t startTime1 = getNanoTime();
+	// 	copyBuffer(blit,temp_MASTER,0,(int32_t)RESY_UI,true);
+	// nano64_t endTime1 = getNanoTime();
+
+	// printfInterval(0.1,"\ntime0: %.3lf\ntime1: %.3lf\n",
+	// 	(fp64)(endTime0 - startTime0) / 1.0e6,
+	// 	(fp64)(endTime1 - startTime1) / 1.0e6
+	// );
+
 	FREE(blit.vram);
 	#undef FRAC
 	return 0;
@@ -1722,13 +1743,13 @@ void newFrame() {
 		}
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
-		copyBuffer(TestGraphic,temp_MASTER,0,(int32_t)RESY_UI,false);
+		copyBuffer_VeritcalOffset(temp_MASTER,TestGraphic,(size_t)RESY_UI);
 		exportFractalBuffer = false;
 	} else if (primaryBufferValid == false) {
 		renderStatusGraphic(Status_Graphic::Graphic_Loading,1.0); // Renders a loading screen if Fractal buffers are unavailable
 		BufferBox temp_MASTER;
 		Master.getBufferBox(&temp_MASTER);
-		copyBuffer(TestGraphic,temp_MASTER,0,(int32_t)RESY_UI,false);
+		copyBuffer_VeritcalOffset(temp_MASTER,TestGraphic,(size_t)RESY_UI);
 		exportFractalBuffer = false;
 	}
 	#ifdef Use_OpenCV_Scaler

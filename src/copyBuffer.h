@@ -10,13 +10,13 @@
 #define COPYBUFFER_H
 #include "Common_Def.h"
 
-struct _BufferBox {
+struct BufferBox {
 	uint8_t* vram;
 	uint32_t resX;
 	uint32_t resY;
 	uint8_t channels;
 	uint8_t padding;
-}; typedef struct _BufferBox BufferBox;
+};
 
 void initBufferBox(BufferBox* box, uint8_t* buf, uint32_t resX, uint32_t resY, uint8_t channels, uint8_t padding = 0);
 
@@ -42,5 +42,30 @@ void copyBuffer(BufferBox bufSrc, BufferBox bufDst, int32_t x, int32_t y, bool a
 
 /* buf{src, dst}, allowClipping | Copies Src buffer to Dst */
 void copyBuffer(BufferBox bufSrc, BufferBox bufDst, bool allowClipping);
+
+// Copies all of src into dst + verticalOffset if the pitch of each BufferBox is the same
+inline void copyBuffer_VeritcalOffset(
+	const BufferBox& dst, const BufferBox& src,
+	size_t verticalOffset
+) {
+	if (
+		(src.vram == nullptr || dst.vram == nullptr) ||
+		(verticalOffset >= (size_t)dst.resY)
+	) {
+		return;
+	}
+	size_t srcPitch = (size_t)src.resX * (size_t)src.channels;
+	srcPitch += (src.padding != 0 && srcPitch % (size_t)src.padding != 0) ? ((size_t)src.padding - (srcPitch % (size_t)src.padding)) : 0;
+	size_t dstPitch = (size_t)dst.resX * (size_t)dst.channels;
+	dstPitch += (dst.padding != 0 && dstPitch % (size_t)dst.padding != 0) ? ((size_t)dst.padding - (dstPitch % (size_t)dst.padding)) : 0;
+	if (srcPitch != dstPitch) { return; }
+
+	size_t offset = (verticalOffset) * dstPitch;
+	size_t copySize = ((size_t)dst.resY - verticalOffset) * dstPitch;
+	if (copySize > src.resY * srcPitch) {
+		copySize = src.resY * srcPitch;
+	}
+	memcpy(&dst.vram[offset], src.vram, copySize);
+}
 
 #endif /* COPYBUFFER_H */

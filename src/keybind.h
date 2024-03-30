@@ -17,15 +17,12 @@
 void renderKeyboard(
 	BufferBox* buf, int32_t ResX, fp64 minScaleX, fp64 maxScaleX,
 	uint8_t KeyboardSize, bool includeNumpad,
-	int32_t curX, int32_t curY, bool click, SDL_Scancode* code, bool* hoverInBounds
+	int32_t curX, int32_t curY, bool click, SDL_Scancode* KB_scancode, SDL_KeyCode* KB_keycode, bool* hoverInBounds
 );
 
 // Default colors
 void initKeyboardGraphics(fp64 hue, fp64 sat, fp64 val);
 void terminateKeyboardGraphics();
-
-SDL_KeyCode getHover_Keycode(uint32_t x, uint32_t y);
-SDL_Scancode getHover_Scancode(uint32_t x, uint32_t y);
 
 void setRGB_Scancode(uint8_t r, uint8_t g, uint8_t b, SDL_Scancode code);
 void setColor_Scancode(uint32_t color, SDL_Scancode code);

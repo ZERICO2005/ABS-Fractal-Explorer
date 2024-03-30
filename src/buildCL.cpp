@@ -11,7 +11,7 @@
 #include "buildCL.h"
 
 // Code below is version 1.0.2
-const char* FractalOpenCL_SRC = "\
+const char* const FractalOpenCL_SRC = "\
 \n\
 /* Type Definitions */\n\
 	typedef uchar	uint8_t;\n\
@@ -52,6 +52,7 @@ const char* FractalOpenCL_SRC = "\
 			fp32 zr0, fp32 zi0,\n\
 			uint32_t formula, fp32 power, uint32_t sample,\n\
 			fp32 rot,\n\
+			fp32 breakoutValue,\n\
 			fp32 numZ,fp32 numW,\n\
 			__global uint8_t* resultBuf,\n\
 			fp32 exterior_R_Freq,fp32 exterior_R_Phase,fp32 exterior_R_Amp,\n\
@@ -121,8 +122,8 @@ const char* FractalOpenCL_SRC = "\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
 						low = zs;\n\
-					} else if (zs > BREAKOUT) {\n\
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(power)));\n\
+					} else if (zs > breakoutValue) {\n\
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(power)));\n\
 						break;\n\
 					}\n\
 				}\n\
@@ -153,8 +154,8 @@ const char* FractalOpenCL_SRC = "\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
 						low = zs;\n\
-					} else if (zs > BREAKOUT) {\n\
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(2.0f)));\n\
+					} else if (zs > breakoutValue) {\n\
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(2.0f)));\n\
 						break;\n\
 					}\n\
 				}\n\
@@ -201,8 +202,8 @@ const char* FractalOpenCL_SRC = "\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
 						low = zs;\n\
-					} else if (zs > BREAKOUT) {\n\
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(3.0f)));\n\
+					} else if (zs > breakoutValue) {\n\
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(3.0f)));\n\
 						break;\n\
 					}\n\
 				}\n\
@@ -253,8 +254,8 @@ const char* FractalOpenCL_SRC = "\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
 						low = zs;\n\
-					} else if (zs > BREAKOUT) {\n\
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(4.0f)));\n\
+					} else if (zs > breakoutValue) {\n\
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(4.0f)));\n\
 						break;\n\
 					}\n\
 				}\n\
@@ -319,8 +320,8 @@ const char* FractalOpenCL_SRC = "\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
 						low = zs;\n\
-					} else if (zs > BREAKOUT) {\n\
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(5.0f)));\n\
+					} else if (zs > breakoutValue) {\n\
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(5.0f)));\n\
 						break;\n\
 					}\n\
 				}\n\
@@ -388,14 +389,14 @@ const char* FractalOpenCL_SRC = "\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
 						low = zs;\n\
-					} else if (zs > BREAKOUT) {\n\
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(6.0f)));\n\
+					} else if (zs > breakoutValue) {\n\
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(6.0f)));\n\
 						break;\n\
 					}\n\
 				}\n\
 			}\n\
 			\n\
-			if (zs > BREAKOUT) {\n\
+			if (zs > breakoutValue) {\n\
 				outR += (uint32_t)(exterior_R_Amp * (511.5f - 511.5f * cos(TAU * (exterior_R_Freq * smooth + exterior_R_Phase))));\n\
 				outG += (uint32_t)(exterior_G_Amp * (511.5f - 511.5f * cos(TAU * (exterior_G_Freq * smooth + exterior_G_Phase))));\n\
 				outB += (uint32_t)(exterior_B_Amp * (511.5f - 511.5f * cos(TAU * (exterior_B_Freq * smooth + exterior_B_Phase))));\n\

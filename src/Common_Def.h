@@ -54,9 +54,9 @@ typedef int64_t i64;
 typedef float fp32;
 typedef double fp64;
 
-typedef int64_t nano64_t;
-
 typedef int int_enum;
+typedef int64_t nano64_t;
+typedef int32_t dim32_t;
 
 /* Version */
 

@@ -255,6 +255,8 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	}
 	fp32 sX = (fp32)param.sX;
 	fp32 sY = (fp32)param.sY;
+	fp32 breakoutValue = (fp32)param.breakoutValue;
+	valueClamp(breakoutValue,0.25f,65536.0f);
 	uint32_t kArg = 0;
 
 	const uint32_t debug_val_0x00 = 0x10;
@@ -283,6 +285,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &power);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &sample);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &rot);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &breakoutValue);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &numZ);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &numW);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(cl_mem), &deviceResultBuf);

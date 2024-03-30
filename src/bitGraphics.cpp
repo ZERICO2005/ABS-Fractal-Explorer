@@ -291,7 +291,7 @@ void Bit_Graphics::text6x8(size_t xW, size_t yW, char lexicon) {
 		b <<= 1;
 	}
 }
-void Bit_Graphics::printText6x8(size_t xW, size_t yW, char* text) {
+void Bit_Graphics::printText6x8(size_t xW, size_t yW, const char* text) {
 	if (initialized == false) { return; }
 	size_t x = xW;
 	size_t y = yW;
@@ -324,7 +324,7 @@ void Bit_Graphics::printText6x8(size_t xW, size_t yW, char* text) {
 		t++;
 	}
 }
-void Bit_Graphics::printTextWarp6x8(size_t xW, size_t yW, char* text, size_t width = 0) {
+void Bit_Graphics::printTextWarp6x8(size_t xW, size_t yW, const char* text, size_t width = 0) {
 	if (initialized == false) { return; }
 	if (width == 0) { width = ResX; }
 	size_t x = xW;

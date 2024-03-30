@@ -147,7 +147,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 	return 0;
 }
 
-int render_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 	if (currentBuf == nullptr || currentBuf->vram == nullptr || currentBuf->allocated() == false) {
 		return -1;
 	}
@@ -197,7 +197,7 @@ int render_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERI
 	return 0;
 }
 
-int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 	using namespace Key_Function;
 	
 	TimerBox fracTime(1.0 / (60.0 + 0.01));
@@ -216,7 +216,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 				currentBuf->resizeBuffer(sizeBuf.resX / primaryRender.subSample,sizeBuf.resY / primaryRender.subSample,sizeBuf.channels);
 			}
 			//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
-			render_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
+			render_Engine(ABORT_RENDERING);
 			//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);
 			next_Write_Cycle_Pos(&currentBuf,Primary_Full);
 			deltaTime = fracTime.getDeltaTime();
@@ -241,7 +241,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	return 0;
 }
 
-int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex) {
+int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 	int32_t init_OpenCL_ret = init_OpenCL();
 	if (init_OpenCL_ret != 0) {
 		printError("OpenCL failed to initialize, error code: %d",init_OpenCL_ret);
@@ -257,7 +257,7 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
-	start_Engine(QUIT_FLAG,ABORT_RENDERING,Key_Function_Mutex);
+	start_Engine(QUIT_FLAG,ABORT_RENDERING);
 	return 0;
 }
 

@@ -1142,7 +1142,7 @@ void Menu_Keybinds() {
 		renderKeyboard(
 			&kBuf, kResX, 5.75, 12.0,
 			(uint8_t)Combo_keyboardSize, displayNumpad,
-			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover, &hoverInBounds
+			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover, nullptr, &hoverInBounds
 		);
 		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, (int32_t)kBuf.resX, (int32_t)kBuf.resY, (int32_t)(IMAGE_BUFFER_CHANNELS * 8), (int32_t)(IMAGE_BUFFER_CHANNELS * kBuf.resX), SDL_PIXELFORMAT_ABGR8888);
 		if (kSurface == nullptr) {

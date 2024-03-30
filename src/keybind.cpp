@@ -35,7 +35,7 @@ Bit_Graphics Text_Graphic;
 #define rktY 17 // 2 rows
 
 void renderKeyText(
-	char* text, uint8_t cR, uint8_t cG, uint8_t cB, 
+	const char* text, uint8_t cR, uint8_t cG, uint8_t cB, 
 	uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1
 ) {
 	if (Text_Graphic.isInitialized() == false) { return; }
@@ -124,11 +124,13 @@ void initKeyboardGraphics(fp64 hue, fp64 sat, fp64 val) {
 		Scancode_Color_Press[z] = bP;
 		Scancode_Color_Click[z] = bC;
 		z++;
-		Scancode_Color_Key[z] = 0xFF;
-		Scancode_Color_Hover[z] = 0xFF;
-		Scancode_Color_Press[z] = 0xFF;
-		Scancode_Color_Click[z] = 0xFF;
-		z++;
+		if (IMAGE_BUFFER_CHANNELS == 4) {
+			Scancode_Color_Key[z] = 0xFF;
+			Scancode_Color_Hover[z] = 0xFF;
+			Scancode_Color_Press[z] = 0xFF;
+			Scancode_Color_Click[z] = 0xFF;
+			z++;
+		}
 	}
 }
 void terminateKeyboardGraphics() {
@@ -157,7 +159,7 @@ void calcBoardBounds(
 
 void renderBoard(
 	enum Keyboard_Enum board,
-	int32_t& curX, int32_t& curY, bool& click, SDL_Scancode* code,
+	int32_t& curX, int32_t& curY, bool& click, SDL_Scancode* KB_scancode, SDL_KeyCode* KB_keycode,
 	int32_t offsetX, int32_t offsetY,
 	const int32_t& KeyboardBorder, const int32_t& KeySpacing,
 	const fp64& keyScaleX, const fp64& keyScaleY
@@ -175,7 +177,8 @@ void renderBoard(
 			uint8_t* col = Scancode_Color_Key;
 			if ((curX >= x0 && curX <= x0 + x1) && (curY >= y0 && curY <= y0 + y1)) {
 				col = click ? Scancode_Color_Click : Scancode_Color_Hover;
-				*code = k.Scancode;
+				if (KB_scancode != nullptr) { *KB_scancode = k.Scancode; }
+				if (KB_keycode != nullptr) { *KB_keycode = k.Keycode; }
 			}
 			if (keyPressed(k.Scancode) && col != Scancode_Color_Click) {
 				col = Scancode_Color_Press;
@@ -193,7 +196,7 @@ void renderBoard(
 void renderKeyboard(
 	BufferBox* buf, int32_t ResX, fp64 minScaleX, fp64 maxScaleX,
 	uint8_t KeyboardSize, bool includeNumpad,
-	int32_t curX, int32_t curY, bool click, SDL_Scancode* code, bool* hoverInBounds
+	int32_t curX, int32_t curY, bool click, SDL_Scancode* KB_scancode, SDL_KeyCode* KB_keycode, bool* hoverInBounds
 ) {
 	if (buf == NULL) { return; }
 	initBufferBox(buf,NULL,0,0,IMAGE_BUFFER_CHANNELS,0);
@@ -283,7 +286,8 @@ void renderKeyboard(
 		}
 	}
 	
-	*code = SDL_SCANCODE_UNKNOWN;
+	if (KB_scancode != nullptr) { *KB_scancode = SDL_SCANCODE_UNKNOWN; }
+	if (KB_keycode != nullptr) { *KB_keycode = SDLK_UNKNOWN; }
 
 	Keyboard_Graphic.gColor_Hex(0xC0C0C0);
 	Keyboard_Graphic.fillScreen();
@@ -291,7 +295,7 @@ void renderKeyboard(
 	renderBoard(
 		KEYB_ANSI,
 		curX, curY,
-		click, code,
+		click, KB_scancode, KB_keycode,
 		offsetX, offsetY,
 		KeyboardBorder, KeySpacing,
 		keyScaleX, keyScaleY
@@ -300,7 +304,7 @@ void renderKeyboard(
 		renderBoard(
 			(Keyboard_Enum)(KeyboardSize * 2 + 1),
 			curX, curY,
-			click, code,
+			click, KB_scancode, KB_keycode,
 			offsetX, offsetY,
 			KeyboardBorder, KeySpacing,
 			keyScaleX, keyScaleY
@@ -310,7 +314,7 @@ void renderKeyboard(
 		renderBoard(
 			(Keyboard_Enum)(KeyboardSize * 2),
 			curX, curY,
-			click, code,
+			click, KB_scancode, KB_keycode,
 			offsetX, offsetY,
 			KeyboardBorder, KeySpacing,
 			keyScaleX, keyScaleY
@@ -325,13 +329,6 @@ void renderKeyboard(
 
 	Keyboard_Graphic.swapBuffer();
 	buf->vram = Keyboard_Graphic.getDisplayBuffer();
-}
-
-SDL_KeyCode getHover_Keycode(uint32_t x, uint32_t y) {
-	return SDLK_UNKNOWN;
-}
-SDL_Scancode getHover_Scancode(uint32_t x, uint32_t y) {
-	return SDL_SCANCODE_UNKNOWN;
 }
 
 void setRGB_Scancode(uint8_t r, uint8_t g, uint8_t b, SDL_Scancode code) {

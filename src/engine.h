@@ -14,7 +14,7 @@
 
 int setup_fracExp(int argc, char* argv[]);
 
-int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex);
+int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING);
 
 int terminate_Engine();
 
@@ -38,9 +38,9 @@ namespace Key_Function {
 		"FORMULA",
 		"toggleScreenSplit","nextScreenSplit","prevScreenSplit","clockwiseCornerSplit","counterClockwiseCornerSplit","toggleFloatingWindow","swapPrimaryAndSecondary",
 		"SCREEN_SPLIT",
-		"openFractalMenu","exportFractal","importFractal","takeScreenshot","takeSuperScreenshot","openRenderingMenu","openSettingsMenu","openKeyBindsMenu","abortRendering","exitApplication","toggleMenuBar","toggleCordinateBar","toggleButtonBar",
+		"openFractalMenu","exportFractal","importFractal","takeScreenshot","takeSuperScreenshot","openRenderingMenu","openSettingsMenu","openKeyBindsMenu","abortRendering","exitApplication","toggleFullscreen","toggleMenuBar","toggleCordinateBar","toggleButtonBar",
 		"FUNCTIONS",
-		"switchCPUandGPU","fp16GpuRendering","fp32GpuRendering","fp64GpuRendering","fp32CpuRendering","fp64CpuRendering","fp80CpuRendering","fp128CpuRendering","incSuperSample","decSuperSample","resetSuperSample","incSubSample","decSubSample","resetSubSample",
+		"refreshFractal","switchCPUandGPU","fp16GpuRendering","fp32GpuRendering","fp64GpuRendering","fp32CpuRendering","fp64CpuRendering","fp80CpuRendering","fp128CpuRendering","incSuperSample","decSuperSample","resetSuperSample","incSubSample","decSubSample","resetSubSample",
 		"RENDERING",
 		"Parameter_Function_Count"
 	};
@@ -106,9 +106,11 @@ namespace Key_Function {
 			openKeyBindsMenu,
 			abortRendering,
 			exitApplication,
+			toggleFullscreen,
 			toggleMenuBar,toggleCordinateBar,toggleButtonBar,
 			FUNCTIONS,
 		/* Rendering */
+			refreshFractal,
 			switchCPUandGPU,
 			fp16GpuRendering,fp32GpuRendering,fp64GpuRendering,
 			fp32CpuRendering,fp64CpuRendering,fp80CpuRendering,fp128CpuRendering,

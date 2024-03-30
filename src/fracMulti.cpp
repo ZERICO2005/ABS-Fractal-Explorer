@@ -15,7 +15,14 @@
 
 /* General Formulas */
 
-uint64_t factorialLUT[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000,20922789888000,355687428096000,6402373705728000,121645100408832000,2432902008176640000};
+uint64_t factorialLUT[] = {
+	/*        0! */ 1,
+	/*  1! -  4! */ 1, 2, 6, 24,
+	/*  5! -  8! */ 120, 720,5040,40320,
+	/*  9! - 12! */ 362880, 3628800,39916800,479001600,
+	/* 13! - 16! */ 6227020800, 87178291200,1307674368000, 20922789888000,
+	/* 17! - 20! */ 355687428096000, 6402373705728000, 121645100408832000, 2432902008176640000
+};
 
 #define nPr(n,r) (factorialLUT[(n)] / (factorialLUT[(n) - (r)]))
 #define nCr(n,r) (factorialLUT[(n)] / (factorialLUT[(r)] * factorialLUT[(n) - (r)]))
@@ -28,10 +35,10 @@ uint64_t factorialLUT[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800
 
 // 511.5 for 10bit color
 // 127.5 for 8bit color
-#define Color_Mult 127.5
+#define Color_Mult 511.5
 // * 4 for 10bit color
 // * 1 for 8bit color
-#define Div_Mult(s) ((s) * 1)
+inline uint32_t Div_Mult(uint32_t s) { return s * 4; }
 
 #ifdef MONOCHROME_MODE
 	#define CPU_Interior_Coloring(fpX); \
@@ -41,7 +48,7 @@ uint64_t factorialLUT[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800
 		outA += 0xFF;
 
 	#define CPU_Exterior_Coloring(fpX,l); \
-		fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
+		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
 		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
 		outG += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
 		outB += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
@@ -54,7 +61,7 @@ uint64_t factorialLUT[] = {1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800
 		outA += 0xFF;
 
 	#define CPU_Exterior_Coloring(fpX,l); \
-		fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
+		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
 		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
 		outG += (uint32_t)(param.gA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.gF * smooth + param.gP))));\
 		outB += (uint32_t)(param.bA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.bF * smooth + param.bP))));\
@@ -559,7 +566,7 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 							fpX acc = (fpX)1.0;\
 // 							acc *= fSign[iT];\
 // 							ziAcc += acc;\
-// 						}\sample * sample * 4
+// 						} /* sample * sample * 4 */\
 // 						\
 // 						ziAcc = zr * zi * 2;\
 // 						zrAcc = (fOuter[2]) ? fabs(zrAcc) : zrAcc;\
@@ -576,7 +583,7 @@ void sexticRenderFP64(FractalParameters) { sexticRender(fp64) }
 // 							outR += (uint32_t)(param.rA * (Color_Mult - Color_Mult * cos(TAU * (param.rF * smooth + param.rP))));\
 // 							outG += (uint32_t)(param.gA * (Color_Mult - Color_Mult * cos(TAU * (param.gF * smooth + param.gP))));\
 // 							outB += (uint32_t)(param.bA * (Color_Mult - Color_Mult * cos(TAU * (param.bF * smooth + param.bP))));\
-//							outA += 0xFF;
+//							outA += 0xFF;\
 // 							break;\
 // 						}\
 // 					}\

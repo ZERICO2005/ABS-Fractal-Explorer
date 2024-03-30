@@ -63,7 +63,7 @@ namespace OPENCV_Interpolation {
 
 int setup_fracExpKB(int argc, char* argv[]);
 
-int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING, std::mutex& Key_Function_Mutex);
+int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING);
 
 int terminate_Render();
 
@@ -86,6 +86,8 @@ uint64_t get_Hardware_Hash();
 /* Window Configuration */
 
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode);
+
+void toggle_Window_Fullscreen_Mode();
 
 void calculate_init_window_size(
 	const int32_t& dispResX, const int32_t& dispResY,
