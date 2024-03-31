@@ -49,8 +49,8 @@ inline void copyBuffer_VeritcalOffset(
 	size_t verticalOffset
 ) {
 	if (
-		(validateBufferBox(&dst,true) == true) ||
-		(validateBufferBox(&src,true) == true) ||
+		(validateBufferBox(&dst,true) == false) ||
+		(validateBufferBox(&src,true) == false) ||
 		(verticalOffset >= (size_t)dst.resY)
 	) {
 		return;

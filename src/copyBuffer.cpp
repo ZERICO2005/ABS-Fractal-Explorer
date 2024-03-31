@@ -139,7 +139,6 @@ void copyBuffer(
 		if (dx0 + dx1 > bufDst.resX || dy0 + dy1 > bufDst.resY) { return; } /* Positive Dst OOB */
 		if (sx1 > dx1 || sy1 > dy1) { return; } /* Src is larger than Dst */
 	}
-	
 	blitBuffer(
 		bufSrc.vram,bufDst.vram,
 		(uint32_t)getBufferBoxPitch(&bufSrc),(uint32_t)getBufferBoxPitch(&bufDst),(uint32_t)bufDst.channels,
