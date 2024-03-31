@@ -155,9 +155,9 @@ void coordinate_to_pixel(fpX xI, fpX yI, int32_t* xO, int32_t* yO, const ABS_Man
 	xC /= (fpX)param->sX;
 	yC /= (fpX)param->sY;
 	/* Normalizes Coordinates */
-	uint32_t resX = ren->resX - 1;
-	uint32_t resY = ren->resY - 1;
-	uint32_t resZ = (resX >= resY) ? resY : resX;
+	dim32_t resX = ren->resX - 1;
+	dim32_t resY = ren->resY - 1;
+	dim32_t resZ = (resX >= resY) ? resY : resX;
 	*xO = (int32_t)( (xC * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resX) / (fpX)2.0) );
 	*yO = (int32_t)( (-yC * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resY) / (fpX)2.0) );
 }
@@ -170,9 +170,9 @@ void coordinate_to_image_cordinate(fpX xI, fpX yI, fp32* xO, fp32* yO, const ABS
 	xC /= (fpX)param->sX;
 	yC /= (fpX)param->sY;
 	/* Normalizes Coordinates */
-	uint32_t resX = ren->resX - 1;
-	uint32_t resY = ren->resY - 1;
-	uint32_t resZ = (resX >= resY) ? resY : resX;\
+	dim32_t resX = ren->resX - 1;
+	dim32_t resY = ren->resY - 1;
+	dim32_t resZ = (resX >= resY) ? resY : resX;\
 	*xO = (fp32)( (xC * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resX) / (fpX)2.0) );
 	*yO = (fp32)( (-yC * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resY) / (fpX)2.0) );
 }
@@ -180,8 +180,8 @@ void coordinate_to_image_cordinate(fpX xI, fpX yI, fp32* xO, fp32* yO, const ABS
 template <typename fpX>
 void pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, const ABS_Mandelbrot* param, const Render_Data* ren) {
 	/* Normalizes Coordinates */
-	uint32_t resX = ren->resX - 1;
-	uint32_t resY = ren->resY - 1;
+	dim32_t resX = ren->resX - 1;
+	dim32_t resY = ren->resY - 1;
 	fpX numX = ((fpX)resX / 2.0);
 	fpX numY = ((fpX)resY / 2.0);
 	fpX numZ = (resX >= resY) ? numY * pow((fpX)10.0, (fpX)param->zoom) : numX * pow((fpX)10.0, (fpX)param->zoom);
@@ -193,10 +193,10 @@ void pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, const ABS_Man
 }
 
 template <typename fpX>
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, fpX zoomVal, fpX rotSin, fpX rotCos, const ABS_Mandelbrot* param, uint32_t ResX, uint32_t ResY, uint32_t subSample) { \
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX* xO, fpX* yO, fpX zoomVal, fpX rotSin, fpX rotCos, const ABS_Mandelbrot* param, dim32_t ResX, dim32_t ResY, int32_t subSample) { \
 	/* Normalizes Coordinates */
-	uint32_t resX = ResX - 1;
-	uint32_t resY = ResY - 1;
+	dim32_t resX = ResX - 1;
+	dim32_t resY = ResY - 1;
 	fpX numX = ((fpX)resX / (fpX)2.0);
 	fpX numY = ((fpX)resY / (fpX)2.0);
 	fpX numZ = (resX >= resY) ? numY * zoomVal : numX * zoomVal;

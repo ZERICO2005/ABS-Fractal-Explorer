@@ -308,38 +308,43 @@ int setup_fracExpKB(int argc, char* argv[]) {
 // 	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
 // #endif
 
-bool windowResizingCode(uint32_t* resX = nullptr, uint32_t* resY = nullptr) {
-	bool reVal = false;
-	int32_t x = 0, y = 0;
-	static int32_t rX = 0, rY = 0;
-	SDL_GetWindowSize(window,&x,&y);
-	if ((rX != x || rY != y) && (rX != 0 && rY != 0)) {
-		if (x < RESX_Minimum) { x = RESX_Minimum; }
-		if (y < RESY_Minimum) { y = RESY_Minimum; }
-		if (x > RESX_Maximum) { x = RESX_Maximum; }
-		if (y > RESY_Maximum) { y = RESY_Maximum; }
+void force_resizeWindow(dim32_t resX, dim32_t resY) {
+		if (resX < RESX_Minimum) { resX = RESX_Minimum; }
+		if (resY < RESY_Minimum) { resY = RESY_Minimum; }
+		if (resX > RESX_Maximum) { resX = RESX_Maximum; }
+		if (resY > RESY_Maximum) { resY = RESY_Maximum; }
 		//if (x & 0x3) { x &= 0xFFFFFFFC; } // Sets resX to a multiple of 4 so I don't have to deal with padded and unpadded image buffers
 		
-		SDL_SetWindowSize(window,x,y);
-		SDL_RenderSetLogicalSize(renderer, x, y);
-		Master.resX = (uint32_t)x;
-		Master.resY = (uint32_t)y;
-		TestGraphic.resX = (uint32_t)x;
-		TestGraphic.resY = (uint32_t)y - RESY_UI;
+		SDL_SetWindowSize(window, resX, resY);
+		SDL_RenderSetLogicalSize(renderer, resX, resY);
+		Master.resX = resX;
+		Master.resY = resY;
+		TestGraphic.resX = resX;
+		TestGraphic.resY = resY - RESY_UI;
 		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
-		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram),getBufferBoxSize(&TestGraphic));
-		if (resX != nullptr) { *resX = (uint32_t)x; }
-		if (resY != nullptr) { *resY = (uint32_t)y; }
+		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram), getBufferBoxSize(&TestGraphic));
+
 		updateRenderData(&primaryRenderData);
 		updateRenderData(&secondaryRenderData);
 		write_Update_Level(Change_Level::Full_Reset);
-		Master.resizeBuffer(x,y,IMAGE_BUFFER_CHANNELS);
+		Master.resizeBuffer(resX, resY, IMAGE_BUFFER_CHANNELS);
 		if (texture != nullptr) {
 			SDL_DestroyTexture(texture);
 		}
-		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, (int32_t)Master.resX, (int32_t)Master.resY);
+		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, Master.resX, Master.resY);
 
-		write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
+		write_Buffer_Size({nullptr, Master.resX,Master.resY - RESY_UI, IMAGE_BUFFER_CHANNELS, 0});
+}
+
+bool windowResizingCode(dim32_t* resX = nullptr, dim32_t* resY = nullptr) {
+	bool reVal = false;
+	dim32_t x = 0, y = 0;
+	static dim32_t rX = 0, rY = 0;
+	SDL_GetWindowSize(window,&x,&y);
+	if ((rX != x || rY != y) && (rX != 0 && rY != 0)) {
+		force_resizeWindow(x, y);
+		if (resX != nullptr) { *resX = x; }
+		if (resY != nullptr) { *resY = y; }
 		reVal = true;
 	}
 	rX = x;
@@ -347,18 +352,15 @@ bool windowResizingCode(uint32_t* resX = nullptr, uint32_t* resY = nullptr) {
 	return reVal;
 }
 
-void force_resizeWindow(dim32_t resX, dim32_t resY) {
-	SDL_SetWindowSize(window, resX, resY);
-	windowResizingCode(nullptr, nullptr);
-}
-
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode) {
+	return; // This code creates werid problems
 	switch (fullscreen_mode) {
 		// case Display_Fullscreen::Fullscreen:
 		// 	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 		// 	break;
 		case Display_Fullscreen::Windowed_Fullscreen:
 			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+			windowResizingCode(nullptr, nullptr);
 			break;
 		// case Display_Fullscreen::Borderless_Fullscreen:
 		// 	SDL_SetWindowFullscreen(window, SDL_WINDOW_BORDERLESS);
@@ -366,6 +368,7 @@ void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum full
 		case Display_Fullscreen::Windowed:
 		default:
 			{
+				//SDL_SetWindowFullscreen(window, 0);
 				int32_t dispResX, dispResY, initResX, initResY, initPosX, initPosY;
 				const DisplayInfo* disp = getDisplayFromWindowPosition(window);
 				if (disp != nullptr) {
@@ -374,7 +377,6 @@ void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum full
 					calculate_init_window_size(dispResX, dispResY, initResX, initResY, initPosX, initPosY);
 					force_resizeWindow(initResX, initResY);
 					SDL_SetWindowPosition(window, initPosX, initPosY);
-					SDL_SetWindowFullscreen(window, 0);
 				}
 			}
 			break;
@@ -1168,7 +1170,7 @@ void terminate_config_data() {
 	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
 
 	int32_t windowPosX, windowPosY; SDL_GetWindowPosition(window, &windowPosX, &windowPosY);
-	int32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
+	dim32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
 	const DisplayInfo* currentDisplay = getDisplayFromPosition(
 		windowPosX + (windowResX / 2), windowPosY + (windowResY / 2)
 	);
@@ -1184,8 +1186,8 @@ void terminate_config_data() {
 // Returns the index of the display to be used. Returns 0 on failure
 int32_t loadDisplayInformation(
 	const User_Display_Preferences& display_config,
-	int32_t& initResX, int32_t& initResY,
-	int32_t& initPosX, int32_t& initPosY
+	dim32_t& initResX, dim32_t& initResY,
+	dim32_t& initPosX, dim32_t& initPosY
 ) {
 	int32_t displayCount = reloadDisplays();
 	if (displayCount <= 0) {
@@ -1210,9 +1212,9 @@ int32_t loadDisplayInformation(
 }
 
 void calculate_init_window_size(
-	const int32_t& dispResX, const int32_t& dispResY,
-	int32_t& initResX, int32_t& initResY,
-	int32_t& initPosX, int32_t& initPosY
+	const dim32_t& dispResX, const dim32_t& dispResY,
+	dim32_t& initResX, dim32_t& initResY,
+	dim32_t& initPosX, dim32_t& initPosY
 ) {
 	initPosX = 0;
 	initPosY = 0;
@@ -1251,8 +1253,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		return -1;
 	}
 	printf("\nSystem Information:");
-	int32_t dispResX, dispResY;
-	int32_t initResX, initResY, initPosX, initPosY;
+	dim32_t dispResX, dispResY;
+	dim32_t initResX, initResY, initPosX, initPosY;
 	int32_t initDisplayIndex = loadDisplayInformation(config_data.Display_Preferences,initResX,initResY,initPosX,initPosY);
 	if (initDisplayIndex == 0) {
 		printCriticalError("init_Render failed to loadDisplayInformation");
@@ -1290,19 +1292,20 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	//initBufferBox(&Master,NULL,initResX,initResY,IMAGE_BUFFER_CHANNELS);
 	Master = ImageBuffer(initResX,initResY,IMAGE_BUFFER_CHANNELS);
 	initBufferBox(&TestGraphic,nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS);
+	
 	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
 	window = SDL_CreateWindow(
 		PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE,
 		initPosX, initPosY,
-		(int32_t)Master.resX, (int32_t)Master.resY,
+		Master.resX, Master.resY,
 		SDL_WINDOW_RESIZABLE
 	);
 	SDL_SetWindowMinimumSize(window, RESX_Minimum, RESY_Minimum);
 	SDL_SetWindowMaximumSize(window, RESX_Maximum, RESY_Maximum);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	SDL_RenderSetLogicalSize(renderer, (int32_t)Master.resX, (int32_t)Master.resY);
+	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	set_Window_Fullscreen_Mode((Display_Fullscreen::Display_Fullscreen_Enum)config_data.Display_Preferences.Bootup_Fullscreen);
-	write_Buffer_Size({nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS,0});
+	write_Buffer_Size({nullptr, Master.resX, Master.resY - RESY_UI, IMAGE_BUFFER_CHANNELS, 0});
 
 	super_screenshot_maxThreads = (int32_t)std::thread::hardware_concurrency();
 	// IMGUI
@@ -1405,9 +1408,9 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	static constexpr size_t patternLength = 256;
 	static constexpr size_t patternSize = patternLength * IMAGE_BUFFER_CHANNELS;
 
-	size_t dimX = ((size_t)TestGraphic.resX > patternLength) ? patternLength : TestGraphic.resX;
-	size_t dimY = ((size_t)TestGraphic.resY > patternLength) ? patternLength : TestGraphic.resY;
-	size_t pitch = (TestGraphic.resX * IMAGE_BUFFER_CHANNELS);
+	size_t dimX = ((size_t)TestGraphic.resX > patternLength) ? patternLength : (size_t)TestGraphic.resX;
+	size_t dimY = ((size_t)TestGraphic.resY > patternLength) ? patternLength : (size_t)TestGraphic.resY;
+	size_t pitch = ((size_t)TestGraphic.resX * IMAGE_BUFFER_CHANNELS);
 	size_t offset = 0;
 	for (size_t y = 0; y < dimY; y++) {
 		z = offset;
@@ -1428,8 +1431,8 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	if ((size_t)TestGraphic.resY > patternLength) {
 		inPlacePatternMemcpy(
 			TestGraphic.vram,
-			TestGraphic.resX * TestGraphic.resY * TestGraphic.channels,
-			patternLength * TestGraphic.resX * TestGraphic.channels
+			(size_t)TestGraphic.resX * (size_t)TestGraphic.resY * TestGraphic.channels,
+			patternLength * (size_t)TestGraphic.resX * (size_t)TestGraphic.channels
 		);
 	}
 	// nano64_t finishTimer = getNanoTime();
@@ -1497,8 +1500,8 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 	if ((size_t)TestGraphic.resY > patternLength) {
 		inPlacePatternMemcpy(
 			TestGraphic.vram,
-			TestGraphic.resX * TestGraphic.resY * TestGraphic.channels,
-			patternLength * TestGraphic.resX * TestGraphic.channels
+			(size_t)TestGraphic.resX * (size_t)TestGraphic.resY * TestGraphic.channels,
+			patternLength * (size_t)TestGraphic.resX * TestGraphic.channels
 		);
 	}
 }
@@ -1523,13 +1526,13 @@ int exportSuperScreenshot() {
 		Fractal_Data superFrac = frac;
 		Render_Data superRenderData = primaryRenderData;
 		if (superFrac.type_value == Fractal_ABS_Mandelbrot) {
-			superFrac.type.abs_mandelbrot.maxItr = (uint32_t)super_screenshot_maxItr;
+			superFrac.type.abs_mandelbrot.maxItr = super_screenshot_maxItr;
 		} else if (superFrac.type_value == Fractal_Polar_Mandelbrot) {
-			superFrac.type.polar_mandelbrot.maxItr = (uint32_t)super_screenshot_maxItr;
+			superFrac.type.polar_mandelbrot.maxItr = super_screenshot_maxItr;
 		}
-		superRenderData.resX = (uint32_t)super_screenshot_resX;
-		superRenderData.resY = (uint32_t)super_screenshot_resY;
-		superRenderData.sample = (uint32_t)super_screenshot_super_sample;
+		superRenderData.resX = super_screenshot_resX;
+		superRenderData.resY = super_screenshot_resY;
+		superRenderData.sample = super_screenshot_super_sample;
 		superRenderData.subSample = 1;
 		superRenderData.CPU_Threads = (uint32_t)super_screenshot_maxThreads * (uint32_t)super_screenshot_threadMultiplier;
 		const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
@@ -1555,7 +1558,7 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	#define FRAC frac.type.abs_mandelbrot
-	static const uint32_t minimumImageResolution = 2;
+	static const dim32_t minimumImageResolution = 2;
 	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
 		printWarning("ImageBuffer* image is below minimum resolution: %ux%u",image->resX,image->resY);
 		return 1;
@@ -1568,21 +1571,21 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (fy0 > fy1) { i32 temp = fy0; fy0 = fy1; fy1 = temp; }
 	i32 fxA = (fx0 + fx1) / 2;
 	i32 fyA = (fy0 + fy1) / 2;
-	if ((fx1 < (i32)minimumImageResolution || fy1 < (i32)minimumImageResolution)) {
+	if ((fx1 < minimumImageResolution || fy1 < minimumImageResolution)) {
 		return 1;
 	}
-	if ((image->rot != FRAC.rot) || ((fx0 < (i32)Master.resX) && (fy0 < (i32)(Master.resY - RESY_UI)))) {
+	if ((image->rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
 		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
 			image->vram,
-			(int32_t)image->resX, (int32_t)image->resY,
-			(int32_t)image->channels * 8,
-			(int32_t)image->channels * (int32_t)image->resX,
+			image->resX, image->resY,
+			(int32_t)(image->channels * 8),
+			(int32_t)(image->channels * (size_t)image->resX),
 			SDL_PIXELFORMAT_ABGR8888
 		);
 		fx1 -= fx0;
 		fy1 -= fy0;
-		SDL_Rect srcRect = {0,0,(i32)image->resX,(i32)image->resY};
-		SDL_Rect dstRect = {fx0,fy0 + (i32)RESY_UI,fx1,fy1};
+		SDL_Rect srcRect = {0, 0, image->resX, image->resY};
+		SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
 		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
 		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
 			printf("\nrenderCopy: %s",SDL_GetError()); fflush(stdout);
@@ -1600,7 +1603,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
 	#define FRAC frac.type.abs_mandelbrot
-	static const uint32_t minimumImageResolution = 2;
+	static const dim32_t minimumImageResolution = 2;
 	BufferBox blit;
 	BufferBox temp_MASTER;
 	Master.getBufferBox(&temp_MASTER);
@@ -1617,8 +1620,8 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	coordinate_to_image_cordinate(image->x11 - FRAC.r,image->y11 - FRAC.i,&dx11,&dy11,&FRAC,ren);
 	coordinate_to_image_cordinate(image->x01 - FRAC.r,image->y01 - FRAC.i,&dx01,&dy01,&FRAC,ren);
 	coordinate_to_image_cordinate(image->x10 - FRAC.r,image->y10 - FRAC.i,&dx10,&dy10,&FRAC,ren);
-	int32_t resX = (int32_t)(image->resX);
-	int32_t resY = (int32_t)(image->resY);
+	dim32_t resX = (dim32_t)(image->resX);
+	dim32_t resY = (dim32_t)(image->resY);
 	// printfInterval(0.5,
 	// 	"\nres{%ux%u}"
 	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}"
@@ -1758,7 +1761,7 @@ void newFrame() {
 			printfChange(int,scaleRet,"\ntransformFracImage: %d",scaleRet);
 		}
 	#endif
-	SDL_UpdateTexture(texture, nullptr, Master.vram, (int32_t)Master.resX * (int32_t)Master.channels);
+	SDL_UpdateTexture(texture, nullptr, Master.vram, (dim32_t)Master.resX * (dim32_t)Master.channels);
 	{
 		SDL_Rect srcRect = {0,0,(int)Master.resX,(int)Master.resY};
 		SDL_Rect dstRect = {0,0,(int)Master.resX,(int)Master.resY};

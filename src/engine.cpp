@@ -213,7 +213,11 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			render_update_timecode = read_Update_Timecode();
 			if (currentBuf != nullptr) {
 				BufferBox sizeBuf = read_Buffer_Size();
-				currentBuf->resizeBuffer(sizeBuf.resX / primaryRender.subSample,sizeBuf.resY / primaryRender.subSample,sizeBuf.channels);
+				currentBuf->resizeBuffer(
+					sizeBuf.resX / (dim32_t)primaryRender.subSample,
+					sizeBuf.resY / (dim32_t)primaryRender.subSample,
+					sizeBuf.channels
+				);
 			}
 			//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
 			render_Engine(ABORT_RENDERING);

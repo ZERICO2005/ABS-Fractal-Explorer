@@ -36,9 +36,10 @@ Bit_Graphics Text_Graphic;
 
 void renderKeyText(
 	const char* text, uint8_t cR, uint8_t cG, uint8_t cB, 
-	uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1
+	int32_t x0, int32_t y0, int32_t x1, int32_t y1
 ) {
 	if (Text_Graphic.isInitialized() == false) { return; }
+	if (x0 < 0 || y0 < 0 || x1 < 0 || y1 < 0) { return; }
 	Text_Graphic.gColor_RGB(cR,cG,cB);
 	Text_Graphic.fillScreen();
 	if (text != NULL) {
@@ -185,9 +186,13 @@ void renderBoard(
 			}
 			Keyboard_Graphic.gColor_RGB(0x40,0x40,0x40);
 			Keyboard_Graphic.drawRect((size_t)(int64_t)x0,(size_t)(int64_t)y0,(size_t)(int64_t)x1,(size_t)(int64_t)y1);
-			Keyboard_Graphic.gColor_RGB(col[pos],col[pos+1],col[pos+2]);
+			Keyboard_Graphic.gColor_RGB(col[pos], col[pos + 1], col[pos + 2]);
 			Keyboard_Graphic.fillRect((size_t)(int64_t)(x0+1),(size_t)(int64_t)(y0+1),(size_t)(int64_t)(x1-2),(size_t)(int64_t)(y1-2));
-			renderKeyText((char*)Keyboard_List[board][i].name,col[pos],col[pos+1],col[pos+2],(uint32_t)(x0+2),(uint32_t)(y0+2),(uint32_t)(x1-4),(uint32_t)(y1-4));
+			renderKeyText(
+				(char*)Keyboard_List[board][i].name,
+				col[pos],col[pos + 1],col[pos + 2],
+				x0 + 2, y0 + 2, x1 - 4, y1 - 4
+			);
 			/* Keyboard_Graphic.printText6x8(x0+2,y0+2,(char*)Keyboard_List[b][i].name); */
 		}
 	}
@@ -265,8 +270,8 @@ void renderKeyboard(
 	int32_t resY = (int32_t)((fp64)resX * ((fp64)dimY / (fp64)dimX));
 	fp64 keyScaleY = (fp64)(resY) / (fp64)dimY;
 
-	buf->resX = (uint32_t)(resX + offsetVal);
-	buf->resY = (uint32_t)(resY + offsetVal);
+	buf->resX = resX + offsetVal;
+	buf->resY = resY + offsetVal;
 
 	//printfInterval(0.6,"\nRes{%ux%u}\nScales: %.3lf %.3lf | %.3lf",buf->resX,buf->resY,keyScaleX,keyScaleY,keyScaleX/keyScaleY);
 	//printfInterval(0.5,"\n%zu dim{%d,%d} min{%d,%d} max{%d,%d} offset{%d,%d}",keyCount,dimX,dimY,minDimX,minDimY,maxDimX,maxDimY,offsetX,offsetY);

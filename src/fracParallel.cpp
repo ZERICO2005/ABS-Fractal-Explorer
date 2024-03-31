@@ -212,8 +212,8 @@ void parallel_Thread_Generator_FP64(
 	size_t totalSections = ((size_t)ren.total_ResX * (size_t)ren.total_ResY > (size_t)threadCount * 64) ? (size_t)threadCount * 64 : (size_t)ren.total_ResX * (size_t)ren.total_ResY;
 	//#pragma omp parallel for
 	for (size_t t = 0; t < totalSections; t++) {
-		size_t p0 = ((buf->resX * buf->resY * buf->channels) * t) / threadCount;
-		size_t p1 = ((buf->resX * buf->resY * buf->channels) * (t + 1)) / threadCount;
+		size_t p0 = (((size_t)buf->resX * (size_t)buf->resY * buf->channels) * t) / (size_t)threadCount;
+		size_t p1 = (((size_t)buf->resX * (size_t)buf->resY * buf->channels) * (t + 1)) / (size_t)threadCount;
 		parallel_ABS_Mandelbrot(ren,param_PC,&buf->vram[p0],p1 - p0,ABORT_RENDERING);
  	}
 }

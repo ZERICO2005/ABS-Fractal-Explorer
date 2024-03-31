@@ -201,8 +201,6 @@ int32_t terminate_OpenCL() { /* Deallocate resources */
 	return 0;
 }
 
-u32 rX = 0;
-u32 rY = 0;
 //#define printChange(f,x); {static int CHANGE; if (CHANGE != x) { printFlush(f, x); } CHANGE = x;}
 #define printErrorChange(f,x); { static int CHANGE; if (CHANGE != x) { printFlush(f, x); printOpenCLError(err); } CHANGE = x; }
 
@@ -218,8 +216,10 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 		printError("BufferBox* buf is NULL or has invalid data in renderOpenCL_ABS_Mandelbrot()");
 		return -1;
 	}
-	uint32_t resX = buf->resX;
-	uint32_t resY = buf->resY;
+	dim32_t resX = buf->resX;
+	dim32_t resY = buf->resY;
+	static dim32_t rX = 0;
+	static dim32_t rY = 0;
 	if (((rX != buf->resX || rY != buf->resY) && (rX != 0 || rY != 0)) || initialized_OpenCL == false || deviceResultBuf == NULL) {
 		// printf("\nr: %d %d",rX,rY); fflush(stdout);
 		size_t global_pixels = 0;
@@ -241,7 +241,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	uint32_t formula32 = (uint32_t)param.formula;
 	uint32_t formula = (polarMandelbrotBool << 30) | (juliaSetBool << 29) | formula32;
 	fp32 power = (param.polarMandelbrot == true) ? (fp32)param.polarPower : (fp32)param.power;
-	uint32_t sample = (uint32_t)ren.sample;
+	int32_t sample = ren.sample;
 	fp32 rot = (fp32)param.rot;
 	fp32 numZ;
 	fp32 numW;

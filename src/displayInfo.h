@@ -19,7 +19,7 @@ class DisplayInfo {
 		~DisplayInfo();
 		DisplayInfo(
 			int32_t index,
-			int32_t resX, int32_t resY,
+			dim32_t resX, dim32_t resY,
 			int32_t posX, int32_t posY,
 			fp64 refreshRate,
 			uint8_t bitsPerPixel,
@@ -28,7 +28,7 @@ class DisplayInfo {
 		// Doesn't do anything
 		void updateDisplayInfo(
 			int32_t index,
-			int32_t resX, int32_t resY,
+			dim32_t resX, dim32_t resY,
 			int32_t posX, int32_t posY,
 			fp64 refreshRate,
 			uint8_t bitsPerPixel,
@@ -37,7 +37,7 @@ class DisplayInfo {
 		// Writes to any non nullptr parameters
 		void retriveDisplayInfo(
 			int32_t* index,
-			int32_t* resX, int32_t* resY,
+			dim32_t* resX, dim32_t* resY,
 			int32_t* posX, int32_t* posY,
 			fp64* refreshRate = nullptr,
 			uint8_t* bitsPerPixel = nullptr,
@@ -46,7 +46,7 @@ class DisplayInfo {
 		int32_t getIndex() const;
 		void getPosition(int32_t& x, int32_t& y) const;
 		int64_t getSquaredDistanceFromPoint(int32_t x, int32_t y) const;
-		void getResolution(int32_t& x, int32_t& y) const;
+		void getResolution(dim32_t& x, dim32_t& y) const;
 		size_t getPixelCount() const;
 		fp64 getHorizontalAspectRatio() const;
 		fp64 getVerticalAspectRatio() const;
@@ -75,8 +75,8 @@ class DisplayInfo {
 	private:
 		void clearDisplayInfo();
 		int32_t Index;
-		int32_t ResX;
-		int32_t ResY;
+		dim32_t ResX;
+		dim32_t ResY;
 		int32_t PosX; // Top left corner
 		int32_t PosY; // Top left corner
 		fp64 RefreshRate;
@@ -144,14 +144,14 @@ const DisplayInfo* getDisplayFromCursorPosition();
 const DisplayInfo* matchDisplayAttribute(
 	Display_Bootup::Display_Bootup_Enum type,
 	const User_Display_Preferences& Display_Config,
-	int32_t minResX = 0, int32_t minResY = 0,
+	dim32_t minResX = 0, dim32_t minResY = 0,
 	int32_t cursorPosX = INT32_MIN, int32_t cursorPosY = INT32_MIN
 );
 
 // Returns 0 if no matches were found
 const DisplayInfo* getBootupDisplay(
 	const User_Display_Preferences& Display_Config,
-	int32_t minResX = 0, int32_t minResY = 0,
+	dim32_t minResX = 0, dim32_t minResY = 0,
 	int32_t cursorPosX = INT32_MIN, int32_t cursorPosY = INT32_MIN
 );
 

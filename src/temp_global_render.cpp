@@ -52,10 +52,10 @@
 	// #define default_Super_Screenshot_MaxItr 16384
 	// #define default_Super_Screenshot_ThreadMultiplier 6
 
-	int32_t super_screenshot_resX = default_Super_Screenshot_ResX;
-	int32_t super_screenshot_resY = default_Super_Screenshot_ResY;
+	dim32_t super_screenshot_resX = default_Super_Screenshot_ResX;
+	dim32_t super_screenshot_resY = default_Super_Screenshot_ResY;
 	int32_t super_screenshot_super_sample = default_Super_Screenshot_Sample;
-	int32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
+	uint32_t super_screenshot_maxItr = default_Super_Screenshot_MaxItr;
 	int32_t super_screenshot_threadMultiplier = default_Super_Screenshot_ThreadMultiplier;
 	int32_t super_screenshot_maxThreads = 1;
 
@@ -64,7 +64,7 @@
 
 /* ImGui Stuff */
 	ImGuiIO* io_IMGUI = nullptr;
-	int32_t ImGui_WINDOW_MARGIN = 8;
+	dim32_t ImGui_WINDOW_MARGIN = 8;
 
 /* SDL2 */
 	SDL_Renderer* renderer = nullptr;
@@ -106,7 +106,7 @@
 	fp64 Frame_Time_Display = 0.0;
 	fp64 Render_Time_Display = 0.0;
 
-	uint32_t RESY_UI = 128;
+	dim32_t RESY_UI = 128;
 
 	nano64_t abortTimer = 0; // How long it is taking to abort the rendering jobs
 	

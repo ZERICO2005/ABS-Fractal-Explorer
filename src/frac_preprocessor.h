@@ -82,7 +82,7 @@ struct Frac_Render_PC {
 
 	size_t total_Size;
 	size_t pitch;
-	uint8_t channels;
+	size_t channels;
 
 	int32_t super_sampleX;
 	int32_t super_sampleY;

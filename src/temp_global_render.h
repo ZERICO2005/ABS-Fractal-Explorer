@@ -52,10 +52,10 @@
 	#define default_Super_Screenshot_MaxItr 16384
 	#define default_Super_Screenshot_ThreadMultiplier 6
 
-	extern int32_t super_screenshot_resX;
-	extern int32_t super_screenshot_resY;
+	extern dim32_t super_screenshot_resX;
+	extern dim32_t super_screenshot_resY;
 	extern int32_t super_screenshot_super_sample;
-	extern int32_t super_screenshot_maxItr;
+	extern uint32_t super_screenshot_maxItr;
 	extern int32_t super_screenshot_threadMultiplier;
 	extern int32_t super_screenshot_maxThreads;
 
@@ -64,7 +64,7 @@
 
 /* ImGui Stuff */
 	extern ImGuiIO* io_IMGUI;
-	extern int32_t ImGui_WINDOW_MARGIN;
+	extern dim32_t ImGui_WINDOW_MARGIN;
 
 /* SDL2 */
 	extern SDL_Renderer* renderer;
@@ -106,7 +106,7 @@
 	extern fp64 Frame_Time_Display;
 	extern fp64 Render_Time_Display;
 
-	extern uint32_t RESY_UI;
+	extern dim32_t RESY_UI;
 
 	extern nano64_t abortTimer; // How long it is taking to abort the rendering jobs
 

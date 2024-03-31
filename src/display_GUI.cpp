@@ -240,7 +240,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::Separator();
 	uint32_t boxSpace = 8;
 	uint32_t boxCount = 8;
-	fp32 boxWidth = (fp32)(Master.resX - (boxSpace * (boxCount + 1))) / (fp32)boxCount;
+	fp32 boxWidth = (fp32)(Master.resX - (dim32_t)(boxSpace * (boxCount + 1))) / (fp32)boxCount;
 
 	#define Param_Input_Box(text,id,buf) \
 	ImGui::Text(text); \
@@ -623,20 +623,20 @@ void Menu_Rendering() {
 
 	ImGui::Separator();
 
-	ImGui::Text("Sub Sample: %d",input_subSample * input_subSample);
+	ImGui::Text("Sub Sample: %d", input_subSample * input_subSample);
 	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
-		primaryRenderData.subSample = (uint32_t)input_subSample;
+		primaryRenderData.subSample = input_subSample;
 	}
-	ImGui::Text("Samples per pixel: %d",input_superSample * input_superSample);
-	if (ImGui::SliderInt("##input_superSample",&input_superSample,1,24,"")) {
-		primaryRenderData.sample = (uint32_t)input_superSample;
+	ImGui::Text("Samples per pixel: %d", input_superSample * input_superSample);
+	if (ImGui::SliderInt("##input_superSample", &input_superSample, 1, 24, "")) {
+		primaryRenderData.sample = input_superSample;
 	}
-	uint32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
-	uint32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
-	ImGui::Text("Total Pixels Rendered: %ux%u %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+	dim32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
+	dim32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
+	ImGui::Text("Total Pixels Rendered: %dx%d %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
 	
 	// { // Doesn't work
-	// 	int32_t resX, resY, dimX, dimY;
+	// 	dim32_t resX, resY, dimX, dimY;
 	// 	SDL_GetWindowSize(window,&resX,&resY);
 	// 	SDL_GetWindowSizeInPixels(window,&dimX,&dimY);
 	// 	if (resX != dimX || resY != dimY) {
@@ -1016,7 +1016,7 @@ void Menu_Settings() {
 		static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
 		ImGui::Text("Maximum Iterations: %d",super_screenshot_maxItr);
 		ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
-		super_screenshot_maxItr = (int32_t)(pow(2.0f,temp_super_screenshot_maxItr));
+		super_screenshot_maxItr = (uint32_t)(pow(2.0f,temp_super_screenshot_maxItr));
 		valueClamp(super_screenshot_maxItr,16,16777216); valueClamp(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
 
 		const uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
@@ -1114,13 +1114,13 @@ void Menu_Keybinds() {
 	}
 	ImGui::Text(" ");
 	{
-		constexpr int32_t kMaxResX = 1440;
-		constexpr int32_t kMinResX = 300;
-		constexpr int32_t kMinResY = 140;
+		constexpr dim32_t kMaxResX = 1440;
+		constexpr dim32_t kMinResX = 300;
+		constexpr dim32_t kMinResY = 140;
 		
 		//static uint32_t kX = kMargin;
 		//static uint32_t kY = 0;
-		int32_t kResX = (int32_t)ImGui::GetWindowContentRegionWidth();
+		dim32_t kResX = (dim32_t)ImGui::GetWindowContentRegionWidth();
 		if (kResX < kMinResX) {
 			kResX = kMinResX;
 		} else if (kResX > kMaxResX) {
@@ -1144,7 +1144,13 @@ void Menu_Keybinds() {
 			(uint8_t)Combo_keyboardSize, displayNumpad,
 			kCurX, kCurY, ((clickState & 0x1) ? true : false), &keyHover, nullptr, &hoverInBounds
 		);
-		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(kBuf.vram, (int32_t)kBuf.resX, (int32_t)kBuf.resY, (int32_t)(IMAGE_BUFFER_CHANNELS * 8), (int32_t)(IMAGE_BUFFER_CHANNELS * kBuf.resX), SDL_PIXELFORMAT_ABGR8888);
+		SDL_Surface* kSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+			kBuf.vram,
+			(dim32_t)kBuf.resX, (dim32_t)kBuf.resY,
+			(int32_t)(IMAGE_BUFFER_CHANNELS * 8),
+			(int32_t)(IMAGE_BUFFER_CHANNELS * (size_t)kBuf.resX),
+			SDL_PIXELFORMAT_ABGR8888
+		);
 		if (kSurface == nullptr) {
 			fprintf(stderr, "Failed to create SDL surface: %s\n", SDL_GetError());
 		}
@@ -1216,7 +1222,7 @@ void Menu_Keybinds() {
 					Combo_function_Select = Key_Function::NONE;
 				} else {
 					for (size_t i = 0; i < ARRAY_LENGTH(Key_Function::Key_Function_Map); i++) {
-						if (Combo_function_Select == (int)Key_Function::Key_Function_Map[i]) {
+						if (Combo_function_Select == (int_enum)Key_Function::Key_Function_Map[i]) {
 							Combo_function_Select = Key_Function::NONE;
 						}
 					}

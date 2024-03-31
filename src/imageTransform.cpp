@@ -15,7 +15,7 @@
 
 int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, BufferBox* backgroundImage, BufferBox* foregroundImage) {
 	
-	initBufferBox(buf,nullptr,(uint32_t)Mat_Render.cols,(uint32_t)Mat_Render.rows,(uint8_t)Mat_Render.channels());
+	initBufferBox(buf, nullptr, Mat_Render.cols, Mat_Render.rows, (size_t)Mat_Render.channels());
 	buf->vram = (uint8_t*)malloc(Mat_Render.total() * Mat_Render.elemSize());
 	if (buf->vram == nullptr) {
 		return -1;
@@ -32,7 +32,7 @@ cv::Mat Image_Place_Parallelogram(
 	fp32 dx00, fp32 dy00,
 	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
 ) {
-	cv::Mat Mat_Image((int32_t)img->resY, (int32_t)img->resX, CV_8UC(img->channels), img->vram);
+	cv::Mat Mat_Image(img->resY, img->resX, (int32_t)CV_8UC(img->channels), img->vram);
 	cv::Point2f srcCord[] = {
 		cv::Point2f(sx00, sy00),
 		cv::Point2f(sx10, sy10),
@@ -51,7 +51,7 @@ cv::Mat Image_Place_Parallelogram(
 	// );
 	cv::Mat projectionMatrix = cv::getAffineTransform(srcCord, dstCord);
  	//cv::Mat Mat_Render(img->resY * ren->subSample, img->resX * ren->subSample, CV_8UC(img->channels));
-	cv::Mat Mat_Render((int32_t)ren->resY, (int32_t)ren->resX, CV_8UC(img->channels));
+	cv::Mat Mat_Render(ren->resY, ren->resX, (int32_t)CV_8UC(img->channels));
 	cv::warpAffine(Mat_Image, Mat_Render, projectionMatrix, Mat_Render.size(),interpolation_mode);
 	return Mat_Render;
 }
@@ -64,7 +64,7 @@ cv::Mat Image_Place_Quadrilateral(
 	fp32 dx00, fp32 dy00, fp32 dx11, fp32 dy11,
 	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
 ) {
-	cv::Mat Mat_Image((int32_t)img->resY, (int32_t)img->resX, CV_8UC(img->channels), img->vram);
+	cv::Mat Mat_Image(img->resY, img->resX, (int32_t)CV_8UC(img->channels), img->vram);
 	cv::Point2f srcCord[] = {
 		cv::Point2f(sx00, sy00),
 		cv::Point2f(sx10, sy10),
@@ -78,7 +78,7 @@ cv::Mat Image_Place_Quadrilateral(
 		cv::Point2f(dx01, dy01)
 	};
 	cv::Mat projectionMatrix = cv::getPerspectiveTransform(srcCord, dstCord);
-	cv::Mat Mat_Render((int32_t)img->resY * (int32_t)ren->subSample, (int32_t)img->resX * (int32_t)ren->subSample, CV_8UC(img->channels));
+	cv::Mat Mat_Render(img->resY * (int32_t)ren->subSample, img->resX * (int32_t)ren->subSample, (int32_t)CV_8UC(img->channels));
 	cv::warpPerspective(Mat_Image, Mat_Render, projectionMatrix, Mat_Render.size(),interpolation_mode);
 	return Mat_Render;
 }

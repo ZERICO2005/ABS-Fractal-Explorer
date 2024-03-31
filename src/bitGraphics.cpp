@@ -94,8 +94,8 @@ void Bit_Graphics::getDrawBufferBox(BufferBox* box) {
 		box->padding = 0;
 	}
 	box->vram = (buf == buf0) ? buf0 : buf1;
-	box->resX = (uint32_t)ResX;
-	box->resY = (uint32_t)ResY;
+	box->resX = (dim32_t)ResX;
+	box->resY = (dim32_t)ResY;
 	box->channels = Bit_Graphics_Channels;
 	box->padding = 0;
 }
@@ -109,8 +109,8 @@ void Bit_Graphics::getDisplayBufferBox(BufferBox* box) {
 		box->padding = 0;
 	}
 	box->vram = (buf == buf0) ? buf1 : buf0;
-	box->resX = (uint32_t)ResX;
-	box->resY = (uint32_t)ResY;
+	box->resX = (dim32_t)ResX;
+	box->resY = (dim32_t)ResY;
 	box->channels = Bit_Graphics_Channels;
 	box->padding = 0;
 }

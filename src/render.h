@@ -21,21 +21,21 @@
 /* Holds resolution, sampling, precision and rendering method */
 struct Render_Data {
 	/* Dimensions */
-	uint32_t resX;
-	uint32_t resY;
+	dim32_t resX;
+	dim32_t resY;
 	int32_t offsetX;
 	int32_t offsetY;
-	uint32_t subResX;
-	uint32_t subResY;
+	dim32_t subResX;
+	dim32_t subResY;
 	/* Format */
-	uint32_t padding;
+	size_t padding;
 	uint8_t bpp;
-	uint8_t channels;
+	size_t channels;
 	uint8_t flip;
 	bool subPixelRendering;
 	/* Rendering Parameters */
-	uint32_t sample;
-	uint32_t subSample;
+	int32_t sample;
+	int32_t subSample;
 	/* Preview */
 	bool previewRender;
 	fp64 areaMult;
@@ -90,9 +90,9 @@ void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum full
 void toggle_Window_Fullscreen_Mode();
 
 void calculate_init_window_size(
-	const int32_t& dispResX, const int32_t& dispResY,
-	int32_t& initResX, int32_t& initResY,
-	int32_t& initPosX, int32_t& initPosY
+	const dim32_t& dispResX, const dim32_t& dispResY,
+	dim32_t& initResX, dim32_t& initResY,
+	dim32_t& initPosX, dim32_t& initPosY
 );
 
 /* ================ */
@@ -139,18 +139,6 @@ int exportSuperScreenshot();
 void correctUsernameText(char* buf, size_t len);
 
 // void correctTextFloat(char* buf, size_t len, uint8_t level);
-
-/* Display */
-
-struct DisplayInfo_Legacy {
-	uint32_t resX;
-	uint32_t resY;
-	int32_t posX;
-	int32_t posY;
-	uint32_t refreshRate;
-	uint8_t bbp;
-	const char* name;
-}; typedef struct DisplayInfo_Legacy DisplayInfo_Legacy;
 
 /* Keys */
 
