@@ -12,14 +12,14 @@
 #include "fractal.h"
 
 /* Safe Method of accessing PowerText */
-const char* getPowerText(int32_t p) {
-	if (p >= 0 && p <= (int32_t)ARRAY_LENGTH(PowerText)) {
+const char* getPowerText(uint32_t p) {
+	if (p < (uint32_t)ARRAY_LENGTH(PowerText)) {
 		return PowerText[p];
 	}
 	return NULL;
 }
 const char* getPowerText(fp64 p) {
-	return getPowerText((int32_t)p);
+	return getPowerText((uint32_t)p);
 }
 
 uint64_t limitFormulaID(uint32_t power, uint64_t formula) {
@@ -69,7 +69,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.swapJuliaSplit = false;
 		FRAC.cursorZValue = false;
 		FRAC.showFloatingJulia = false;
-		FRAC.adjustZoomToPower = true;
+		FRAC.adjustZoomToPower = false;
 		FRAC.polarMandelbrot = false;
 		FRAC.lockToCardioid = false;
 		FRAC.flipCardioidSide = false;

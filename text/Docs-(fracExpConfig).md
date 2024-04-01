@@ -36,7 +36,7 @@
 	Configures how the program should determine which display to open on. Doesn't have an effect if the system only has one monitor. 
 	
 	0. Automatic: Goes through a multi-step process to determine which display to use
-		* If the current and previous `Display_Config_Hash` values match, the display will open on the `Previous_Display_Used`.
+		* (Skipped due to some bugs/issues) If the current and previous `Display_Config_Hash` values match, the display will open on the `Previous_Display_Used`.
 		* If the current and previous `Display_Config_Hash` do **not** match, or the `Previous_Display_Used` is not set, the display will open on the `Cursors Position`.
 		* If the `Cursor Position` display is invalid, the `Primary Display` will be used.
 		* If the `Primary Display` is also invalid, then the first valid display will be used.

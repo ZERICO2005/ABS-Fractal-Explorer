@@ -264,11 +264,17 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	#define FRAC frac.type.abs_mandelbrot
 	uint32_t renderFP = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
 	const char* const renderMethod = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
+	
+	static char powerText[64];
+	if (FRAC.polarMandelbrot) {
+		snprintf(powerText,sizeof(powerText),"%6.4lf",FRAC.polarPower);
+	}
+
 	ImGui::Text(
-		"Formula: %llu Power: %6.4lf Super-Sample: %u Rendering: %s fp%u",
-		FRAC.formula,(FRAC.polarMandelbrot ? FRAC.polarPower : (fp64)FRAC.power),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
+		"Formula: %llu Power: %s Super-Sample: %u Rendering: %s fp%u",
+		FRAC.formula,(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
 	);
-	#define temp_quad_len 64
+	constexpr size_t temp_quad_len = 64;
 	static char temp_quad_r[temp_quad_len]; static char temp_quad_i[temp_quad_len];
 	static char temp_quad_zr[temp_quad_len]; static char temp_quad_zi[temp_quad_len];
 	quadmath_snprintf(temp_quad_r,temp_quad_len,"%15.12Qf",FRAC.r);
@@ -309,6 +315,7 @@ void Menu_Coordinates() {
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
+		ImGui::SeparatorText("Cordinates");
 		#define FRAC frac.type.abs_mandelbrot
 		#define NumberTextLen 64
 		
@@ -341,17 +348,27 @@ void Menu_Coordinates() {
 			Quad_InputText("i",FRAC.i,"%35.32Qf");
 		ImGui::Text("Zoom:");
 			Float_InputText("##zoom_input",FRAC.zoom,"%.5lf",strtod);
+		
+		ImGui::Text(" ");
 		ImGui::Text("Julia Coordinate:");
 			static bool useJuliaSliders = true;
 			if (useJuliaSliders == true) {
 				float input_Zreal = (fp32)FRAC.zr; float input_Zimag = (fp32)FRAC.zi;
 				if (ImGui::SliderFloat("zr",&input_Zreal,-2.0,2.0,"%.9f")) { FRAC.zr = (fp64)input_Zreal; }
 				if (ImGui::SliderFloat("zi",&input_Zimag,-2.0,2.0,"%.9f")) { FRAC.zi = (fp64)input_Zimag; }
+				fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
+				if (ImGui::SliderAngle("Julia Angle",&juliaAngle,-360.0f,360.0f,"%.1f deg")) {
+					fp128 juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
+					fp128 juliaTheta = (fp128)juliaAngle;
+					FRAC.zr = juliaMagnitude * cos(juliaTheta);
+					FRAC.zi = juliaMagnitude * sin(juliaTheta);
+				}
 			} else {
 				Quad_InputText("##input_Zreal",FRAC.zr,"%35.32Qf");
 				Quad_InputText("##input_zimag",FRAC.zi,"%35.32Qf");
 			}
 			ImGui::Checkbox("Use Sliders", &useJuliaSliders);
+		ImGui::SeparatorText("Parameters");
 		ImGui::Text("Maximum Iterations:");
 		Int_InputText("##input_maxIter",FRAC.maxItr,"%u",strtoul,10);
 		ImGui::Text("Fractal Formula:");
@@ -364,7 +381,7 @@ void Menu_Coordinates() {
 			ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
 		/* Power */
 			if (frac.type_value == Fractal_ABS_Mandelbrot) {
-				ImGui::Text("Power: %s",getPowerText((int32_t)FRAC.power));
+				ImGui::Text("Power: %s",getPowerText((uint32_t)FRAC.power));
 				Int_InputText("##input_power",FRAC.power,"%u",strtoul,10);
 			} else if (frac.type_value == Fractal_Polar_Mandelbrot) {
 				ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
@@ -421,7 +438,7 @@ void Menu_Fractal() {
 		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
 		ImGui::Text("Cardioid Location: %.6lg",minRadius);
 		if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
-			ImGui::Text("Fractal Power: %s",getPowerText((int32_t)FRAC.power));
+			ImGui::Text("Fractal Power: %s",getPowerText((uint32_t)FRAC.power));
 			int temp_input_power = (int)FRAC.power;
 			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
 			valueClamp(FRAC.power, 2, 6); // Support up to Sextic
@@ -529,6 +546,8 @@ void Menu_Rendering() {
 		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
 	);
 	
+	User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
+
 	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
 	#ifndef BUILD_RELEASE
 		static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
@@ -621,7 +640,7 @@ void Menu_Rendering() {
 		}
 	#endif
 
-	ImGui::Separator();
+	ImGui::SeparatorText("Super Screenshot Settings");
 
 	ImGui::Text("Sub Sample: %d", input_subSample * input_subSample);
 	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
@@ -646,8 +665,20 @@ void Menu_Rendering() {
 	// 		);
 	// 	}
 	// }
+	constexpr fp32 maxOutterRadius = 24.0f;
+	constexpr fp32 maxInnerRadius = maxOutterRadius - 1.0f;
+	ImGui::SeparatorText("Julia Cordinate Point");
+	ImGui::Checkbox("Display Julia Point", &Rendering_Settings.JuliaPoint_Enabled);
+	ImGui::Text("Outer-Radius:");
+	if (ImGui::SliderFloat("##OuterRadius",&Rendering_Settings.JuliaPoint_OuterRadius, 1.0f, maxOutterRadius, "%.2f")) {
+		valueClamp(Rendering_Settings.JuliaPoint_InnerRadius, 0.0f, Rendering_Settings.JuliaPoint_OuterRadius - 1.0f);
+	}
+	ImGui::Text("Inner-Radius");
+	if (ImGui::SliderFloat("##InnerRadius",&Rendering_Settings.JuliaPoint_InnerRadius, 0.0f, maxInnerRadius, "%.2f")) {
+		valueClamp(Rendering_Settings.JuliaPoint_OuterRadius, Rendering_Settings.JuliaPoint_InnerRadius + 1.0f, maxOutterRadius);
+	}
 
-	ImGui::Separator();
+	ImGui::SeparatorText("Frame Interpolation");
 	static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
 	int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;
 	ImGui::Text("Frame Interpolation Method:");

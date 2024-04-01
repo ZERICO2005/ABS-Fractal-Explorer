@@ -54,25 +54,13 @@ void calculate_GPU_Hardware_Hash(uint64_t& hash) {
 		DeviceMaxComputeUnits,sizeof(DeviceMaxComputeUnits)
 	);
 	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
-		DeviceMaxWorkGroupSize,sizeof(DeviceMaxWorkGroupSize)
-	);
-	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
 		DeviceGlobalMemSize,sizeof(DeviceGlobalMemSize)
-	);
-	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
-		DeviceLocalMemSize,sizeof(DeviceLocalMemSize)
 	);
 	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
 		DeviceFP32Config,sizeof(DeviceFP32Config)
 	);
 	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
 		DeviceFP64Config,sizeof(DeviceFP64Config)
-	);
-	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
-		KernelWorkGroupSize,sizeof(KernelWorkGroupSize)
-	);
-	fnv1a_hash_continous(hash,(uint8_t*)(void*)&
-		KernelLocalMemSize,sizeof(KernelLocalMemSize)
 	);
 }
 

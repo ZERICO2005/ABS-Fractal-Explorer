@@ -353,7 +353,7 @@ bool windowResizingCode(dim32_t* resX = nullptr, dim32_t* resY = nullptr) {
 }
 
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode) {
-	return; // This code creates werid problems
+	//return; // This code creates werid problems
 	switch (fullscreen_mode) {
 		// case Display_Fullscreen::Fullscreen:
 		// 	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
@@ -368,12 +368,13 @@ void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum full
 		case Display_Fullscreen::Windowed:
 		default:
 			{
-				//SDL_SetWindowFullscreen(window, 0);
+				SDL_SetWindowFullscreen(window, 0);
 				int32_t dispResX, dispResY, initResX, initResY, initPosX, initPosY;
 				const DisplayInfo* disp = getDisplayFromWindowPosition(window);
 				if (disp != nullptr) {
 					disp->getResolution(dispResX, dispResY);
 					disp->getResolution(initResX, initResY);
+					disp->getPosition(initPosX,initPosY);
 					calculate_init_window_size(dispResX, dispResY, initResX, initResY, initPosX, initPosY);
 					force_resizeWindow(initResX, initResY);
 					SDL_SetWindowPosition(window, initPosX, initPosY);
@@ -483,14 +484,10 @@ void initFunctionTimers() {
 // #define stretchValue(s) pow(2.0,-abs(s))
 // #define zoomDefault(p) (-log10(getABSFractalMaxRadius((fp64)(p))) - 0.01)
 
-void moveCord(fp128* x, fp128* y, fp64 angle, fp64 speed) {
-	*x += speed * cos(angle);
-	*y += speed * sin(angle);
-}
-
-void moveCord(fp64* x, fp64* y, fp64 angle, fp64 speed) {
-	*x += speed * cos(angle);
-	*y += speed * sin(angle);
+template<typename fpX>
+void moveCord(fpX* x, fpX* y, fp64 angle, fp64 speed) {
+	*x += (fpX)speed * cos((fpX)angle);
+	*y += (fpX)speed * sin((fpX)angle);
 }
 
 bool funcTimeDelay(Key_Function::Key_Function_Enum func) {
@@ -997,7 +994,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	updateFrameRate(FRAME_RATE + FRAME_RATE_OFFSET);
 	GUI_FrameTimer = TimerBox(GUI_FrameTime);
 
-	TimerBox maxFrameReset = TimerBox(1.0/5.0); /* Keeps track of longest frame times */
+	TimerBox maxFrameReset = TimerBox(1.0 / 5.0); /* Keeps track of longest frame times */
 	write_Update_Level(Change_Level::Full_Reset);
 	while (QUIT_FLAG == false) {
 		{ // Accesses ABORT_RENDERING only when Abort_Rendering_Flag changes to reduce unnecessary accesses
@@ -1216,8 +1213,8 @@ void calculate_init_window_size(
 	dim32_t& initResX, dim32_t& initResY,
 	dim32_t& initPosX, dim32_t& initPosY
 ) {
-	initPosX = 0;
-	initPosY = 0;
+	// initPosX = 0;
+	// initPosY = 0;
 	initResX -= RESX_Margin;
 	initResY -= RESY_Margin;
 	if (config_data.Display_Preferences.ScaleWindowToScreenSize == true) {
@@ -1261,8 +1258,12 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 	dispResX = initResX;
 	dispResY = initResY;
-
 	//printFlush("\nOld: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
+	calculate_init_window_size(
+		dispResX, dispResY,
+		initResX, initResY,
+		initPosX, initPosY
+	);
 	switch (config_data.Display_Preferences.Bootup_Fullscreen) {
 		case Display_Fullscreen::Windowed_Fullscreen:
 			break;
@@ -1274,6 +1275,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 				initPosX, initPosY
 			);
 	}
+
 
 	//printFlush("\nNew: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
 	{
@@ -1379,12 +1381,12 @@ int terminate_Render() {
 	terminateKeyboardGraphics();
 	clear_KeyBind_PresetList();
 	ImGui_ImplSDLRenderer2_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+	SDL_DestroyWindow(window);
+	SDL_Quit();
 	FREE(TestGraphic.vram);
 	return 0;
 }
@@ -1597,6 +1599,45 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	return 0;
 }
 
+void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
+	const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
+	if (Rendering_Settings.JuliaPoint_Enabled == false) { return; }
+	if (frac.type.abs_mandelbrot.zr == 0.0 && frac.type.abs_mandelbrot.zi == 0.0) { return; }
+	if (ren == nullptr) {
+		printError("Unable to renderJuliaCordinatePoint(), Render_Data is nullptr");
+		return;
+	}
+	if (validateBufferBox(&box,true) == false) {
+		printError("Unable to renderJuliaCordinatePoint(), to invalid BufferBox");
+		return;
+	}
+	const int32_t outsideRadiusSquared =
+	(int32_t)(Rendering_Settings.JuliaPoint_OuterRadius * Rendering_Settings.JuliaPoint_OuterRadius);
+	const int32_t insideRadiusSquared =
+	(int32_t)(Rendering_Settings.JuliaPoint_InnerRadius * Rendering_Settings.JuliaPoint_InnerRadius);
+	int32_t pointRadius = (int32_t)ceil(Rendering_Settings.JuliaPoint_OuterRadius);
+	int32_t posX, posY;
+	coordinate_to_pixel(
+		frac.type.abs_mandelbrot.zr, frac.type.abs_mandelbrot.zi,
+		&posX, &posY, &frac.type.abs_mandelbrot, ren
+	);
+	for (int32_t y = posY - pointRadius; y <= posY + pointRadius; y++) {
+		if (y < 0 || y >= box.resY) { continue; }
+		for (int32_t x = posX - pointRadius; x <= posX + pointRadius; x++) {
+			if (x < 0 || x >= box.resX) { continue; }
+			int32_t squaredDistance = (posX - x) * (posX - x) + (posY - y) * (posY - y);
+			if (
+				(squaredDistance >= outsideRadiusSquared) ||
+				(squaredDistance < insideRadiusSquared)
+			) { continue; }
+			size_t offset = ((size_t)x * box.channels) + (getBufferBoxPitch(&box) * (size_t)y);
+			for (size_t i = 0; i < box.channels; i++) {
+				box.vram[offset + i] = (uint8_t)(((uint32_t)box.vram[offset + i] + (uint32_t)0xFF) / 2);
+			}
+		}
+	}
+}
+
 int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
@@ -1674,10 +1715,10 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// }
 	//printfInterval(0.6,"\n%p: %ux%u %uC %uP",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
 	
-
+	renderJuliaCordinatePoint(blit, ren);
 	
 	// nano64_t startTime0 = getNanoTime();
-	copyBuffer_VeritcalOffset(temp_MASTER,blit,(size_t)RESY_UI);
+	copyBuffer_VeritcalOffset(temp_MASTER, blit, (size_t)RESY_UI);
 		// uint8_t* dstBuf = temp_MASTER.vram;
 		// Buffer_Data srcData; set_Buffer_Data(srcData,
 		// 	blit.resX, blit.resY,
