@@ -86,9 +86,9 @@ typedef int32_t dim32_t;
 	// Right Circular Shift
 	#define ROR(n,b) (((n) >> (b)) | ((n) << ((sizeof(n) * CHAR_BIT) - (b))))
 
-	inline const char* bool_Text(const bool& b) { return b ? "true" : "false"; }
-	inline const char* Bool_Text(const bool& b) { return b ? "True" : "False"; }
-	inline const char* BOOL_Text(const bool& b) { return b ? "TRUE" : "FALSE"; }
+	constexpr inline const char* bool_Text(const bool& b) { return b ? "true" : "false"; }
+	constexpr inline const char* Bool_Text(const bool& b) { return b ? "True" : "False"; }
+	constexpr inline const char* BOOL_Text(const bool& b) { return b ? "TRUE" : "FALSE"; }
 
 	// Replace with valueClamp<cast, minimum, maximum>(value)
 
@@ -159,13 +159,10 @@ typedef int32_t dim32_t;
 	// Returns the time in seconds 
 	fp64 getDecimalTime();
 
-	inline nano64_t SECONDS_TO_NANO(fp64 t) { return (nano64_t)((t) * 1.0e9); }
-	inline fp64 NANO_TO_SECONDS(nano64_t t) { return ((fp64)(t) / 1.0e9); }
-
-	// // Callocs the date and time in UTC
-	// const char* getDateAndTimeUTC(
-	// 	char DateDelimiter = '-', char DateSeparator = '_', char TimeDelimiter = '-'
-	// );
+	constexpr inline nano64_t SECONDS_TO_NANO(fp64 s) { return (nano64_t)(s * 1.0e9); }
+	constexpr inline fp64 NANO_TO_SECONDS(nano64_t t) { return (fp64)t / 1.0e9; }
+	constexpr inline nano64_t FRAMERATE_TO_NANO(fp64 f) { return (nano64_t)(1.0e9 / f); }
+	constexpr inline fp64 NANO_TO_FRAMERATE(nano64_t t) { return (1.0e9) / (fp64)t; }
 
 /* Print Functions */
 	#define printFlush(...) printf(__VA_ARGS__); fflush(stdout)

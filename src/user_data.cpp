@@ -60,7 +60,10 @@ constexpr User_Configuration_Data Default_Config = {
 	},
 	.Rendering_Settings = {
 		.Hardware_Hash = 0x0,
-		.Frame_Interpolation_Method = OPENCV_Interpolation::OPENCV_INTER_NEAREST
+		.Frame_Interpolation_Method = OPENCV_Interpolation::OPENCV_INTER_NEAREST,
+		.JuliaPoint_Enabled = true,
+		.JuliaPoint_OuterRadius = 8.0f,
+		.JuliaPoint_InnerRadius = 2.4f
 	}
 };
 
@@ -117,6 +120,8 @@ constexpr User_Configuration_Data Default_Config = {
 	void clean_Rendering_Settings(User_Rendering_Settings& config_data) {
 		const User_Rendering_Settings& config_default = Default_Config.Rendering_Settings;
 		clean_config_data(Frame_Interpolation_Method, 0, OPENCV_Interpolation::OPENCV_INTER_COUNT);
+		clean_config_data(JuliaPoint_OuterRadius, 1.0f, 24.0f);
+		clean_config_data(JuliaPoint_InnerRadius, 0.0f, config_data.JuliaPoint_OuterRadius - 1.0f);
 	}
 
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data) {
@@ -125,6 +130,7 @@ constexpr User_Configuration_Data Default_Config = {
 		clean_Display_Preferences(config_data.Display_Preferences);
 		clean_GUI_Settings(config_data.GUI_Settings);
 		clean_Screenshot_Settings(config_data.Screenshot_Settings);
+		clean_Rendering_Settings(config_data.Rendering_Settings);
 	}
 	#undef clean_config_data
 
@@ -385,6 +391,12 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		textToUint64(get_config_value(Config_Text,config_label,"Hardware_Hash"));
 		config_data.Rendering_Settings.Frame_Interpolation_Method =
 		textToEnum(get_config_value(Config_Text,config_label,"Frame_Interpolation_Method"));
+		config_data.Rendering_Settings.JuliaPoint_Enabled =
+		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"JuliaPoint_Enabled"));
+		config_data.Rendering_Settings.JuliaPoint_OuterRadius =
+		textToFloat32(get_config_value(Config_Text,config_label,"JuliaPoint_OuterRadius"));
+		config_data.Rendering_Settings.JuliaPoint_InnerRadius =
+		textToFloat32(get_config_value(Config_Text,config_label,"JuliaPoint_InnerRadius"));
 }
 
 int import_config_data(User_Configuration_Data& config_data, const char* path) {
@@ -594,6 +606,15 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 		fprintf(file,"\n\tFrame_Interpolation_Method: %d",
 			config_data.Rendering_Settings.Frame_Interpolation_Method
+		);
+		fprintf(file,"\n\tJuliaPoint_Enabled: %s",
+			bool_Text(config_data.Rendering_Settings.JuliaPoint_Enabled)
+		);
+		fprintf(file,"\n\tJuliaPoint_OuterRadius: %.6f",
+			config_data.Rendering_Settings.JuliaPoint_OuterRadius
+		);
+		fprintf(file,"\n\tJuliaPoint_InnerRadius: %.6f",
+			config_data.Rendering_Settings.JuliaPoint_InnerRadius
 		);
 
 	fclose(file);

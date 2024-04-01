@@ -29,10 +29,10 @@ enum FractalTypeEnum {
 const char* const PowerText[] = {
 	"Constant", "Linear"  , "Quadratic", "Cubic"    , "Quartic"    , "Quintic"   , "Sextic"   , "Septic"    , "Octic"    , "Nonic"    ,
 	"Decic"   , "Undecic" , "Dodecic"  , "Tridecic" , "Tetradecic" , "Pentadecic", "Hexadecic", "Heptadecic", "Octadecic", "Nonadecic",
-    "Icosic"  , "Unicosic", "Duocosic" , "Triacosic", "Tetraicosic", "Pentacosic", "Hexacosic", "Heptacosic", "Octacosic", "Nonacosic"
+	"Icosic"  , "Unicosic", "Duocosic" , "Triacosic", "Tetraicosic", "Pentacosic", "Hexacosic", "Heptacosic", "Octacosic", "Nonacosic"
 };
  /* Safe Method of accessing PowerText */
-const char* getPowerText(int32_t p);
+const char* getPowerText(uint32_t p);
 const char* getPowerText(fp64 p);
 
 inline fp64 getABSFractalMinRadius(fp64 power) {
@@ -150,8 +150,8 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type);
 template <typename fpX>
 void coordinate_to_pixel(fpX xI, fpX yI, int32_t* xO, int32_t* yO, const ABS_Mandelbrot* param, const Render_Data* ren) {
 	/* Reverses Transformations */
-	fpX xC = xI * cos(-(fpX)param->rot) - yI * sin(-(fpX)param->rot);
-	fpX yC = yI * cos(-(fpX)param->rot) + xI * sin(-(fpX)param->rot);
+	fpX xC = xI * cos(-(fpX)param->rot) - yI * sin(-(fpX)param->rot) - param->r;
+	fpX yC = yI * cos(-(fpX)param->rot) + xI * sin(-(fpX)param->rot) - param->i;
 	xC /= (fpX)param->sX;
 	yC /= (fpX)param->sY;
 	/* Normalizes Coordinates */
@@ -172,7 +172,7 @@ void coordinate_to_image_cordinate(fpX xI, fpX yI, fp32* xO, fp32* yO, const ABS
 	/* Normalizes Coordinates */
 	dim32_t resX = ren->resX - 1;
 	dim32_t resY = ren->resY - 1;
-	dim32_t resZ = (resX >= resY) ? resY : resX;\
+	dim32_t resZ = (resX >= resY) ? resY : resX;
 	*xO = (fp32)( (xC * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resX) / (fpX)2.0) );
 	*yO = (fp32)( (-yC * pow((fpX)10.0, (fpX)param->zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resY) / (fpX)2.0) );
 }

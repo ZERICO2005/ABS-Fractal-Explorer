@@ -69,6 +69,9 @@
 	struct User_Rendering_Settings {
 		uint64_t Hardware_Hash;
 		int_enum Frame_Interpolation_Method;
+		bool JuliaPoint_Enabled;
+		fp32 JuliaPoint_OuterRadius;
+		fp32 JuliaPoint_InnerRadius;
 	}; typedef struct User_Rendering_Settings User_Rendering_Settings;
 
 /* User Data Configuration */

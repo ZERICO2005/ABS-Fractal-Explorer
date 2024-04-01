@@ -23,8 +23,8 @@
 #define PROGRAM_DATE "2024/03/31" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
-#define PROGRAM_V_PATCH 8
-#define PROGRAM_V_TAG "Rev-6 Developer Alpha"
+#define PROGRAM_V_PATCH 9
+#define PROGRAM_V_TAG "Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* float80 and float128 */
@@ -46,6 +46,7 @@
 		inline fp128 acos(fp128 x) { return acosq(x); }
 		inline fp128 atan(fp128 x) { return atanq(x); }
 		inline fp128 atan2(fp128 y, fp128 x) { return atan2q(y,x); }
+		inline fp128 hypot(fp128 x, fp128 y) { return hypotq(x,y); }
 		inline fp128 log(fp128 x) { return logq(x); }
 		inline fp128 log1p(fp128 x) { return log1pq(x); }
 		inline fp128 log2(fp128 x) { return log2q(x); }

@@ -73,7 +73,7 @@
 	SDL_Texture* kTexture = nullptr; // Keyboard graphic
 
 /* Rendering */
-	
+
 	//#define Use_OpenCV_Scaler
 	
 	SDL_Texture* scale_tex = nullptr;

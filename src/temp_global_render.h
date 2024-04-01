@@ -73,7 +73,7 @@
 	extern SDL_Texture* kTexture; // Keyboard graphic
 
 /* Rendering */
-	
+
 	#define Use_OpenCV_Scaler
 	
 	extern SDL_Texture* scale_tex;
