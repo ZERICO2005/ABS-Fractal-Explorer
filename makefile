@@ -11,14 +11,14 @@ OBJ_DIR = ./obj
 BIN_DIR = ./bin
 
 # Output
-BIN_OUTPUT = ./bin/ABS-Fractal-Explorer_Classic.exe
+BIN_OUTPUT = ./bin/ABS-Fractal-Explorer_Classic
 # Sources
 #SRC_FILES = ./src/main.cpp ./src/render.cpp ./src/fracSingle.cpp ./src/fracMulti.cpp ./src/fracCL.cpp ./src/prime2D.cpp ./src/primeUX.cpp ./src/graphics2D.cpp ./src/fileManager.cpp
 SRC_FILES = ./src/main.cpp ./src/gamma.cpp ./src/render.cpp ./src/fracMulti.cpp ./src/buildCL.cpp ./src/fracCL.cpp ./src/primeUX.cpp ./src/graphics2D.cpp ./src/fileManager.cpp
 # Flags
-CFLAGS = -std=c++11 -Wall -Wextra -Wshadow
+CFLAGS = -std=c++11 -Wall -Wextra -Wshadow -Wno-format-truncation
 #LDFLAGS = -lOpenCL -lmingw32 -lSDL2main -lSDL2 -lglfw3 -lglfw3dll -pthread
-LDFLAGS = -lOpenCL -lmingw32 -lSDL2main -lSDL2 -pthread -mwindows -static-libgcc -static-libstdc++
+LDFLAGS = -lOpenCL -lSDL2main -lSDL2 -pthread -static-libgcc -static-libstdc++
 OBJ = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
 $(BIN_OUTPUT): $(OBJ)

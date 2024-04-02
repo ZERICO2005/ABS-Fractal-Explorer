@@ -212,13 +212,18 @@ void renderLoop() {
 
 	renderFractal(&input);
 	uint8_t update;
+	if (SDL_PollEvent(&event)) {
+		if( event.type == SDL_QUIT ) {
+			return;
+		}
+	}
 	while (1) {
-		scanKeyboard();
 		if (SDL_PollEvent(&event)) {
 			if( event.type == SDL_QUIT ) {
 				return;
 			}
 		}
+		scanKeyboard();
 		
 		fp64 moveDelta = deltaTime < 0.2 ? deltaTime : 0.2;
 		
@@ -365,7 +370,7 @@ void renderLoop() {
 			time_t timeFormat;
 			timeFormat = time(NULL);
 			struct tm tm = *localtime(&timeFormat);
-			sprintf(tempName,"Fractal-id-%llu-time-%04d-%02d-%02d_%02d-%02d-%02d",input.formula,tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday,tm.tm_hour, tm.tm_min, tm.tm_sec);
+			sprintf(tempName,"Fractal-id-%lu-time-%04d-%02d-%02d_%02d-%02d-%02d",input.formula,tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday,tm.tm_hour, tm.tm_min, tm.tm_sec);
 			writeImage(tempName,VRAM_Render,RESX_Render,RESY_Render);
 		}
 		if (UI_Camera == 1 && timerReady(&cameraUIColorTimer)) {
@@ -513,6 +518,8 @@ void initLCDcontroller() {
 	setTimer(&keyInputTimer,0.116);
 	setTimer(&imageSaveTimer,5.0);
 //	setTimer(&numberInputTimer,0.145);
+	printf("\n");
+	fflush(stdout);
 }
 void terminateLCDcontroller() {
 	SDL_DestroyTexture(texture);
@@ -578,7 +585,7 @@ void renderUI(const frac* param) {
 	char tempString[64];
 	memset(tempString,'\0',sizeof(tempString));
 	#define printAFloat(x,y,z,l) snprintf(tempString,l+1,"%.10lf",z); printText(x,y,tempString);
-	#define printAnInt(x,y,z,l) snprintf(tempString,l+1,"%llu",z); printText(x,y,tempString);
+	#define printAnInt(x,y,z,l) snprintf(tempString,l+1,"%lu",z); printText(x,y,tempString);
 	#define printAType(x,y,z,w,l) snprintf(tempString,l+1,w,z); printText(x,y,tempString);
 	setBuffer(VRAM_UI,RESX_UI,RESY_UI);
 	if (UI_Camera == 0) { setHexColor(0x555555); } else { setHexColor(0x111111); }
