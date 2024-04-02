@@ -6,11 +6,11 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#ifndef FILE_MANAGER_H
-#define FILE_MANAGER_H
+#ifndef FRAC_MULTI_H
+#define FRAC_MULTI_H
 
 #include "gamma.h"
 
-void writeImage(char* name, uint8_t* data, uint32_t resX, uint32_t resY);
+void renderFormula_MultiThread(const frac* parameter, uint8_t* data, u32 resX, u32 resY, u32 threadCount);
 
-#endif /* FILE_MANAGER_H */
+#endif /* FRAC_MULTI_H */

@@ -16,12 +16,15 @@
 
 #define BREAKOUT 4096.0
 
-#define Block0 u32 dataPtr = p0 * 3;\
+#define Block0 \
+u32 dataPtr = p0 * 3;\
 u32 maxItr = param->itr;\
-fp64 typeC = (fp64)param->type;\
 fp64 r = param->r;\
 fp64 i = param->i;\
-fp64 zoom = param->zoom;\
+const fp64 zoomVal = pow(10.0,param->zoom);\
+const fp64 numResX = ((fp64)(resX - 1) / 2.0);\
+const fp64 numResY = ((fp64)(resY - 1) / 2.0);\
+const fp64 numZ = (numResY < numResX) ? (1.0 / (numResY * zoomVal)) : (1.0 / (numResX * zoomVal));\
 u32 y = p0 / resX;\
 u32 x = p0 % resX;\
 fp64 cr = 0.0;\
@@ -29,27 +32,29 @@ fp64 ci = 0.0;\
 fp64 zr = 0.0;\
 fp64 zi = 0.0;
 
-#define Block1 for (; y < resY; y++) {\
-ci = (param->julia & 0x1) ? param->zi : (-((((fp64)y - (((fp64)resY - 1.0) / 2.0)) / (((fp64)resY - 1.0) / 2.0)) / pow(10.0, zoom)) + i);\
-for (; x < resX; x++) {\
-	if (p0 == p1) {\
-		return;\
-	}\
-	if (param->julia & 0x1) {\
-		zi = -((((fp64)y - (((fp64)resY - 1.0) / 2.0)) / (((fp64)resY - 1.0) / 2.0)) / pow(10.0, zoom)) + i;\
-		zr = ((((fp64)x - (((fp64)resX - 1.0) / 2.0)) / (((fp64)resY - 1.0) / 2.0)) / pow(10.0, zoom)) + r;\
-		cr = param->zr;\
-	} else {\
-		cr = ((((fp64)x - (((fp64)resX - 1.0) / 2.0)) / (((fp64)resY - 1.0) / 2.0)) / pow(10.0, zoom)) + r;\
-		zr = (param->julia & 0x2) ? 0.0 : param->zr;\
-		zi = (param->julia & 0x2) ? 0.0 : param->zi;\
-	}\
-	fp64 low = 4.0;\
-	fp64 temp;\
-	fp64 zs;\
-	for (u32 itr = 0; itr < maxItr; itr++) {
+#define Block1 \
+for (; y < resY; y++) {\
+	ci = (param->julia & 0x1) ? param->zi : (-(((fp64)y - numResY) * numZ) + i);\
+	for (; x < resX; x++) {\
+		if (p0 == p1) {\
+			return;\
+		}\
+		if (param->julia & 0x1) {\
+			zi = -(((fp64)y - numResY) * numZ) + i;\
+			zr = (((fp64)x - numResX) * numZ) + r;\
+			cr = param->zr;\
+		} else {\
+			cr = (((fp64)x - numResX) * numZ) + r;\
+			zr = (param->julia & 0x2) ? 0.0 : param->zr;\
+			zi = (param->julia & 0x2) ? 0.0 : param->zi;\
+		}\
+		fp64 low = 4.0;\
+		fp64 temp;\
+		fp64 zs = 0.0;\
+		for (u32 itr = 0; itr < maxItr; itr++) {
 
-#define Block2(l) zs = zr * zr + zi * zi;\
+#define Block2(l) \
+			zs = zr * zr + zi * zi;\
 			if (zs < low) {\
 				low = zs;\
 			} else if (zs > BREAKOUT) {\
@@ -72,7 +77,7 @@ for (; x < resX; x++) {\
 
 /* BOILERPLATE */
 
-void quadraticRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
+void quadraticRender(const frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
 	Block0
 	fp64 zr1, zr2, zi1, zi2, s1, s2, s3;
 	uint8_t f[8];
@@ -90,20 +95,14 @@ void quadraticRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32
 	zr2 = (f[5]) ? abs(zr) : zr;
 	zi2 = (f[6]) ? abs(zi) : zi;
 
-	if (f[7] == 0) {
-		temp = s1 * ((zr1 * zr) - s2 * (zi1 * zi)) + cr;
-		zi = (zr2 * zi2 * s3) + ci;
-		zr = temp;
-	} else {
-		temp = s1 * abs((zr1 * zr) - s2 * (zi1 * zi)) + cr;
-		zi = (zr2 * zi2 * s3) + ci;
-		zr = temp;
-	}
+	temp = ((zr1 * zr) - s2 * (zi1 * zi));
+	zi = (zr2 * zi2 * s3) + ci;
+	zr = (f[7] != 0) ? (s1 * abs(temp) + cr) : (s1 * temp + cr);
 
 	Block2(2.0)
 }
 
-void cubicRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
+void cubicRender(const frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
 	Block0
 	fp64 zr1, zr2, zr3, zi1, zi2, zi3, s1, s2, s3, s4, s5, s6;
 	uint8_t f[14];
@@ -150,7 +149,7 @@ void cubicRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1)
 	Block2(3.0)
 }
 
-void quarticRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
+void quarticRender(const frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
 	Block0
 	fp64 zr1, zr2, zr3, zr4, zi1, zi2, zi3, zi4, s1, s2, s3, s4, s5, s6, s7;
 	uint8_t f[17];
@@ -200,7 +199,7 @@ void quarticRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p
 	Block2(4.0)
 }
 
-void quinticRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
+void quinticRender(const frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
 	Block0
 	fp64 zr1, zr2, zr3, zr4, zr5, zi1, zi2, zi3, zi4, zi5, s1, s2, s3, s4, s5, s6, s7, s8;
 	uint8_t fS[6];
@@ -264,7 +263,7 @@ void quinticRender(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p
 	Block2(5.0)
 }
 
-void renderRow(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
+void renderRow(const frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
 	
 	u32 dataPtr = p0 * 3; // RGB
 	u32 maxItr = param->itr;
@@ -289,7 +288,7 @@ void renderRow(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
 			fp64 zi = param->zi; // Default 0.0
 			fp64 low = 4.0; // Squared
 			fp64 temp;
-			fp64 zs;
+			fp64 zs = 0.0;
 			
 			for (u32 itr = 0; itr < maxItr; itr++) {
 
@@ -321,21 +320,21 @@ void renderRow(frac* param, uint8_t* data, u32 resX, u32 resY, u32 p0, u32 p1) {
 	//y = 0;
 }
 
-void renderFormula_MultiThread(frac* param, uint8_t* data, u32 resX, u32 resY, u32 tc) {
+void renderFormula_MultiThread(const frac* param, uint8_t* data, u32 resX, u32 resY, u32 tc) {
 	if (data == NULL) {
 		printf("\nError | Texture Pointer is NULL"); fflush(stdout);
 		return;
 	}
-	u32 dataPtr = 0;
+	// u32 dataPtr = 0;
 	
-	u32 maxItr = param->itr;
+	// u32 maxItr = param->itr;
 	
-	fp64 r = param->r;
-	fp64 i = param->i;
-	fp64 zoom = param->zoom;
+	// fp64 r = param->r;
+	// fp64 i = param->i;
+	// fp64 zoom = param->zoom;
 	
-	fp64 cr = 0.0;
-	fp64 ci = 0.0;
+	// fp64 cr = 0.0;
+	// fp64 ci = 0.0;
 		
 	std::vector<std::thread> renderThread;
 	#define makeThread(k) renderThread.push_back(std::thread(k, param, data, resX, resY, p0, p1))
@@ -343,17 +342,21 @@ void renderFormula_MultiThread(frac* param, uint8_t* data, u32 resX, u32 resY, u
 		u32 p0 = ((resX * resY) * t) / tc;
 		u32 p1 = ((resX * resY) * (t + 1)) / tc;
 
-		if (param->type == 2) {
-			makeThread(quadraticRender);
-		} else if (param->type == 3) {
-			makeThread(cubicRender);
-		} else if (param->type == 4) {
-			makeThread(quarticRender);
-		} else if (param->type == 5) {
-			makeThread(quinticRender);
-		} else {
-			renderThread.push_back(std::thread(renderRow, param, data, resX, resY, p0, p1)); //Original Method
-		}
+		switch(param->type) {
+			case 2:
+			default:
+				makeThread(quadraticRender);
+				break;
+			case 3:
+				makeThread(cubicRender);
+				break;
+			case 4:
+				makeThread(quarticRender);
+				break;
+			case 5:
+				makeThread(quinticRender);
+				break;
+		};
 	}
 	for (u32 t = 0; t < tc; t++) {
 		renderThread.at(t).join();

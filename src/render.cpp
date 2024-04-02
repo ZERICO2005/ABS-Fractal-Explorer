@@ -30,8 +30,8 @@
 #define RESX_Default 800
 #define RESY_Default 640
 //Minimum allowed resolution
-#define RESX_Minimum 640
-#define RESY_Minimum 360
+#define RESX_Minimum 600
+#define RESY_Minimum 280
 //Maximum allowed resolution (To avoid allocating way too much resources)
 #define RESX_Maximum 8192
 #define RESY_Maximum 4608
@@ -176,13 +176,40 @@ Timer updateTimer;
 uint64_t numberAcc = 0;
 uint8_t numberInputSelect = 0;
 
+uint64_t getFractalFamilySize(uint8_t input_type) {
+	if (input_type == 2) {
+		return 8; // Bit 3
+	} else if (input_type == 3) {
+		return 64; // Bit 6
+	} else if (input_type == 4) {
+		return 128; // Bit 7
+	} else if (input_type == 5) {
+		return 256; // Bit 8
+	}
+	return 1;
+}
+
+uint64_t clampFractalFormula(uint8_t input_type, uint64_t input_formula) {
+	if (input_type == 2) {
+		input_formula %= 256;
+	} else if (input_type == 3) {
+		input_formula %= 16384;	
+	} else if (input_type == 4) {
+		input_formula %= 131072;
+	} else if (input_type == 5) {
+		input_formula %= 1048576;
+	}
+	return input_formula;
+}
+
 void renderLoop() {
-	frac input = {
-		2,0,0x0, // type, formula, julia
-		0.0,0.0,-0.2, //r, i, zoom
-		1024, //itr
-		0.0,0.0 // zr, zi
-	};
+	frac input;
+	input.type = 2; input.julia = 0x0; input.formula = 0;
+	input.r = 0.0; input.i = 0.0; input.zoom = -0.2;
+	input.itr = 128; input.itrVal = log2((fp64)input.itr);
+	input.zr = 0.0; input.zi = 0.0;
+	/* Unused */ input.resX = 0; input.resY = 0; input.samples = 0;
+
 	renderFractal(&input);
 	uint8_t update;
 	while (1) {
@@ -220,6 +247,18 @@ void renderLoop() {
 			update = 1;
 		}
 		
+		if (keyPressed(SDL_SCANCODE_T))
+		{
+			input.itrVal += 1.75 * moveDelta;
+			input.itrVal = (input.itrVal <= log2(131072.0)) ? input.itrVal : log2(131072.0);
+			update = 1;
+		}
+		if (keyPressed(SDL_SCANCODE_G)) {
+			input.itrVal -= 1.75 * moveDelta;
+			input.itrVal = (input.itrVal >= log2(16.0)) ? input.itrVal : log2(16.0);
+			update = 1;
+		}
+
 		if (keyPressed(SDL_SCANCODE_J)) {
 			input.zr -= 0.3 * pow(10.0,-input.zoom / 2.0) * moveDelta;
 			update = 1;
@@ -285,8 +324,27 @@ void renderLoop() {
 				}
 			}
 
-			if (keyPressed(SDL_SCANCODE_T)) { input.itr *= 2; input.itr = (input.itr <= 65536) ? input.itr : 65536; update = 1; }
-			if (keyPressed(SDL_SCANCODE_G)) { input.itr /= 2; input.itr = (input.itr >= 16) ? input.itr : 16; update = 1; }
+			// Increment/Decrement Fractal Formula
+			if (keyPressed(SDL_SCANCODE_LEFTBRACKET)) {
+				input.formula--;
+				input.formula = clampFractalFormula(input.type,input.formula);
+				update = 1;
+			}
+			if (keyPressed(SDL_SCANCODE_RIGHTBRACKET)) {
+				input.formula++;
+				input.formula = clampFractalFormula(input.type,input.formula);
+				update = 1;
+			}
+			if (keyPressed(SDL_SCANCODE_MINUS)) {
+				input.formula -= getFractalFamilySize(input.type);
+				input.formula = clampFractalFormula(input.type,input.formula);
+				update = 1;
+			}
+			if (keyPressed(SDL_SCANCODE_EQUALS)) {
+				input.formula += getFractalFamilySize(input.type);
+				input.formula = clampFractalFormula(input.type,input.formula);
+				update = 1;
+			}
 			
 			if (keyPressed(SDL_SCANCODE_B)) { renderType = SingleThread; update = 1; } else
 			if (keyPressed(SDL_SCANCODE_N)) { renderType = MultiThread; update = 1; } else
@@ -307,7 +365,7 @@ void renderLoop() {
 			time_t timeFormat;
 			timeFormat = time(NULL);
 			struct tm tm = *localtime(&timeFormat);
-			sprintf(tempName,"Fractal-id-%ld-time-%04d-%02d-%02d_%02d-%02d-%02d",input.formula,tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday,tm.tm_hour, tm.tm_min, tm.tm_sec);
+			sprintf(tempName,"Fractal-id-%llu-time-%04d-%02d-%02d_%02d-%02d-%02d",input.formula,tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday,tm.tm_hour, tm.tm_min, tm.tm_sec);
 			writeImage(tempName,VRAM_Render,RESX_Render,RESY_Render);
 		}
 		if (UI_Camera == 1 && timerReady(&cameraUIColorTimer)) {
@@ -320,7 +378,7 @@ void renderLoop() {
 			valLimitExclusive(&input.i,-10.0,10.0); valLimitExclusive(&input.r,-10.0,10.0);
 			valLimitExclusive(&input.zoom,-10.0,100.0);
 			valLimitInclusive(&input.zr,-2.0,2.0); valLimitInclusive(&input.zi,-2.0,2.0);
-			
+			valLimitInclusive(&input.itrVal,log2(16.0),log2(131072.0));
 			renderFractal(&input);
 		}
 		renderFrame(&input);
@@ -393,7 +451,7 @@ displayInfo* displayList;
 
 void initLCDcontroller() {
 	// Bootup
-	printf("\nVersion 1.0.2 | 2023/08/17 | zerico2005"); fflush(stdout);
+	printf("\nABS-Fractal-Explorer Classic\nVersion 1.0.3 | 2024/04/02 | zerico2005"); fflush(stdout);
 	SDL_Init(SDL_INIT_VIDEO);
 	// Retrive Display Information
 	int32_t displayCount = SDL_GetNumVideoDisplays();
@@ -432,9 +490,14 @@ void initLCDcontroller() {
 	RESX_Render = RESX_Master;
 	RESY_Render = RESY_Master - RESY_UI;
 	// Create SDL2 Window
-    SDL_CreateWindowAndRenderer(setX, setY, SDL_WINDOW_RESIZABLE, &window, &renderer);
+   	//SDL_CreateWindowAndRenderer(setX, setY, SDL_WINDOW_RESIZABLE, &window, &renderer);
+	window = SDL_CreateWindow("ABS-Fractal-Explorer Classic (v1.0.3)",SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,setX,setY,SDL_WINDOW_RESIZABLE);
+	SDL_SetWindowMinimumSize(window,RESX_Minimum,RESY_Minimum);
+	SDL_SetWindowMaximumSize(window,RESX_Maximum,RESY_Maximum);
+	renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
 //	SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
 	SDL_RenderSetLogicalSize(renderer, RESX_Master, RESY_Master);
+	texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STREAMING, RESX_Master, RESY_Master);
 	// Retrive Processor Information
 	auto processor_count = std::thread::hardware_concurrency();
 	threadCount = (uint32_t)processor_count;
@@ -443,18 +506,21 @@ void initLCDcontroller() {
 	init_OpenCL(RESX_Render,RESY_Render);
 	queryOpenCL_GPU();
 	// Allocate Buffers
-	VRAM_Render = (uint8_t*)malloc(RESX_Render*RESY_Render*3);
-	VRAM_UI = (uint8_t*)malloc(RESX_UI*RESX_UI*3);
+	VRAM_Render = (uint8_t*)calloc(RESX_Render * RESY_Render * 3, sizeof(uint8_t));
+	VRAM_UI = (uint8_t*)calloc(RESX_UI * RESX_UI * 3, sizeof(uint8_t));
+	VRAM_Master = (uint8_t*)calloc(RESX_Master * RESY_Master * 3, sizeof(uint8_t));
 	// Set Timers
 	setTimer(&keyInputTimer,0.116);
 	setTimer(&imageSaveTimer,5.0);
 //	setTimer(&numberInputTimer,0.145);
 }
 void terminateLCDcontroller() {
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+	SDL_DestroyTexture(texture);
+	SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	SDL_Quit();
 	terminate_OpenCL();
+	free(VRAM_Master);
 	free(VRAM_Render);
 	free(VRAM_UI);
 	free(displayList);
@@ -481,11 +547,14 @@ uint8_t windowResizingCode() {
 		RESX_Render = RESX_Master;
 		RESY_Render = RESY_Master - RESY_UI;
 		
-		free(VRAM_Render);
-		free(VRAM_UI);
-		VRAM_Render = (uint8_t*)malloc(RESX_Render*RESY_Render*3);
-		VRAM_UI = (uint8_t*)malloc(RESX_UI*RESY_UI*3);
+		VRAM_Render = (uint8_t*)realloc(VRAM_Render, RESX_Render * RESY_Render * 3);
+		VRAM_UI = (uint8_t*)realloc(VRAM_UI, RESX_UI * RESY_UI * 3);
+		VRAM_Master = (uint8_t*)realloc(VRAM_Master, RESX_Master * RESY_Master * 3);
 		//printf("\n%d %d",x,y);
+		if (texture != nullptr) {
+			SDL_DestroyTexture(texture);
+		}
+		texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STREAMING, RESX_Master, RESY_Master);
 		reVal = 1;
 	}
 	rX = x;
@@ -494,21 +563,22 @@ uint8_t windowResizingCode() {
 }
 
 void overlayPixel(u32 x, u32 y, uint8_t* buffer) {
-	if (x >= RESX_Master || y >= RESY_Master) { // Out of bounds
+	if (x >= RESX_Render || y >= RESY_Render) { // Out of bounds
 		return;	
 	}
-	u32 z = ((y * RESX_Master) + x) * 3;
+	u32 z = ((y * RESX_Render) + x) * 3;
 	buffer[z] = (buffer[z] + 255) / 2; // R
 	buffer[z+1] = (buffer[z+1] + 255) / 2; // G
 	buffer[z+2] = (buffer[z+2] + 255) / 2; // B
 }
 
-char* const HeaderText[] = {"Real:","Imag:","Zoom: 10^","Itr:","ZR:","ZI:"};
-char* const PowerText[] = {"Quadratic","Cubic","Quartic","Quintic"};
-void renderUI(frac* param) {
+const char* const HeaderText[] = {"Real:","Imag:","Zoom: 10^","Itr:","ZR:","ZI:"};
+const char* const PowerText[] = {"Quadratic","Cubic","Quartic","Quintic"};
+void renderUI(const frac* param) {
 	char tempString[64];
+	memset(tempString,'\0',sizeof(tempString));
 	#define printAFloat(x,y,z,l) snprintf(tempString,l+1,"%.10lf",z); printText(x,y,tempString);
-	#define printAnInt(x,y,z,l) snprintf(tempString,l+1,"%ld",z); printText(x,y,tempString);
+	#define printAnInt(x,y,z,l) snprintf(tempString,l+1,"%llu",z); printText(x,y,tempString);
 	#define printAType(x,y,z,w,l) snprintf(tempString,l+1,w,z); printText(x,y,tempString);
 	setBuffer(VRAM_UI,RESX_UI,RESY_UI);
 	if (UI_Camera == 0) { setHexColor(0x555555); } else { setHexColor(0x111111); }
@@ -521,21 +591,48 @@ void renderUI(frac* param) {
 	uint64_t f0 = (numberInputSelect == 2) ? numberAcc : param->formula;
 	
 	setHexColor(0x000000);
-	printText(10,10,"Real:"); printText(136,10,"Zoom:"); printText(241,10,"Zr0:"); printText(346,10,"crsR:"); 
-	printText(10,22,"Imag:"); printText(136,22,"Iter:"); printText(241,22,"Zi0:"); printText(346,22,"crsI:"); 
-	printAFloat(52,10,param->r,11); printAFloat(178,10,param->zoom,8); printAFloat(276,10,param->zr,9); printAFloat(390,10,cXR,9); 
-	printAFloat(52,22,param->i,11); printAType(178,22,param->itr,"%d",8); printAFloat(276,22,param->zi,9); printAFloat(390,22,cYI,9); 
-	printText(458,10,"FPS:"); //printText(570,10,"Type:");
-	printText(458,22,"mili:"); //printText(570,22,"f-ID:");
-	printAType(500,10,1.0 / deltaTime,"%.3lf",7);
-	printAType(500,22,deltaTime * 1000.0,"%.3lf",7);
-	if (numberInputSelect == 1) {setHexColor(0xAA0000); } printText(556,10,PowerText[param->type - 2]); setHexColor(0x000000);
-	printText(556,22,"ID"); if (numberInputSelect == 2) {setHexColor(0xAA0000); } printAnInt(577,22,f0,7); //setHexColor(0x000000);
-	//printFPS();
-	uint8_t* bufUI = getBuffer();
-	for (u32 z = 0; z < RESX_UI * RESY_UI * 3; z++) {
-		VRAM_UI[z] = bufUI[z];
+	printText(10,10,"Real:"); printText(136,10,"Zoom:"); printText(227,10,"Zr0:"); printText(332,10,"crsR:"); 
+	printText(10,22,"Imag:"); printText(136,22,"Iter:"); printText(227,22,"Zi0:"); printText(332,22,"crsI:"); 
+	printAFloat(52,10,param->r,11); printAFloat(178,10,param->zoom,6); printAFloat(262,10,param->zr,9); printAFloat(376,10,cXR,9); 
+	printAFloat(52,22,param->i,11); printAType(178,22,param->itr,"%d",6); printAFloat(262,22,param->zi,9); printAFloat(376,22,cYI,9); 
+	
+	printFPS();
+	printText(444,10,"FPS:"); //printText(570,10,"Type:");
+	printText(444,22,"mili:"); //printText(570,22,"f-ID:");
+	if (1.0 / maxDisplayTime >= 100.0) {
+		printAType(479,10,1.0 / maxDisplayTime,"%.2lf",6);
+	} else {
+		printAType(486,10,1.0 / maxDisplayTime,"%.2lf",5);
 	}
+	printAType(486,22,maxDisplayTime * 1000.0,"%.2lf",5);
+	if (numberInputSelect == 1) {setHexColor(0xAA0000); } printText(528,10,PowerText[param->type - 2]); setHexColor(0x000000);
+	printText(528,22,"ID"); if (numberInputSelect == 2) {setHexColor(0xAA0000); } printAnInt(549,22,f0,7); //setHexColor(0x000000);
+	
+	const uint8_t* bufUI = getBuffer();
+	// for (u32 z = 0; z < RESX_UI * RESY_UI * 3; z++) {
+	// 	VRAM_UI[z] = bufUI[z];
+	// }
+	memcpy(VRAM_UI, bufUI, RESX_UI * RESY_UI * 3);
+}
+
+// Copies all of src into dst + verticalOffset if the pitch of each BufferBox is the same
+inline void copyBuffer_VeritcalOffset(
+	const uint8_t* buffer, size_t verticalOffset, int32_t resY
+) {
+	if (
+		(buffer == nullptr) ||
+		(verticalOffset >= (size_t)resY)
+	) {
+		return;
+	}
+	size_t bufPitch = (size_t)RESX_Master * 3;
+
+	size_t offset = (verticalOffset) * bufPitch;
+	size_t copySize = ((size_t)RESY_Master - verticalOffset) * bufPitch;
+	if (copySize > resY * bufPitch) {
+		copySize = resY * bufPitch;
+	}
+	memcpy(&((uint8_t*)VRAM_Master)[offset], buffer, copySize);
 }
 
 void blitBuffer(uint8_t* buffer, u32 x0, u32 y0, u32 x1, u32 y1) { // Cord, Size
@@ -556,36 +653,49 @@ void blitBuffer(uint8_t* buffer, u32 x0, u32 y0, u32 x1, u32 y1) { // Cord, Size
 
 void renderFrame(frac* param) {
 	//static int pT;
-	int pitch;
-	//if (pitch & 0x3) { pitch &= 0xFFFFFFFC; pitch += 0x4; }
-	texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STREAMING, RESX_Master, RESY_Master);
-	// if (pT != pitch) {
-	// 	printf("\nPitch %d", pitch); fflush(stdout);
-	// }
-	// pT = pitch;
-	SDL_LockTexture(texture, NULL, &VRAM_Master,&pitch);
-	//setPrintInt(VRAM_Render,resX,resY);
-	//printFloat(1.0 / deltaTime,4,3,10,resX-31,0);
-	//printFloat(parameter->r,2,6,10,0,0);
-	//printFloat(parameter->i,2,6,10,39,0);
-	//printFloat(parameter->zoom,2,3,10,78,0);
-	/*
-	printInt(cursorX(),4,10,8,30);
-	printInt(cursorY()-(i32)UIresY,4,10,8,40);
-	fp64 cXR = ((((fp64)cursorX() - (((fp64)RESX_Render - 1.0f) / 2.0f)) / (((fp64)RESY_Render - 1.0f) / 2.0f)) / pow(10.0f, parameter->zoom)) + parameter->r;
-	fp64 cYI = -((((fp64)(cursorY()-(i32)UIresY) - (((fp64)RESY_Render - 1.0f) / 2.0f)) / (((fp64)RESY_Render - 1.0f) / 2.0f)) / pow(10.0f, parameter->zoom)) + parameter->i;
-	printFloat(cXR,2,6,10,52,30);
-	printFloat(cYI,2,6,10,52,40);
-	*/
-	blitBuffer(VRAM_Render,0,RESY_UI,RESX_Render,RESY_Render);
+	//int pitch;
+		//if (pitch & 0x3) { pitch &= 0xFFFFFFFC; pitch += 0x4; }
+		//texture = SDL_CreateTexture(renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STREAMING, RESX_Master, RESY_Master);
+		// if (pT != pitch) {
+		// 	printf("\nPitch %d", pitch); fflush(stdout);
+		// }
+		// pT = pitch;
+	//SDL_LockTexture(texture, NULL, &VRAM_Master,&pitch);
+		//setPrintInt(VRAM_Render,resX,resY);
+		//printFloat(1.0 / deltaTime,4,3,10,resX-31,0);
+		//printFloat(parameter->r,2,6,10,0,0);
+		//printFloat(parameter->i,2,6,10,39,0);
+		//printFloat(parameter->zoom,2,3,10,78,0);
+		/*
+		printInt(cursorX(),4,10,8,30);
+		printInt(cursorY()-(i32)UIresY,4,10,8,40);
+		fp64 cXR = ((((fp64)cursorX() - (((fp64)RESX_Render - 1.0f) / 2.0f)) / (((fp64)RESY_Render - 1.0f) / 2.0f)) / pow(10.0f, parameter->zoom)) + parameter->r;
+		fp64 cYI = -((((fp64)(cursorY()-(i32)UIresY) - (((fp64)RESY_Render - 1.0f) / 2.0f)) / (((fp64)RESY_Render - 1.0f) / 2.0f)) / pow(10.0f, parameter->zoom)) + parameter->i;
+		printFloat(cXR,2,6,10,52,30);
+		printFloat(cYI,2,6,10,52,40);
+		*/
+		//printf("\n%p\nRes: %ux%u\n",VRAM_Master,RESX_Master,RESY_Master);
+		//fflush(stdout);
+	// blitBuffer(VRAM_Render,0,RESY_UI,RESX_Render,RESY_Render);
+	copyBuffer_VeritcalOffset(VRAM_Render,RESY_UI,RESY_Render);
 	renderUI(param);
-	blitBuffer(VRAM_UI,0,0,RESX_UI,RESY_UI);
-
-	SDL_UnlockTexture(texture);
-	SDL_RenderCopy(renderer, texture, NULL, NULL);
-	SDL_DestroyTexture(texture);
+	//memset((uint8_t*)VRAM_Master,0xA0,RESX_Master * RESY_Master);
+	//printf("\n%p\nRes: %ux%u\n",VRAM_Master,RESX_Master,RESY_Master);
+	// blitBuffer(VRAM_UI,0,0,RESX_UI,RESY_UI);
+	copyBuffer_VeritcalOffset(VRAM_UI,0,RESY_UI);
+	//memcpy(&(((uint8_t*)VRAM_Master)[0]),VRAM_UI,(RESX_UI * 3) * RESY_UI);
+	
+	
+	SDL_UpdateTexture(texture, NULL, VRAM_Master, RESX_Master * 3); 
+	{
+		SDL_Rect srcRect = {0,0,(int)RESX_Master,(int)RESY_Master};
+		SDL_Rect dstRect = {0,0,(int)RESX_Master,(int)RESY_Master};
+		SDL_RenderCopy(renderer, texture, &srcRect, &dstRect);
+	}
+	//SDL_UnlockTexture(texture);
+	//SDL_RenderCopy(renderer, texture, NULL, NULL);
+		//SDL_DestroyTexture(texture);
 	SDL_RenderPresent(renderer);
-
 }
 
 void renderFractal(frac* param) {

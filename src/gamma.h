@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -28,6 +28,10 @@ typedef int64_t i64;
 typedef float fp32;
 typedef double fp64;
 
+typedef int int_enum;
+
+typedef int64_t nano64_t;
+
 #include "RGB888.h"
 
 #define PI 		3.1415926535897932384626433832795
@@ -42,6 +46,7 @@ struct fractalData {
 	fp64 i;
 	fp64 zoom;
 	uint32_t itr;
+	fp64 itrVal;
 	fp64 zr;
 	fp64 zi;
 	uint32_t resX;
@@ -53,5 +58,13 @@ typedef struct fractalData frac;
 #define shallowCopy(dst,src) memcpy(dst, src, sizeof (*dst))
 #define fpInc(x) nextafter(x,x-copysign(1.0,x))
 #define fpDec(x) nextafter(x,x+copysign(1.0,x))
+
+/* Functions */
+	// Fills a buffer with a repeating pattern of N bytes
+	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize);
+
+	// Assumes the pattern is set in the first N bytes in buf
+	void* inPlacePatternMemcpy(void* __restrict__ buf, size_t bufSize, size_t PatternSize);
+
 
 #endif /* GAMMA_H */

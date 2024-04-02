@@ -1,16 +1,16 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#ifndef FRAC_MULTI_H
-#define FRAC_MULTI_H
+#ifndef FILE_MANAGER_H
+#define FILE_MANAGER_H
 
 #include "gamma.h"
 
-void renderFormula_MultiThread(frac* parameter, uint8_t* data, u32 resX, u32 resY, u32 threadCount);
+void writeImage(const char* name, const uint8_t* data, uint32_t resX, uint32_t resY);
 
-#endif /* FRAC_MULTI_H */
+#endif /* FILE_MANAGER_H */

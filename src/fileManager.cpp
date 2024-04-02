@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -16,15 +16,19 @@
 uint8_t imageOutPathSet = 0;
 const char* imageOutPath = "";
 
-void setPath(char* path) {
+// void setPath(char* path) {
 	
-}
+// }
 
-void writeImage(char* name, uint8_t* data, uint32_t resX, uint32_t resY) {
+void writeImage(const char* name, const uint8_t* data, uint32_t resX, uint32_t resY) {
 //	if (imageOutPathSet == 0) {
 //		setPath(imageOutPath);
 //	}
-	char* fileName = (char*)malloc(strlen(imageOutPath) + strlen(name) + strlen(".png") + 1);
+	char* fileName = (char*)calloc(strlen(imageOutPath) + strlen(name) + strlen(".png") + 1, sizeof(char));
+	if (fileName == nullptr) {
+		printf("\nUnable to calloc fileName");
+		return;
+	}
 	sprintf(fileName,"%s%s.png",imageOutPath,name);
 	printf("\nWriting File: %s",fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);

@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -11,7 +11,8 @@
 
 #include "gamma.h"
 
-#define PROGRAM_FILE "src/fracCL.cl"
+const char PROGRAM_FILE[] = "src/fracCL.cl";
+
 #define KERNEL_FUNC "renderFracCLPoint"
 #define CL_TARGET_OPENCL_VERSION 120
 
@@ -29,6 +30,6 @@ struct _OpenCL_Engine {
 }; typedef struct _OpenCL_Engine OpenCL_Engine;
 
 cl_device_id create_device();
-cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename);
+cl_program build_program(cl_context ctx, cl_device_id dev);
 
 #endif /* BUILD_CL_H */

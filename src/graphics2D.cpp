@@ -72,33 +72,38 @@ void plotFast(uint32_t z) {
 	}
 }
 void fillScreen() { //x start, y start, x length, y length
-    for (uint32_t v = 0; v < resX * resY; v++) {
-		plotColor(v);
-    }
+	// for (uint32_t v = 0; v < resX * resY; v++) {
+	// 	plotColor(v);
+	// }
+	patternMemcpy(VRAM, resX * resY * 3, (uint8_t*)((void*)&gColor), 3);
 }
 
 void fillRect(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1) { //x start, y start, x length, y length
-    uint32_t v = (x0 + (y0 * resX));
-    const uint32_t jump = resX - x1;
-    for (uint32_t dY = 0; dY < y1; dY++) {
-        for (uint32_t dX = 0; dX < x1; dX++) {
-			if (v < resZ) { plotColor(v); }
-            v++;
-        }
-        v += jump;
-    }
+	if (
+		(x0 >= resX || y0 >= resY || x1 == 0 || y1 == 0) ||
+		(x0 + x1 > resX || y0 + y1 > resY)
+	) { return; }
+	uint32_t v = (x0 + (y0 * resX));
+	for (uint32_t dY = 1; dY < y1; dY++) {
+		patternMemcpy(&VRAM[v * 3], x1 * 3, (uint8_t*)((void*)&gColor), 3);
+		v += resX;
+	}
 }
 void horiz(uint32_t x0, uint32_t y, uint32_t x1) { //x start, y postion, x length
-    uint32_t z = ((x0 + x1) + (y * resX));
-    for (uint32_t fill = x0 + (y * resX); fill < z; fill++) {
-        plotColor(fill);
-    }
+	if (
+		(x0 >= resX || y >= resY || x1 == 0) ||
+		(x0 + x1 > resX)
+	) { return; }
+	uint32_t fill = (x0 + y * resX) * 3;
+	patternMemcpy(&VRAM[fill], x1 * 3, (uint8_t*)((void*)&gColor), 3);
 }
 void vert(uint32_t x, uint32_t y0, uint32_t y1) { //x postion, y start, y length
-    uint32_t z = (x + ((y1 + y0) * resX));
-    for (uint32_t fill = (y0 * resX) + x; fill < z; fill += resX) {
-        plotColor(fill);
-    }
+	if (x >= resX || y0 >= resY || y1 == 0) { return; }
+	if (y0 + y1 > resY) { return; }
+	uint32_t z = (x + ((y1 + y0) * resX));
+	for (uint32_t fill = (y0 * resX) + x; fill < z; fill += resX) {
+		plotColor(fill);
+	}
 }
 
 void drawLine0(i32 x0, i32 y0, i32 x1, i32 y1) {
@@ -195,7 +200,7 @@ void text6x8(uint32_t xW, uint32_t yW, uint8_t lexicon) { //x position, y positi
     }
 }
 
-void printText(uint32_t xW, uint32_t yW, char* text) { // X, Y, Text
+void printText(uint32_t xW, uint32_t yW, const char* text) { // X, Y, Text
 	uint32_t x = xW;
 	uint32_t y = yW;
 	uint32_t t = 0; // For tabs

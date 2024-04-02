@@ -35,9 +35,9 @@ void init_OpenCL(uint32_t resX, uint32_t resY) {
 	engine.device = create_device();
 	engine.context = clCreateContext(NULL, 1, &engine.device, NULL, NULL, &err);
 
-	engine.program = build_program(engine.context, engine.device, PROGRAM_FILE); /* Build program */
+	engine.program = build_program(engine.context, engine.device); /* Build program */
 	engine.queue = clCreateCommandQueue(engine.context, engine.device, 0, &err); /* Create a command queue */
-	deviceResultBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, resX*resY*3, NULL, NULL); /* Create data buffer */
+	deviceResultBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, resX * resY * 3, NULL, NULL); /* Create data buffer */
 	// Write our data set into the input array in device memory
 	//err = clEnqueueWriteBuffer(queue, dreals, CL_TRUE, 0, sizeof(float)*nreals, reals, 0, NULL, NULL);
 	engine.kernel = clCreateKernel(engine.program, KERNEL_FUNC, &err); /* Create a kernel */
@@ -127,10 +127,10 @@ void queryOpenCL_GPU() {
 	//err = clGetKernelWorkGroupInfo(engine.kernel,engine.device,CL_KERNEL_WORK_GROUP_SIZE,sizeof(size_t),&work_group_size,NULL); printf("\nCL_KERNEL_WORK_GROUP_SIZE: %d",work_group_size); fflush(stdout); printOpenCLError(err);
 	#define printGPUstat(f,in,out) err = clGetKernelWorkGroupInfo(engine.kernel,engine.device,in,sizeof(out),&out,NULL); printf(f,out); fflush(stdout); printOpenCLError(err)
 	printf("\nGPU Hardware Capablilities:"); fflush(stdout);
-	printGPUstat("\nCL_KERNEL_WORK_GROUP_SIZE: %d",CL_KERNEL_WORK_GROUP_SIZE,WorkGroup_Size);
-	printGPUstat("\nCL_KERNEL_LOCAL_MEM_SIZE: %d",CL_KERNEL_LOCAL_MEM_SIZE,LocalMem_Size);
-	printGPUstat("\nCL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE: %d",CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,WorkGroup_SizeMultiple);
-	printGPUstat("\nCL_KERNEL_PRIVATE_MEM_SIZE: %d",CL_KERNEL_PRIVATE_MEM_SIZE,PrivateMem_Size);
+	printGPUstat("\nCL_KERNEL_WORK_GROUP_SIZE: %zu",CL_KERNEL_WORK_GROUP_SIZE,WorkGroup_Size);
+	printGPUstat("\nCL_KERNEL_LOCAL_MEM_SIZE: %zu",CL_KERNEL_LOCAL_MEM_SIZE,LocalMem_Size);
+	printGPUstat("\nCL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE: %zu",CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,WorkGroup_SizeMultiple);
+	printGPUstat("\nCL_KERNEL_PRIVATE_MEM_SIZE: %zu",CL_KERNEL_PRIVATE_MEM_SIZE,PrivateMem_Size);
 }
 void terminate_OpenCL() { 	/* Deallocate resources */
 	clReleaseKernel(engine.kernel);

@@ -1,5 +1,6 @@
 Quadratic ID Number | Number in Video | Name
 ============================================
+Video: https://youtu.be/HeUpSzC1vzU
 
 Standard Fractals:
 	000 |  1. | Mandelbrot Set

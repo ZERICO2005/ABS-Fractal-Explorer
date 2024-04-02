@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -300,7 +300,7 @@ cl_device_id create_device() {
 }
 
 /* Create program from a file and compile it */
-cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename) {
+cl_program build_program(cl_context ctx, cl_device_id dev) {
    
    #ifdef BUILD_FRAC_FROM_FILE
       cl_program program;
@@ -310,7 +310,7 @@ cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename)
       int err;
 
       /* Read program file and place content into buffer */
-      program_handle = fopen(filename, "r");
+      program_handle = fopen(PROGRAM_FILE "r");
       if(program_handle == NULL) {
          perror("Couldn't find the program file");
          exit(1);
@@ -355,7 +355,7 @@ cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename)
    #endif
    #ifdef BUILD_FRAC_FROM_CONST
       cl_program program;
-      FILE *program_handle;
+      //FILE *program_handle;
       char *program_log;
       size_t program_size, log_size;
       int err;

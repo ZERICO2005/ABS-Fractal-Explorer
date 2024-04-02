@@ -1,37 +1,18 @@
-ABS Fractal Explorer
-v1.0.2 | 2023/08/17 | zerico2005
+ABS-Fractal-Explorer Classic
+v1.0.3 | 2024/04/02 | zerico2005
 
 Description:
-	ABS Fractal Explorer will allow you to explore hundereds of different Mandelbrot variants.
+	ABS-Fractal-Explorer will allow you to explore hundereds of different Mandelbrot variants.
 	Some extra features include changing the starting Z values, along with viewing each fractals Julia set.
-	Software is available for Windows and Linux
-	More features, preformance improvements, and bug fixes will be released in later versions.
 
-	ABS-Fractal-Explorer is currently being rewriten to add new functionaility and to fix issues. The source code for it can be found under the "rewrite" branch.
-
-Controls:
-	Primary:
-		WASD/Arrows: Panning/Moving
-		E/Q: Zooming In/Out
-		T/G: Increase/Decrease Maximum Iterations
-		R: Reset Cordinates and Zoom
-	Secondary:
-		J/L: Change starting Z.real value
-		I/K: Change starting Z.imag value
-		U/O: Reset Z.real/Z.imag to 0.0
-	Fractal:
-		Z: Change Fractal ID (0-1048575) (Type in number then press Enter)
-		X: Change Fractal Type (2-5) (Quadratic-Quintic)
-		C: View Julia Set
-		V: Toggle starting Z value for Mandelbrot set
-		P: Take a screenshot (To the directory the EXE is located in)
-	Cycling:
-		[/]: Decrement/Increment by Formula ID
-		-/+: Decrement/Increment by Fractal Family
-	Rendering:
-		M: GPU Rendering (Fastest)
-		N: CPU Full Multithreading (Zoom further)
-		B: CPU Half Multithreading (Slowest, Not Recommended) (Limits the amount of threads used to render fractals)
+What is ABS-Fractal-Explorer Classic?
+	ABS-Fractal-Explorer Classic is based off of the older versions of ABS-Fractal-Explorer from 2023/08/15 to 2023/08/17. The code base is less complex, making it easier to develop for and port to other platforms. ABS-Fractal-Explorer Classic won't receive any feature updates, but may continute to receive bug fixes and patches to make the program more stable and run faster.
+	
+	Modern versions of ABS-Fractal-Explorer from 2023/10/25 onwards are actively being worked on to add new features, updates, and functionality.
+	
+	The latest releases of ABS-Fractal-Explorer can be found on Itch.io and GitHub:
+	Itch.io: https://zerico2005.itch.io/abs-fractal-explorer
+	GitHub: https://github.com/ZERICO2005/ABS-Fractal-Explorer/releases
 		
 What are Fractal Families?
 	A Fractal Family refers to fractals with the exact same ABS functions but different signage.
@@ -63,12 +44,6 @@ Notes:
 	- The Quadratic fractal ID's are NOT related to the fractals shown in "75 Mandelbrot Variants". Please consult the conversion table included in the software package to get their Quadratic ID number.
 	- If you would like a challenge, try finding how many Quadratic fractals are contained in a singular Quadratic Fractal.
 		- There is 4 fractals contained within the "Anchor" fractal, can you find more? https://youtu.be/gu1QfON0zxg
-
-System Requirements:
-	- GPU capable of running OpenCL 1.2 (Most computers from 2012 or later)
-	- 64bit x86 CPU
-	- 640x480 minimum screen resolution
-	- Program uses ~130megabytes of RAM
 
 Attributions:
 	- The 6x8 pixel font used in the program is a slightly modified version of the "even" font created by Christian Munk (CMunk), which can be found at https://fontstruct.com/fontstructions/show/275268/even_2. The "even" font is lincesed under Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0). Original License URL: https://creativecommons.org/licenses/by-sa/3.0/

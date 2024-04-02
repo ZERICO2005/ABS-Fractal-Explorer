@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -43,7 +43,7 @@ void drawLine(i32 x0, i32 y0, i32 x1, i32 y1); //xy start, xy end
 void drawRect(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1);
 
 //Other
-void printText(uint32_t xW, uint32_t yW, char* text);
+void printText(uint32_t xW, uint32_t yW, const char* text);
 void text6x8(uint32_t xW, uint32_t yW, uint8_t lexicon);
 void shadeRect(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1);
 
