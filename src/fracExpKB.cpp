@@ -390,6 +390,7 @@ int write_FracExpKB_Header(FILE *ptrW) {
 	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64,
 		(uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0
 	);
+	
 	fprintf(ptrW,"\n\nFile_Information:");
 	fprintf(ptrW,"\n\tPlatform:\n\t\t\"%s\"","Unknown");
 	fprintf(ptrW,"\n\tCreated:\n\t\t\"%s\"","2000/01/01 00:00");
