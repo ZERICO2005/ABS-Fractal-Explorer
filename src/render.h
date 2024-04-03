@@ -15,8 +15,8 @@
 #include "display_GUI.h"
 #include "displayInfo.h"
 
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_scancode.h>
+#include <SDL_keycode.h>
+#include <SDL_scancode.h>
 
 /* Holds resolution, sampling, precision and rendering method */
 struct Render_Data {
@@ -86,6 +86,8 @@ uint64_t get_Hardware_Hash();
 /* Window Configuration */
 
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode);
+
+Display_Fullscreen::Display_Fullscreen_Enum get_Window_Fullscreen_Mode();
 
 void toggle_Window_Fullscreen_Mode();
 

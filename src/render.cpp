@@ -21,7 +21,7 @@
 #include "imageBuffer.h"
 #include "imageTransform.h"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <opencv2/opencv.hpp>
 
 #include "imgui.h"
@@ -353,12 +353,23 @@ bool windowResizingCode(dim32_t* resX = nullptr, dim32_t* resY = nullptr) {
 }
 
 void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum fullscreen_mode) {
-	//return; // This code creates werid problems
+	int32_t dispResX, dispResY, initResX, initResY, initPosX, initPosY;
+	const DisplayInfo* disp = getDisplayFromWindowPosition(window);
+	if (disp == nullptr) {
+		return;
+	}
+	disp->getResolution(dispResX, dispResY);
+	disp->getResolution(initResX, initResY);
+	disp->getPosition(initPosX,initPosY);
 	switch (fullscreen_mode) {
 		// case Display_Fullscreen::Fullscreen:
 		// 	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 		// 	break;
 		case Display_Fullscreen::Windowed_Fullscreen:
+			if (dispResX >= RESX_Minimum && dispResY >= RESY_Minimum) {
+				force_resizeWindow(dispResX, dispResY);
+				SDL_SetWindowPosition(window, initPosX, initPosY);
+			}
 			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 			windowResizingCode(nullptr, nullptr);
 			break;
@@ -369,19 +380,25 @@ void set_Window_Fullscreen_Mode(Display_Fullscreen::Display_Fullscreen_Enum full
 		default:
 			{
 				SDL_SetWindowFullscreen(window, 0);
-				int32_t dispResX, dispResY, initResX, initResY, initPosX, initPosY;
-				const DisplayInfo* disp = getDisplayFromWindowPosition(window);
-				if (disp != nullptr) {
-					disp->getResolution(dispResX, dispResY);
-					disp->getResolution(initResX, initResY);
-					disp->getPosition(initPosX,initPosY);
-					calculate_init_window_size(dispResX, dispResY, initResX, initResY, initPosX, initPosY);
-					force_resizeWindow(initResX, initResY);
-					SDL_SetWindowPosition(window, initPosX, initPosY);
-				}
+				calculate_init_window_size(dispResX, dispResY, initResX, initResY, initPosX, initPosY);
+				force_resizeWindow(initResX, initResY);
+				SDL_SetWindowPosition(window, initPosX, initPosY);
 			}
 			break;
 	};
+}
+
+Display_Fullscreen::Display_Fullscreen_Enum get_Window_Fullscreen_Mode() {
+	dim32_t resX, resY;
+	const DisplayInfo* disp = getDisplayFromWindowPosition(window);
+	if (disp == nullptr) {
+		return Display_Fullscreen::Windowed;
+	}
+	disp->getResolution(resX, resY);
+	if ((dim32_t)Master.resX == resX && (dim32_t)Master.resY == resY) {
+		return Display_Fullscreen::Windowed_Fullscreen;
+	}
+	return Display_Fullscreen::Windowed;
 }
 
 void toggle_Window_Fullscreen_Mode() {
@@ -1306,7 +1323,11 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	SDL_SetWindowMaximumSize(window, RESX_Maximum, RESY_Maximum);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
-	set_Window_Fullscreen_Mode((Display_Fullscreen::Display_Fullscreen_Enum)config_data.Display_Preferences.Bootup_Fullscreen);
+	set_Window_Fullscreen_Mode(Display_Fullscreen::Windowed);
+	if ((Display_Fullscreen::Display_Fullscreen_Enum)config_data.Display_Preferences.Bootup_Fullscreen == Display_Fullscreen::Windowed_Fullscreen) {
+		set_Window_Fullscreen_Mode(Display_Fullscreen::Windowed_Fullscreen);
+	}
+	
 	write_Buffer_Size({nullptr, Master.resX, Master.resY - RESY_UI, IMAGE_BUFFER_CHANNELS, 0});
 
 	super_screenshot_maxThreads = (int32_t)std::thread::hardware_concurrency();
@@ -1357,6 +1378,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
+	printFlush("\nReady");
 	start_Render(QUIT_FLAG,ABORT_RENDERING);
 	return 0;
 }
@@ -1372,9 +1394,9 @@ uint64_t get_Hardware_Hash() {
 	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
 	value32 = SDL_GetSystemRAM();
 	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
-	#ifdef Enable_OpenCL
-		get_GPU_Hardware_Hash(hardwareHash);
-	#endif
+	// #ifdef Enable_OpenCL
+	// 	get_GPU_Hardware_Hash(hardwareHash);
+	// #endif
 	return hardwareHash;
 }
 
@@ -1420,13 +1442,13 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 		z = offset;
 		for (size_t x = 0; x < dimX; x++) {
 			#ifdef fullColorTestGraphic
-				TestGraphic.vram[z] = (x - w) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
-				TestGraphic.vram[z] = (w - y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+				TestGraphic.vram[z] = (uint8_t)((x - w) % 256); TestGraphic.vram[z] /= color_square_divider; z++;
+				TestGraphic.vram[z] = (uint8_t)((w - y) % 256); TestGraphic.vram[z] /= color_square_divider; z++;
 			#else
 				TestGraphic.vram[z] = 0; z++;
 				TestGraphic.vram[z] = 0; z++;
 			#endif
-			TestGraphic.vram[z] = (w + x + y) % 256; TestGraphic.vram[z] /= color_square_divider; z++;
+			TestGraphic.vram[z] = (uint8_t)((w + x + y) % 256); TestGraphic.vram[z] /= color_square_divider; z++;
 			TestGraphic.vram[z] = 0xFF; z++;
 		}
 		inPlacePatternMemcpy(&TestGraphic.vram[offset], pitch, (dimX * IMAGE_BUFFER_CHANNELS));
@@ -1463,8 +1485,8 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 	switch (status_graphic) {
 		case Status_Graphic::Graphic_Abort:
 			for (uint32_t p = 0; p < patternLength; p++) {
-				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
-				pattern[z] = ((w + p) % 256) / 4; pattern[z] /= color_square_divider; z++;
+				pattern[z] = (uint8_t)((w + p) % 256); pattern[z] /= color_square_divider; z++;
+				pattern[z] = (uint8_t)((w + p) % 256) / 4; pattern[z] /= color_square_divider; z++;
 				pattern[z] = 0; z++;
 				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
@@ -1472,7 +1494,7 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 		case Status_Graphic::Graphic_Pause:
 			for (uint32_t p = 0; p < patternLength; p++) {
 				pattern[z] = 0; z++;
-				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
+				pattern[z] = (uint8_t)((w + p) % 256); pattern[z] /= color_square_divider; z++;
 				pattern[z] = 0; z++;
 				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
@@ -1482,7 +1504,7 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 			for (uint32_t p = 0; p < patternLength; p++) {
 				pattern[z] = 0; z++;
 				pattern[z] = 0; z++;
-				pattern[z] = (w + p) % 256; pattern[z] /= color_square_divider; z++;
+				pattern[z] = (uint8_t)((w + p) % 256); pattern[z] /= color_square_divider; z++;
 				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
 			break;

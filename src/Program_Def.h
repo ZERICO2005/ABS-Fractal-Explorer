@@ -20,11 +20,11 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/04/02" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/04/03" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 9
-#define PROGRAM_V_TAG "Alpha"
+#define PROGRAM_V_TAG "Rev-4 Unstable Developer Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* OpenCL */
@@ -34,6 +34,7 @@
 
 /* float80 and float128 */
 
+// This may be refactored to have FP80 and FP128 enabled/disabled independantly
 #define enableFP80andFP128
 
 #ifdef enableFP80andFP128
@@ -67,7 +68,7 @@
 		
 		#ifdef PLATFORM_WINDOWS
 			inline fp80 stringTo_Float80(const char* nPtr, char** endPtr) { return (fp80)strtold(nPtr,endPtr); }
-			inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtold(nPtr,endPtr); }
+			inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtoflt128(nPtr,endPtr); }
 		#else
 			inline fp80 stringTo_Float80(const char* nPtr, char** endPtr) { return (fp80)strtold(nPtr,endPtr); }
 			inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtof128(nPtr,endPtr); }
@@ -75,7 +76,7 @@
 		
 #else
 	#define quadmath_snprintf snprintf
-	#define strtoflt128 strtod
+	#define strtoflt128 strtold
 	typedef long double fp128;
 	typedef long double fp80;
 	typedef int64_t int128_t;

@@ -12,8 +12,8 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_scancode.h>
+#include <SDL_keycode.h>
+#include <SDL_scancode.h>
 
 #include "engine.h"
 #include "render.h"

@@ -23,7 +23,7 @@
 #include "imageBuffer.h"
 #include "imageTransform.h"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <opencv2/opencv.hpp>
 
 #include "imgui.h"
@@ -148,7 +148,10 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 /* Menus */
 
-	enum Menu_Enum {GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Count};
+	enum Menu_Enum {
+		GUI_Menu_None, GUI_Menu_Coordinates, GUI_Menu_Fractal, GUI_Menu_Import, GUI_Menu_Rendering, GUI_Menu_Settings, GUI_Menu_KeyBinds, GUI_Menu_Status,
+		GUI_Menu_Count
+	};
 	
 	extern bool Lock_Key_Inputs;
 

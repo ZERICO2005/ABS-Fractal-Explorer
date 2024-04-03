@@ -12,7 +12,7 @@
 #include "display_GUI.h"
 #include "temp_global_render.h"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 // #include <opencv2/opencv.hpp>
 
 #include "imgui.h"
@@ -62,10 +62,19 @@ void ImGui_BoundWindowPosition(const User_GUI_Settings& GUI_Settings) {
 	if (GUI_Settings.PreventOutOfBoundsWindows == true) {
 		int32_t WINDOW_POSX = (int32_t)ImGui::GetWindowPos().x;
 		int32_t WINDOW_POSY = (int32_t)ImGui::GetWindowPos().y;
-		valueClamp(WINDOW_POSX,ImGui_WINDOW_MARGIN,(int32_t)Master.resX - (int32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN);
-		valueClamp(WINDOW_POSY,ImGui_WINDOW_MARGIN,(int32_t)Master.resY - (int32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN);
+		valueClamp(WINDOW_POSX, ImGui_WINDOW_MARGIN, Master.resX - (dim32_t)ImGui::GetWindowSize().x - ImGui_WINDOW_MARGIN);
+		valueClamp(WINDOW_POSY, ImGui_WINDOW_MARGIN, Master.resY - (dim32_t)ImGui::GetWindowSize().y - ImGui_WINDOW_MARGIN);
 		ImGui::SetWindowPos({(fp32)(WINDOW_POSX),(fp32)(WINDOW_POSY)});
 	}
+}
+
+void Item_Tooltip(const char* fmt, ...) {
+    if (ImGui::IsItemHovered()) {
+        va_list args;
+        va_start(args, fmt);
+        ImGui::SetTooltipV(fmt, args);
+        va_end(args);
+    }
 }
 
 void set_IMGUI_Theme(Display_GUI::IMGUI_Theme theme) {
@@ -93,11 +102,7 @@ int render_IMGUI() {
 		printError("render_IMGUI(): window == nullptr");
 	}
 	ImGui_ImplSDLRenderer2_NewFrame();
-	#ifdef PLATFORM_WINDOWS
-		ImGui_ImplSDL2_NewFrame(window);
-	#else
-		ImGui_ImplSDL2_NewFrame();
-	#endif
+	ImGui_ImplSDL2_NewFrame();
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos({0,0});
 	ImGui::SetNextWindowSize({(fp32)Master.resX,(fp32)RESY_UI});
@@ -131,6 +136,9 @@ int render_IMGUI() {
 			break;
 			case GUI_Menu_KeyBinds:
 				Menu_Keybinds();
+			break;
+			case GUI_Menu_Status:
+				Menu_Status();
 			break;
 			default:
 			Lock_Key_Inputs = false;
@@ -220,6 +228,9 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	if (ImGui::Button("Key-binds")) {
 		buttonSelection = (buttonSelection == GUI_Menu_KeyBinds) ? -1 : GUI_Menu_KeyBinds;
 	} ImGui::SameLine();
+	if (ImGui::Button("Program-Status")) {
+		buttonSelection = (buttonSelection == GUI_Menu_Status) ? -1 : GUI_Menu_Status;
+	} ImGui::SameLine();
 	if (Waiting_To_Abort_Rendering == true) {
 		ImGui::Text("Aborting...(%.1lfs)",NANO_TO_SECONDS(getNanoTime() - abortTimer));
 	} else {
@@ -242,8 +253,8 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 
 	ImGui::Separator();
-	uint32_t boxSpace = 8;
-	uint32_t boxCount = 8;
+	int32_t boxSpace = 8;
+	int32_t boxCount = 8;
 	fp32 boxWidth = (fp32)(Master.resX - (dim32_t)(boxSpace * (boxCount + 1))) / (fp32)boxCount;
 
 	#define Param_Input_Box(text,id,buf) \
@@ -281,15 +292,22 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	constexpr size_t temp_quad_len = 64;
 	static char temp_quad_r[temp_quad_len]; static char temp_quad_i[temp_quad_len];
 	static char temp_quad_zr[temp_quad_len]; static char temp_quad_zi[temp_quad_len];
-	quadmath_snprintf(temp_quad_r,temp_quad_len,"%15.12Qf",FRAC.r);
-	quadmath_snprintf(temp_quad_i,temp_quad_len,"%15.12Qf",FRAC.i);
-	quadmath_snprintf(temp_quad_zr,temp_quad_len,"%15.12Qf",FRAC.zr);
-	quadmath_snprintf(temp_quad_zi,temp_quad_len,"%15.12Qf",FRAC.zi);
+	#ifdef enableFP80andFP128
+		quadmath_snprintf(temp_quad_r,temp_quad_len,"%15.12Qf",FRAC.r);
+		quadmath_snprintf(temp_quad_i,temp_quad_len,"%15.12Qf",FRAC.i);
+		quadmath_snprintf(temp_quad_zr,temp_quad_len,"%15.12Qf",FRAC.zr);
+		quadmath_snprintf(temp_quad_zi,temp_quad_len,"%15.12Qf",FRAC.zi);
+	#else
+		snprintf(temp_quad_r,temp_quad_len,"%15.12Lf",FRAC.r);
+		snprintf(temp_quad_i,temp_quad_len,"%15.12Lf",FRAC.i);
+		snprintf(temp_quad_zr,temp_quad_len,"%15.12Lf",FRAC.zr);
+		snprintf(temp_quad_zi,temp_quad_len,"%15.12Lf",FRAC.zi);
+	#endif
 	ImGui::Text(
 		"Zreal: %s Zimag: %s Rotation: %5.1lf Stetch: 2^%6.4lf",
 		temp_quad_zr,temp_quad_zi,FRAC.rot * 360.0 / TAU,FRAC.stretch
 	);
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	fp64 adjustedZoomValue = FRAC.zoom;
 	if (FRAC.adjustZoomToPower == true) {
 		if (FRAC.polarMandelbrot == true) {
@@ -323,14 +341,25 @@ void Menu_Coordinates() {
 		#define FRAC frac.type.abs_mandelbrot
 		#define NumberTextLen 64
 		
-		#define Quad_InputText(lbl, num, fmt); \
-			{ \
-				static char Temp_Text_Input_Buf[NumberTextLen]; \
-				quadmath_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-				if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-					num = strtoflt128(Temp_Text_Input_Buf, nullptr); \
-				} \
-			}
+		#ifdef enableFP80andFP128
+			#define Quad_InputText(lbl, num, fmt); \
+				{ \
+					static char Temp_Text_Input_Buf[NumberTextLen]; \
+					quadmath_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
+					if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
+						num = strtoflt128(Temp_Text_Input_Buf, nullptr); \
+					} \
+				}
+		#else
+			#define Quad_InputText(lbl, num, fmt); \
+				{ \
+					static char Temp_Text_Input_Buf[NumberTextLen]; \
+					snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
+					if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
+						num = strtold(Temp_Text_Input_Buf, nullptr); \
+					} \
+				}
+		#endif
 		#define Float_InputText(lbl, num, fmt, func); \
 			{ \
 				static char Temp_Text_Input_Buf[NumberTextLen]; \
@@ -348,12 +377,17 @@ void Menu_Coordinates() {
 				} \
 			}
 		ImGui::Text("Real and Imaginary Coordinate:");
-			Quad_InputText("r",FRAC.r,"%35.32Qf");
-			Quad_InputText("i",FRAC.i,"%35.32Qf");
+			#ifdef enableFP80andFP128
+				Quad_InputText("r",FRAC.r,"%35.32Qf");
+				Quad_InputText("i",FRAC.i,"%35.32Qf");
+			#else
+				Quad_InputText("r",FRAC.r,"%35.32Lf");
+				Quad_InputText("i",FRAC.i,"%35.32Lf");
+			#endif
 		ImGui::Text("Zoom:");
 			Float_InputText("##zoom_input",FRAC.zoom,"%.5lf",strtod);
 		
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		ImGui::Text("Julia Coordinate:");
 			static bool useJuliaSliders = true;
 			if (useJuliaSliders == true) {
@@ -368,8 +402,13 @@ void Menu_Coordinates() {
 					FRAC.zi = juliaMagnitude * sin(juliaTheta);
 				}
 			} else {
-				Quad_InputText("##input_Zreal",FRAC.zr,"%35.32Qf");
-				Quad_InputText("##input_zimag",FRAC.zi,"%35.32Qf");
+				#ifdef enableFP80andFP128
+					Quad_InputText("r",FRAC.r,"%35.32Qf");
+					Quad_InputText("i",FRAC.i,"%35.32Qf");
+				#else
+					Quad_InputText("##input_Zreal",FRAC.zr,"%35.32Lf");
+					Quad_InputText("##input_zimag",FRAC.zi,"%35.32Lf");
+				#endif
 			}
 			ImGui::Checkbox("Use Sliders", &useJuliaSliders);
 		ImGui::SeparatorText("Parameters");
@@ -463,7 +502,7 @@ void Menu_Fractal() {
 		// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
 		// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
 		
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		
 		fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
 		if (FRAC.breakoutValue < 100.0) {
@@ -478,8 +517,11 @@ void Menu_Fractal() {
 		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
 		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
 		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
-		if (FRAC.cursorZValue) { ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue); }
-		if (ImGui::IsItemHovered()) { ImGui::SetTooltip("Ignores the zoom value when calculating cursor Z values"); }
+		if (FRAC.cursorZValue) {
+			ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue);
+			Item_Tooltip("Ignores the zoom value when calculating cursor Z values");
+		}
+		
 		ImGui::Separator();
 		#ifndef BUILD_RELEASE
 			static int Combo_JuliaSplit = 1;
@@ -597,13 +639,13 @@ void Menu_Rendering() {
 		ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
 		ImGui::Text("Thread Multiplier:");
 		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,16);
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		ImGui::Text("Super Screenshot:");
 		ImGui::Text("Maximum Threads:");
 		ImGui::SliderInt("##input_CPU_MaxThreads",&input_super_CPU_MaxThreads,1,CPU_ThreadCount);
 		ImGui::Text("Thread Multiplier:");
 		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
-		ImGui::Text(" ");
+		ImGui::NewLine();
 	}
 	primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
 	super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
@@ -640,7 +682,7 @@ void Menu_Rendering() {
 				"However, increasing the rendering paritions can cause some performance loss due to the overhead of rendering smaller chunks of the fractal at a time. "\
 				"For the best performance, set render paritions to 1."
 			);
-			ImGui::Text(" ");
+			ImGui::NewLine();
 		}
 	#endif
 
@@ -760,7 +802,7 @@ void Menu_Settings() {
 	ImGui::Text("ABS-Fractal-Explorer v%s", PROGRAM_VERSION);
 	ImGui::Separator();
 	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	ImGui::TextWrapped("Warning: Due to a bug, importing/exporting files through the windows file dialog changes where \"./config.fracExpConfig\" is saved to, which may overwrite files");
 	if(ImGui::Button("Import fracExpConfig")) {
 		static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
@@ -791,7 +833,7 @@ void Menu_Settings() {
 	}
 	ImGui::Checkbox("Automatically load fracExpConfig File",&config_data.Automatic_Behaviour.AutoLoad_Config_File);
 	ImGui::Checkbox("Automatically save fracExpConfig File",&config_data.Automatic_Behaviour.AutoSave_Config_File);
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	ImGui::SeparatorText("CATEGORIES:");
 	if (ImGui::CollapsingHeader("MENU WINDOW SETTINGS")) {
 		{
@@ -812,7 +854,7 @@ void Menu_Settings() {
 		ImGui::Text("Window Opacity: (0.95 default)");
 		ImGui::SliderFloat("##WindowOpacity",&config_data.GUI_Settings.WindowOpacity,0.3f,1.0f,"%.3f");
 		
-		ImGui::Text(" ");
+		ImGui::NewLine();
 	}
 	if (ImGui::CollapsingHeader("DISPLAYS AND FRAME-RATE")) {
 		int32_t cursorPosX, cursorPosY; SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
@@ -855,7 +897,7 @@ void Menu_Settings() {
 			ImGui::EndChild();
 			
 		}
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		ImGui::SeparatorText("Bootup-Diplay"); {
 
 			ImGui::Text("Which monitor should the application open to:");
@@ -909,17 +951,25 @@ void Menu_Settings() {
 				);
 				printDisplayInfo(initDisp);
 			}
-			ImGui::Text(" ");
+			ImGui::NewLine();
 		}
 		ImGui::SeparatorText("Windowed/Fullscreen"); {
 			using namespace Display_Fullscreen;
-			ImGui::Combo("##Bootup_Fullscreen",&config_Display.Bootup_Fullscreen,
+			static int_enum Combo_WindowFullscreen = get_Window_Fullscreen_Mode();
+			ImGui::Text("Set Current Window Mode:");
+			ImGui::Combo("##Current_Fullscreen",&Combo_WindowFullscreen,
 				Display_Fullscreen_Text, ARRAY_LENGTH(Display_Fullscreen_Text)
 			);
 			if (ImGui::Button("Update Window")) {
-				set_Window_Fullscreen_Mode((Display_Fullscreen_Enum)config_Display.Bootup_Fullscreen);
+				set_Window_Fullscreen_Mode((Display_Fullscreen_Enum)Combo_WindowFullscreen);
+				Combo_WindowFullscreen = get_Window_Fullscreen_Mode();
 			}
-			ImGui::Text(" ");
+			ImGui::NewLine();
+			ImGui::Text("Set Bootup Window Mode:");
+			ImGui::Combo("##Bootup_Fullscreen",&config_Display.Bootup_Fullscreen,
+				Display_Fullscreen_Text, ARRAY_LENGTH(Display_Fullscreen_Text)
+			); Item_Tooltip("Choose if the program will start in Fullscreen, Windowed, etc.");
+			ImGui::NewLine();
 		}
 		ImGui::SeparatorText("Frame-Rate"); {
 			ImGui::Text("Base maximum frame-rate off of:");
@@ -958,7 +1008,7 @@ void Menu_Settings() {
 			
 			if (Display_Preferences.Display_RefreshRate_Type == Display_RefreshRate::ConstantValue) { // Constant
 				static fp32 temp_FPS_Constant_Value = (fp32)Display_Preferences.Constant_RefreshRate_Value;
-				ImGui::Text(" ");
+				ImGui::NewLine();
 				ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
 				ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0f,30.0f,"%.3f"); valueClamp(temp_FPS_Constant_Value,12.0f,1200.0f);
 				FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
@@ -967,7 +1017,7 @@ void Menu_Settings() {
 					updateFrameRate(Display_Preferences.Constant_RefreshRate_Value + FRAME_RATE_OFFSET);
 				}
 			} else { // Relative
-				ImGui::Text(" "); // Blank Line
+				ImGui::NewLine(); // Blank Line
 				static int32_t temp_frameMultiplier = Display_Preferences.Maximum_FPS_Multiplier;
 				fp64 frameMultiplier;
 				//int temp_frameMultiplier = (Default_Frame_Rate_Multiplier >= 0.0) ? (int)(Default_Frame_Rate_Multiplier - 1.0) : (int)(1.0 - 1.0);
@@ -995,7 +1045,7 @@ void Menu_Settings() {
 					updateFrameRate(calculatedFPS + FRAME_RATE_OFFSET);
 				}
 			}
-			ImGui::Text(" "); 
+			ImGui::NewLine(); 
 		}
 	}
 	if (ImGui::CollapsingHeader("FRACEXP FILES")) {
@@ -1011,7 +1061,7 @@ void Menu_Settings() {
 			#endif
 			ImGui::InputText("##FileUserName_Input",FileUsername,FileUsernameLength);
 		}
-		ImGui::Text(" ");
+		ImGui::NewLine();
 	}
 	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) {
 		User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
@@ -1044,9 +1094,9 @@ void Menu_Settings() {
 			ImGui::Text("Note: Super Screenshots only support PNG and JPG.");
 		}
 
-		ImGui::Text(" "); ImGui::Separator(); ImGui::Text(" ");
+		ImGui::NewLine(); ImGui::Separator(); ImGui::NewLine();
 		ImGui::Text("Super Screenshot Settings:");
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		
 		static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
 		ImGui::Text("Maximum Iterations: %" PRId32,super_screenshot_maxItr);
@@ -1061,7 +1111,7 @@ void Menu_Settings() {
 		size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
 		size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
 
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		static int Combo_Common_ResolutionPreset = 3;
 		const uint32_t Combo_Common_ResolutionPreset_RESX[] = {640,1280,1366,1920,2560,3840,5120,7680};
 		const uint32_t Combo_Common_ResolutionPreset_RESY[] = {480, 720, 768,1080,1440,2160,2880,4320};
@@ -1082,7 +1132,7 @@ void Menu_Settings() {
 		ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
 		valueClamp(super_screenshot_resY,64,65536); valueMaximumClamp(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
 		
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
 		if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS >= 1000000000) {
 			ImGui::Text("Current Image Size: %.1lf megabytes",
@@ -1092,12 +1142,12 @@ void Menu_Settings() {
 				(fp64)(MaximumImageSize) / 1000000.0
 			);
 		}
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		if (ImGui::Button("Take Super Screenshot")) {
 			exportSuperScreenshot();
 			//exportScreenshot();
 		}
-		ImGui::Text(" ");
+		ImGui::NewLine();
 	}
 	
 
@@ -1113,13 +1163,13 @@ void Menu_Settings() {
 				if(ImGui::Button("Reset GUI Settings")) { default_GUI_Settings(config_data.GUI_Settings, false, false); }
 				if(ImGui::Button("Reset Screenshot")) { default_Screenshot_Settings(config_data.Screenshot_Settings); }
 				
-				ImGui::Text(" ");
+				ImGui::NewLine();
 				if(ImGui::Button("Full Reset")) { 
 					default_User_Configuration_Data(config_data, true);
 					set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
 				}
 			#endif
-			ImGui::Text(" ");
+			ImGui::NewLine();
 		}
 	
 	ImGui::End();
@@ -1147,7 +1197,7 @@ void Menu_Keybinds() {
 	if (Combo_keyboardSize != 0) {
 		ImGui::Text("Note: Some Scancodes may or may not trigger on modern Keyboards");
 	}
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	{
 		constexpr dim32_t kMaxResX = 1440;
 		constexpr dim32_t kMinResX = 300;
@@ -1224,7 +1274,7 @@ void Menu_Keybinds() {
 				ImGui::Text("- Key not bound to any functions");
 			}
 		} else {
-			ImGui::Text(" ");
+			ImGui::NewLine();
 		}
 
 		ImGui::Separator();
@@ -1298,7 +1348,7 @@ void Menu_Keybinds() {
 			}
 		} else {
 			ImGui::Text("Click on a Key and Select a Function");
-			ImGui::Text(" ");
+			ImGui::NewLine();
 		}
 		if (keyClick != SDL_SCANCODE_UNKNOWN) {
 			if(ImGui::Button("Clear Key bindings")) {
@@ -1327,14 +1377,14 @@ void Menu_Keybinds() {
 		} else {
 			ImGui::Button("Select a Function");
 		}
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		if (ImGui::Button("Reset current key-bind to defaults")) {
 			Combo_function_Select = Key_Function::NONE;
 			keyClick = SDL_SCANCODE_UNKNOWN;
 			currentKBPreset->kList = defaultKeyBind;
 			recolorKeyboard();
 		}
-		ImGui::Text(" ");
+		ImGui::NewLine();
 
 		ImGui::Separator();
 
@@ -1368,7 +1418,7 @@ void Menu_Keybinds() {
 			}
 			ImGui::EndCombo();
 		}
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		static uint32_t name_count = 1;
 		if (ImGui::Button("Create key-bind")) {
 			Combo_function_Select = Key_Function::NONE;
@@ -1395,7 +1445,7 @@ void Menu_Keybinds() {
 			recolorKeyboard();
 		}
 
-		ImGui::Text(" ");
+		ImGui::NewLine();
 		if (ImGui::Button("Import Key-bind (.FracExpKB)")) {
 			static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',sizeof(importKeyBindFile));
 			int openFileState = openFileInterface(
@@ -1475,9 +1525,9 @@ void Menu_Keybinds() {
 		// 	FREE(exportFracExpKBPath);
 		// }
 	}
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	ImGui::Separator();
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	ImGui::Text("Movement Sensitivity:");
 	#define sen_slider(lbl,num,min,max) \
 		{ \
@@ -1485,7 +1535,7 @@ void Menu_Keybinds() {
 			ImGui::SliderFloat(lbl,&temp_sensitivity_float_slider,min,max,"%.2f"); \
 			num = (fp64)temp_sensitivity_float_slider; \
 		}
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	ImGui::Text("Global Sensitivity Multiplier:");
 
 	User_Parameter_Sensitivity& config_sensitivity = config_data.Parameter_Sensitivity;
@@ -1494,7 +1544,7 @@ void Menu_Keybinds() {
 	if (ImGui::Button("Reset Sensitvity")) {
 		default_Parameter_Sensitivity(config_sensitivity);
 	}
-	ImGui::Text(" ");
+	ImGui::NewLine();
 	ImGui::Text("Coordinate:");
 	sen_slider("##sen_coordinate",config_sensitivity.coordinate,0.4f,2.5f);
 	ImGui::Text("Zoom:");
@@ -1512,5 +1562,33 @@ void Menu_Keybinds() {
 	sen_slider("##sen_polar_power",config_sensitivity.polar_power,0.4f,2.5f);
 	ImGui::Text("Breakout Value:");
 	sen_slider("##sen_breakout_value",config_sensitivity.breakout_value,0.4f,2.5f);
+	ImGui::End();
+}
+
+void Menu_Status() {
+	ImGui_DefaultWindowSize(
+		config_data.GUI_Settings,
+		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 320, 480,
+		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 240, 360
+	);
+	ImGui::Begin("Program Status",&ShowTheXButton,ImGui_WINDOW_FLAGS);
+	ImGui_BoundWindowPosition(config_data.GUI_Settings);
+
+	ImGui::Text("NOT IMPLEMENTED YET");
+	ImGui::NewLine();
+	ImGui::SeparatorText("Information");
+		ImGui::Text("Program: %s", PROGRAM_NAME);
+		ImGui::Text("Version: %s", PROGRAM_VERSION);
+		ImGui::Text("Date: %s", PROGRAM_DATE);
+		ImGui::NewLine();
+	ImGui::SeparatorText("System Hardware");
+		ImGui::Text("CPU Threads: %u", std::thread::hardware_concurrency());
+		ImGui::Text("System RAM: %dMiB", SDL_GetSystemRAM());
+		ImGui::Text("Display Count: %d", SDL_GetNumVideoDisplays());
+		ImGui::NewLine();
+	ImGui::SeparatorText("GPU Hardware");
+		ImGui::Text("OpenCL Enabled: %s", "<Not Implemented>");
+		ImGui::Text("GPU Name: %s", "<Not Implemented>");
+		ImGui::NewLine();
 	ImGui::End();
 }

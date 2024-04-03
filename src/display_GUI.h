@@ -39,6 +39,7 @@ void Menu_Fractal();
 void Menu_Rendering();
 void Menu_Settings();
 void Menu_Keybinds();
+void Menu_Status();
 
 // int updateFractalParameters();
 

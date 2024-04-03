@@ -11,8 +11,8 @@
 
 #include <cstdint>
 
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_scancode.h>
+#include <SDL_keycode.h>
+#include <SDL_scancode.h>
 
 /*
 **	This file contains the data used to generate the keyboard graphics.

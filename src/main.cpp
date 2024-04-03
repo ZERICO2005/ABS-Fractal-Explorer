@@ -59,7 +59,18 @@ int main(int argc, char* argv[]) {
 		printFlush("\nArgument Count: %d\n",argc - 1);
 	}
 	//write_ini_file("./ABS-Fractal-Explorer.ini");
-	init_Fractal_Engine(argc, argv);
-	terminate_Fractal_Engine();
+	int ret_init = init_Fractal_Engine(argc, argv);
+	int ret_terminate = terminate_Fractal_Engine();
+
+	if (ret_init == 0 && ret_terminate == 0) {
+		printFlush("\nProgram Exited Normally\n");
+	} else {
+		printFlush(
+			"\nProgram Exited with Error/Warning:"
+			"\n\tinit: %d\n\tterminate: %d\n",
+			ret_init,ret_terminate
+		);
+	}
+
 	return 0;
 }

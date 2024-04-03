@@ -25,7 +25,9 @@ Render_Data secondaryRender;
 ImageBuffer* currentBuf = nullptr;
 ImageBuffer* previewBuf = nullptr;
 
-void get_GPU_Hardware_Hash(uint64_t& hash) { calculate_GPU_Hardware_Hash(hash); }
+void get_GPU_Hardware_Hash(uint64_t& hash) { 
+	//calculate_GPU_Hardware_Hash(hash);
+}
 
 void render_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param);
 

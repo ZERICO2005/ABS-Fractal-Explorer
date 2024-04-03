@@ -23,7 +23,7 @@
 #include "imageBuffer.h"
 #include "imageTransform.h"
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <opencv2/opencv.hpp>
 
 #include "imgui.h"

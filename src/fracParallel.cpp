@@ -179,8 +179,10 @@ void parallel_ABS_Mandelbrot(
 	/*__restrict*/ uint8_t* buf, size_t len,
 	std::atomic<bool>& ABORT_RENDERING
 ) {
-	fpX mult[param.mult_Count]; 
-	bool formulaBit[param.bool_Count];
+	fpX* mult = (fpX*)calloc(param.mult_Count, sizeof(fpX));
+	if (mult == nullptr) { return; }
+	bool* formulaBit = (bool*)calloc(param.bool_Count, sizeof(bool));
+	if (formulaBit == nullptr) { free(mult); mult = nullptr; return; }
 	init_ABS_Mandelbrot_Formula(param,mult,formulaBit);
 	for (int32_t y = ren.start_PosY; y < ren.end_PosY; y += ren.super_sampleY) {
 		for (int32_t x = ren.start_PosY; x < ren.end_PosY; x += ren.super_sampleX) {

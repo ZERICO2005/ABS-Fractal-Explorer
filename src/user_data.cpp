@@ -437,7 +437,7 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 const char* getDateAndTimeUTC(
 	char DateDelimiter, char DateSeparator, char TimeDelimiter
 ) {
-	static char timeFormat[sizeof("%Y-%m-%" PRId32 "_%H-%M-%S")];
+	static char timeFormat[sizeof("%Y-%m-%d_%H-%M-%S")];
 	memset(timeFormat,'\0',sizeof(timeFormat));
 
 	char* timeText = nullptr;

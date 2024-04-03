@@ -11,8 +11,8 @@
 #include "keybind.h"
 #include "keybind_data.h"
 
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_scancode.h>
+#include <SDL_keycode.h>
+#include <SDL_scancode.h>
 #include "bitGraphics.h"
 #include "copyBuffer.h"
 #include "render.h"
