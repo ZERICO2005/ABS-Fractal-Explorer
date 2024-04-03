@@ -93,7 +93,11 @@ int render_IMGUI() {
 		printError("render_IMGUI(): window == nullptr");
 	}
 	ImGui_ImplSDLRenderer2_NewFrame();
-	ImGui_ImplSDL2_NewFrame(window);
+	#ifdef PLATFORM_WINDOWS
+		ImGui_ImplSDL2_NewFrame(window);
+	#else
+		ImGui_ImplSDL2_NewFrame();
+	#endif
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos({0,0});
 	ImGui::SetNextWindowSize({(fp32)Master.resX,(fp32)RESY_UI});
@@ -271,7 +275,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 
 	ImGui::Text(
-		"Formula: %llu Power: %s Super-Sample: %u Rendering: %s fp%u",
+		"Formula: %" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s fp%" PRIu32,
 		FRAC.formula,(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
 	);
 	constexpr size_t temp_quad_len = 64;
@@ -297,7 +301,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 	
 	ImGui::Text(
-		"Real:  %s Imag:  %s Zoom: 10^%6.4lf Itr: %u",
+		"Real:  %s Imag:  %s Zoom: 10^%6.4lf Itr: %" PRIu32,
 		temp_quad_r,temp_quad_i,adjustedZoomValue,FRAC.maxItr
 	);
 	#undef FRAC
@@ -370,22 +374,22 @@ void Menu_Coordinates() {
 			ImGui::Checkbox("Use Sliders", &useJuliaSliders);
 		ImGui::SeparatorText("Parameters");
 		ImGui::Text("Maximum Iterations:");
-		Int_InputText("##input_maxIter",FRAC.maxItr,"%u",strtoul,10);
+		Int_InputText("##input_maxIter",FRAC.maxItr,"%" PRIu32,stringTo_Uint32,10);
 		ImGui::Text("Fractal Formula:");
 			static bool inputHexadecimal = false;
 			if (inputHexadecimal == true) {
-				Int_InputText("##input_formula",FRAC.formula,"%llX",strtoull,16);
+				Int_InputText("##input_formula",FRAC.formula,"%" PRIX64,stringTo_Uint64,16);
 			} else {
-				Int_InputText("##input_formula",FRAC.formula,"%llu",strtoull,10);
+				Int_InputText("##input_formula",FRAC.formula,"%" PRIu64,stringTo_Uint64,10);
 			}
 			ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
 		/* Power */
 			if (frac.type_value == Fractal_ABS_Mandelbrot) {
 				ImGui::Text("Power: %s",getPowerText((uint32_t)FRAC.power));
-				Int_InputText("##input_power",FRAC.power,"%u",strtoul,10);
+				Int_InputText("##input_power",FRAC.power,"%" PRIu32,stringTo_Uint32,10);
 			} else if (frac.type_value == Fractal_Polar_Mandelbrot) {
 				ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
-				Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",strtod);
+				Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
 			}
 		#undef FRAC
 	} else if (frac.type_value == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
@@ -427,7 +431,7 @@ void Menu_Fractal() {
 				setDefaultParameters(&frac,Fractal_Sierpinski_Carpet);
 			break;
 			default:
-			printError("Unknown Fractal Type: %d",Combo_FractalType);
+			printError("Unknown Fractal Type: %" PRId32,Combo_FractalType);
 		}
     }
 	ImGui::Separator();
@@ -454,7 +458,7 @@ void Menu_Fractal() {
 		}
 		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
 		// fp32 temp_input_maxItr = (fp32)log2(FRAC.maxItr);
-		// ImGui::Text("Maximum Iterations: %u",FRAC.maxItr);
+		// ImGui::Text("Maximum Iterations: %" PRIu32,FRAC.maxItr);
 		// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
 		// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
 		// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
@@ -642,17 +646,17 @@ void Menu_Rendering() {
 
 	ImGui::SeparatorText("Super Screenshot Settings");
 
-	ImGui::Text("Sub Sample: %d", input_subSample * input_subSample);
+	ImGui::Text("Sub Sample: %" PRId32, input_subSample * input_subSample);
 	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
 		primaryRenderData.subSample = input_subSample;
 	}
-	ImGui::Text("Samples per pixel: %d", input_superSample * input_superSample);
+	ImGui::Text("Samples per pixel: %" PRId32, input_superSample * input_superSample);
 	if (ImGui::SliderInt("##input_superSample", &input_superSample, 1, 24, "")) {
 		primaryRenderData.sample = input_superSample;
 	}
 	dim32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
 	dim32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
-	ImGui::Text("Total Pixels Rendered: %dx%d %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+	ImGui::Text("Total Pixels Rendered: %" PRId32 "x%" PRId32 " %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
 	
 	// { // Doesn't work
 	// 	dim32_t resX, resY, dimX, dimY;
@@ -660,7 +664,7 @@ void Menu_Rendering() {
 	// 	SDL_GetWindowSizeInPixels(window,&dimX,&dimY);
 	// 	if (resX != dimX || resY != dimY) {
 	// 		ImGui::Text(
-	// 			"Warning: Window is rendering in high dpi mode, and may have scaling artifacts %dx%d != %dx%d",
+	// 			"Warning: Window is rendering in high dpi mode, and may have scaling artifacts %" PRId32 "x%" PRId32 " != %" PRId32 "x%" PRId32,
 	// 			resX, resY, dimX, dimY
 	// 		);
 	// 	}
@@ -720,7 +724,7 @@ void printDisplayInfo(const DisplayInfo* Disp, bool printWarning = true) {
 	Disp->getResolution(resX,resY);
 	Disp->getPosition(posX,posY);
 	ImGui::Text(
-		"Display[%d]: %dx%d at %dHz (%d,%d) | %s",
+		"Display[%" PRId32 "]: %" PRId32 "x%" PRId32 " at %" PRId32 "Hz (%" PRId32 ",%" PRId32 ") | %s",
 		Disp->getIndex(),
 		resX, resY,
 		(int32_t)Disp->getRefreshRate(),
@@ -814,7 +818,7 @@ void Menu_Settings() {
 		int32_t cursorPosX, cursorPosY; SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
 		int32_t windowPosX, windowPosY; SDL_GetWindowPosition(window, &windowPosX, &windowPosY);
 		int32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
-		ImGui::Text("Display Count: %d",getDisplayCount());
+		ImGui::Text("Display Count: %" PRId32,getDisplayCount());
 		
 		static bool changesToDisplayList = false;
 		static nano64_t displayTimer = 0;
@@ -838,7 +842,7 @@ void Menu_Settings() {
 		}
 
 		if (getDisplayCount() != 0) {
-			fp32 displayListWidth = ImGui::GetWindowContentRegionWidth();
+			fp32 displayListWidth = ImGui::GetContentRegionAvail().x;
 			displayListWidth = calcMinRatioMax(displayListWidth, 384.0f, 0.8f, 768.0f);
 			fp32 displayListHeight = (getDisplayCount() > 3) ? 120.0f : 64.0f;
 			ImGui::BeginChild(
@@ -877,7 +881,7 @@ void Menu_Settings() {
 				}
 				const DisplayInfo* specificDisp = getDisplayFromIndex(config_Display.Specific_Bootup_Display);
 				if (specificDisp == nullptr) {
-					ImGui::Text("Display %d is not detected",config_Display.Specific_Bootup_Display);
+					ImGui::Text("Display %" PRId32 " is not detected",config_Display.Specific_Bootup_Display);
 				} else {
 					printDisplayInfo(specificDisp);
 				}
@@ -888,7 +892,7 @@ void Menu_Settings() {
 				}
 				if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
 					ImGui::Text(
-						"Note: Display %d will be used if Display %d is not detected",
+						"Note: Display %" PRId32 " will be used if Display %" PRId32 " is not detected",
 						getDisplayCount(),
 						config_Display.Specific_Bootup_Display
 					);
@@ -970,10 +974,10 @@ void Menu_Settings() {
 				//static fp64 frameMultiplier = Default_Frame_Rate_Multiplier;
 				if (temp_frameMultiplier >= 0) {
 					frameMultiplier = (fp64)(temp_frameMultiplier + 1);
-					ImGui::Text("Maximum FPS Multiplier: %dx",(temp_frameMultiplier + 1));
+					ImGui::Text("Maximum FPS Multiplier: %" PRId32 "x",(temp_frameMultiplier + 1));
 				} else {
 					frameMultiplier = 1.0 / (fp64)(1 - temp_frameMultiplier);
-					ImGui::Text("Maximum FPS Multiplier: 1/%dx", (1 - temp_frameMultiplier));
+					ImGui::Text("Maximum FPS Multiplier: 1/%" PRId32 "x", (1 - temp_frameMultiplier));
 				}
 				fp64 calculatedFPS = frameMultiplier * TEMP_FPS;
 				valueClamp(calculatedFPS,FRAMERATE_MINIMUM,FRAMERATE_MAXIMUM);
@@ -1045,14 +1049,14 @@ void Menu_Settings() {
 		ImGui::Text(" ");
 		
 		static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
-		ImGui::Text("Maximum Iterations: %d",super_screenshot_maxItr);
+		ImGui::Text("Maximum Iterations: %" PRId32,super_screenshot_maxItr);
 		ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
 		super_screenshot_maxItr = (uint32_t)(pow(2.0f,temp_super_screenshot_maxItr));
 		valueClamp(super_screenshot_maxItr,16,16777216); valueClamp(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
 
 		const uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
 
-		ImGui::Text("Samples per pixel: %d",super_screenshot_super_sample * super_screenshot_super_sample);
+		ImGui::Text("Samples per pixel: %" PRId32,super_screenshot_super_sample * super_screenshot_super_sample);
 		ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
 		size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
 		size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
@@ -1151,7 +1155,7 @@ void Menu_Keybinds() {
 		
 		//static uint32_t kX = kMargin;
 		//static uint32_t kY = 0;
-		dim32_t kResX = (dim32_t)ImGui::GetWindowContentRegionWidth();
+		dim32_t kResX = (dim32_t)ImGui::GetContentRegionAvail().x;
 		if (kResX < kMinResX) {
 			kResX = kMinResX;
 		} else if (kResX > kMaxResX) {
@@ -1198,8 +1202,8 @@ void Menu_Keybinds() {
 			keyClick = keyHover;
 		}
 		ImGui::Image((void*)kTexture, ImVec2((fp32)kBuf.resX, (fp32)kBuf.resY));
-		// ImGui::Text("size = %d x %d", kBuf.resX, kBuf.resY);
-		// ImGui::Text("Cursor Position: %d,%d",kCurX,kCurY);
+		// ImGui::Text("size = %" PRId32 " x %" PRId32, kBuf.resX, kBuf.resY);
+		// ImGui::Text("Cursor Position: %" PRId32 ",%" PRId32,kCurX,kCurY);
 		ImGui::Text("Clicked Key: %s",Scancode_Name[keyClick]);
 		size_t funcCount = 0;
 		if (keyClick != SDL_SCANCODE_UNKNOWN) {
@@ -1338,12 +1342,12 @@ void Menu_Keybinds() {
 		memset(KeyBindName,'\0',ARRAY_LENGTH(KeyBindName));
 		memcpy(KeyBindName,currentKBPreset->name.c_str(),TEXT_LENGTH(KeyBindName));
 		if (currentKBPreset->kList.size() < 6) {
-			ImGui::Text("Warning: The current Key-bind Preset has %llu key-binds, and may not be functional or practical.",currentKBPreset->kList.size());
-			ImGui::Text("Current Key-bind Preset[%d]: ",get_currentKBPreset_Pos()); ImGui::SameLine(0.0,1.0);
-			ImGui::TextColored({1.0,0.5,0.5,1.0},"%llu",currentKBPreset->kList.size()); ImGui::SameLine(0.0,1.0);
+			ImGui::Text("Warning: The current Key-bind Preset has %" PRIu64 " key-binds, and may not be functional or practical.",currentKBPreset->kList.size());
+			ImGui::Text("Current Key-bind Preset[%" PRId32 "]: ",get_currentKBPreset_Pos()); ImGui::SameLine(0.0,1.0);
+			ImGui::TextColored({1.0,0.5,0.5,1.0},"%" PRIu64,currentKBPreset->kList.size()); ImGui::SameLine(0.0,1.0);
 			ImGui::Text(" key-binds");
 		} else {
-			ImGui::Text("Current Key-bind Preset[%d]: %llu key-binds",get_currentKBPreset_Pos(),currentKBPreset->kList.size());
+			ImGui::Text("Current Key-bind Preset[%" PRId32 "]: %" PRIu64 " key-binds",get_currentKBPreset_Pos(),currentKBPreset->kList.size());
 		}
 
 		ImGui::InputText("##KeyBindName",BufAndLen(KeyBindName));
@@ -1372,7 +1376,7 @@ void Menu_Keybinds() {
 			KeyBind_Preset temp_KeyBind;
 			temp_KeyBind = *currentKBPreset;
 			static char rand_name[324]; memset(rand_name,'\0',324);
-			snprintf(rand_name,320,"KeyBind_%u",name_count++);
+			snprintf(rand_name,320,"KeyBind_%" PRIu32,name_count++);
 			temp_KeyBind.name = rand_name;
 			KeyBind_PresetList.push_back(temp_KeyBind);
 			currentKBPreset = &KeyBind_PresetList.back();

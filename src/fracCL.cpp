@@ -94,7 +94,7 @@ int32_t init_OpenCL() {
 
 uint8_t printOpenCLError(cl_int errorCode) {
 	if (errorCode != 0) {
-		printFlush("\nOpenCL Error: %d %s",errorCode,getOpenCLErrorString(errorCode));
+		printFlush("\nOpenCL Error: %" PRId32 " %s",errorCode,getOpenCLErrorString(errorCode));
 		return 1;
 	}
 	return 0;
@@ -140,36 +140,36 @@ void queryOpenCL_GPU() {
 		printDeviceText("\n\tCL_DEVICE_VERSION: %s",CL_DEVICE_VERSION,DeviceVersion);
 		printDeviceText("\n\tCL_DEVICE_PROFILE: %s",CL_DEVICE_PROFILE,DeviceProfile);
 	writefToLog("\nDevice Properties:");
-		printDeviceStat("\n\tCL_DEVICE_MAX_WORK_GROUP_SIZE: %llu",CL_DEVICE_MAX_WORK_GROUP_SIZE,DeviceMaxWorkGroupSize);
-		printDeviceStat("\n\tCL_DEVICE_MAX_COMPUTE_UNITS: %u",CL_DEVICE_MAX_COMPUTE_UNITS,DeviceMaxComputeUnits);
-		printDeviceStat("\n\tCL_DEVICE_GLOBAL_MEM_SIZE: %llu",CL_DEVICE_GLOBAL_MEM_SIZE,DeviceGlobalMemSize);
-		writefToLog(" | %lldMB",(DeviceGlobalMemSize / 1048576));
-		printDeviceStat("\n\tCL_DEVICE_MAX_MEM_ALLOC_SIZE: %llu",CL_DEVICE_MAX_MEM_ALLOC_SIZE,DeviceMaxMemAllocSize);
-		writefToLog(" | %lldMB",(DeviceMaxMemAllocSize / 1048576));
-		printDeviceStat("\n\tCL_DEVICE_MAX_CLOCK_FREQUENCY: %uMhz",CL_DEVICE_MAX_CLOCK_FREQUENCY,DeviceMaxClockFrequency);
-		printDeviceStat("\n\tCL_DEVICE_MAX_PARAMETER_SIZE: %llu",CL_DEVICE_MAX_PARAMETER_SIZE,DeviceMaxParameterSize);
-		printDeviceStat("\n\tCL_DEVICE_MAX_CONSTANT_BUFFER_SIZE: %llu",CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE,DeviceMaxConstantBufferSize);
-		printDeviceStat("\n\tCL_DEVICE_MAX_CONSTANT_ARGS: %u",CL_DEVICE_MAX_CONSTANT_ARGS,DeviceMaxConstantArgs);
-		printDeviceStat("\n\tCL_DEVICE_LOCAL_MEM_SIZE: %llu",CL_DEVICE_LOCAL_MEM_SIZE,DeviceLocalMemSize);
-		printDeviceStat("\n\tCL_DEVICE_PROFILING_TIMER_RESOLUTION: %llu",CL_DEVICE_PROFILING_TIMER_RESOLUTION,DeviceProfilingTimerResolution);
+		printDeviceStat("\n\tCL_DEVICE_MAX_WORK_GROUP_SIZE: %" PRIu64,CL_DEVICE_MAX_WORK_GROUP_SIZE,DeviceMaxWorkGroupSize);
+		printDeviceStat("\n\tCL_DEVICE_MAX_COMPUTE_UNITS: %" PRIu32,CL_DEVICE_MAX_COMPUTE_UNITS,DeviceMaxComputeUnits);
+		printDeviceStat("\n\tCL_DEVICE_GLOBAL_MEM_SIZE: %" PRIu64,CL_DEVICE_GLOBAL_MEM_SIZE,DeviceGlobalMemSize);
+		writefToLog(" | %" PRId64 "MB",(DeviceGlobalMemSize / 1048576));
+		printDeviceStat("\n\tCL_DEVICE_MAX_MEM_ALLOC_SIZE: %" PRIu64,CL_DEVICE_MAX_MEM_ALLOC_SIZE,DeviceMaxMemAllocSize);
+		writefToLog(" | %" PRId64 "MB",(DeviceMaxMemAllocSize / 1048576));
+		printDeviceStat("\n\tCL_DEVICE_MAX_CLOCK_FREQUENCY: %" PRIu32 "Mhz",CL_DEVICE_MAX_CLOCK_FREQUENCY,DeviceMaxClockFrequency);
+		printDeviceStat("\n\tCL_DEVICE_MAX_PARAMETER_SIZE: %" PRIu64,CL_DEVICE_MAX_PARAMETER_SIZE,DeviceMaxParameterSize);
+		printDeviceStat("\n\tCL_DEVICE_MAX_CONSTANT_BUFFER_SIZE: %" PRIu64,CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE,DeviceMaxConstantBufferSize);
+		printDeviceStat("\n\tCL_DEVICE_MAX_CONSTANT_ARGS: %" PRIu32,CL_DEVICE_MAX_CONSTANT_ARGS,DeviceMaxConstantArgs);
+		printDeviceStat("\n\tCL_DEVICE_LOCAL_MEM_SIZE: %" PRIu64,CL_DEVICE_LOCAL_MEM_SIZE,DeviceLocalMemSize);
+		printDeviceStat("\n\tCL_DEVICE_PROFILING_TIMER_RESOLUTION: %" PRIu64,CL_DEVICE_PROFILING_TIMER_RESOLUTION,DeviceProfilingTimerResolution);
 	writefToLog("\nFloating Point Support:");
-		printDeviceStat("\n\tCL_DEVICE_SINGLE_FP_CONFIG: %llu",CL_DEVICE_SINGLE_FP_CONFIG,DeviceFP32Config);
+		printDeviceStat("\n\tCL_DEVICE_SINGLE_FP_CONFIG: %" PRIu64,CL_DEVICE_SINGLE_FP_CONFIG,DeviceFP32Config);
 		printFloatingPointConfig("\n\tFP32", DeviceFP32Config);
-		printDeviceStat("\n\tCL_DEVICE_DOUBLE_FP_CONFIG: %llu",CL_DEVICE_DOUBLE_FP_CONFIG ,DeviceFP64Config);
+		printDeviceStat("\n\tCL_DEVICE_DOUBLE_FP_CONFIG: %" PRIu64,CL_DEVICE_DOUBLE_FP_CONFIG ,DeviceFP64Config);
 		printFloatingPointConfig("\n\tFP64", DeviceFP64Config);
 
 	if (initialized_OpenCL) {
 		writefToLog("\nKernel Properties:");
-		printKernelStat("\n\tCL_KERNEL_WORK_GROUP_SIZE: %llu",CL_KERNEL_WORK_GROUP_SIZE,KernelWorkGroupSize);
-		printKernelStat("\n\tCL_KERNEL_LOCAL_MEM_SIZE: %llu",CL_KERNEL_LOCAL_MEM_SIZE,KernelLocalMemSize);
-		printKernelStat("\n\tCL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE: %llu",CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,KernelPreferredWorkGroupSizeMultiple);
-		printKernelStat("\n\tCL_KERNEL_PRIVATE_MEM_SIZE: %llu",CL_KERNEL_PRIVATE_MEM_SIZE,KernelPrivateMemSize);
+		printKernelStat("\n\tCL_KERNEL_WORK_GROUP_SIZE: %" PRIu64,CL_KERNEL_WORK_GROUP_SIZE,KernelWorkGroupSize);
+		printKernelStat("\n\tCL_KERNEL_LOCAL_MEM_SIZE: %" PRIu64,CL_KERNEL_LOCAL_MEM_SIZE,KernelLocalMemSize);
+		printKernelStat("\n\tCL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE: %" PRIu64,CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,KernelPreferredWorkGroupSizeMultiple);
+		printKernelStat("\n\tCL_KERNEL_PRIVATE_MEM_SIZE: %" PRIu64,CL_KERNEL_PRIVATE_MEM_SIZE,KernelPrivateMemSize);
 	}
 
 
 	printf("\n\tDevice Name: %s | %s",DeviceName,DeviceVendor); fflush(stdout);
 	printf("\n\tDriver Version: %s | %s | %s",DriverVersion,DeviceVersion,DeviceProfile); fflush(stdout);
-	printf("\n\tDevice VRAM: %lluMB",(DeviceGlobalMemSize / 1048576)); fflush(stdout);
+	printf("\n\tDevice VRAM: %" PRIu64 "MB",(DeviceGlobalMemSize / 1048576)); fflush(stdout);
 }
 int32_t terminate_OpenCL() { /* Deallocate resources */
 	if (initialized_OpenCL == false) {
@@ -209,7 +209,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	static dim32_t rX = 0;
 	static dim32_t rY = 0;
 	if (((rX != buf->resX || rY != buf->resY) && (rX != 0 || rY != 0)) || initialized_OpenCL == false || deviceResultBuf == NULL) {
-		// printf("\nr: %d %d",rX,rY); fflush(stdout);
+		// printf("\nr: %" PRId32 " %" PRId32,rX,rY); fflush(stdout);
 		size_t global_pixels = 0;
 		getGlobalAndLocalSize(&global_pixels,nullptr,KernelWorkGroupSize,(size_t)resX * (size_t)resY);
 		cl_mem tempBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, global_pixels * buf->channels, NULL, NULL);
@@ -301,7 +301,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &interior_B_Amp);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &debug_val_0xFF);
 
-	printErrorChange("\nKernelArgs: %d",err);
+	printErrorChange("\nKernelArgs: %" PRId32,err);
 
 	// size_t partitionCount = (ren.GPU_Partitions < resX * resY / 2) ? ren.GPU_Partitions : (resX * resY / 2);
 	// for (size_t p = 0; p < partitionCount; p++) {
@@ -319,7 +319,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	// 	global_size = pSize + cor; // Number of total work items - localSize must be devisor
 
 	// 	err = clEnqueueNDRangeKernel(engine.queue, engine.kernel, 1, &p0, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
-	// 	printErrorChange("\nclEnqueueNDRangeKernel: %d",err);
+	// 	printErrorChange("\nclEnqueueNDRangeKernel: %" PRId32,err);
 	// }
 	// if (ABORT_RENDERING == true) {
 	// 	printFlush("\nAborted GPU");
@@ -327,9 +327,9 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	// 	printFlush("\nSafe Return");
 	// }
 	getGlobalAndLocalSize(&global_size,&local_size,KernelWorkGroupSize,(size_t)resX * (size_t)resY);
-	//printfInterval(0.25,"\n%ux%u == %u | kernel %zu |cor %u --> %u\n\tSize: %zu",resX,resY,resX*resY,KernelWorkGroupSize,cor,resX*resY+cor,getBufferBoxSize(buf));
+	//printfInterval(0.25,"\n%" PRIu32 "x%" PRIu32 " == %" PRIu32 " | kernel %zu |cor %" PRIu32 " --> %" PRIu32 "\n\tSize: %zu",resX,resY,resX*resY,KernelWorkGroupSize,cor,resX*resY+cor,getBufferBoxSize(buf));
 	err = clEnqueueNDRangeKernel(engine.queue, engine.kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
-	printErrorChange("\nclEnqueueNDRangeKernel: %d",err);
+	printErrorChange("\nclEnqueueNDRangeKernel: %" PRId32,err);
 
 	clFinish(engine.queue); /* Wait for the command queue to get serviced before reading back results */
 

@@ -100,7 +100,9 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 				}
 				break;
 			case Rendering_Method::GPU_Rendering:
-				renderOpenCL_ABS_Mandelbrot(&image_box,image_render_data,image_fractal_data.type.abs_mandelbrot,ABORT_RENDERING);
+				#ifdef Enable_OpenCL
+					renderOpenCL_ABS_Mandelbrot(&image_box,image_render_data,image_fractal_data.type.abs_mandelbrot,ABORT_RENDERING);
+				#endif
 				break;
 			default:
 				printfInterval(0.5,"Error: Super Screenshot, unknown rendering method %u",image_render_data.rendering_method);
@@ -118,14 +120,14 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			curTime /= 1000;
 			char id_number[64]; memset(id_number,'\0',sizeof(id_number));
 			if (image_fractal_data.type_value == Fractal_ABS_Mandelbrot) {
-				snprintf(id_number,sizeof(id_number),"_id-%llu",image_fractal_data.type.abs_mandelbrot.formula);
+				snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.type.abs_mandelbrot.formula);
 			} else if (image_fractal_data.type_value == Fractal_Polar_Mandelbrot) {
-				snprintf(id_number,sizeof(id_number),"_id-%llu",image_fractal_data.type.polar_mandelbrot.formula);
+				snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.type.polar_mandelbrot.formula);
 			}
-			size_t size = (size_t)snprintf(nullptr,0,"Super_%s%s_(%lld)",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
+			size_t size = (size_t)snprintf(nullptr,0,"Super_%s%s_(%" PRId64 ")",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
 			size++;
 			char* name = (char*)calloc(size,sizeof(char));
-			snprintf(name,size,"Super_%s%s_(%llu)",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
+			snprintf(name,size,"Super_%s%s_(%" PRIu64 ")",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
 			char path[] = "./";
 			switch(image_file_format) {
 				case Image_File_Format::PNG:
@@ -157,7 +159,7 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 	//render_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot);
 	if (ABORT_RENDERING == false) {
 		#define FRAC fracData.type.abs_mandelbrot
-		//printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %llu",FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
+		//printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %" PRIu64,FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
 		#undef FRAC
 		switch(primaryRender.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
@@ -168,7 +170,9 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 				}
 				break;
 			case Rendering_Method::GPU_Rendering:
-				renderOpenCL_ABS_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING);
+				#ifdef Enable_OpenCL
+					renderOpenCL_ABS_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING);
+				#endif
 				break;
 			default:
 			printfInterval(0.5,"Unknown rendering method %u",primaryRender.rendering_method);
@@ -246,11 +250,15 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 }
 
 int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
-	int32_t init_OpenCL_ret = init_OpenCL();
-	if (init_OpenCL_ret != 0) {
-		printError("OpenCL failed to initialize, error code: %d",init_OpenCL_ret);
-	}
-	queryOpenCL_GPU();
+	#ifdef Enable_OpenCL
+		int32_t init_OpenCL_ret = init_OpenCL();
+		if (init_OpenCL_ret != 0) {
+			printError("OpenCL failed to initialize, error code: %d",init_OpenCL_ret);
+		}
+		queryOpenCL_GPU();
+	#else 
+		printFlush("\nNote: OpenCL GPU rendering is disabled");
+	#endif
 	clear_Cycle_Buffers();
 	reset_Image_Render();
 	write_Engine_Ready(true);
@@ -266,7 +274,9 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 }
 
 int terminate_Engine() {
-	terminate_OpenCL();
+	#ifdef Enable_OpenCL
+		terminate_OpenCL();
+	#endif
 	delete_Cycle_Buffers();
 	return 0;
 }

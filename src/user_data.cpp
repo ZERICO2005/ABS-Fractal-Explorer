@@ -8,7 +8,7 @@
 
 #include "Common_Def.h"
 #include "Program_Def.h"
-#include "user_Data.h"
+#include "user_data.h"
 
 /* Headers containing enums for default values */
 	#include "display_GUI.h"
@@ -257,7 +257,7 @@ void compare_Versions(int32_t version_major, int32_t version_minor, int32_t vers
 	) {
 		printFlush(
 			"\nWarning: Config-File might not be backwards compatible:"\
-			"\n(Current) v%d.%d.%d < (Config-File) v%d.%d.%d",
+			"\n(Current) v%" PRId32 ".%" PRId32 ".%" PRId32 " < (Config-File) v%" PRId32 ".%" PRId32 ".%" PRId32,
 			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,
 			version_major,version_minor,version_patch
 		);
@@ -269,7 +269,7 @@ void compare_Versions(int32_t version_major, int32_t version_minor, int32_t vers
 	) {
 		printFlush(
 			"\nWarning: Config-File might not be fully supported:"\
-			"\n(Current) v%d.%d.%d > (Config-File) v%d.%d.%d",
+			"\n(Current) v%" PRId32 ".%" PRId32 ".%" PRId32 " > (Config-File) v%" PRId32 ".%" PRId32 ".%" PRId32,
 			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,
 			version_major,version_minor,version_patch
 		);
@@ -280,7 +280,7 @@ void compare_Versions(int32_t version_major, int32_t version_minor, int32_t vers
 	if (PROGRAM_V_PATCH != version_patch) {
 		printFlush(
 			"\nNote: Config-File doesn't match current software version:"\
-			"\n(Current) v%d.%d.%d != (Config-File) v%d.%d.%d",
+			"\n(Current) v%" PRId32 ".%" PRId32 ".%" PRId32 " != (Config-File) v%" PRId32 ".%" PRId32 ".%" PRId32,
 			PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,
 			version_major,version_minor,version_patch
 		);
@@ -290,22 +290,15 @@ void compare_Versions(int32_t version_major, int32_t version_minor, int32_t vers
 void load_config_values(User_Configuration_Data& config_data, const char* Config_Text) {
 	if (Config_Text == nullptr) { return; }
 
-	#define textToFloat32(str) (fp32)atof(str)
-	#define textToFloat64(str) atof(str)
-
-	#define textToInt32(str) atoi(str)
 	// textToEnum will need to support text values too
-	#define textToEnum(str) atoi(str)
-	#define textToUint32(str) (uint32_t)atoll(str)
-	#define textToInt64(str) atoll(str)
-	#define textToUint64(str) (uint64_t)atoll(str)
+	#define textToEnum(str) stringTo_Int32(str)
 
 	const char* config_label = nullptr;
 
 	config_label = "Version";
-	int32_t version_major = textToInt32(get_config_value(Config_Text,config_label,"Major"));
-	int32_t version_minor = textToInt32(get_config_value(Config_Text,config_label,"Minor"));
-	int32_t version_patch = textToInt32(get_config_value(Config_Text,config_label,"Patch"));
+	int32_t version_major = stringTo_Int32(get_config_value(Config_Text,config_label,"Major"));
+	int32_t version_minor = stringTo_Int32(get_config_value(Config_Text,config_label,"Minor"));
+	int32_t version_patch = stringTo_Int32(get_config_value(Config_Text,config_label,"Patch"));
 	compare_Versions(version_major,version_minor,version_patch,true);
 
 	config_label = User_Configuration_Labels[Automatic_Behaviour];
@@ -320,49 +313,49 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 
 	config_label = User_Configuration_Labels[Parameter_Sensitivity];
 		config_data.Parameter_Sensitivity.global =
-		textToFloat64(get_config_value(Config_Text,config_label,"global"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"global"));
 		config_data.Parameter_Sensitivity.coordinate =
-		textToFloat64(get_config_value(Config_Text,config_label,"coordinate"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"coordinate"));
 		config_data.Parameter_Sensitivity.zoom =
-		textToFloat64(get_config_value(Config_Text,config_label,"zoom"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"zoom"));
 		config_data.Parameter_Sensitivity.invert_zoom =
 		textToBool_FalseDefault(get_config_value(Config_Text,config_label,"invert_zoom"));
 		config_data.Parameter_Sensitivity.maxIter =
-		textToFloat64(get_config_value(Config_Text,config_label,"maxIter"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"maxIter"));
 		config_data.Parameter_Sensitivity.julia =
-		textToFloat64(get_config_value(Config_Text,config_label,"julia"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"julia"));
 		config_data.Parameter_Sensitivity.rotation =
-		textToFloat64(get_config_value(Config_Text,config_label,"rotation"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"rotation"));
 		config_data.Parameter_Sensitivity.stretch =
-		textToFloat64(get_config_value(Config_Text,config_label,"stretch"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"stretch"));
 		config_data.Parameter_Sensitivity.polar_power =
-		textToFloat64(get_config_value(Config_Text,config_label,"polar_power"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"polar_power"));
 		config_data.Parameter_Sensitivity.breakout_value =
-		textToFloat64(get_config_value(Config_Text,config_label,"breakout_value"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"breakout_value"));
 
 	config_label = User_Configuration_Labels[Display_Preferences];
 		config_data.Display_Preferences.Display_Config_Hash =
-		textToUint64(get_config_value(Config_Text,config_label,"Display_Config_Hash"));
+		stringTo_Uint64(get_config_value(Config_Text,config_label,"Display_Config_Hash"));
 		config_data.Display_Preferences.Display_Bootup_Type =
 		textToEnum(get_config_value(Config_Text,config_label,"Display_Bootup_Type"));
 		config_data.Display_Preferences.Specific_Bootup_Display =
-		textToInt32(get_config_value(Config_Text,config_label,"Specific_Bootup_Display"));
+		stringTo_Int32(get_config_value(Config_Text,config_label,"Specific_Bootup_Display"));
 		config_data.Display_Preferences.Previous_Display_Used =
-		textToInt32(get_config_value(Config_Text,config_label,"Previous_Display_Used"));
+		stringTo_Int32(get_config_value(Config_Text,config_label,"Previous_Display_Used"));
 		config_data.Display_Preferences.Bootup_Fullscreen =
 		textToEnum(get_config_value(Config_Text,config_label,"Bootup_Fullscreen"));
 		config_data.Display_Preferences.ScaleWindowToScreenSize =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"ScaleWindowToScreenSize"));
 		config_data.Display_Preferences.Bootup_Window_Scale =
-		textToFloat64(get_config_value(Config_Text,config_label,"Bootup_Window_Scale"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"Bootup_Window_Scale"));
 		config_data.Display_Preferences.Display_RefreshRate_Type =
 		textToEnum(get_config_value(Config_Text,config_label,"Display_RefreshRate_Type"));
 		config_data.Display_Preferences.Automatically_Update_RefreshRate =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"Automatically_Update_RefreshRate"));
 		config_data.Display_Preferences.Constant_RefreshRate_Value =
-		textToFloat64(get_config_value(Config_Text,config_label,"Constant_RefreshRate_Value"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"Constant_RefreshRate_Value"));
 		config_data.Display_Preferences.Maximum_FPS_Multiplier =
-		textToInt32(get_config_value(Config_Text,config_label,"Maximum_FPS_Multiplier"));
+		stringTo_Int32(get_config_value(Config_Text,config_label,"Maximum_FPS_Multiplier"));
 
 	config_label = User_Configuration_Labels[GUI_Settings];
 		config_data.GUI_Settings.LockKeyInputsInMenus =
@@ -374,29 +367,29 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		config_data.GUI_Settings.GUI_Theme =
 		textToEnum(get_config_value(Config_Text,config_label,"GUI_Theme"));
 		config_data.GUI_Settings.WindowOpacity =
-		textToFloat32(get_config_value(Config_Text,config_label,"WindowOpacity"));
+		stringTo_Float32(get_config_value(Config_Text,config_label,"WindowOpacity"));
 		config_data.GUI_Settings.WindowAutoScale =
-		textToFloat64(get_config_value(Config_Text,config_label,"WindowAutoScale"));
+		stringTo_Float64(get_config_value(Config_Text,config_label,"WindowAutoScale"));
 
 	config_label = User_Configuration_Labels[Screenshot_Settings];
 		config_data.Screenshot_Settings.screenshotFileType =
 		textToEnum(get_config_value(Config_Text,config_label,"screenshotFileType"));
 		config_data.Screenshot_Settings.PNG_Compression_Level =
-		textToUint32(get_config_value(Config_Text,config_label,"PNG_Compression_Level"));
+		stringTo_Uint32(get_config_value(Config_Text,config_label,"PNG_Compression_Level"));
 		config_data.Screenshot_Settings.JPG_Quality_Level =
-		textToUint32(get_config_value(Config_Text,config_label,"JPG_Quality_Level"));
+		stringTo_Uint32(get_config_value(Config_Text,config_label,"JPG_Quality_Level"));
 
 	config_label = User_Configuration_Labels[Rendering_Settings];
 		config_data.Rendering_Settings.Hardware_Hash =
-		textToUint64(get_config_value(Config_Text,config_label,"Hardware_Hash"));
+		stringTo_Uint64(get_config_value(Config_Text,config_label,"Hardware_Hash"));
 		config_data.Rendering_Settings.Frame_Interpolation_Method =
 		textToEnum(get_config_value(Config_Text,config_label,"Frame_Interpolation_Method"));
 		config_data.Rendering_Settings.JuliaPoint_Enabled =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"JuliaPoint_Enabled"));
 		config_data.Rendering_Settings.JuliaPoint_OuterRadius =
-		textToFloat32(get_config_value(Config_Text,config_label,"JuliaPoint_OuterRadius"));
+		stringTo_Float32(get_config_value(Config_Text,config_label,"JuliaPoint_OuterRadius"));
 		config_data.Rendering_Settings.JuliaPoint_InnerRadius =
-		textToFloat32(get_config_value(Config_Text,config_label,"JuliaPoint_InnerRadius"));
+		stringTo_Float32(get_config_value(Config_Text,config_label,"JuliaPoint_InnerRadius"));
 }
 
 int import_config_data(User_Configuration_Data& config_data, const char* path) {
@@ -444,7 +437,7 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 const char* getDateAndTimeUTC(
 	char DateDelimiter, char DateSeparator, char TimeDelimiter
 ) {
-	static char timeFormat[sizeof("%Y-%m-%d_%H-%M-%S")];
+	static char timeFormat[sizeof("%Y-%m-%" PRId32 "_%H-%M-%S")];
 	memset(timeFormat,'\0',sizeof(timeFormat));
 
 	char* timeText = nullptr;
@@ -454,7 +447,7 @@ const char* getDateAndTimeUTC(
 		return nullptr;
 	}
 	
-	snprintf(timeFormat,sizeof(timeFormat),"%%Y%c%%m%c%%d%c%%H%c%%M%c%%S",
+	snprintf(timeFormat,sizeof(timeFormat),"%%Y%c%%m%c%%" PRId32 "%c%%H%c%%M%c%%S",
 		DateDelimiter,DateDelimiter,DateSeparator,TimeDelimiter,TimeDelimiter
 	);
 	time_t currentTime;
@@ -480,9 +473,9 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 	fprintf(file,"%s Config File",PROGRAM_NAME);
 	fprintf(file,"\n\nVersion:");
 		fprintf(file,"\n\tDate: %s",PROGRAM_DATE);
-		fprintf(file,"\n\tMajor: %d",PROGRAM_V_MAJOR);
-		fprintf(file,"\n\tMinor: %d",PROGRAM_V_MINOR);
-		fprintf(file,"\n\tPatch: %d",PROGRAM_V_PATCH);
+		fprintf(file,"\n\tMajor: %" PRId32,PROGRAM_V_MAJOR);
+		fprintf(file,"\n\tMinor: %" PRId32,PROGRAM_V_MINOR);
+		fprintf(file,"\n\tPatch: %" PRId32,PROGRAM_V_PATCH);
 		fprintf(file,"\n\tTag: %s",PROGRAM_V_TAG);
 		{
 			static char timeText[sizeof("YYYY/mm/dd HH:MM:SS")]; memset(timeText,'\0',sizeof(timeText));
@@ -490,7 +483,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 			struct tm *utcTime;
 			time(&currentTime);
 			utcTime = gmtime(&currentTime);
-			strftime(timeText, sizeof(timeText), "%Y/%m/%d %H:%M:%S", utcTime);
+			strftime(timeText, sizeof(timeText), "%Y/%m/%" PRId32 " %H:%M:%S", utcTime);
 			fprintf(file, "\n\tExport_Time: %s UTC", timeText);
 		}
 
@@ -535,19 +528,19 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Display_Preferences]);
-		fprintf(file,"\n\tDisplay_Config_Hash: %llu",
+		fprintf(file,"\n\tDisplay_Config_Hash: %" PRId64,
 			config_data.Display_Preferences.Display_Config_Hash
 		);
-		fprintf(file,"\n\tDisplay_Bootup_Type: %d",
+		fprintf(file,"\n\tDisplay_Bootup_Type: %" PRId32,
 			config_data.Display_Preferences.Display_Bootup_Type
 		);
-		fprintf(file,"\n\tSpecific_Bootup_Display: %d",
+		fprintf(file,"\n\tSpecific_Bootup_Display: %" PRId32,
 			config_data.Display_Preferences.Specific_Bootup_Display
 		);
-		fprintf(file,"\n\tLast_Display_Used: %d",
+		fprintf(file,"\n\tLast_Display_Used: %" PRId32,
 			config_data.Display_Preferences.Previous_Display_Used
 		);
-		fprintf(file,"\n\tBootup_Fullscreen: %d",
+		fprintf(file,"\n\tBootup_Fullscreen: %" PRId32,
 			config_data.Display_Preferences.Bootup_Fullscreen
 		);
 		fprintf(file,"\n\tScaleWindowToScreenSize: %s",
@@ -556,16 +549,16 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		fprintf(file,"\n\tBootup_Window_Scale: %.6lf",
 			config_data.Display_Preferences.Bootup_Window_Scale
 		);
-		fprintf(file,"\n\tDisplay_RefreshRate_Type: %d",
+		fprintf(file,"\n\tDisplay_RefreshRate_Type: %" PRId32,
 			config_data.Display_Preferences.Display_RefreshRate_Type
 		);
-		fprintf(file,"\n\tAutomatically_Update_RefreshRate: %d",
+		fprintf(file,"\n\tAutomatically_Update_RefreshRate: %" PRId32,
 			config_data.Display_Preferences.Automatically_Update_RefreshRate
 		);
 		fprintf(file,"\n\tConstant_RefreshRate_Value: %.6lf",
 			config_data.Display_Preferences.Constant_RefreshRate_Value
 		);
-		fprintf(file,"\n\tMaximum_FPS_Multiplier: %d",
+		fprintf(file,"\n\tMaximum_FPS_Multiplier: %" PRId32,
 			config_data.Display_Preferences.Maximum_FPS_Multiplier
 		);
 
@@ -579,7 +572,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		fprintf(file,"\n\tPreventOutOfBoundsWindows: %s",
 			bool_Text(config_data.GUI_Settings.PreventOutOfBoundsWindows)
 		);
-		fprintf(file,"\n\tGUI_Theme: %d",
+		fprintf(file,"\n\tGUI_Theme: %" PRId32,
 			config_data.GUI_Settings.GUI_Theme
 		);
 		fprintf(file,"\n\tWindowOpacity: %.6f",
@@ -590,21 +583,21 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Screenshot_Settings]);
-		fprintf(file,"\n\tscreenshotFileType: %d",
+		fprintf(file,"\n\tscreenshotFileType: %" PRId32,
 			config_data.Screenshot_Settings.screenshotFileType
 		);
-		fprintf(file,"\n\tPNG_Compression_Level: %u",
+		fprintf(file,"\n\tPNG_Compression_Level: %" PRIu32,
 			config_data.Screenshot_Settings.PNG_Compression_Level
 		);
-		fprintf(file,"\n\tJPG_Quality_Level: %u",
+		fprintf(file,"\n\tJPG_Quality_Level: %" PRIu32,
 			config_data.Screenshot_Settings.JPG_Quality_Level
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Rendering_Settings]);
-		fprintf(file,"\n\tHardware_Hash: %llu",
+		fprintf(file,"\n\tHardware_Hash: %" PRId64,
 			config_data.Rendering_Settings.Hardware_Hash
 		);
-		fprintf(file,"\n\tFrame_Interpolation_Method: %d",
+		fprintf(file,"\n\tFrame_Interpolation_Method: %" PRId32,
 			config_data.Rendering_Settings.Frame_Interpolation_Method
 		);
 		fprintf(file,"\n\tJuliaPoint_Enabled: %s",

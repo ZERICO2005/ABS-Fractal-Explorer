@@ -321,7 +321,7 @@ void force_resizeWindow(dim32_t resX, dim32_t resY) {
 		Master.resY = resY;
 		TestGraphic.resX = resX;
 		TestGraphic.resY = resY - RESY_UI;
-		// printFlush("\n%d %d | %llu",x,y,getBufferBoxSize(&TestGraphic));
+		// printFlush("\n%" PRId32 " %" PRId32 " | %" PRIu64,x,y,getBufferBoxSize(&TestGraphic));
 		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram), getBufferBoxSize(&TestGraphic));
 
 		updateRenderData(&primaryRenderData);
@@ -1118,7 +1118,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 					if (yeildPrint == true || yeildSwitch == true) {
 // 						yeildSwitch = false;
 // 						yeildPrint = false;
-// 						printFlush("\n\nYeild Count: %llu Errors: %llu",yeildCount, yeildError);
+// 						printFlush("\n\nYeild Count: %llu Errors: %" PRIu64,yeildCount, yeildError);
 // 						printFlush("\nTime Saved: %.3lfms",NANO_TO_SECONDS(yeildSave) * 1.0e3);
 // 						yeildSum += yeildCount;
 // 						printFlush("\nYeild Error: %.3lfms per error\n",((fp64)(getNanoTime() - yeildTimer) / (fp64)yeildError) / 1.0e6);
@@ -1191,7 +1191,7 @@ int32_t loadDisplayInformation(
 		printError("Failed to detect displays");
 		return 0;
 	}
-	printf("\n\tDisplay Count: %d",displayCount);
+	printf("\n\tDisplay Count: %" PRId32,displayCount);
 	int32_t cursorPosX, cursorPosY;
 	SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
 	const DisplayInfo* disp = getBootupDisplay(
@@ -1258,7 +1258,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 	dispResX = initResX;
 	dispResY = initResY;
-	//printFlush("\nOld: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
+	//printFlush("\nOld: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
 	calculate_init_window_size(
 		dispResX, dispResY,
 		initResX, initResY,
@@ -1277,7 +1277,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 
 
-	//printFlush("\nNew: %dx%d %d,%d",initResX,initResY,initPosX,initPosY);
+	//printFlush("\nNew: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
 	{
 		#ifndef MANUAL_FRAME_RATE_OVERRIDE
 			const DisplayInfo* disp = getDisplayFromIndex(initDisplayIndex);
@@ -1289,7 +1289,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		valueClamp(FRAME_RATE,12.0,1200.0);
 	}
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
-	printf("\n\tSystem RAM: %dMB",SDL_GetSystemRAM());
+	printf("\n\tSystem RAM: %" PRId32 "MB",SDL_GetSystemRAM());
 	// Allocate Buffers
 	//initBufferBox(&Master,NULL,initResX,initResY,IMAGE_BUFFER_CHANNELS);
 	Master = ImageBuffer(initResX,initResY,IMAGE_BUFFER_CHANNELS);
@@ -1327,7 +1327,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	// 	SDL_GetWindowSizeInPixels(window,&dimX,&dimY);
 	// 	if (resX != dimX || resY != dimY) {
 	// 		printWarning(
-	// 			"Window is rendering in high dpi mode, and may have scaling artifacts %dx%d != %dx%d",
+	// 			"Window is rendering in high dpi mode, and may have scaling artifacts %" PRId32 "x%" PRId32 " != %" PRId32 "x%" PRId32,
 	// 			resX, resY, dimX, dimY
 	// 		);
 	// 	}
@@ -1372,7 +1372,9 @@ uint64_t get_Hardware_Hash() {
 	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
 	value32 = SDL_GetSystemRAM();
 	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
-	get_GPU_Hardware_Hash(hardwareHash);
+	#ifdef Enable_OpenCL
+		get_GPU_Hardware_Hash(hardwareHash);
+	#endif
 	return hardwareHash;
 }
 
@@ -1562,7 +1564,7 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	#define FRAC frac.type.abs_mandelbrot
 	static const dim32_t minimumImageResolution = 2;
 	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
-		printWarning("ImageBuffer* image is below minimum resolution: %ux%u",image->resX,image->resY);
+		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
 		return 1;
 	}
 	i32 fx0 = 0; i32 fy0 = 0;
@@ -1664,7 +1666,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	dim32_t resX = (dim32_t)(image->resX);
 	dim32_t resY = (dim32_t)(image->resY);
 	// printfInterval(0.5,
-	// 	"\nres{%ux%u}"
+	// 	"\nres{%" PRIu32 "x%" PRIu32 "}"
 	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}"
 	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}\n",
 	// 	resX,resY,
@@ -1678,8 +1680,8 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	fp32 sx01 = 0.0f; fp32 sy01 = (fp32)resY;
 	fp32 sx10 = (fp32)resX; fp32 sy10 = 0.0f;
 	// image->printTransformationData(0.6);
-	// printfInterval(0.6,"\nsrc: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
-	// printfInterval(0.6,"\ndst: 00{%d,%d} 11{%d,%d} 01{%d,%d} 10{%d,%d}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
+	// printfInterval(0.6,"\nsrc: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
+	// printfInterval(0.6,"\ndst: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
 	uint32_t backgroundColor = 0xFF000000;
 	backgroundColor |= (uint32_t)(FRAC.rA * (127.5 - 127.5 * cos(TAU * FRAC.rP)));
 	backgroundColor |= (uint32_t)(FRAC.gA * (127.5 - 127.5 * cos(TAU * FRAC.gP))) << 8;
@@ -1713,7 +1715,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// 	printError("\nImage_Scaler_Quadrilateral failed");
 	// 	return -1;
 	// }
-	//printfInterval(0.6,"\n%p: %ux%u %uC %uP",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
+	//printfInterval(0.6,"\n%p: %" PRIu32 "x%" PRIu32 " %" PRIu32 "C %" PRIu32 "P",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
 	
 	renderJuliaCordinatePoint(blit, ren);
 	
@@ -1799,7 +1801,7 @@ void newFrame() {
 	#ifdef Use_OpenCV_Scaler
 		if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
 			int scaleRet = transformFracImage(Primary_Image,&primaryRenderData);
-			printfChange(int,scaleRet,"\ntransformFracImage: %d",scaleRet);
+			printfChange(int,scaleRet,"\ntransformFracImage: %" PRId32,scaleRet);
 		}
 	#endif
 	SDL_UpdateTexture(texture, nullptr, Master.vram, (dim32_t)Master.resX * (dim32_t)Master.channels);
@@ -1814,13 +1816,13 @@ void newFrame() {
 
 		#ifndef Use_OpenCV_Scaler
 			int dispRet = displayFracImage(Primary_Image,&primaryRenderData);
-			printfChange(int,dispRet,"\ndisplayFracImage: %d",dispRet);
+			printfChange(int,dispRet,"\ndisplayFracImage: %" PRId32,dispRet);
 		#endif
 		if (exportFractalBuffer == true) {
 			nano64_t curTime = getNanoTime();
-			size_t size = (size_t)snprintf(nullptr,0,"%s_%llu",frac.type_name,curTime);
+			size_t size = (size_t)snprintf(nullptr,0,"%s_%" PRIu64,frac.type_name,curTime);
 			char* name = (char*)calloc(size + 1,sizeof(char));
-			snprintf(name,size,"%s_%llu",FractalTypeFileText[frac.type_value],curTime);
+			snprintf(name,size,"%s_%" PRIu64,FractalTypeFileText[frac.type_value],curTime);
 			char path[] = "./";
 			const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
 			switch(screenshot_settings.screenshotFileType) {
@@ -1837,7 +1839,7 @@ void newFrame() {
 					writeBMPImage(&temp_primaryBox,path,name);
 				break;
 				default:
-				printError("Unknown screenshot file type: %d",screenshot_settings.screenshotFileType);
+				printError("Unknown screenshot file type: %" PRId32,screenshot_settings.screenshotFileType);
 			}
 			FREE(name);
 		}

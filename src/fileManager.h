@@ -12,8 +12,11 @@
 #include "Common_Def.h"
 #include "copyBuffer.h"
 
-#define fileManager_Platform_Windows
-//#define fileManager_Platform_Linux
+#ifdef PLATFORM_WINDOWS
+	#define fileManager_Platform_Windows
+#else
+	#define fileManager_Platform_Linux
+#endif
 
 /* fileManager.h is intended to have platform specific methods for opening/saving files */
 

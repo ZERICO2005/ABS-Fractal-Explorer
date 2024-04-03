@@ -20,12 +20,17 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/03/31" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/04/02" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 9
 #define PROGRAM_V_TAG "Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
+
+/* OpenCL */
+
+// Uncomment if OpenCL does not work on your device
+#define Enable_OpenCL
 
 /* float80 and float128 */
 
@@ -59,6 +64,9 @@
 		inline fp128 fmod(fp128 x, fp128 y) { return fmodq(x,y); }
 		inline fp128 fabs(fp128 x) { return fabsq(x); }
 		inline fp128 copysign(fp128 x, fp128 y) { return copysignq(x,y); }
+		
+		inline fp80 stringTo_Float80(const char* nPtr, char** endPtr) { return (fp80)strtold(nPtr,endPtr); }
+		inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtof128(nPtr,endPtr); }
 #else
 	#define quadmath_snprintf snprintf
 	#define strtoflt128 strtod
@@ -68,7 +76,11 @@
 	typedef uint64_t uint128_t;
 	typedef int64_t i128;
 	typedef uint64_t u128;
+
+	inline fp80 stringTo_Float80(const char* nPtr, char** endPtr) { return (fp80)strtold(nPtr,endPtr); }
+	inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtold(nPtr,endPtr); }
 #endif
+
 
 constexpr size_t IMAGE_BUFFER_CHANNELS = 4;
 
