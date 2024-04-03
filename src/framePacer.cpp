@@ -32,6 +32,12 @@
 		fp64 Frame_Pacer::get_FrameRate() const {
 			return NANO_TO_FRAMERATE(FrameTime);
 		}
+		nano64_t Frame_Pacer::get_FrameDeltaTime() const {
+			return Delta_Time;
+		}
+		fp64 Frame_Pacer::get_FrameDeltaSeconds() const {
+			return NANO_TO_SECONDS(Delta_Time);
+		}
 
 		void Frame_Pacer::set_FrameTime(nano64_t frameTime) {
 			FrameTime = frameTime;

@@ -34,6 +34,10 @@
 
 #include "display_GUI.h"
 
+#include "framePacer.hpp"
+
+extern Frame_Pacer GUI_Frame_Pacer;
+
 /* Resolution */
 	#define RESX_Default 800
 	#define RESY_Default 600

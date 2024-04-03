@@ -22,6 +22,9 @@ class Frame_Pacer {
 		nano64_t get_FrameTime() const;
 		fp64 get_FrameRate() const;
 
+		nano64_t get_FrameDeltaTime() const;
+		fp64 get_FrameDeltaSeconds() const;
+
 		void set_FrameTime(nano64_t frameTime);
 		void set_FrameRate(fp64 frameRate);
 
