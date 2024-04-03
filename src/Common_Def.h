@@ -16,7 +16,9 @@
 
 /* Includes */
 
+#include <cstddef>
 #include <cstdint>
+#include <cinttypes>
 #include <cstdlib>
 #include <cmath>
 #include <cstring>
@@ -63,8 +65,8 @@ typedef int32_t dim32_t;
 //#define BUILD_DEBUG
 #define BUILD_RELEASE
 
-// #define PLATFORM_WINDOWS
-#define PLATFORM_LINUX
+#define PLATFORM_WINDOWS
+// #define PLATFORM_LINUX
 
 /* Constants */
 
@@ -178,8 +180,8 @@ typedef int32_t dim32_t;
 	inline int16_t stringTo_Int16(const char* nPtr, char** endPtr, int base) { return (int16_t)strtol(nPtr,endPtr,base); }
 	inline int32_t stringTo_Int32(const char* nPtr, char** endPtr, int base) { return (int32_t)strtol(nPtr,endPtr,base); }
 	inline int64_t stringTo_Int64(const char* nPtr, char** endPtr, int base) { return (int64_t)strtoll(nPtr,endPtr,base); }
-	inline fp32 stringTo_Float32(const char* nPtr, char** endPtr) { return strtof32(nPtr,endPtr); }
-	inline fp64 stringTo_Float64(const char* nPtr, char** endPtr) { return strtof64(nPtr,endPtr); }
+	inline fp32 stringTo_Float32(const char* nPtr, char** endPtr) { return strtof(nPtr,endPtr); }
+	inline fp64 stringTo_Float64(const char* nPtr, char** endPtr) { return strtod(nPtr,endPtr); }
 
 	inline uint8_t stringTo_Uint8(const char* nPtr) { return (uint8_t)atoi(nPtr); }
 	inline uint16_t stringTo_Uint16(const char* nPtr) { return (uint16_t)atoi(nPtr); }

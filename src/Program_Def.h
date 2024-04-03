@@ -65,8 +65,14 @@
 		inline fp128 fabs(fp128 x) { return fabsq(x); }
 		inline fp128 copysign(fp128 x, fp128 y) { return copysignq(x,y); }
 		
-		inline fp80 stringTo_Float80(const char* nPtr, char** endPtr) { return (fp80)strtold(nPtr,endPtr); }
-		inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtof128(nPtr,endPtr); }
+		#ifdef PLATFORM_WINDOWS
+			inline fp80 stringTo_Float80(const char* nPtr, char** endPtr) { return (fp80)strtold(nPtr,endPtr); }
+			inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtold(nPtr,endPtr); }
+		#else
+			inline fp80 stringTo_Float80(const char* nPtr, char** endPtr) { return (fp80)strtold(nPtr,endPtr); }
+			inline fp128 stringTo_Float128(const char* nPtr, char** endPtr) { return (fp128)strtof128(nPtr,endPtr); }
+		#endif
+		
 #else
 	#define quadmath_snprintf snprintf
 	#define strtoflt128 strtod

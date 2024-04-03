@@ -271,10 +271,10 @@
 	}
 	void ImageBuffer::printTransformationData(fp64 freq) {
 		printfInterval(freq,
-			"\ndeg(%.3lf) res{%ux%u} vram(%p)"
+			"\ndeg(%.3lf) res{%" PRId32 "x%" PRId32 "} vram(%p)"
 			"\n{%6.4lf,%.4lf} --- {%6.4lf,%6.4lf}"
 			"\n{%6.4lf,%.4lf} --- {%6.4lf,%6.4lf}",
-			rot * 360.0 / TAU,resX,resY,vram,
+			rot * 360.0 / TAU, resX, resY, vram,
 			(fp64)x00,(fp64)y00,(fp64)x10,(fp64)y10,
 			(fp64)x01,(fp64)y01,(fp64)x11,(fp64)y11
 		);

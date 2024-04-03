@@ -139,7 +139,7 @@ void generate_Param_List(char* raw, size_t len,Param_List** param_list_ptr,size_
 		}
 		prev = raw[pos];
 	}
-	printFlushDebug("\nTotal Rows: %llu",rowCount);
+	printFlushDebug("\nTotal Rows: %" PRIu64,rowCount);
 	param_len = rowCount;
 	param_list = (Param_List*)malloc(param_len * sizeof(Param_List));
 	
@@ -297,11 +297,11 @@ Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t 
 			prev = path[pos1];
 			pos1++;
 		}
-		// printf("\nDepth: %llu Len: %llu Searching: ",depth,pos1 - pos0);
+		// printf("\nDepth: %" PRIu64 " Len: %" PRIu64 " Searching: ",depth,pos1 - pos0);
 		// for (size_t p = pos0; p < pos1; p++) { printf("%c",path[p]); }
 		// fflush(stdout);
 		size_t row = select;
-		// printFlush("\n%llu %llu %llu %llu",row,param_list[row].depth,depth,param_len);
+		// printFlush("\n%" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64,row,param_list[row].depth,depth,param_len);
 		for (; row < param_len; row++) {
 			if (param_list[row].depth == depth) {
 				if (strictCompareText(&path[pos0], pos1 - pos0, &raw[param_list[row].pos], param_list[row].len) == true) {
@@ -311,16 +311,16 @@ Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t 
 						return &param_list[row + 1];
 					}
 					select = row + 1;
-					// printFlush("\nMatched row %llu",row);
+					// printFlush("\nMatched row %" PRIu64,row);
 					break;
 				}
 			} else if (param_list[row].depth < depth) {
-				printFlushDebug("\nDepth Error: Depth %llu, Row %llu, Row-Depth %llu, unable to find %s",depth,row,param_list[row].depth,path);
+				printFlushDebug("\nDepth Error: Depth %" PRIu64 ", Row %" PRIu64 ", Row-Depth %" PRIu64 ", unable to find %s",depth,row,param_list[row].depth,path);
 				return NULL;
 			}
 		}
 		if (row == param_len) {
-			printFlushDebug("\nExhaust Error: Depth %llu, unable to find %s",depth,path);
+			printFlushDebug("\nExhaust Error: Depth %" PRIu64 ", unable to find %s",depth,path);
 			return NULL;
 		}
 		pos1++;
@@ -346,11 +346,11 @@ Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t 
 	// 			if (param_list[row].depth == depth) {
 	// 			if (strictCompareText(&path[pos0], pos1 - pos0, &frac_raw[param_list[row].pos], param_list[row].len) == true) {
 	// 				select = row;
-	// 				printFlush("Matched row %llu",row);
+	// 				printFlush("Matched row %" PRIu64,row);
 	// 				break;
 	// 			}
 	// 		} else if (param_list[row].depth < depth) {
-	// 			printFlush("\nDepth Error: Depth %llu, unable to find %s",depth,path);
+	// 			printFlush("\nDepth Error: Depth %" PRIu64 ", unable to find %s",depth,path);
 	// 			return NULL;
 	// 		}
 	return NULL;
@@ -395,7 +395,7 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
 		return;
 	}
 	if (item->len < 17 * len + 1) { // 64 + 5
-		printFlushDebug("\nError: Hexdecimal code is not long enough (%llu < %llu)\n", item->len, 17 * len + 1);
+		printFlushDebug("\nError: Hexdecimal code is not long enough (%" PRIu64 " < %" PRIu64 ")\n", item->len, 17 * len + 1);
 		printParamTextN(raw,item);
 		for (size_t i = 0; i < len; i++) {
 			hex[i] = 0x0;

@@ -303,7 +303,7 @@ int import_KeyBindPresets(std::list<KeyBind_Preset>* presetList, KeyBind_Preset*
 			frac.KeyBind_Preset_List.back().kList.clear();
 			frac.KeyBind_Preset_List.pop_back();
 		}
-		printError("read_FracExpKB_File() returned %d",ret);
+		printError("read_FracExpKB_File() returned %" PRId32,ret);
 		return ret;
 	}
 	if (frac.KeyBind_Preset_List.empty() == true) {
@@ -347,7 +347,7 @@ int write_FracExpKB_Preset(const KeyBind_Preset* preset, FILE *ptrW) {
 	/* Preset Header */
 	fprintf(ptrW,"\n\tPreset:");
 	if (preset->name.empty() == true) {
-		fprintf(ptrW,"\n\t\tName:\n\t\t\t\"KeyBind_%012llu\"",(getNanoTime() / 1000) % 1000000000000);
+		fprintf(ptrW,"\n\t\tName:\n\t\t\t\"KeyBind_%012" PRIu64 "\"",(getNanoTime() / 1000) % 1000000000000);
 	}
 	fprintf(ptrW,"\n\t\tName:\n\t\t\t\"%s\"",preset->name.c_str());
 	/* Print KeyBinds */
@@ -369,19 +369,27 @@ int write_FracExpKB_Header(FILE *ptrW) {
 	fprintf(ptrW,"\n\nFile_Header:");
 	fprintf(
 		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
-		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+		\n\t\t\tMajor:\n\t\t\t\t%" PRIu32 "\n\t\t\tMinor:\n\t\t\t\t%" PRIu32 "\n\t\t\tPatch:\n\t\t\t\t%" PRIu32 "\n\t\t\tBuild:\n\t\t\t\t%" PRIu32 "\n\t\t\tTags:\n\t\t\t\t\"%s\"",
 		FRACEXPKB_V_MAJOR,FRACEXPKB_V_MINOR,FRACEXPKB_V_PATCH,0,FRACEXPKB_V_TAG
 	);
 	fprintf(
 		ptrW,"\n\tFracExp_KeyBind:\n\t\tVersion:\
-		\n\t\t\tMajor:\n\t\t\t\t%u\n\t\t\tMinor:\n\t\t\t\t%u\n\t\t\tPatch:\n\t\t\t\t%u\n\t\t\tBuild:\n\t\t\t\t%u\n\t\t\tTags:\n\t\t\t\t\"%s\"",
+		\n\t\t\tMajor:\n\t\t\t\t%" PRIu32 "\n\t\t\tMinor:\n\t\t\t\t%" PRIu32 "\n\t\t\tPatch:\n\t\t\t\t%" PRIu32 "\n\t\t\tBuild:\n\t\t\t\t%" PRIu32 "\n\t\t\tTags:\n\t\t\t\t\"%s\"",
 		PROGRAM_V_MAJOR,PROGRAM_V_MINOR,PROGRAM_V_PATCH,0,PROGRAM_V_TAG
 	);
 	fprintf(ptrW,"\n\tHash:");
-	fprintf(ptrW,"\n\t\tAll:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tCritical:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tFile:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
-	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016Xx%016Xx%016Xx%016X",0,0,0,0);
+	fprintf(ptrW,"\n\t\tAll:\n\t\t\t0x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64,
+		(uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0
+	);
+	fprintf(ptrW,"\n\t\tCritical:\n\t\t\t0x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64,
+		(uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0
+	);
+	fprintf(ptrW,"\n\t\tFile:\n\t\t\t0x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64,
+		(uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0
+	);
+	fprintf(ptrW,"\n\t\tKeyBinds:\n\t\t\t0x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64 "x%016" PRIX64,
+		(uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0, (uint64_t)0x0
+	);
 	fprintf(ptrW,"\n\nFile_Information:");
 	fprintf(ptrW,"\n\tPlatform:\n\t\t\"%s\"","Unknown");
 	fprintf(ptrW,"\n\tCreated:\n\t\t\"%s\"","2000/01/01 00:00");
