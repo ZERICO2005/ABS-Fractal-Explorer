@@ -1369,8 +1369,11 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	config_data.Rendering_Settings.Hardware_Hash = get_Hardware_Hash();
 
 	bootup_Fractal_Frame_Rendered = false;
-	printFlush("\n");
+	
 	write_Render_Ready(true);
+	write_Parameters(&frac,&primaryRenderData,&secondaryRenderData);
+	printFlush("\n");
+
 	while (read_Engine_Ready() == false) {
 		if (QUIT_FLAG == true) {
 			printWarning("Render thread exiting initialization: QUIT_FLAG == true");
@@ -1378,7 +1381,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
-	printFlush("\nReady");
 	start_Render(QUIT_FLAG,ABORT_RENDERING);
 	return 0;
 }

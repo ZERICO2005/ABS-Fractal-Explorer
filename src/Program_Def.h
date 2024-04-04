@@ -20,11 +20,11 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/04/03" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/04/04" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 9
-#define PROGRAM_V_TAG "Rev-4 Unstable Developer Alpha"
+#define PROGRAM_V_TAG "Rev-5 Developer Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* OpenCL */

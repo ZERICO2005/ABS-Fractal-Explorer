@@ -164,9 +164,9 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
 	#ifndef BUILD_RELEASE
-		static const char* buttonLabels[] = {"Fractal", "Export", "Import", "Screenshot", "Rendering", "Settings", "KeyBinds"};
+		static const char* buttonLabels[] = {"Fractal", "Export", "Import", "Screenshot", "Rendering", "Settings", "KeyBinds", "Status"};
 	#else
-		static const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
+		static const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds", "Status"};
 	#endif
 
 /* Other */
@@ -176,5 +176,6 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern char FileUsername[FileUsernameLength];
 	extern bool SaveHardwareInfoInFiles; /* This MUST be False by Default */
 	extern User_Configuration_Data config_data;
+
 
 #endif /* TEMP_GLOBAL_RENDER_H */

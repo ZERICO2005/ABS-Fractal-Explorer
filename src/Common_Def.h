@@ -261,7 +261,7 @@ typedef int32_t dim32_t;
 		} \
 	}
 	
-	// Waits for a duration in seconds
+	// (Debugging Tool) Waits for a duration in seconds
 	inline void BurnTime(fp64 s) {
 		nano64_t BURN_TIME_NANOSECONDS = getNanoTime();
 		while (getNanoTime() - BURN_TIME_NANOSECONDS < SECONDS_TO_NANO(s)) {};

@@ -81,6 +81,14 @@ namespace Image_File_Format {
 	};
 }
 
+namespace Namespace_Image_Render_Bounding_Box {
+	enum Enum_Image_Render_Bounding_Box {
+		Fill_Area, Fit_Area, Fit_Width, Fit_Height,
+		Image_Render_Bounding_Box_Count
+	};
+	const char* const Image_Render_Bounding_Box_Text[] = {"Fill Area", "Fit Area", "Fit Width", "Fit Height"};
+};
+
 uint64_t get_Hardware_Hash();
 
 /* Window Configuration */

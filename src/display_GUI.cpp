@@ -228,9 +228,11 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	if (ImGui::Button("Key-binds")) {
 		buttonSelection = (buttonSelection == GUI_Menu_KeyBinds) ? -1 : GUI_Menu_KeyBinds;
 	} ImGui::SameLine();
-	if (ImGui::Button("Program-Status")) {
-		buttonSelection = (buttonSelection == GUI_Menu_Status) ? -1 : GUI_Menu_Status;
-	} ImGui::SameLine();
+	#ifndef BUILD_RELEASE
+		if (ImGui::Button("Program-Status")) {
+			buttonSelection = (buttonSelection == GUI_Menu_Status) ? -1 : GUI_Menu_Status;
+		} ImGui::SameLine();
+	#endif
 	if (Waiting_To_Abort_Rendering == true) {
 		ImGui::Text("Aborting...(%.1lfs)",NANO_TO_SECONDS(getNanoTime() - abortTimer));
 	} else {
@@ -585,6 +587,25 @@ void Menu_Fractal() {
 	ImGui::End();
 }
 
+// Until it gets its own proper menu
+void SubMenu_SuperScreenshot() {
+	if (ImGui::CollapsingHeader("Unimplemented Screenshot Feature")) {
+		ImGui::Button("Clear Markers");
+		ImGui::Button("Set Top-Left Cordinate Marker");
+		ImGui::Button("Set Bottom-Right Cordinate Marker");
+		ImGui::NewLine();
+		ImGui::Text("Bounding Box: (Unimplemented)");
+		static int_enum Combo_BoundingBox = Namespace_Image_Render_Bounding_Box::Fill_Area;
+		ImGui::Combo("##SuperScreenshotBoundingBox", &Combo_BoundingBox,
+			Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
+			ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
+		);
+		Item_Tooltip("Which area should be used for taking the sceenshot");
+		ImGui::NewLine();
+		ImGui::Button("Render Image");
+	}
+}
+
 void Menu_Rendering() {
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
@@ -687,7 +708,7 @@ void Menu_Rendering() {
 	#endif
 
 	ImGui::SeparatorText("Super Screenshot Settings");
-
+	
 	ImGui::Text("Sub Sample: %" PRId32, input_subSample * input_subSample);
 	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
 		primaryRenderData.subSample = input_subSample;
@@ -700,6 +721,8 @@ void Menu_Rendering() {
 	dim32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
 	ImGui::Text("Total Pixels Rendered: %" PRId32 "x%" PRId32 " %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
 	
+
+
 	// { // Doesn't work
 	// 	dim32_t resX, resY, dimX, dimY;
 	// 	SDL_GetWindowSize(window,&resX,&resY);
@@ -1096,6 +1119,15 @@ void Menu_Settings() {
 
 		ImGui::NewLine(); ImGui::Separator(); ImGui::NewLine();
 		ImGui::Text("Super Screenshot Settings:");
+		ImGui::NewLine();
+
+		ImGui::Text("Bounding Box: (Unimplemented)");
+		static int_enum Combo_BoundingBox = Namespace_Image_Render_Bounding_Box::Fill_Area;
+		ImGui::Combo("##SuperScreenshotBoundingBox", &Combo_BoundingBox,
+			Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
+			ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
+		); Item_Tooltip("Which area should be used for taking the sceenshot");
+		//SubMenu_SuperScreenshot();
 		ImGui::NewLine();
 		
 		static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
