@@ -42,58 +42,60 @@ inline uint32_t Div_Mult(int32_t s) { return (uint32_t)s * 4; }
 
 #ifdef MONOCHROME_MODE
 	#define CPU_Interior_Coloring(fpX); \
-		outR += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
-		outG += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
-		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
-		outA += 0xFF;
+		outR += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
+		outG += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
+		outB += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
+		outA += (uint32_t)(param.interior_Alpha * (Color_Mult * 2.0));
 
 	#define CPU_Exterior_Coloring(fpX,l); \
 		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
-		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
-		outG += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
-		outB += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
-		outA += 0xFF;
+		outR += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
+		outG += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
+		outB += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
+		outA += (uint32_t)(param.exterior_Alpha * (Color_Mult * 2.0));
 #else
 	#define CPU_Interior_Coloring(fpX); \
-		outR += 0;\
-		outG += 0;\
-		outB += (uint32_t)(param.iA * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.iF + param.iP)));\
-		outA += 0xFF;
+		outR += (uint32_t)(param.interior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_R_Freq + param.interior_R_Phase)));\
+		outG += (uint32_t)(param.interior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_G_Freq + param.interior_G_Phase)));\
+		outB += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
+		outA += (uint32_t)(param.interior_Alpha * (Color_Mult * 2.0));
 
 	#define CPU_Exterior_Coloring(fpX,l); \
 		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
-		outR += (uint32_t)(param.rA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.rF * smooth + param.rP))));\
-		outG += (uint32_t)(param.gA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.gF * smooth + param.gP))));\
-		outB += (uint32_t)(param.bA * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.bF * smooth + param.bP))));\
-		outA += 0xFF;
+		outR += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
+		outG += (uint32_t)(param.exterior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase))));\
+		outB += (uint32_t)(param.exterior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase))));\
+		outA += (uint32_t)(param.exterior_Alpha * (Color_Mult * 2.0));
 #endif
 
 #define Block0(fpX) \
+ABS_Mandelbrot& FRAC = param;\
 uint8_t* data = buf->vram;\
-int32_t subSample = ren.subSample;\
 dim32_t resX = buf->resX;\
 dim32_t resY = buf->resY;\
 size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 uint32_t maxItr = param.maxItr;\
-fpX r = (fpX)param.r;\
-fpX i = (fpX)param.i;\
-fpX zoom_PC = (fpX)pow((fp128)10.0, (fp128)param.zoom);\
+const fpX realCord = (fpX)param.r;\
+const fpX imagCord = (fpX)param.i;\
+const fpX realJulia = (fpX)param.zr;\
+const fpX imagJulia = (fpX)param.zi;\
+const fpX zoom_PC = (fpX)pow((fp128)10.0, (fp128)param.zoom);\
 int32_t y = (int32_t)(p0 / (size_t)resX);\
 int32_t x = (int32_t)(p0 % (size_t)resX);\
 int32_t sample = ren.sample;\
-fpX rotSin_PC = (fpX)sin((fp128)param.rot);\
-fpX rotCos_PC = (fpX)cos((fp128)param.rot);\
+const fpX rotSin_PC = (fpX)sin((fp128)param.rot);\
+const fpX rotCos_PC = (fpX)cos((fp128)param.rot);\
 resX *= sample;\
 resY *= sample;\
 x *= sample;\
 y *= sample;\
 int32_t sResX = resX - 1;\
 int32_t sResY = resY - 1;\
-fpX numY = ((fpX)sResY / (fpX)2.0);\
-fpX numX = ((fpX)sResX / (fpX)2.0);\
-fpX numT = (sResX >= sResY) ? numY * zoom_PC : numX * zoom_PC;\
-fpX recip_numZ = (fpX)((fpX)param.sX / numT);\
-fpX neg_recip_numW = (fpX)(-((fpX)param.sY / numT));
+const fpX numY = ((fpX)sResY / (fpX)2.0);\
+const fpX numX = ((fpX)sResX / (fpX)2.0);\
+const fpX numT = (sResX >= sResY) ? numY * zoom_PC : numX * zoom_PC;\
+const fpX recip_numZ = (fpX)((fpX)param.sX / numT);\
+const fpX neg_recip_numW = (fpX)(-((fpX)param.sY / numT));
 
 
 #define Block1(fpX) for (; y < resY; y += sample) {\
@@ -109,10 +111,10 @@ for (; x < resX; x += sample) {\
 			for (int32_t u = 0; u < sample; u++) {\
 				fpX xCord = (((fpX)x - numX) * recip_numZ);\
 				fpX yCord = (((fpX)y - numY) * neg_recip_numW);\
-				fpX cr = (!param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + (fpX)param.r) : (fpX)param.zr;\
-				fpX ci = (!param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + (fpX)param.i) : (fpX)param.zi;\
-				fpX zr = (param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + (fpX)param.r) : (fpX)param.zr;\
-				fpX zi = (param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + (fpX)param.i) : (fpX)param.zi;\
+				fpX cr = (!param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + realCord) : realJulia;\
+				fpX ci = (!param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + imagCord) : imagJulia;\
+				fpX zr = (param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + realCord) : realJulia;\
+				fpX zi = (param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + imagCord) : imagJulia;\
 \
 				fpX low = (fpX)4.0;\
 				fpX temp = (fpX)0.0;\
@@ -686,9 +688,9 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 		printError("BufferBox* buf is NULL or has invalid data in renderCPU_ABS_Mandelbrot()");
 		return;
 	}
-	dim32_t resX = buf->resX * (dim32_t)ren.sample;
-	dim32_t resY =	buf->resY * (dim32_t)ren.sample;
-	size_t dataPtr = 0;
+	// dim32_t resX = buf->resX * (dim32_t)ren.sample;
+	// dim32_t resY =	buf->resY * (dim32_t)ren.sample;
+	// size_t dataPtr = 0;
 	std::vector<std::thread> renderThread;
 	/* Thread Creation */
 		#define makeThread(k) renderThread.push_back(std::thread(k, buf, ren, param, p0, p1, std::ref(ABORT_RENDERING)))
@@ -803,33 +805,31 @@ fpX polarAngle(fpX zr, fpX zi) {
 
 #define polarRender(fpX) \
 	uint8_t* data = buf->vram;\
-	int32_t subSample = ren.subSample;\
 	dim32_t resX = buf->resX;\
 	dim32_t resY = buf->resY;\
 	size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 	uint32_t maxItr = param.maxItr;\
-	fpX r = (fpX)param.r;\
-	fpX i = (fpX)param.i;\
-	fpX zoom = (fpX)param.zoom;\
+	const fpX realCord = (fpX)param.r;\
+	const fpX imagCord = (fpX)param.i;\
+	const fpX realJulia = (fpX)param.zr;\
+	const fpX imagJulia = (fpX)param.zi;\
+	const fpX zoom_PC = (fpX)pow((fp128)10.0, (fp128)param.zoom);\
 	int32_t y = (int32_t)(p0 / (size_t)resX);\
 	int32_t x = (int32_t)(p0 % (size_t)resX);\
 	int32_t sample = ren.sample;\
-	fpX cr = (fpX)0.0;\
-	fpX ci = (fpX)0.0;\
-	fpX zr = (fpX)0.0;\
-	fpX zi = (fpX)0.0;\
+	const fpX rotSin_PC = (fpX)sin((fp128)param.rot);\
+	const fpX rotCos_PC = (fpX)cos((fp128)param.rot);\
 	resX *= sample;\
 	resY *= sample;\
 	x *= sample;\
 	y *= sample;\
 	int32_t sResX = resX - 1;\
 	int32_t sResY = resY - 1;\
-	fpX zoomVal = (fpX)pow((fpX)10.0, zoom);\
-	fpX rotSin = (fpX)sin((fpX)param.rot);\
-	fpX rotCos = (fpX)cos((fpX)param.rot);\
-	fpX numY = ((fpX)sResY / (fpX)2.0);\
-	fpX numX = ((fpX)sResX / (fpX)2.0);\
-	fpX numZ = (sResX >= sResY) ? numY * zoomVal : numX * zoomVal;\
+	const fpX numY = ((fpX)sResY / (fpX)2.0);\
+	const fpX numX = ((fpX)sResX / (fpX)2.0);\
+	const fpX numT = (sResX >= sResY) ? numY * zoom_PC : numX * zoom_PC;\
+	const fpX recip_numZ = (fpX)((fpX)param.sX / numT);\
+	const fpX neg_recip_numW = (fpX)(-((fpX)param.sY / numT));\
 	const fpX power = (fpX)param.polarPower;\
 	const fpX powerHalf = (fpX)(param.polarPower / 2.0);\
 	const fp64 powerLog2 = 1.0 / log2((fp64)param.polarPower);\
@@ -844,17 +844,14 @@ fpX polarAngle(fpX zr, fpX zi) {
 			uint32_t outA = 0;\
 			for (int32_t v = 0; v < sample; v++) {\
 				for (int32_t u = 0; u < sample; u++) {\
-					if (param.juliaSet == true) {\
-						cpu_pixel_to_coordinate((int32_t)x, (int32_t)y, &zr, &zi, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
-						cr = (fpX)param.zr;\
-						ci = (fpX)param.zi;\
-					} else {\
-						cpu_pixel_to_coordinate((int32_t)x, (int32_t)y, &cr, &ci, zoomVal, rotSin, rotCos, &param, resX, resY, subSample);\
-						zr = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zr;\
-						zi = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zi;\
-					}\
+					fpX xCord = (((fpX)x - numX) * recip_numZ);\
+					fpX yCord = (((fpX)y - numY) * neg_recip_numW);\
+					fpX cr = (!param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + realCord) : realJulia;\
+					fpX ci = (!param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + imagCord) : imagJulia;\
+					fpX zr = (param.juliaSet) ? ((xCord * rotCos_PC - yCord * rotSin_PC) + realCord) : realJulia;\
+					fpX zi = (param.juliaSet) ? ((yCord * rotCos_PC + xCord * rotSin_PC) + imagCord) : imagJulia;\
+					\
 					fpX low = (fpX)4.0;\
-					fpX temp;\
 					fpX zs = (fpX)(zr * zr + zi * zi);\
 					fpX za = 0.0;\
 					for (uint32_t itr = 0; itr < maxItr; itr++) {\
@@ -865,19 +862,18 @@ fpX polarAngle(fpX zr, fpX zi) {
 						if (zs < low) {\
 							low = zs;\
 						} else if (zs > param.breakoutValue) {\
-							fp64 smooth = log(1.0 + fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) * powerLog2));\
-							outR += (uint32_t)(param.rA * (Color_Mult - Color_Mult * cos(TAU * (param.rF * smooth + param.rP))));\
-							outG += (uint32_t)(param.gA * (Color_Mult - Color_Mult * cos(TAU * (param.gF * smooth + param.gP))));\
-							outB += (uint32_t)(param.bA * (Color_Mult - Color_Mult * cos(TAU * (param.bF * smooth + param.bP))));\
-							outA += 0xFF;\
-							break;\
+							fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) * powerLog2));\
+							outR += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
+							outG += (uint32_t)(param.exterior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase))));\
+							outB += (uint32_t)(param.exterior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase))));\
+							outA += (uint32_t)(param.exterior_Alpha * (Color_Mult * 2.0));\
 						}\
 					}\
 					if (zs <= BREAKOUT) {\
-						outR += 0;\
-						outG += 0;\
-						outB += (uint32_t)(param.iA * (Color_Mult - Color_Mult * cos(log(low) * param.iF + param.iP)));\
-						outA += 0xFF;\
+						outR += (uint32_t)(param.interior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_R_Freq + param.interior_R_Phase)));\
+						outG += (uint32_t)(param.interior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_G_Freq + param.interior_G_Phase)));\
+						outB += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
+						outA += (uint32_t)(param.interior_Alpha * (Color_Mult * 2.0));\
 					}\
 					x++;\
 				}\
@@ -911,9 +907,9 @@ void renderCPU_Polar_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot 
 		printError("BufferBox* buf is NULL or has invalid data in renderCPU_Polar_Mandelbrot()");
 		return;
 	}
-	dim32_t resX = buf->resX * (dim32_t)ren.sample;
-	dim32_t resY = buf->resY * (dim32_t)ren.sample;
-	size_t dataPtr = 0;
+	//dim32_t resX = buf->resX * (dim32_t)ren.sample;
+	//dim32_t resY = buf->resY * (dim32_t)ren.sample;
+	//size_t dataPtr = 0;
 	std::vector<std::thread> renderThread;
 	/* Thread Creation */
 		#define makeThread(k) renderThread.push_back(std::thread(k, buf, ren, param, p0, p1, std::ref(ABORT_RENDERING)))

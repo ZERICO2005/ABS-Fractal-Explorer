@@ -44,18 +44,26 @@ int preCalc_Frac_Param(
 			param_PC.bool_count = 0;
 	/* Coloring */
 		param_PC.smoothColoring = frac.smoothColoring;
-		param_PC.r_Amp = frac.rA;
-		param_PC.r_Freq = frac.rF * TAU;
-		param_PC.r_Phase = frac.rP * TAU;
-		param_PC.g_Amp = frac.gA;
-		param_PC.g_Freq = frac.gF * TAU;
-		param_PC.g_Phase = frac.gP * TAU;
-		param_PC.b_Amp = frac.bA;
-		param_PC.b_Freq = frac.bF * TAU;
-		param_PC.b_Phase = frac.bP * TAU;
-		param_PC.interior_Amp = frac.bA;
-		param_PC.interior_Freq = frac.bF * TAU;
-		param_PC.interior_Phase = frac.bP * TAU;
+
+		param_PC.exterior_R_Amp   = frac.exterior_R_Amp;
+		param_PC.exterior_R_Freq  = frac.exterior_R_Freq  * TAU;
+		param_PC.exterior_R_Phase = frac.exterior_R_Phase * TAU;
+		param_PC.exterior_G_Amp   = frac.exterior_G_Amp;
+		param_PC.exterior_G_Freq  = frac.exterior_G_Freq  * TAU;
+		param_PC.exterior_G_Phase = frac.exterior_G_Phase * TAU;
+		param_PC.exterior_B_Amp   = frac.exterior_B_Amp;
+		param_PC.exterior_B_Freq  = frac.exterior_B_Freq  * TAU;
+		param_PC.exterior_B_Phase = frac.exterior_B_Phase * TAU;
+		param_PC.interior_R_Amp   = frac.interior_R_Amp;
+		param_PC.interior_R_Freq  = frac.interior_R_Freq  * TAU;
+		param_PC.interior_R_Phase = frac.interior_R_Phase * TAU;
+		param_PC.interior_G_Amp   = frac.interior_G_Amp;
+		param_PC.interior_G_Freq  = frac.interior_G_Freq  * TAU;
+		param_PC.interior_G_Phase = frac.interior_G_Phase * TAU;
+		param_PC.interior_B_Amp   = frac.interior_B_Amp;
+		param_PC.interior_B_Freq  = frac.interior_B_Freq  * TAU;
+		param_PC.interior_B_Phase = frac.interior_B_Phase * TAU;
+		
 		param_PC.Color_Mult = (fpX)12.5;
 		param_PC.Div_Mult = 1;
 		param_PC.interior_Alpha = 0xFF;

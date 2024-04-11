@@ -22,9 +22,9 @@ void colorExterior(
 ) {
 	// log2(log2(zs)) - 1 == log2(log2(sqrt(zs)))
 	fpC smooth = log1p(fmax((fpC)0.0, (fpC)itr - (fpC)(log2(log2(zs)) - (fpC)1.0) * param.recip_log2_Power));
-	outR += (uint32_t)(param.r_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(param.r_Freq * smooth + param.r_Phase)));
-	outG += (uint32_t)(param.g_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(param.g_Freq * smooth + param.g_Phase)));
-	outB += (uint32_t)(param.b_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(param.b_Freq * smooth + param.b_Phase)));
+	outR += (uint32_t)(param.exterior_R_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(param.exterior_R_Freq * smooth + param.exterior_R_Phase)));
+	outG += (uint32_t)(param.exterior_G_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(param.exterior_G_Freq * smooth + param.exterior_G_Phase)));
+	outB += (uint32_t)(param.exterior_B_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(param.exterior_B_Freq * smooth + param.exterior_B_Phase)));
 	outA += param.exterior_Alpha;
 }
 
@@ -33,12 +33,11 @@ void colorInterior(
 	const Frac_Param_PC<fpX,fpC>& param, fpC low,
 	uint32_t& outR, uint32_t& outG, uint32_t& outB, uint32_t& outA
 ) {
-	outR += 0;
-	outG += 0;
-	outB += (uint32_t)(param.interior_Alpha * ((param.Color_Mult) - (param.Color_Mult) * cos(log(low) * param.interior_Freq + param.interior_Phase)));
+	outR += (uint32_t)(param.interior_R_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(log(low) * param.interior_R_Freq + param.interior_R_Phase)));
+	outG += (uint32_t)(param.interior_G_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(log(low) * param.interior_G_Freq + param.interior_G_Phase)));
+	outB += (uint32_t)(param.interior_B_Amp * ((param.Color_Mult) - (param.Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));
 	outA += param.interior_Alpha;
 }
-
 
 
 

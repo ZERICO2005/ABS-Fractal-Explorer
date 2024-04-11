@@ -278,7 +278,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::SameLine(); \
 	ImGui::InputInt(id,ptr,16,256);
 
-	#define FRAC frac.type.abs_mandelbrot
+	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
 	uint32_t renderFP = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
 	const char* const renderMethod = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
 	
@@ -324,7 +324,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 		"Real:  %s Imag:  %s Zoom: 10^%6.4lf Itr: %" PRIu32,
 		temp_quad_r,temp_quad_i,adjustedZoomValue,FRAC.maxItr
 	);
-	#undef FRAC
     // End the ImGui window
     ImGui::End();
 }
@@ -340,7 +339,7 @@ void Menu_Coordinates() {
 
 	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
 		ImGui::SeparatorText("Cordinates");
-		#define FRAC frac.type.abs_mandelbrot
+		ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
 		#define NumberTextLen 64
 		
 		#ifdef enableFP80andFP128
@@ -432,10 +431,8 @@ void Menu_Coordinates() {
 				ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
 				Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
 			}
-		#undef FRAC
 	} else if (frac.type_value == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
-		#define FRAC frac.type.sierpinski_carpet
-		#undef FRAC
+		Sierpinski_Carpet& FRAC = frac.type.sierpinski_carpet;
 	}
 	ImGui::End();
 }
@@ -477,7 +474,7 @@ void Menu_Fractal() {
     }
 	ImGui::Separator();
 	if (Combo_FractalType == Fractal_ABS_Mandelbrot || Combo_FractalType == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
-		#define FRAC frac.type.abs_mandelbrot
+		ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
 		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
 		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
 		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
@@ -544,34 +541,86 @@ void Menu_Fractal() {
 			}
 			ImGui::Separator();
 		#endif
-			/*
-			fp32 temp_col = 0.0f;
-			temp_col = (fp32)FRAC.rA;
-			ImGui::SliderFloat("R",&temp_col,0.0,1.0); FRAC.rA = (fp64)temp_col;
-			temp_col = (fp32)FRAC.gA;
-			ImGui::SliderFloat("G",&temp_col,0.0,1.0); FRAC.gA = (fp64)temp_col;
-			temp_col = (fp32)FRAC.bA;
-			ImGui::SliderFloat("B",&temp_col,0.0,1.0); FRAC.bA = (fp64)temp_col;
-			temp_col = (fp32)FRAC.iA;
-			ImGui::SliderFloat("I",&temp_col,0.0,1.0); FRAC.iA = (fp64)temp_col;
-			*/
-			ImGui::Text("Note: Color only applies to CPU rendering.");
-			ImGui::Text("Color: Red, Green, Blue, Interior");
-			ImGui::Text("Phase:");
-			float colP[4] = {(fp32)FRAC.rP,(fp32)FRAC.gP,(fp32)FRAC.bP,(fp32)FRAC.iP};
-			ImGui::ColorEdit4("##colP",colP);
-			FRAC.rP = (fp64)colP[0]; FRAC.gP = (fp64)colP[1]; FRAC.bP = (fp64)colP[2]; FRAC.iP = (fp64)colP[3];
-			ImGui::Text("Amplitude:");
-			float colA[4] = {(fp32)FRAC.rA,(fp32)FRAC.gA,(fp32)FRAC.bA,(fp32)FRAC.iA};
-			ImGui::ColorEdit4("##colA",colA);
-			FRAC.rA = (fp64)colA[0]; FRAC.gA = (fp64)colA[1]; FRAC.bA = (fp64)colA[2]; FRAC.iA = (fp64)colA[3];
-			ImGui::Text("Frequency:");
-			float colF[4] = {(fp32)FRAC.rF,(fp32)FRAC.gF,(fp32)FRAC.bF,(fp32)FRAC.iF};
-			ImGui::ColorEdit4("##colF",colF);
-			FRAC.rF = (fp64)colF[0]; FRAC.gF = (fp64)colF[1]; FRAC.bF = (fp64)colF[2]; FRAC.iF = (fp64)colF[3];
-		#undef FRAC
+		ImGui::SeparatorText("Coloring"); {
+			struct Temp_Color {
+				fp32 exterior_Alpha;
+					fp32 exterior_R_Amp; fp32 exterior_R_Freq; fp32 exterior_R_Phase;
+					fp32 exterior_G_Amp; fp32 exterior_G_Freq; fp32 exterior_G_Phase;
+					fp32 exterior_B_Amp; fp32 exterior_B_Freq; fp32 exterior_B_Phase;
+				fp32 interior_Alpha;
+					fp32 interior_R_Amp; fp32 interior_R_Freq; fp32 interior_R_Phase;
+					fp32 interior_G_Amp; fp32 interior_G_Freq; fp32 interior_G_Phase;
+					fp32 interior_B_Amp; fp32 interior_B_Freq; fp32 interior_B_Phase;
+			};
+			Temp_Color temp_Color;
+			temp_Color.exterior_Alpha = (fp32)FRAC.exterior_Alpha;
+				temp_Color.exterior_R_Amp = (fp32)FRAC.exterior_R_Amp; temp_Color.exterior_R_Freq = (fp32)FRAC.exterior_R_Freq; temp_Color.exterior_R_Phase = (fp32)FRAC.exterior_R_Phase;
+				temp_Color.exterior_G_Amp = (fp32)FRAC.exterior_G_Amp; temp_Color.exterior_G_Freq = (fp32)FRAC.exterior_G_Freq; temp_Color.exterior_G_Phase = (fp32)FRAC.exterior_G_Phase;
+				temp_Color.exterior_B_Amp = (fp32)FRAC.exterior_B_Amp; temp_Color.exterior_B_Freq = (fp32)FRAC.exterior_B_Freq; temp_Color.exterior_B_Phase = (fp32)FRAC.exterior_B_Phase;
+			temp_Color.interior_Alpha = (fp32)FRAC.interior_Alpha;
+				temp_Color.interior_R_Amp = (fp32)FRAC.interior_R_Amp; temp_Color.interior_R_Freq = (fp32)FRAC.interior_R_Freq; temp_Color.interior_R_Phase = (fp32)FRAC.interior_R_Phase;
+				temp_Color.interior_G_Amp = (fp32)FRAC.interior_G_Amp; temp_Color.interior_G_Freq = (fp32)FRAC.interior_G_Freq; temp_Color.interior_G_Phase = (fp32)FRAC.interior_G_Phase;
+				temp_Color.interior_B_Amp = (fp32)FRAC.interior_B_Amp; temp_Color.interior_B_Freq = (fp32)FRAC.interior_B_Freq; temp_Color.interior_B_Phase = (fp32)FRAC.interior_B_Phase;
+			
+			
+			ImGui::Text("Note: Alpha calculations may be incorrect");
+			ImGui::Text("EXTERIOR COLORING:");
+				constexpr fp32 Maximum_Exterior_Freq = 2.0f;
+				ImGui::Text("Amplitude:");
+					fp32 exterior_Amp[4] = {temp_Color.exterior_R_Amp, temp_Color.exterior_G_Amp, temp_Color.exterior_B_Amp, temp_Color.exterior_Alpha};
+					ImGui::ColorEdit4("##exterior_Amp", exterior_Amp);
+						temp_Color.exterior_R_Amp = exterior_Amp[0];
+						temp_Color.exterior_G_Amp = exterior_Amp[1];
+						temp_Color.exterior_B_Amp = exterior_Amp[2];
+						temp_Color.exterior_Alpha = exterior_Amp[3];
+				ImGui::Text("Frequency:");
+					fp32 exterior_Freq[3] = {temp_Color.exterior_R_Freq, temp_Color.exterior_G_Freq, temp_Color.exterior_B_Freq};
+					ImGui::SliderFloat3("##exterior_Freq", exterior_Freq, 0.0f, Maximum_Exterior_Freq, "%.4f");
+						temp_Color.exterior_R_Freq = exterior_Freq[0];
+						temp_Color.exterior_G_Freq = exterior_Freq[1];
+						temp_Color.exterior_B_Freq = exterior_Freq[2];
+				ImGui::Text("Phase:");
+					fp32 exterior_Phase[3] = {temp_Color.exterior_R_Phase, temp_Color.exterior_G_Phase, temp_Color.exterior_B_Phase};
+					ImGui::SliderFloat3("##exterior_Phase", exterior_Phase, 0.0f, 1.0f, "%.4f");
+						temp_Color.exterior_R_Phase = exterior_Phase[0];
+						temp_Color.exterior_G_Phase = exterior_Phase[1];
+						temp_Color.exterior_B_Phase = exterior_Phase[2];
+				ImGui::NewLine();
+			
+			ImGui::Text("INTERIOR COLORING:");
+				constexpr fp32 Maximum_Interior_Freq = 3.0f;
+				ImGui::Text("Amplitude:");
+					fp32 interior_Amp[4] = {temp_Color.interior_R_Amp, temp_Color.interior_G_Amp, temp_Color.interior_B_Amp, temp_Color.interior_Alpha};
+					ImGui::ColorEdit4("##interior_Amp", interior_Amp);
+						temp_Color.interior_R_Amp = interior_Amp[0];
+						temp_Color.interior_G_Amp = interior_Amp[1];
+						temp_Color.interior_B_Amp = interior_Amp[2];
+						temp_Color.interior_Alpha = interior_Amp[3];
+				ImGui::Text("Frequency:");
+					fp32 interior_Freq[3] = {temp_Color.interior_R_Freq, temp_Color.interior_G_Freq, temp_Color.interior_B_Freq};
+					ImGui::SliderFloat3("##interior_Freq", interior_Freq, 0.0f, Maximum_Interior_Freq, "%.4f");
+						temp_Color.interior_R_Freq = interior_Freq[0];
+						temp_Color.interior_G_Freq = interior_Freq[1];
+						temp_Color.interior_B_Freq = interior_Freq[2];
+				ImGui::Text("Phase:");
+					fp32 interior_Phase[3] = {temp_Color.interior_R_Phase, temp_Color.interior_G_Phase, temp_Color.interior_B_Phase};
+					ImGui::SliderFloat3("##interior_Phase", interior_Phase, 0.0f, 1.0f, "%.4f");
+						temp_Color.interior_R_Phase = interior_Phase[0];
+						temp_Color.interior_G_Phase = interior_Phase[1];
+						temp_Color.interior_B_Phase = interior_Phase[2];
+				ImGui::NewLine();
+			
+			FRAC.exterior_Alpha = (fp64)temp_Color.exterior_Alpha;
+				FRAC.exterior_R_Amp = (fp64)temp_Color.exterior_R_Amp; FRAC.exterior_R_Freq = (fp64)temp_Color.exterior_R_Freq; FRAC.exterior_R_Phase = (fp64)temp_Color.exterior_R_Phase;
+				FRAC.exterior_G_Amp = (fp64)temp_Color.exterior_G_Amp; FRAC.exterior_G_Freq = (fp64)temp_Color.exterior_G_Freq; FRAC.exterior_G_Phase = (fp64)temp_Color.exterior_G_Phase;
+				FRAC.exterior_B_Amp = (fp64)temp_Color.exterior_B_Amp; FRAC.exterior_B_Freq = (fp64)temp_Color.exterior_B_Freq; FRAC.exterior_B_Phase = (fp64)temp_Color.exterior_B_Phase;
+			FRAC.interior_Alpha = (fp64)temp_Color.interior_Alpha;
+				FRAC.interior_R_Amp = (fp64)temp_Color.interior_R_Amp; FRAC.interior_R_Freq = (fp64)temp_Color.interior_R_Freq; FRAC.interior_R_Phase = (fp64)temp_Color.interior_R_Phase;
+				FRAC.interior_G_Amp = (fp64)temp_Color.interior_G_Amp; FRAC.interior_G_Freq = (fp64)temp_Color.interior_G_Freq; FRAC.interior_G_Phase = (fp64)temp_Color.interior_G_Phase;
+				FRAC.interior_B_Amp = (fp64)temp_Color.interior_B_Amp; FRAC.interior_B_Freq = (fp64)temp_Color.interior_B_Freq; FRAC.interior_B_Phase = (fp64)temp_Color.interior_B_Phase;
+		}
 	} else if (Combo_FractalType == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
-		#define FRAC frac.type.sierpinski_carpet
+		Sierpinski_Carpet& FRAC = frac.type.sierpinski_carpet;
 		static bool wallisSieve = false;
 		static bool renderOutOfBounds = false;
 		static bool fixateOnCorner = false;
@@ -581,7 +630,6 @@ void Menu_Fractal() {
 		ImGui::Checkbox("Fixate on top-left corner",&FRAC.fixateOnCorner);
 		ImGui::Text("Square Size Multiplier:");
 		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4f,1.0f,"%.4f"); FRAC.squareSize = (fp64)temp_squareSize;
-		#undef FRAC
 	}
 
 	ImGui::End();
@@ -808,7 +856,7 @@ void Menu_Settings() {
 	// 	"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
 	// 	"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
 	// };
-	int& specificMonitor = config_data.Display_Preferences.Specific_Bootup_Display;
+	int32_t& specificMonitor = config_data.Display_Preferences.Specific_Bootup_Display;
 
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
@@ -826,34 +874,55 @@ void Menu_Settings() {
 	ImGui::Separator();
 	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
 	ImGui::NewLine();
-	ImGui::TextWrapped("Warning: Due to a bug, importing/exporting files through the windows file dialog changes where \"./config.fracExpConfig\" is saved to, which may overwrite files");
-	if(ImGui::Button("Import fracExpConfig")) {
-		static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
-		openFileInterface(
-			filePath,sizeof(filePath),
-			"Select a FracExp Configuration File",
-			"Config Files (*.fracExpConfig)\0*.fracExpConfig\0"\
-			"All Files (*.*)\0*.*\0"
-		);
-		import_config_data(config_data,filePath);
-		refresh_IMGUI(config_data);
-		/* TEMPORARY BUG PREVENTION */
-			config_data.Automatic_Behaviour.AutoSave_Config_File = false;
-		/* TEMPORARY BUG PREVENTION */
-	}
-	if(ImGui::Button("Export fracExpConfig")) {
-		static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
-		saveFileInterface(
-			filePath,sizeof(filePath),
-			"Save FracExp-Configuration File",
-			"Config Files (*.fracExpConfig)\0*.fracExpConfig\0"\
-			"All Files (*.*)\0*.*\0"
-		);
-		export_config_data(config_data,filePath);
-		/* TEMPORARY BUG PREVENTION */
-			config_data.Automatic_Behaviour.AutoSave_Config_File = false;
-		/* TEMPORARY BUG PREVENTION */
-	}
+	#ifdef PLATFORM_WINDOWS
+		ImGui::TextWrapped("Warning: Due to a bug, importing/exporting files through the windows file dialog changes where \"./config.fracExpConfig\" is saved to, which may overwrite files");
+		if(ImGui::Button("Import fracExpConfig")) {
+			static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
+			openFileInterface(
+				filePath,sizeof(filePath),
+				"Select a FracExp Configuration File",
+				"Config Files (*.fracExpConfig)\0*.fracExpConfig\0"\
+				"All Files (*.*)\0*.*\0"
+			);
+			import_config_data(config_data,filePath);
+			refresh_IMGUI(config_data);
+			/* TEMPORARY BUG PREVENTION */
+				config_data.Automatic_Behaviour.AutoSave_Config_File = false;
+			/* TEMPORARY BUG PREVENTION */
+		}
+		if(ImGui::Button("Export fracExpConfig")) {
+			static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
+			saveFileInterface(
+				filePath,sizeof(filePath),
+				"Save FracExp-Configuration File",
+				"Config Files (*.fracExpConfig)\0*.fracExpConfig\0"\
+				"All Files (*.*)\0*.*\0"
+			);
+			export_config_data(config_data,filePath);
+			/* TEMPORARY BUG PREVENTION */
+				config_data.Automatic_Behaviour.AutoSave_Config_File = false;
+			/* TEMPORARY BUG PREVENTION */
+		}
+	#else
+		{
+			static char filePath[324] = "./config.fracExpConfig";
+			ImGui::Text("Import .fracExpConfig Path:");
+			ImGui::InputText("##Import_fracExpConfig_Path",filePath, sizeof(filePath));
+			if (ImGui::Button("Load FracExp-Configuration File from path")) {
+				import_config_data(config_data,filePath);
+			}
+			ImGui::NewLine();
+		}
+		{
+			static char filePath[324] = "./config.fracExpConfig";
+			ImGui::Text("Export .fracExpConfig Path:");
+			ImGui::InputText("##Export_fracExpConfig_Path",filePath, sizeof(filePath));
+			if (ImGui::Button("Save FracExp-Configuration File to path")) {
+				export_config_data(config_data,filePath);
+			}
+			ImGui::NewLine();
+		}
+	#endif
 	ImGui::Checkbox("Automatically load fracExpConfig File",&config_data.Automatic_Behaviour.AutoLoad_Config_File);
 	ImGui::Checkbox("Automatically save fracExpConfig File",&config_data.Automatic_Behaviour.AutoSave_Config_File);
 	ImGui::NewLine();
@@ -1478,23 +1547,23 @@ void Menu_Keybinds() {
 		}
 
 		ImGui::NewLine();
-		if (ImGui::Button("Import Key-bind (.FracExpKB)")) {
-			static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',sizeof(importKeyBindFile));
-			int openFileState = openFileInterface(
-				importKeyBindFile,sizeof(importKeyBindFile),
-				"Select a FracExpKB file",
-				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
-				"FracExp Files (*.fracExp)\0*.fracExp\0"\
-				"All Files (*.*)\0*.*\0"
-			);
-			if (openFileState == 0) {
-				Combo_function_Select = Key_Function::NONE;
-				keyClick = SDL_SCANCODE_UNKNOWN;
-				import_KeyBindPresets(&KeyBind_PresetList,&currentKBPreset,importKeyBindFile);
-				recolorKeyboard();
-			}
-		}
 		#ifdef PLATFORM_WINDOWS
+			if (ImGui::Button("Import Key-bind (.FracExpKB)")) {
+				static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',sizeof(importKeyBindFile));
+				int openFileState = openFileInterface(
+					importKeyBindFile,sizeof(importKeyBindFile),
+					"Select a FracExpKB file",
+					"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
+					"FracExp Files (*.fracExp)\0*.fracExp\0"\
+					"All Files (*.*)\0*.*\0"
+				);
+				if (openFileState == 0) {
+					Combo_function_Select = Key_Function::NONE;
+					keyClick = SDL_SCANCODE_UNKNOWN;
+					import_KeyBindPresets(&KeyBind_PresetList,&currentKBPreset,importKeyBindFile);
+					recolorKeyboard();
+				}
+			}
 			if (ImGui::Button("Export Current Key-bind (.FracExpKB)")) {
 				
 					static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',sizeof(exportKeyBindFile));
@@ -1529,8 +1598,20 @@ void Menu_Keybinds() {
 			#endif
 		#else
 			{
+				static char importKeyBindFile[324] = "./KeyBind.fracExpKB";
+				ImGui::Text("Import .fracExpKB Path:");
+				ImGui::InputText("##ImportCurrentKey_bindfrompath",importKeyBindFile, sizeof(importKeyBindFile));
+				if (ImGui::Button("Import Current Key-bind from path")) {
+					Combo_function_Select = Key_Function::NONE;
+					keyClick = SDL_SCANCODE_UNKNOWN;
+					import_KeyBindPresets(&KeyBind_PresetList,&currentKBPreset,importKeyBindFile);
+					recolorKeyboard();
+				}
+				ImGui::NewLine();
+			}
+			{
 				static char exportKeyBindFile[324] = "./KeyBind.fracExpKB";
-				ImGui::Text("File Path:");
+				ImGui::Text("Export .fracExpKB Path:");
 				ImGui::InputText("##ExportCurrentKey_bindtopath",exportKeyBindFile, sizeof(exportKeyBindFile));
 				if (ImGui::Button("Export Current Key-bind to path")) {
 					KeyBind_Preset temp_KeyBind = *currentKBPreset;

@@ -49,23 +49,29 @@ struct Frac_Param_PC {
 			size_t bool_Count;
 	/* Coloring */
 		// Phase and Freq are pre-multiplied by TAU
-		fpC r_Amp;
-		fpC r_Freq;
-		fpC r_Phase;
-		fpC g_Amp;
-		fpC g_Freq;
-		fpC g_Phase;
-		fpC b_Amp;
-		fpC b_Freq;
-		fpC b_Phase;
-		fpC interior_Amp;
-		fpC interior_Freq;
-		fpC interior_Phase;
+		fpC exterior_R_Amp;
+		fpC exterior_R_Freq;
+		fpC exterior_R_Phase;
+		fpC exterior_G_Amp;
+		fpC exterior_G_Freq;
+		fpC exterior_G_Phase;
+		fpC exterior_B_Amp;
+		fpC exterior_B_Freq;
+		fpC exterior_B_Phase;
+		fpC interior_R_Amp;
+		fpC interior_R_Freq;
+		fpC interior_R_Phase;
+		fpC interior_G_Amp;
+		fpC interior_G_Freq;
+		fpC interior_G_Phase;
+		fpC interior_B_Amp;
+		fpC interior_B_Freq;
+		fpC interior_B_Phase;
 		// Other
 		fpC Color_Mult;
 		uint32_t Div_Mult;
-		uint8_t interior_Alpha;
-		uint8_t exterior_Alpha;
+		uint32_t interior_Alpha; // Refactor
+		uint32_t exterior_Alpha; // Refactor
 		bool smoothColoring;
 };
 

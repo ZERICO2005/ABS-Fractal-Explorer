@@ -62,7 +62,7 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		return;
 	}
 	if (type == Fractal_ABS_Mandelbrot) {
-		#define FRAC frac->type.abs_mandelbrot
+		ABS_Mandelbrot& FRAC = frac->type.abs_mandelbrot;
 		FRAC.juliaSet = false;
 		FRAC.startingZ = true;
 		FRAC.screenSplit = 0;
@@ -90,21 +90,30 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.formula = 0;
 		FRAC.breakoutValue = 4096.0;
 		FRAC.smoothColoring = true;
-		FRAC.rA = 0.9;
-		FRAC.rF = 0.45;
-		FRAC.rP = 0.5;
-		FRAC.gA = 1.0;
-		FRAC.gF = 0.45;
-		FRAC.gP = 0.9;
-		FRAC.bA = 1.0;
-		FRAC.bF = 0.45;
-		FRAC.bP = 0.1;
-		FRAC.iA = 1.0;
-		FRAC.iF = 0.5;
-		FRAC.iP = 0.0;
-		#undef FRAC
+
+		FRAC.exterior_Alpha = 1.0;
+			FRAC.exterior_R_Amp   = 0.9 ;
+			FRAC.exterior_R_Freq  = 0.45;
+			FRAC.exterior_R_Phase = 0.5 ;
+			FRAC.exterior_G_Amp   = 1.0 ;
+			FRAC.exterior_G_Freq  = 0.45;
+			FRAC.exterior_G_Phase = 0.9 ;
+			FRAC.exterior_B_Amp   = 1.0 ;
+			FRAC.exterior_B_Freq  = 0.45;
+			FRAC.exterior_B_Phase = 0.1 ;
+		FRAC.interior_Alpha = 1.0;
+			FRAC.interior_R_Amp   = 0.0;
+			FRAC.interior_R_Freq  = 0.5;
+			FRAC.interior_R_Phase = 0.0;
+			FRAC.interior_G_Amp   = 0.0;
+			FRAC.interior_G_Freq  = 0.5;
+			FRAC.interior_G_Phase = 0.0;
+			FRAC.interior_B_Amp   = 1.0;
+			FRAC.interior_B_Freq  = 0.5;
+			FRAC.interior_B_Phase = 0.0;
+
 	} else if (type == Fractal_Polar_Mandelbrot) {
-		#define FRAC frac->type.abs_mandelbrot
+		ABS_Mandelbrot& FRAC = frac->type.abs_mandelbrot;
 		FRAC.juliaSet = false;
 		FRAC.startingZ = true;
 		FRAC.screenSplit = 0;
@@ -132,21 +141,30 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.formula = 0;
 		FRAC.breakoutValue = 4096.0;
 		FRAC.smoothColoring = true;
-		FRAC.rA = 0.875;
-		FRAC.rF = 0.59375;
-		FRAC.rP = 0.3125;
-		FRAC.gA = 0.9375;
-		FRAC.gF = 0.59375;
-		FRAC.gP = 0.9375;
-		FRAC.bA = 1.0;
-		FRAC.bF = 0.59375;
-		FRAC.bP = 0.6875;
-		FRAC.iA = 1.0;
-		FRAC.iF = 0.5;
-		FRAC.iP = 0.0;
-		#undef FRAC
+
+		FRAC.exterior_Alpha = 1.0;
+			FRAC.exterior_R_Amp   = 0.875  ;
+			FRAC.exterior_R_Freq  = 0.59375;
+			FRAC.exterior_R_Phase = 0.3125 ;
+			FRAC.exterior_G_Amp   = 0.9375 ;
+			FRAC.exterior_G_Freq  = 0.59375;
+			FRAC.exterior_G_Phase = 0.9375 ;
+			FRAC.exterior_B_Amp   = 1.0    ;
+			FRAC.exterior_B_Freq  = 0.59375;
+			FRAC.exterior_B_Phase = 0.6875 ;
+		FRAC.interior_Alpha = 1.0;
+			FRAC.interior_R_Amp   = 0.0;
+			FRAC.interior_R_Freq  = 0.5;
+			FRAC.interior_R_Phase = 0.0;
+			FRAC.interior_G_Amp   = 0.0;
+			FRAC.interior_G_Freq  = 0.5;
+			FRAC.interior_G_Phase = 0.0;
+			FRAC.interior_B_Amp   = 1.0;
+			FRAC.interior_B_Freq  = 0.5;
+			FRAC.interior_B_Phase = 0.0;
+		
 	} else if (type == Fractal_Sierpinski_Carpet) {
-		#define FRAC frac->type.sierpinski_carpet
+		Sierpinski_Carpet& FRAC = frac->type.sierpinski_carpet;
 		FRAC.wallisSieve = false;
 		FRAC.renderOutOfBounds = false;
 		FRAC.fixateOnCorner = false;
@@ -158,7 +176,6 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.baseColor = 0xFF0000;
 		FRAC.lowColor = 0x000000;
 		FRAC.lowColor = 0x00FFFF;
-		#undef FRAC
 	} else {
 		printError("Unknown Fractal Type: %d",type);
 		return;
@@ -218,8 +235,13 @@ void correctFracParameters(ABS_Mandelbrot* frac) {
 	valueClamp(frac->stretch,-100.0,100.0);
 	setStretchValue(frac);
 	valueClamp(frac->breakoutValue,0.25,4294967296.0);
-	valueClamp(frac->rA,-1.0,1.0);
-	valueClamp(frac->gA,-1.0,1.0);
-	valueClamp(frac->bA,-1.0,1.0);
-	valueClamp(frac->iA,-1.0,1.0);
+	
+	valueClamp(frac->exterior_Alpha, 0.0, 1.0);
+		valueClamp(frac->exterior_R_Amp, -1.0, 1.0);
+		valueClamp(frac->exterior_G_Amp, -1.0, 1.0);
+		valueClamp(frac->exterior_B_Amp, -1.0, 1.0);
+	valueClamp(frac->interior_Alpha, 0.0, 1.0);
+		valueClamp(frac->interior_R_Amp, -1.0, 1.0);
+		valueClamp(frac->interior_G_Amp, -1.0, 1.0);
+		valueClamp(frac->interior_B_Amp, -1.0, 1.0);
 }

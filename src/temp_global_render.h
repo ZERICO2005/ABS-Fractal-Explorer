@@ -161,12 +161,12 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern bool ShowTheXButton;
 	//bool yeildSwitch;
 
-	static const char* WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
+	const char* const WindowDivider[] = {"Fullscreen","Split Vertical","Split Horizontally","Top-Left Corner","Top-Right Corner","Bottom-Left Corner","Bottom-Right Corner","Floating"};
 
 	#ifndef BUILD_RELEASE
-		static const char* buttonLabels[] = {"Fractal", "Export", "Import", "Screenshot", "Rendering", "Settings", "KeyBinds", "Status"};
+		const char* const buttonLabels[] = {"Fractal", "Export", "Import", "Screenshot", "Rendering", "Settings", "KeyBinds", "Status"};
 	#else
-		static const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds", "Status"};
+		const char* const buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds", "Status"};
 	#endif
 
 /* Other */

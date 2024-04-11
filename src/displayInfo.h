@@ -91,7 +91,7 @@ namespace Display_Bootup {
 		HighResolution,LowResolution,HighFrameRate,LowFrameRate,WideAspectRatio,TallAspectRatio,
 		Length
 	};
-	static const char* Display_Bootup_Text[] = {
+	const char* const Display_Bootup_Text[] = {
 		"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
 		"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
 		"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
@@ -103,7 +103,7 @@ namespace Display_Fullscreen {
 		Windowed, Windowed_Fullscreen, /* Fullscreen, */
 		Length
 	};
-	static const char* const Display_Fullscreen_Text[] {
+	const char* const Display_Fullscreen_Text[] {
 		"Windowed", "Windowed-Fullscreen", /* "Fullscreen" */
 	};
 };

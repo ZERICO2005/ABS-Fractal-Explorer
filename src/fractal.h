@@ -98,18 +98,26 @@ struct _ABS_Mandelbrot {
 	fp64 breakoutValue;
 	/* Coloring */
 	bool smoothColoring;
-	fp64 rA;
-	fp64 rF;
-	fp64 rP;
-	fp64 gA;
-	fp64 gF;
-	fp64 gP;
-	fp64 bA;
-	fp64 bF;
-	fp64 bP;
-	fp64 iA;
-	fp64 iF;
-	fp64 iP;
+	fp64 exterior_Alpha;
+		fp64 exterior_R_Amp;
+		fp64 exterior_R_Freq;
+		fp64 exterior_R_Phase;
+		fp64 exterior_G_Amp;
+		fp64 exterior_G_Freq;
+		fp64 exterior_G_Phase;
+		fp64 exterior_B_Amp;
+		fp64 exterior_B_Freq;
+		fp64 exterior_B_Phase;
+	fp64 interior_Alpha;
+		fp64 interior_R_Amp;
+		fp64 interior_R_Freq;
+		fp64 interior_R_Phase;
+		fp64 interior_G_Amp;
+		fp64 interior_G_Freq;
+		fp64 interior_G_Phase;
+		fp64 interior_B_Amp;
+		fp64 interior_B_Freq;
+		fp64 interior_B_Phase;
 }; typedef struct _ABS_Mandelbrot ABS_Mandelbrot;
 
 struct _Sierpinski_Carpet {

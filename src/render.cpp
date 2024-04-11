@@ -587,10 +587,13 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 		Update_Level(update_level, Change_Level::Breakout);
 	}
 	if (
-		(frac_data->rA != frac0.rA || frac_data->rF != frac0.rF || frac_data->rP != frac0.rP) ||
-		(frac_data->gA != frac0.gA || frac_data->gF != frac0.gF || frac_data->gP != frac0.gP) ||
-		(frac_data->bA != frac0.bA || frac_data->bF != frac0.bF || frac_data->bP != frac0.bP) ||
-		(frac_data->iA != frac0.iA || frac_data->iF != frac0.iF || frac_data->iP != frac0.iP)
+		(frac_data->exterior_R_Amp != frac0.exterior_R_Amp || frac_data->exterior_R_Freq != frac0.exterior_R_Freq || frac_data->exterior_R_Phase != frac0.exterior_R_Phase) ||
+		(frac_data->exterior_G_Amp != frac0.exterior_G_Amp || frac_data->exterior_G_Freq != frac0.exterior_G_Freq || frac_data->exterior_G_Phase != frac0.exterior_G_Phase) ||
+		(frac_data->exterior_B_Amp != frac0.exterior_B_Amp || frac_data->exterior_B_Freq != frac0.exterior_B_Freq || frac_data->exterior_B_Phase != frac0.exterior_B_Phase) ||
+		(frac_data->interior_R_Amp != frac0.interior_R_Amp || frac_data->interior_R_Freq != frac0.interior_R_Freq || frac_data->interior_R_Phase != frac0.interior_R_Phase) ||
+		(frac_data->interior_G_Amp != frac0.interior_G_Amp || frac_data->interior_G_Freq != frac0.interior_G_Freq || frac_data->interior_G_Phase != frac0.interior_G_Phase) ||
+		(frac_data->interior_B_Amp != frac0.interior_B_Amp || frac_data->interior_B_Freq != frac0.interior_B_Freq || frac_data->interior_B_Phase != frac0.interior_B_Phase) ||
+		(frac_data->exterior_Alpha != frac0.exterior_Alpha || frac_data->interior_Alpha != frac0.interior_Alpha)
 	) {
 		Update_Level(update_level, Change_Level::Coloring);
 	}
@@ -629,7 +632,7 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 int_enum updateFractalParameters() {
 	using namespace Key_Function;
 	using namespace Change_Level;
-	#define FRAC frac.type.abs_mandelbrot
+	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
 	fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
 	fp64 moveDelta = (DeltaTime < 0.2) ? DeltaTime : 0.2;
 	
@@ -973,7 +976,6 @@ int_enum updateFractalParameters() {
 		if (funcTimeDelay(takeSuperScreenshot,0.4)) {
 			exportSuperScreenshot();
 		}
-	#undef FRAC
 	write_Update_Level(update_level);
 	return update_level;
 }
@@ -1585,7 +1587,7 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	#define FRAC frac.type.abs_mandelbrot
+	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
 	static const dim32_t minimumImageResolution = 2;
 	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
 		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
@@ -1621,7 +1623,6 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 		SDL_DestroyTexture(scale_tex);
 		SDL_FreeSurface(scale_surface);
 	}
-	#undef FRAC
 	return 0;
 }
 
@@ -1669,7 +1670,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
-	#define FRAC frac.type.abs_mandelbrot
+	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
 	static const dim32_t minimumImageResolution = 2;
 	BufferBox blit;
 	BufferBox temp_MASTER;
@@ -1707,9 +1708,9 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// printfInterval(0.6,"\nsrc: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
 	// printfInterval(0.6,"\ndst: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
 	uint32_t backgroundColor = 0xFF000000;
-	backgroundColor |= (uint32_t)(FRAC.rA * (127.5 - 127.5 * cos(TAU * FRAC.rP)));
-	backgroundColor |= (uint32_t)(FRAC.gA * (127.5 - 127.5 * cos(TAU * FRAC.gP))) << 8;
-	backgroundColor |= (uint32_t)(FRAC.bA * (127.5 - 127.5 * cos(TAU * FRAC.bP))) << 16;
+	backgroundColor |= (uint32_t)(FRAC.exterior_R_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_R_Phase)));
+	backgroundColor |= (uint32_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase))) << 8;
+	backgroundColor |= (uint32_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase))) << 16;
 
 	if (
 		Image_Scaler_Parallelogram(
@@ -1767,7 +1768,6 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	// );
 
 	FREE(blit.vram);
-	#undef FRAC
 	return 0;
 }
 
@@ -1777,13 +1777,12 @@ void newFrame() {
 		return;
 	}
 	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) {
-		#define FRAC frac.type.abs_mandelbrot
+		ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
 		Master.clearBuffer(
-			(uint8_t)(FRAC.rA * (127.5 - 127.5 * cos(TAU * FRAC.rP))),
-			(uint8_t)(FRAC.gA * (127.5 - 127.5 * cos(TAU * FRAC.gP))),
-			(uint8_t)(FRAC.bA * (127.5 - 127.5 * cos(TAU * FRAC.bP)))
+			(uint8_t)(FRAC.exterior_R_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_R_Phase))),
+			(uint8_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase))),
+			(uint8_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase)))
 		);
-		#undef FRAC
 	} else {
 		Master.clearBuffer();
 	}

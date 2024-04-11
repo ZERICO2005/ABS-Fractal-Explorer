@@ -160,9 +160,9 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 	currentBuf->getBufferBox(&renderBox);
 	//render_ABS_Mandelbrot(currentBuf,primaryRender,fracData.type.abs_mandelbrot);
 	if (ABORT_RENDERING == false) {
-		#define FRAC fracData.type.abs_mandelbrot
+		//ABS_Mandelbrot& FRAC = fracData.type.abs_mandelbrot;
 		//printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %" PRIu64,FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
-		#undef FRAC
+
 		switch(primaryRender.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
 				if (fracData.type.abs_mandelbrot.polarMandelbrot == true) {
@@ -180,7 +180,7 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			printfInterval(0.5,"Unknown rendering method %u",primaryRender.rendering_method);
 		}
 		if (fracData.type_value == Fractal_ABS_Mandelbrot || fracData.type_value == Fractal_Polar_Mandelbrot) {
-			#define FRAC fracData.type.abs_mandelbrot
+			ABS_Mandelbrot& FRAC = fracData.type.abs_mandelbrot;
 			fp128 cx00; fp128 cy00;
 			fp128 cx11; fp128 cy11;
 			fp128 cx01; fp128 cy01;
@@ -194,10 +194,8 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * -extraPadding),&cx10,&cy10,&FRAC,&primaryRender);
 			currentBuf->setTransformationData(cx00,cy00,cx11,cy11,cx01,cy01,cx10,cy10);
 			currentBuf->rot = FRAC.rot;
-			#undef FRAC
 		} else if (fracData.type_value == Fractal_Sierpinski_Carpet) {
-			#define CARPET fracData.type.sierpinski_carpet
-			#undef CARPET
+			Sierpinski_Carpet& CARPET = fracData.type.sierpinski_carpet;
 		}
 	}
 	return 0;

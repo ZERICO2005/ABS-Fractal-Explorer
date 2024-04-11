@@ -568,7 +568,7 @@ cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename)
 	#endif
 	#ifdef BUILD_FRAC_FROM_CONST
 		cl_program program;
-		FILE *program_handle;
+		// FILE *program_handle;
 		char *program_log;
 		size_t program_size, log_size;
 		int err;

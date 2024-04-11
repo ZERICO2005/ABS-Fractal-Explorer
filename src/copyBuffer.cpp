@@ -64,15 +64,8 @@ void blitBuffer(
 	//uint64_t stopWatch = getNanoTime();
 	uint32_t srcPtr = (srcY * srcPitch) + (srcX * channels);
 	uint32_t dstPtr = (dstY * dstPitch) + (dstX * channels);
-	uint32_t srcJump = srcPitch - (sizeX * channels);
-	uint32_t dstJump = dstPitch - (sizeX * channels);
 	uint32_t copySize = (sizeX * channels);
 	for (uint32_t y = 0; y < sizeY; y++) {
-		/*for (uint32_t x = 0; x < sizeX * channels; x++) {
-			dstBuf[dstPtr] = srcBuf[srcPtr]; dstPtr++; srcPtr++;
-		}
-		srcPtr += srcJump;
-		dstPtr += dstJump;*/
 		memcpy(&dstBuf[dstPtr],&srcBuf[srcPtr],copySize);
 		srcPtr += srcPitch;
 		dstPtr += dstPitch;
