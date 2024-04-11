@@ -65,8 +65,8 @@ typedef int32_t dim32_t;
 //#define BUILD_DEBUG
 #define BUILD_RELEASE
 
-#define PLATFORM_WINDOWS
-// #define PLATFORM_LINUX
+// #define PLATFORM_WINDOWS
+#define PLATFORM_LINUX
 
 /* Constants */
 
@@ -172,49 +172,49 @@ typedef int32_t dim32_t;
 /* String Functions */
 
 #ifdef PLATFORM_WINDOWS
-	inline uint8_t stringTo_Uint8(const char* nPtr, char** endPtr, int base) { return (uint8_t)strtoul(nPtr,endPtr,base); }
-	inline uint16_t stringTo_Uint16(const char* nPtr, char** endPtr, int base) { return (uint16_t)strtoul(nPtr,endPtr,base); }
-	inline uint32_t stringTo_Uint32(const char* nPtr, char** endPtr, int base) { return (uint32_t)strtoul(nPtr,endPtr,base); }
-	inline uint64_t stringTo_Uint64(const char* nPtr, char** endPtr, int base) { return (uint64_t)strtoull(nPtr,endPtr,base); }
-	inline int8_t stringTo_Int8(const char* nPtr, char** endPtr, int base) { return (int8_t)strtol(nPtr,endPtr,base); }
-	inline int16_t stringTo_Int16(const char* nPtr, char** endPtr, int base) { return (int16_t)strtol(nPtr,endPtr,base); }
-	inline int32_t stringTo_Int32(const char* nPtr, char** endPtr, int base) { return (int32_t)strtol(nPtr,endPtr,base); }
-	inline int64_t stringTo_Int64(const char* nPtr, char** endPtr, int base) { return (int64_t)strtoll(nPtr,endPtr,base); }
+	inline uint8_t  stringTo_Uint8 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint8_t) strtoul (nPtr,endPtr,base) : 0; }
+	inline uint16_t stringTo_Uint16(const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint16_t)strtoul (nPtr,endPtr,base) : 0; }
+	inline uint32_t stringTo_Uint32(const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint32_t)strtoul (nPtr,endPtr,base) : 0; }
+	inline uint64_t stringTo_Uint64(const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint64_t)strtoull(nPtr,endPtr,base) : 0; }
+	inline int8_t   stringTo_Int8  (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int8_t)  strtol  (nPtr,endPtr,base) : 0; }
+	inline int16_t  stringTo_Int16 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int16_t) strtol  (nPtr,endPtr,base) : 0; }
+	inline int32_t  stringTo_Int32 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int32_t) strtol  (nPtr,endPtr,base) : 0; }
+	inline int64_t  stringTo_Int64 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int64_t) strtoll (nPtr,endPtr,base) : 0; }
 	inline fp32 stringTo_Float32(const char* nPtr, char** endPtr) { return strtof(nPtr,endPtr); }
 	inline fp64 stringTo_Float64(const char* nPtr, char** endPtr) { return strtod(nPtr,endPtr); }
 
-	inline uint8_t stringTo_Uint8(const char* nPtr) { return (uint8_t)atoi(nPtr); }
-	inline uint16_t stringTo_Uint16(const char* nPtr) { return (uint16_t)atoi(nPtr); }
-	inline uint32_t stringTo_Uint32(const char* nPtr) { return (uint32_t)atoll(nPtr); }
-	inline uint64_t stringTo_Uint64(const char* nPtr) { return (uint64_t)atoll(nPtr); }
-	inline int8_t stringTo_Int8(const char* nPtr) { return (int8_t)atoi(nPtr); }
-	inline int16_t stringTo_Int16(const char* nPtr) { return (int16_t)atoi(nPtr); }
-	inline int32_t stringTo_Int32(const char* nPtr) { return (int32_t)atoi(nPtr); }
-	inline int64_t stringTo_Int64(const char* nPtr) { return (int64_t)atoll(nPtr); }
-	inline fp32 stringTo_Float32(const char* nPtr) { return (fp32)atof(nPtr); }
-	inline fp64 stringTo_Float64(const char* nPtr) { return (fp64)atof(nPtr); }
+	inline uint8_t  stringTo_Uint8 (const char* nPtr) { return (nPtr != nullptr) ? (uint8_t) atoi (nPtr) : 0; }
+	inline uint16_t stringTo_Uint16(const char* nPtr) { return (nPtr != nullptr) ? (uint16_t)atoi (nPtr) : 0; }
+	inline uint32_t stringTo_Uint32(const char* nPtr) { return (nPtr != nullptr) ? (uint32_t)atoll(nPtr) : 0; }
+	inline uint64_t stringTo_Uint64(const char* nPtr) { return (nPtr != nullptr) ? (uint64_t)atoll(nPtr) : 0; }
+	inline int8_t   stringTo_Int8  (const char* nPtr) { return (nPtr != nullptr) ? (int8_t)  atoi (nPtr) : 0; }
+	inline int16_t  stringTo_Int16 (const char* nPtr) { return (nPtr != nullptr) ? (int16_t) atoi (nPtr) : 0; }
+	inline int32_t  stringTo_Int32 (const char* nPtr) { return (nPtr != nullptr) ? (int32_t) atoi (nPtr) : 0; }
+	inline int64_t  stringTo_Int64 (const char* nPtr) { return (nPtr != nullptr) ? (int64_t) atoll(nPtr) : 0; }
+	inline fp32 stringTo_Float32   (const char* nPtr) { return (nPtr != nullptr) ? (fp32)atof(nPtr) : 0.0f; }
+	inline fp64 stringTo_Float64   (const char* nPtr) { return (nPtr != nullptr) ? (fp64)atof(nPtr) : 0.0 ; }
 #else
-	inline uint8_t stringTo_Uint8(const char* nPtr, char** endPtr, int base) { return (uint8_t)strtoul(nPtr,endPtr,base); }
-	inline uint16_t stringTo_Uint16(const char* nPtr, char** endPtr, int base) { return (uint16_t)strtoul(nPtr,endPtr,base); }
-	inline uint32_t stringTo_Uint32(const char* nPtr, char** endPtr, int base) { return (uint32_t)strtoul(nPtr,endPtr,base); }
-	inline uint64_t stringTo_Uint64(const char* nPtr, char** endPtr, int base) { return (uint64_t)strtoul(nPtr,endPtr,base); }
-	inline int8_t stringTo_Int8(const char* nPtr, char** endPtr, int base) { return (int8_t)strtol(nPtr,endPtr,base); }
-	inline int16_t stringTo_Int16(const char* nPtr, char** endPtr, int base) { return (int16_t)strtol(nPtr,endPtr,base); }
-	inline int32_t stringTo_Int32(const char* nPtr, char** endPtr, int base) { return (int32_t)strtol(nPtr,endPtr,base); }
-	inline int64_t stringTo_Int64(const char* nPtr, char** endPtr, int base) { return (int64_t)strtol(nPtr,endPtr,base); }
-	inline fp32 stringTo_Float32(const char* nPtr, char** endPtr) { return (fp32)strtof32(nPtr,endPtr); }
-	inline fp64 stringTo_Float64(const char* nPtr, char** endPtr) { return (fp64)strtof64(nPtr,endPtr); }
+	inline uint8_t  stringTo_Uint8 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint8_t) strtoul(nPtr,endPtr,base) : 0; }
+	inline uint16_t stringTo_Uint16(const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint16_t)strtoul(nPtr,endPtr,base) : 0; }
+	inline uint32_t stringTo_Uint32(const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint32_t)strtoul(nPtr,endPtr,base) : 0; }
+	inline uint64_t stringTo_Uint64(const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (uint64_t)strtoul(nPtr,endPtr,base) : 0; }
+	inline int8_t   stringTo_Int8  (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int8_t)  strtol (nPtr,endPtr,base) : 0; }
+	inline int16_t  stringTo_Int16 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int16_t) strtol (nPtr,endPtr,base) : 0; }
+	inline int32_t  stringTo_Int32 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int32_t) strtol (nPtr,endPtr,base) : 0; }
+	inline int64_t  stringTo_Int64 (const char* nPtr, char** endPtr, int base) { return (nPtr != nullptr) ? (int64_t) strtol (nPtr,endPtr,base) : 0; }
+	inline fp32 stringTo_Float32(const char* nPtr, char** endPtr) { return (nPtr != nullptr) ? (fp32)strtof32(nPtr,endPtr) : 0.0f; }
+	inline fp64 stringTo_Float64(const char* nPtr, char** endPtr) { return (nPtr != nullptr) ? (fp64)strtof64(nPtr,endPtr) : 0.0 ; }
 
-	inline uint8_t stringTo_Uint8(const char* nPtr) { return (uint8_t)atoi(nPtr); }
-	inline uint16_t stringTo_Uint16(const char* nPtr) { return (uint16_t)atoi(nPtr); }
-	inline uint32_t stringTo_Uint32(const char* nPtr) { return (uint32_t)atol(nPtr); }
-	inline uint64_t stringTo_Uint64(const char* nPtr) { return (uint64_t)atol(nPtr); }
-	inline int8_t stringTo_Int8(const char* nPtr) { return (int8_t)atoi(nPtr); }
-	inline int16_t stringTo_Int16(const char* nPtr) { return (int16_t)atoi(nPtr); }
-	inline int32_t stringTo_Int32(const char* nPtr) { return (int32_t)atoi(nPtr); }
-	inline int64_t stringTo_Int64(const char* nPtr) { return (int64_t)atol(nPtr); }
-	inline fp32 stringTo_Float32(const char* nPtr) { return (fp32)atof(nPtr); }
-	inline fp64 stringTo_Float64(const char* nPtr) { return (fp64)atof(nPtr); }
+	inline uint8_t  stringTo_Uint8 (const char* nPtr) { return (nPtr != nullptr) ? (uint8_t )atoi(nPtr) : 0; }
+	inline uint16_t stringTo_Uint16(const char* nPtr) { return (nPtr != nullptr) ? (uint16_t)atoi(nPtr) : 0; }
+	inline uint32_t stringTo_Uint32(const char* nPtr) { return (nPtr != nullptr) ? (uint32_t)atol(nPtr) : 0; }
+	inline uint64_t stringTo_Uint64(const char* nPtr) { return (nPtr != nullptr) ? (uint64_t)atol(nPtr) : 0; }
+	inline int8_t   stringTo_Int8  (const char* nPtr) { return (nPtr != nullptr) ? (int8_t  )atoi(nPtr) : 0; }
+	inline int32_t  stringTo_Int32 (const char* nPtr) { return (nPtr != nullptr) ? (int32_t )atoi(nPtr) : 0; }
+	inline int16_t  stringTo_Int16 (const char* nPtr) { return (nPtr != nullptr) ? (int16_t )atoi(nPtr) : 0; }
+	inline int64_t  stringTo_Int64 (const char* nPtr) { return (nPtr != nullptr) ? (int64_t )atol(nPtr) : 0; }
+	inline fp32 stringTo_Float32(const char* nPtr) { return (nPtr != nullptr) ? (fp32)atof(nPtr) : 0.0f; }
+	inline fp64 stringTo_Float64(const char* nPtr) { return (nPtr != nullptr) ? (fp64)atof(nPtr) : 0.0 ; }
 #endif
 
 /* Print Functions */

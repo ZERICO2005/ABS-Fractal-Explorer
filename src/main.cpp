@@ -10,6 +10,7 @@
 #include "engine.h"
 #include "render.h"
 #include "programData.h"
+#include "fileManager.h"
 
 std::atomic<bool> QUIT_FLAG(false);
 std::atomic<bool> ABORT_RENDERING(false);
@@ -17,10 +18,12 @@ std::atomic<bool> ABORT_RENDERING(false);
 int terminate_Fractal_Engine() {
 	terminate_Render();
 	terminate_Engine();
+	terminate_FileInterface();
 	return 0;
 }
 
 int init_Fractal_Engine(int argc, char* argv[]) {
+	init_FileInterface(argc, argv);
 	init_Cycle_Buffers();
 	setup_fracExp(argc,argv);
 	setup_fracExpKB(argc,argv);

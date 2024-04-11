@@ -1494,37 +1494,62 @@ void Menu_Keybinds() {
 				recolorKeyboard();
 			}
 		}
-		if (ImGui::Button("Export Current Key-bind (.FracExpKB)")) {
-			static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',sizeof(exportKeyBindFile));
-			int saveFileState = saveFileInterface(
-				exportKeyBindFile,sizeof(exportKeyBindFile),"Save FracExpKB file",
-				"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
-				"FracExp Files (*.fracExp)\0*.fracExp\0"\
-				"All Files (*.*)\0*.*\0",
-				"fracExpKB",
-				currentKBPreset->name.c_str()
-			);
-			if (saveFileState == 0) {
-				KeyBind_Preset temp_KeyBind = *currentKBPreset;
-				export_KeyBind(&temp_KeyBind,exportKeyBindFile);
+		#ifdef PLATFORM_WINDOWS
+			if (ImGui::Button("Export Current Key-bind (.FracExpKB)")) {
+				
+					static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',sizeof(exportKeyBindFile));
+					int saveFileState = saveFileInterface(
+						exportKeyBindFile,sizeof(exportKeyBindFile),"Save FracExpKB file",
+						"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
+						"FracExp Files (*.fracExp)\0*.fracExp\0"\
+						"All Files (*.*)\0*.*\0",
+						"fracExpKB",
+						currentKBPreset->name.c_str()
+					);
+					if (saveFileState == 0) {
+						KeyBind_Preset temp_KeyBind = *currentKBPreset;
+						export_KeyBind(&temp_KeyBind,exportKeyBindFile);
+					}
 			}
-		}
-		#ifndef BUILD_RELEASE
-			if (ImGui::Button("Export All Key-binds (.FracExpKB)")) {
-				static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
-				int saveFileState = saveFileInterface(
-					exportKeyBindFile,324,"Save FracExpKB file",
-					"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
-					"FracExp Files (*.fracExp)\0*.fracExp\0"\
-					"All Files (*.*)\0*.*\0",
-					"fracExpKB",
-					currentKBPreset->name.c_str()
-				);
-				if (saveFileState == 0) {
-					export_KeyBindPresets(&KeyBind_PresetList,exportKeyBindFile);
+			#ifndef BUILD_RELEASE
+				if (ImGui::Button("Export All Key-binds (.FracExpKB)")) {
+					static char exportKeyBindFile[324]; memset(exportKeyBindFile,'\0',324);
+					int saveFileState = saveFileInterface(
+						exportKeyBindFile,324,"Save FracExpKB file",
+						"KeyBind Files (*.fracExpKB)\0*.fracExpKB\0"\
+						"FracExp Files (*.fracExp)\0*.fracExp\0"\
+						"All Files (*.*)\0*.*\0",
+						"fracExpKB",
+						currentKBPreset->name.c_str()
+					);
+					if (saveFileState == 0) {
+						export_KeyBindPresets(&KeyBind_PresetList,exportKeyBindFile);
+					}
 				}
+			#endif
+		#else
+			{
+				static char exportKeyBindFile[324] = "./KeyBind.fracExpKB";
+				ImGui::Text("File Path:");
+				ImGui::InputText("##ExportCurrentKey_bindtopath",exportKeyBindFile, sizeof(exportKeyBindFile));
+				if (ImGui::Button("Export Current Key-bind to path")) {
+					KeyBind_Preset temp_KeyBind = *currentKBPreset;
+					export_KeyBind(&temp_KeyBind,exportKeyBindFile);
+				}
+				ImGui::NewLine();
 			}
+			#ifndef BUILD_RELEASE
+				{
+					static char exportKeyBindFile[324] = "./All-KeyBinds.fracExpKB";
+					ImGui::Text("File Path:");
+					ImGui::InputText("##ExportAllCurrentKey_bindstopath",exportKeyBindFile, sizeof(exportKeyBindFile));
+					if (ImGui::Button("Export All Key-binds to path")) {
+						export_KeyBindPresets(&KeyBind_PresetList,exportKeyBindFile);
+					}
+				}
+			#endif
 		#endif
+
 		// //	Disabling the name field since it can cause confusion when typing "./folder" + "KeyBind.fracExpKB" = "./folderKeyBind.fracExpKB"
 		// // static char exportFracExpKBName[324] = "KeyBind";
 		// static char exportFracExpKBDir[324] = "./KeyBind"; // "./"

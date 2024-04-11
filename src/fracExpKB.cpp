@@ -122,7 +122,8 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 			FREE(pathF);
 			return -1;
 		}
-		fread(fracExpKB_raw, sizeof(char), len, ptrF); fracExpKB_raw[len] = '\0'; // Manual string termination
+		size_t importLen = fread(fracExpKB_raw, sizeof(char), len, ptrF); fracExpKB_raw[len] = '\0'; // Manual string termination
+		printFlush("\ncreate_FracExpKB_File: len %zu | fread %zu",len, importLen);
 		fclose(ptrF);
 		FREE(pathF);
 	Param_List* param_list; size_t param_len = 0;
@@ -219,9 +220,10 @@ int create_FracExpKB_Preset(FracExpKB_File* frac, char* fracExpKB_raw, Param_Lis
 
 		for (size_t i = Key_Function_Skip; i < Parameter_Function_Count; i++) {
 			size_t strSize = 0;
-			char CurDir[128] = "KeyBind_List/Preset/";
-			// 20 is a magic number for the end of CurDir
-			snprintf(&CurDir[20],ARRAY_LENGTH(CurDir)-4,"%s",Key_Function_Text[i]);
+			constexpr size_t maxCurDirLen = 128;
+			char CurDir[maxCurDirLen] = "KeyBind_List/Preset/";
+			size_t offsetCurDir = strnlen(CurDir,maxCurDirLen);
+			snprintf(&CurDir[offsetCurDir], maxCurDirLen - offsetCurDir,"%s",Key_Function_Text[i]);
 			item = getParam(CurDir);
 			if (item == nullptr) { continue; }
 
@@ -247,9 +249,10 @@ int create_FracExpKB_Preset(FracExpKB_File* frac, char* fracExpKB_raw, Param_Lis
 		}
 		for (size_t i = SDL_Scancode_Skip; i < ARRAY_LENGTH(Scancode_Name); i++) {
 			size_t strSize = 0;
-			char CurDir[128] = "KeyBind_List/Preset/";
-			// 20 is a magic number for the end of CurDir
-			snprintf(&CurDir[20],ARRAY_LENGTH(CurDir)-4,"%s",Scancode_Name[i]);
+			constexpr size_t maxCurDirLen = 128;
+			char CurDir[maxCurDirLen] = "KeyBind_List/Preset/";
+			size_t offsetCurDir = strnlen(CurDir,maxCurDirLen);
+			snprintf(&CurDir[offsetCurDir], maxCurDirLen - offsetCurDir,"%s",Scancode_Name[i]);
 			item = getParam(CurDir);
 			if (item == nullptr) { continue; }
 

@@ -33,6 +33,9 @@ int saveFileInterface(
 	const char* defaultName = nullptr
 );
 
+int init_FileInterface(int argc, char* argv[]);
+int terminate_FileInterface();
+
 /* Images */
 
 int writePNGImage(const BufferBox* buf, char* path, char* name, uint32_t compression_level = 8);

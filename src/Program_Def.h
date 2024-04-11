@@ -20,11 +20,11 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/04/04" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/04/10" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 9
-#define PROGRAM_V_TAG "Rev-5 Developer Alpha"
+#define PROGRAM_V_TAG "Rev-6 Unstable Developer Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* OpenCL */
@@ -45,6 +45,7 @@
 		typedef __int128_t i128;
 		typedef __uint128_t u128;
 		typedef __float80 fp80;
+		typedef fp128 fpCord;
 		inline fp128 sin(fp128 x) { return sinq(x); }
 		inline fp128 cos(fp128 x) { return cosq(x); }
 		inline fp128 tan(fp128 x) { return tanq(x); }
@@ -79,6 +80,7 @@
 	#define strtoflt128 strtold
 	typedef long double fp128;
 	typedef long double fp80;
+	typedef fp80 fpCord;
 	typedef int64_t int128_t;
 	typedef uint64_t uint128_t;
 	typedef int64_t i128;

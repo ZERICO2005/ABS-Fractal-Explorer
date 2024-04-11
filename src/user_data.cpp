@@ -426,8 +426,9 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 		fclose(file);
 		return -1;
 	}
-	fread(config_text, sizeof(char), fileSize, file);
+	size_t importLen = fread(config_text, sizeof(char), fileSize, file);
 	config_text[fileSize] = '\0';
+	printFlush("import_config_data: len %zu fread %zu",fileSize,importLen);
 
 	load_config_values(config_data,config_text);
 	clean_User_Configuration_Data(config_data);
@@ -541,7 +542,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		fprintf(file,"\n\tSpecific_Bootup_Display: %" PRId32,
 			config_data.Display_Preferences.Specific_Bootup_Display
 		);
-		fprintf(file,"\n\tLast_Display_Used: %" PRId32,
+		fprintf(file,"\n\tPrevious_Display_Used: %" PRId32,
 			config_data.Display_Preferences.Previous_Display_Used
 		);
 		fprintf(file,"\n\tBootup_Fullscreen: %" PRId32,

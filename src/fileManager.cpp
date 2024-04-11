@@ -27,7 +27,7 @@
 	) {
 		if (filePathMaxLen == 0) { return -1; }
 		if (title == nullptr) { return -1; }
-		if (filter == nullptr) { return -1; }	
+		if (filter == nullptr) { return -1; }
 		size_t len = (filePathMaxLen < MAX_PATH) ? filePathMaxLen : MAX_PATH;
 		memset(filePath,'\0',len);
 		OPENFILENAME ofn;
@@ -57,7 +57,7 @@
 	) {
 		if (filePathMaxLen == 0) { return -1; }
 		if (title == nullptr) { return -1; }
-		if (filter == nullptr) { return -1; }	
+		if (filter == nullptr) { return -1; }
 		size_t len = (filePathMaxLen < MAX_PATH) ? filePathMaxLen : MAX_PATH;
 		memset(filePath, '\0', len);
 		OPENFILENAME ofn;
@@ -87,17 +87,28 @@
 		}
 		return 0;
 	}
+	int init_FileInterface(int argc, char* argv[]) {
+		return 0;
+	}
+	int terminate_FileInterface() {
+		return 0;
+	}
 #endif
 
 #ifdef fileManager_Platform_Linux
+
 	int openFileInterface(
 		char* filePath, size_t filePathMaxLen,
 		const char* title,
 		const char* filter
 	) {
 		if (filePathMaxLen == 0) { return -1; }
+		if (title == nullptr) { return -1; }
+		if (filter == nullptr) { return -1; }
+
 		return 0;
 	}
+
 	int saveFileInterface(
 		char* filePath, size_t filePathMaxLen,
 		const char* title,
@@ -106,9 +117,20 @@
 		const char* defaultName
 	) {
 		if (filePathMaxLen == 0) { return -1; }
+		if (title == nullptr) { return -1; }
+		if (filter == nullptr) { return -1; }
+
 		return 0;
 	}
 
+	int init_FileInterface(int argc, char* argv[]) {
+		//gtk_init(&argc, &argv);
+		return 0;
+	}
+	int terminate_FileInterface() {
+		//gtk_widget_destroy(file_chooser_dialog);
+		return 0;
+	}
 #endif
 
 
