@@ -302,7 +302,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_B_Freq );
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_B_Phase);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_B_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &exterior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_Alpha);
 	/* Interior Color */
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_R_Freq );
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_R_Phase);
@@ -313,7 +313,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_B_Freq );
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_B_Phase);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_B_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &interior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_Alpha);
 
 	printErrorChange("\nKernelArgs: %" PRId32,err);
 

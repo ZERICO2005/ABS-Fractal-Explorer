@@ -123,7 +123,9 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 			return -1;
 		}
 		size_t importLen = fread(fracExpKB_raw, sizeof(char), len, ptrF); fracExpKB_raw[len] = '\0'; // Manual string termination
-		printFlush("\ncreate_FracExpKB_File: len %zu | fread %zu",len, importLen);
+		if (len != importLen) {
+			printWarning("create_FracExpKB_File: len %zu | fread %zu",len, importLen);
+		}
 		fclose(ptrF);
 		FREE(pathF);
 	Param_List* param_list; size_t param_len = 0;

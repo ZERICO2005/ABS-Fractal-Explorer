@@ -42,30 +42,30 @@ inline uint32_t Div_Mult(int32_t s) { return (uint32_t)s * 4; }
 
 #ifdef MONOCHROME_MODE
 	#define CPU_Interior_Coloring(fpX); \
-		outR += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
-		outG += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
-		outB += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
-		outA += (uint32_t)(param.interior_Alpha * (Color_Mult * 2.0));
+		outR += param.interior_B_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_B_Freq + param.interior_B_Phase));\
+		outG += param.interior_B_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_B_Freq + param.interior_B_Phase));\
+		outB += param.interior_B_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_B_Freq + param.interior_B_Phase));\
+		outA += param.interior_Alpha;
 
 	#define CPU_Exterior_Coloring(fpX,l); \
 		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
-		outR += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
-		outG += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
-		outB += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
-		outA += (uint32_t)(param.exterior_Alpha * (Color_Mult * 2.0));
+		outR += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
+		outG += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
+		outB += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
+		outA += param.exterior_Alpha;
 #else
 	#define CPU_Interior_Coloring(fpX); \
-		outR += (uint32_t)(param.interior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_R_Freq + param.interior_R_Phase)));\
-		outG += (uint32_t)(param.interior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_G_Freq + param.interior_G_Phase)));\
-		outB += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
-		outA += (uint32_t)(param.interior_Alpha * (Color_Mult * 2.0));
+		outR += param.interior_R_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_R_Freq + param.interior_R_Phase));\
+		outG += param.interior_G_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_G_Freq + param.interior_G_Phase));\
+		outB += param.interior_B_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_B_Freq + param.interior_B_Phase));\
+		outA += param.interior_Alpha;
 
 	#define CPU_Exterior_Coloring(fpX,l); \
 		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
-		outR += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
-		outG += (uint32_t)(param.exterior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase))));\
-		outB += (uint32_t)(param.exterior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase))));\
-		outA += (uint32_t)(param.exterior_Alpha * (Color_Mult * 2.0));
+		outR += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
+		outG += param.exterior_G_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase)));\
+		outB += param.exterior_B_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase)));\
+		outA += param.exterior_Alpha;
 #endif
 
 #define Block0(fpX) \
@@ -103,10 +103,10 @@ for (; x < resX; x += sample) {\
 		if (p0 == p1 || ABORT_RENDERING == true) {\
 			return;\
 		}\
-		uint32_t outR = 0;\
-		uint32_t outG = 0;\
-		uint32_t outB = 0;\
-		uint32_t outA = 0;\
+		fp64 outR = 0;\
+		fp64 outG = 0;\
+		fp64 outB = 0;\
+		fp64 outA = 0;\
 		for (int32_t v = 0; v < sample; v++) {\
 			for (int32_t u = 0; u < sample; u++) {\
 				fpX xCord = (((fpX)x - numX) * recip_numZ);\
@@ -138,11 +138,17 @@ for (; x < resX; x += sample) {\
 			y++;\
 		}\
 		y -= sample;\
-		uint32_t div = Div_Mult(sample * sample);\
-		outR /= div;\
-		outG /= div;\
-		outB /= div;\
-		outA /= div;\
+		/*uint32_t div = Div_Mult(sample * sample);*/\
+		if (outA != 0.0) {\
+			outR = outR / outA;\
+			outG = outG / outA;\
+			outB = outB / outA;\
+			outA = outA / (fp64)(sample * sample);\
+		}\
+		outR *= 255.0;\
+		outG *= 255.0;\
+		outB *= 255.0;\
+		outA *= 255.0;\
 		data[dataPtr] = (uint8_t)outR; dataPtr++;\
 		data[dataPtr] = (uint8_t)outG; dataPtr++;\
 		data[dataPtr] = (uint8_t)outB; dataPtr++;\

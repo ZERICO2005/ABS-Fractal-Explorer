@@ -22,6 +22,7 @@
 #include "displayInfo.h"
 
 #include "render.h"
+#include "fractal_video.h"
 
 // #include "copyBuffer.h"
 // #include "fractal.h"
@@ -431,6 +432,16 @@ void Menu_Coordinates() {
 				ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
 				Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
 			}
+
+		if (FRAC.power == 2) {
+			ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
+			int Combo_Quadractic_Fractals = 0;
+			if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
+				if (Combo_Quadractic_Fractals != 0) {
+					FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+				}
+			}
+		}
 	} else if (frac.type_value == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
 		Sierpinski_Carpet& FRAC = frac.type.sierpinski_carpet;
 	}
@@ -562,8 +573,6 @@ void Menu_Fractal() {
 				temp_Color.interior_G_Amp = (fp32)FRAC.interior_G_Amp; temp_Color.interior_G_Freq = (fp32)FRAC.interior_G_Freq; temp_Color.interior_G_Phase = (fp32)FRAC.interior_G_Phase;
 				temp_Color.interior_B_Amp = (fp32)FRAC.interior_B_Amp; temp_Color.interior_B_Freq = (fp32)FRAC.interior_B_Freq; temp_Color.interior_B_Phase = (fp32)FRAC.interior_B_Phase;
 			
-			
-			ImGui::Text("Note: Alpha calculations may be incorrect");
 			ImGui::Text("EXTERIOR COLORING:");
 				constexpr fp32 Maximum_Exterior_Freq = 2.0f;
 				ImGui::Text("Amplitude:");

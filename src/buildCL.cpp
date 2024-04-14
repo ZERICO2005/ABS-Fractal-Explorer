@@ -58,17 +58,17 @@ const char* const FractalOpenCL_SRC = "\
 			fp32 exterior_R_Freq,fp32 exterior_R_Phase,fp32 exterior_R_Amp,\n\
 			fp32 exterior_G_Freq,fp32 exterior_G_Phase,fp32 exterior_G_Amp,\n\
 			fp32 exterior_B_Freq,fp32 exterior_B_Phase,fp32 exterior_B_Amp,\n\
-			uint32_t exterior_Alpha,\n\
+			fp32 exterior_Alpha,\n\
 			fp32 interior_R_Freq,fp32 interior_R_Phase,fp32 interior_R_Amp,\n\
 			fp32 interior_G_Freq,fp32 interior_G_Phase,fp32 interior_G_Amp,\n\
 			fp32 interior_B_Freq,fp32 interior_B_Phase,fp32 interior_B_Amp,\n\
-			uint32_t interior_Alpha\n\
+			fp32 interior_Alpha\n\
 ) { // Some values like zoom are embeded into precalculated constants\n\
-    u32 id = get_global_id(0);\n\
-	uint32_t outR = 0;\n\
-	uint32_t outG = 0;\n\
-	uint32_t outB = 0;\n\
-	uint32_t outA = 0;\n\
+	u32 id = get_global_id(0);\n\
+	fp32 outR = 0.0f;\n\
+	fp32 outG = 0.0f;\n\
+	fp32 outB = 0.0f;\n\
+	fp32 outA = 0.0f;\n\
 	fp32 smooth = 0.0;\n\
 	u8 type = (formula & 0x40000000) ? 1 : (uint8_t)power;\n\
 	fp32 y = (fp32)(id / resX);\n\
@@ -80,10 +80,10 @@ const char* const FractalOpenCL_SRC = "\
 	resY = (resY * sample) - 1;\n\
 	x *= sample;\n\
 	y *= sample;\n\
-	fp32 numY = ((fp32)resY / 2.0f);\n\
-	fp32 numX = ((fp32)resX / 2.0f);\n\
-	fp32 rSin = sin(rot);\n\
-	fp32 rCos = cos(rot);\n\
+	const fp32 numY = ((fp32)resY / 2.0f);\n\
+	const fp32 numX = ((fp32)resX / 2.0f);\n\
+	const fp32 rSin = sin(rot);\n\
+	const fp32 rCos = cos(rot);\n\
 	x -= numX;\n\
 	y -= numY;\n\
 \n\
@@ -397,14 +397,14 @@ const char* const FractalOpenCL_SRC = "\
 			}\n\
 			\n\
 			if (zs > breakoutValue) {\n\
-				outR += (uint32_t)(exterior_R_Amp * (511.5f - 511.5f * cos(TAU * (exterior_R_Freq * smooth + exterior_R_Phase))));\n\
-				outG += (uint32_t)(exterior_G_Amp * (511.5f - 511.5f * cos(TAU * (exterior_G_Freq * smooth + exterior_G_Phase))));\n\
-				outB += (uint32_t)(exterior_B_Amp * (511.5f - 511.5f * cos(TAU * (exterior_B_Freq * smooth + exterior_B_Phase))));\n\
+				outR += exterior_R_Amp * exterior_Alpha * (0.5f - 0.5f * cos(TAU * (exterior_R_Freq * smooth + exterior_R_Phase)));\n\
+				outG += exterior_G_Amp * exterior_Alpha * (0.5f - 0.5f * cos(TAU * (exterior_G_Freq * smooth + exterior_G_Phase)));\n\
+				outB += exterior_B_Amp * exterior_Alpha * (0.5f - 0.5f * cos(TAU * (exterior_B_Freq * smooth + exterior_B_Phase)));\n\
 				outA += exterior_Alpha;\n\
 			} else {\n\
-				outR += (uint32_t)(interior_R_Amp * (511.5f - 511.5f * cos(log(low) * interior_R_Freq + interior_R_Phase)));\n\
-				outG += (uint32_t)(interior_G_Amp * (511.5f - 511.5f * cos(log(low) * interior_G_Freq + interior_G_Phase)));\n\
-				outB += (uint32_t)(interior_B_Amp * (511.5f - 511.5f * cos(log(low) * interior_B_Freq + interior_B_Phase)));\n\
+				outR += interior_R_Amp * interior_Alpha * (0.5f - 0.5f * cos(log(low) * interior_R_Freq + interior_R_Phase));\n\
+				outG += interior_G_Amp * interior_Alpha * (0.5f - 0.5f * cos(log(low) * interior_G_Freq + interior_G_Phase));\n\
+				outB += interior_B_Amp * interior_Alpha * (0.5f - 0.5f * cos(log(low) * interior_B_Freq + interior_B_Phase));\n\
 				outA += interior_Alpha;\n\
 			}\n\
 			x++;\n\
@@ -412,11 +412,16 @@ const char* const FractalOpenCL_SRC = "\
 		x -= sample;\n\
 		y++;\n\
 	}\n\
-	uint32_t div = sample * sample * 4;\n\
-	outR /= div;\n\
-	outG /= div;\n\
-	outB /= div;\n\
-	outA /= sample * sample;\n\
+	if (outA != 0.0f) {\n\
+		outR = outR / outA;\n\
+		outG = outG / outA;\n\
+		outB = outB / outA;\n\
+		outA = outA / (fp32)(sample * sample);\n\
+	}\n\
+	outR *= 255.0f;\n\
+	outG *= 255.0f;\n\
+	outB *= 255.0f;\n\
+	outA *= 255.0f;\n\
 	//uint32_t outAvr = (outR + outG + outB) / 3; outR = outAvr; outG = outAvr; outB = outAvr; /* Grey-scale */\n\
 	//uint32_t outAvr = (outR + outG + outB) / 3; outR = (outAvr + outR) / 2; outG = (outAvr + outG) / 2; outB = (outAvr + outB) / 2; /* Low-saturation */\n\
 	id *= IMAGE_BUFFER_CHANNELS;\n\

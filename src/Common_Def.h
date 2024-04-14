@@ -65,8 +65,8 @@ typedef int32_t dim32_t;
 //#define BUILD_DEBUG
 #define BUILD_RELEASE
 
-// #define PLATFORM_WINDOWS
-#define PLATFORM_LINUX
+#define PLATFORM_WINDOWS
+// #define PLATFORM_LINUX
 
 /* Constants */
 

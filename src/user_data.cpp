@@ -428,7 +428,9 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 	}
 	size_t importLen = fread(config_text, sizeof(char), fileSize, file);
 	config_text[fileSize] = '\0';
-	printFlush("import_config_data: len %zu fread %zu",fileSize,importLen);
+	if (fileSize != importLen) {
+		printWarning("import_config_data: len %zu fread %zu",fileSize,importLen);
+	}
 
 	load_config_values(config_data,config_text);
 	clean_User_Configuration_Data(config_data);
