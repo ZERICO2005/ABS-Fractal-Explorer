@@ -68,20 +68,24 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.screenSplit = 0;
 		FRAC.swapJuliaSplit = false;
 		FRAC.cursorZValue = false;
+		FRAC.relativeZValue = false;
 		FRAC.showFloatingJulia = false;
 		FRAC.adjustZoomToPower = false;
 		FRAC.polarMandelbrot = false;
 		FRAC.lockToCardioid = false;
 		FRAC.flipCardioidSide = false;
+		/* Coordinates */
 		FRAC.r = 0.0;
 		FRAC.i = 0.0;
 		FRAC.zr = 0.0;
 		FRAC.zi = 0.0;
 		FRAC.zoom = -log10(getABSFractalMaxRadius(2.0));
+		/* Transformation */
 		FRAC.rot = 0.0;
 		FRAC.sX = 1.0;
 		FRAC.sY = 1.0;
 		FRAC.stretch = 0.0;
+		/* Parameters */
 		FRAC.maxItr = 192;
 		FRAC.maxItr_Log2 = log2(192.0);
 		FRAC.power = 2;
@@ -89,8 +93,9 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.integerPolarPower = false;
 		FRAC.formula = 0;
 		FRAC.breakoutValue = 4096.0;
-		FRAC.smoothColoring = true;
+		/* Coloring */
 
+		FRAC.smoothColoring = true;
 		FRAC.exterior_Alpha = 1.0;
 			FRAC.exterior_R_Amp   = 0.9 ;
 			FRAC.exterior_R_Freq  = 0.45;
@@ -119,29 +124,33 @@ void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
 		FRAC.screenSplit = 0;
 		FRAC.swapJuliaSplit = false;
 		FRAC.cursorZValue = false;
+		FRAC.relativeZValue = false;
 		FRAC.showFloatingJulia = false;
-		FRAC.adjustZoomToPower = true;
+		FRAC.adjustZoomToPower = false;
 		FRAC.polarMandelbrot = true;
 		FRAC.integerPolarPower = false;
 		FRAC.lockToCardioid = false;
 		FRAC.flipCardioidSide = false;
+		/* Coordinates */
 		FRAC.r = 0.0;
 		FRAC.i = 0.0;
 		FRAC.zr = 0.0;
 		FRAC.zi = 0.0;
 		FRAC.zoom = -log10(getABSFractalMaxRadius(3.0));
+		/* Transformation */
 		FRAC.rot = 0.0;
 		FRAC.sX = 1.0;
 		FRAC.sY = 1.0;
 		FRAC.stretch = 0.0;
+		/* Parameters */
 		FRAC.maxItr = 192;
 		FRAC.maxItr_Log2 = log2(192.0);
 		FRAC.power = 3;
 		FRAC.polarPower = 3.0;
 		FRAC.formula = 0;
 		FRAC.breakoutValue = 4096.0;
+		/* Coloring */
 		FRAC.smoothColoring = true;
-
 		FRAC.exterior_Alpha = 1.0;
 			FRAC.exterior_R_Amp   = 0.875  ;
 			FRAC.exterior_R_Freq  = 0.59375;

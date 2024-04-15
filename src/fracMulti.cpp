@@ -29,7 +29,7 @@ uint64_t factorialLUT[] = {
 
 /* BOILERPLATE */
 
-#define BREAKOUT 4096.0
+//#define BREAKOUT 4096.0
 
 #define FractalParameters BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, size_t p0, size_t p1, std::atomic<bool>& ABORT_RENDERING
 
@@ -40,6 +40,8 @@ uint64_t factorialLUT[] = {
 // * 1 for 8bit color
 inline uint32_t Div_Mult(int32_t s) { return (uint32_t)s * 4; }
 
+constexpr inline fp64 inverse_log2(fp64 p) { return 1.0 / log2(p); }
+
 #ifdef MONOCHROME_MODE
 	#define CPU_Interior_Coloring(fpX); \
 		outR += param.interior_B_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_B_Freq + param.interior_B_Phase));\
@@ -48,7 +50,7 @@ inline uint32_t Div_Mult(int32_t s) { return (uint32_t)s * 4; }
 		outA += param.interior_Alpha;
 
 	#define CPU_Exterior_Coloring(fpX,l); \
-		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
+		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) * inverse_log2_power));\
 		outR += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
 		outG += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
 		outB += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
@@ -60,8 +62,8 @@ inline uint32_t Div_Mult(int32_t s) { return (uint32_t)s * 4; }
 		outB += param.interior_B_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_B_Freq + param.interior_B_Phase));\
 		outA += param.interior_Alpha;
 
-	#define CPU_Exterior_Coloring(fpX,l); \
-		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) / log2(l)));\
+	#define CPU_Exterior_Coloring(fpX, inverse_log2_power); \
+		fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) * inverse_log2_power));\
 		outR += param.exterior_R_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
 		outG += param.exterior_G_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase)));\
 		outB += param.exterior_B_Amp * param.exterior_Alpha * (0.5 - 0.5 * cos(TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase)));\
@@ -129,7 +131,7 @@ for (; x < resX; x += sample) {\
 						break;\
 					}\
 				}\
-				if (zs <= BREAKOUT) {\
+				if (zs <= param.breakoutValue) {\
 					CPU_Interior_Coloring(fpX);\
 				}\
 				x++;\
@@ -188,7 +190,7 @@ for (; x < resX; x += sample) {\
 		zr = temp;\
 	}\
 	\
-	Block2(fpX,2.0)
+	Block2(fpX, inverse_log2(2.0))
 /* quadraticRender(fpX) */
 	
 void quadraticRenderFP32(FractalParameters) { quadraticRender(fp32) }
@@ -243,7 +245,7 @@ void quadraticRenderFP64(FractalParameters) { quadraticRender(fp64) }
 		}\
 	}\
 	\
-	Block2(fpX,3.0)
+	Block2(fpX, inverse_log2(3.0))
 /* cubicRender(fpX) */
 	
 void cubicRenderFP32(FractalParameters) { cubicRender(fp32) }
@@ -300,7 +302,7 @@ void cubicRenderFP64(FractalParameters) { cubicRender(fp64) }
 		}\
 	}\
 	\
-	Block2(fpX,4.0)
+	Block2(fpX, inverse_log2(4.0))
 /* quarticRender(fpX) */
 	
 void quarticRenderFP32(FractalParameters) { quarticRender(fp32) }
@@ -371,7 +373,7 @@ void quarticRenderFP64(FractalParameters) { quarticRender(fp64) }
 		}\
 	}\
 	\
-	Block2(fpX,5.0)
+	Block2(fpX, inverse_log2(5.0))
 /* quinticRender(fpX) */
 	
 void quinticRenderFP32(FractalParameters) { quinticRender(fp32) }
@@ -445,7 +447,7 @@ void quinticRenderFP64(FractalParameters) { quinticRender(fp64) }
 		}\
 	}\
 	\
-	Block2(fpX,6.0)
+	Block2(fpX, inverse_log2(6.0))
 /* sexticRender(fpX) */
 	
 void sexticRenderFP32(FractalParameters) { sexticRender(fp32) }
@@ -808,7 +810,6 @@ fpX polarAngle(fpX zr, fpX zi) {
 	return angle;
 }
 
-
 #define polarRender(fpX) \
 	uint8_t* data = buf->vram;\
 	dim32_t resX = buf->resX;\
@@ -844,10 +845,10 @@ fpX polarAngle(fpX zr, fpX zi) {
 			if (p0 == p1 || ABORT_RENDERING == true) {\
 				return;\
 			}\
-			uint32_t outR = 0;\
-			uint32_t outG = 0;\
-			uint32_t outB = 0;\
-			uint32_t outA = 0;\
+			fp64 outR = 0.0;\
+			fp64 outG = 0.0;\
+			fp64 outB = 0.0;\
+			fp64 outA = 0.0;\
 			for (int32_t v = 0; v < sample; v++) {\
 				for (int32_t u = 0; u < sample; u++) {\
 					fpX xCord = (((fpX)x - numX) * recip_numZ);\
@@ -868,18 +869,16 @@ fpX polarAngle(fpX zr, fpX zi) {
 						if (zs < low) {\
 							low = zs;\
 						} else if (zs > param.breakoutValue) {\
-							fp64 smooth = log1p(fmax(0.0, (fp64)itr - (fp64)log2(log2(zs) / (fpX)2.0) * powerLog2));\
-							outR += (uint32_t)(param.exterior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase))));\
-							outG += (uint32_t)(param.exterior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase))));\
-							outB += (uint32_t)(param.exterior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase))));\
-							outA += (uint32_t)(param.exterior_Alpha * (Color_Mult * 2.0));\
+							CPU_Exterior_Coloring(fpX, powerLog2);\
+							break;\
 						}\
 					}\
-					if (zs <= BREAKOUT) {\
-						outR += (uint32_t)(param.interior_R_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_R_Freq + param.interior_R_Phase)));\
-						outG += (uint32_t)(param.interior_G_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_G_Freq + param.interior_G_Phase)));\
-						outB += (uint32_t)(param.interior_B_Amp * ((Color_Mult) - (Color_Mult) * cos(log(low) * param.interior_B_Freq + param.interior_B_Phase)));\
-						outA += (uint32_t)(param.interior_Alpha * (Color_Mult * 2.0));\
+					if (zs <= param.breakoutValue) {\
+						outR += param.interior_R_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_R_Freq + param.interior_R_Phase));\
+						outG += param.interior_G_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_G_Freq + param.interior_G_Phase));\
+						outB += param.interior_B_Amp * param.interior_Alpha * (0.5 - 0.5 * cos(log((fp64)low) * param.interior_B_Freq + param.interior_B_Phase));\
+						outA += param.interior_Alpha;\
+						CPU_Interior_Coloring(fpX);\
 					}\
 					x++;\
 				}\
@@ -887,11 +886,17 @@ fpX polarAngle(fpX zr, fpX zi) {
 				y++;\
 			}\
 			y -= sample;\
-			uint32_t div = Div_Mult(sample * sample);\
-			outR /= div;\
-			outG /= div;\
-			outB /= div;\
-			outA /= div;\
+			/*uint32_t div = Div_Mult(sample * sample);*/\
+			if (outA != 0.0) {\
+				outR = outR / outA;\
+				outG = outG / outA;\
+				outB = outB / outA;\
+				outA = outA / (fp64)(sample * sample);\
+			}\
+			outR *= 255.0;\
+			outG *= 255.0;\
+			outB *= 255.0;\
+			outA *= 255.0;\
 			data[dataPtr] = (uint8_t)outR; dataPtr++;\
 			data[dataPtr] = (uint8_t)outG; dataPtr++;\
 			data[dataPtr] = (uint8_t)outB; dataPtr++;\
