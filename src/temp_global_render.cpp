@@ -99,11 +99,6 @@ Frame_Pacer GUI_Frame_Pacer;
 	ImageBuffer* Secondary_Image = nullptr;
 	ImageBuffer* Secondary_Image_Preview = nullptr;
 
-	//#define MANUAL_FRAME_RATE_OVERRIDE
-	fp64 FRAME_RATE = 60.0; // Double the max screen refresh rate
-	const fp64 FRAME_RATE_OFFSET = 0.01;
-	nano64_t FRAME_RATE_NANO = 0;
-	//#define  Default_Frame_Rate_Multiplier 1.0
 	fp64 DeltaTime = 0.0;
 	nano64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
@@ -117,8 +112,8 @@ Frame_Pacer GUI_Frame_Pacer;
 	bool bootup_Fractal_Frame_Rendered = false;
 
 	TimerBox GUI_FrameTimer;
-	nano64_t GUI_FrameTimeNano = SECONDS_TO_NANO(1.0/60.0);
-	fp64 GUI_FrameTime = 1.0/60.0;
+	nano64_t GUI_FrameTimeNano = FRAMERATE_TO_NANO(60.0);
+	fp64 GUI_FrameTimeSeconds = FRAMERATE_TO_SECONDS(60.0);
 	fp64 GUI_FrameRate = 60.0;
 
 /* Fractals */

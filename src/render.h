@@ -72,7 +72,7 @@ void newFrame();
 /* Framerate stuff */
 
 void updateFrameTimeNano(nano64_t frameTime);
-void updateFrameTime(fp64 frameTime);
+void updateFrameTimeSeconds(fp64 frameTime);
 void updateFrameRate(fp64 frameRate);
 
 namespace Image_File_Format {

@@ -269,6 +269,24 @@ int write_Render_Buffers(BufferBox* primary) {
 	return 0;
 }
 
+/* Frame Time */
+	std::mutex pDat_FrameTime_Mutex;
+	nano64_t render_FrameTime = FRAMERATE_TO_NANO(CALC_FRAMERATE_OFFSET(60.0));
+	nano64_t read_FrameTime() {
+		std::lock_guard<std::mutex> lock(pDat_FrameTime_Mutex);
+		return render_FrameTime;
+	}
+	fp64 read_FrameRate() {
+		return NANO_TO_FRAMERATE(read_FrameTime());
+	}
+	void write_FrameTime(nano64_t frameTime) {
+		std::lock_guard<std::mutex> lock(pDat_FrameTime_Mutex);
+		render_FrameTime = frameTime;
+	}
+	void write_FrameRate(fp64 frameRate) {
+		write_FrameTime(FRAMERATE_TO_NANO(frameRate));
+	}
+
 /* Image Buffer */
 
 std::mutex pDat_Image_Buffers_Mutex;

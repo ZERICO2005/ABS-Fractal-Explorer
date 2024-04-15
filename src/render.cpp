@@ -629,6 +629,12 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 // fp64 GUI_FrameTime = 1.0/60.0;
 // fp64 GUI_FrameRate = 60.0;
 
+inline void paramToggle(Key_Function::Key_Function_Enum func, bool& toggle, fp64 freq) {
+	if (funcTimeDelay(func,freq)) {
+		toggle = !toggle;
+	}
+}
+
 int_enum updateFractalParameters() {
 	using namespace Key_Function;
 	using namespace Change_Level;
@@ -646,8 +652,9 @@ int_enum updateFractalParameters() {
 		#define ABS_Mandelbrot_Default_Power 2
 		#define Polar_Mandelbrot_Default_Power 3.0
 	/* Boolean toggles */
-		#define paramToggle(func,toggle,freq) if (funcTimeDelay(func,freq)) { toggle = !toggle; }
+
 		#define paramToggleUpdate(func,toggle,freq,level) if (funcTimeDelay(func,freq)) { toggle = !toggle; Update_Level(update_level, level); }
+		
 		paramToggle(toggleAdjustZoomToPower,FRAC.adjustZoomToPower,0.4);
 		paramToggleUpdate(toggleJulia,FRAC.juliaSet,0.4,Major_Reset);
 		paramToggleUpdate(toggleABSandPolarMandelbrot,FRAC.polarMandelbrot,0.4,Major_Reset);
@@ -655,7 +662,7 @@ int_enum updateFractalParameters() {
 		paramToggle(toggleCursorZValue,FRAC.cursorZValue,0.4);
 		paramToggleUpdate(toggleStartingZ,FRAC.startingZ,0.4,Minor_Reset);
 		paramToggleUpdate(toggleIntegerPower,FRAC.integerPolarPower,0.4,Minor_Reset);
-		#undef paramToggle
+		
 	/* Real and Imaginary Coordinates */
 		if (func_stat[incRealPos].triggered == true) {
 			moveCord(
@@ -981,37 +988,38 @@ int_enum updateFractalParameters() {
 }
 
 void correctFrameTime() {
-	valueClamp(GUI_FrameTimeNano,SECONDS_TO_NANO(1.0/1200.0),SECONDS_TO_NANO(1.0/6.0));
-	valueClamp(GUI_FrameTime,1.0/1200.0,1.0/6.0);
-	valueClamp(GUI_FrameRate,6.0,1200.0);
-	GUI_FrameTimer.setFreq(GUI_FrameTime);
+	valueClamp(GUI_FrameTimeNano, FRAMETIME_MINIMUM, FRAMETIME_MAXIMUM);
+	valueClamp(GUI_FrameTimeSeconds, NANO_TO_SECONDS(FRAMETIME_MINIMUM), NANO_TO_SECONDS(FRAMETIME_MAXIMUM));
+	valueClamp(GUI_FrameRate, FRAMERATE_MINIMUM, FRAMERATE_MAXIMUM);
+	GUI_FrameTimer.setFreq(GUI_FrameTimeNano);
+	write_FrameTime(GUI_FrameTimeNano);
 }
 
-void updateFrameTimeNano(nano64_t frameTime) {
-	GUI_FrameTimeNano = frameTime;
-	GUI_FrameTime = NANO_TO_SECONDS(frameTime);
-	GUI_FrameRate = 1.0 / NANO_TO_SECONDS(frameTime);
+void updateFrameTimeNano(nano64_t frameTimeNano) {
+	GUI_FrameTimeNano = frameTimeNano;
+	GUI_FrameTimeSeconds = NANO_TO_SECONDS(frameTimeNano);
+	GUI_FrameRate = NANO_TO_FRAMERATE(frameTimeNano);
 	correctFrameTime();
 }
 
-void updateFrameTime(fp64 frameTime) {
-	GUI_FrameTimeNano = SECONDS_TO_NANO(frameTime);
-	GUI_FrameTime = frameTime;
-	GUI_FrameRate = 1.0 / frameTime;
+void updateFrameTimeSeconds(fp64 frameTimeSeconds) {
+	GUI_FrameTimeNano = SECONDS_TO_NANO(frameTimeSeconds);
+	GUI_FrameTimeSeconds = frameTimeSeconds;
+	GUI_FrameRate = SECONDS_TO_FRAMERATE(frameTimeSeconds);
 	correctFrameTime();
 }
 
 void updateFrameRate(fp64 frameRate) {
-	GUI_FrameTimeNano = SECONDS_TO_NANO(1.0 / frameRate);
-	GUI_FrameTime = 1.0 / frameRate;
+	GUI_FrameTimeNano = FRAMERATE_TO_NANO(frameRate);
+	GUI_FrameTimeSeconds = FRAMERATE_TO_SECONDS(frameRate);
 	GUI_FrameRate = frameRate;
 	correctFrameTime();
 }
 
 
 int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
-	updateFrameRate(FRAME_RATE + FRAME_RATE_OFFSET);
-	GUI_FrameTimer = TimerBox(GUI_FrameTime);
+	
+	GUI_FrameTimer = TimerBox(GUI_FrameTimeNano);
 
 	TimerBox maxFrameReset = TimerBox(1.0 / 5.0); /* Keeps track of longest frame times */
 	write_Update_Level(Change_Level::Full_Reset);
@@ -1263,15 +1271,18 @@ void calculate_init_window_size(
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 	init_config_data();
+	const User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
+
 	//SDL_Init(SDL_INIT_VIDEO);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
 		return -1;
 	}
 	printf("\nSystem Information:");
+	
 	dim32_t dispResX, dispResY;
 	dim32_t initResX, initResY, initPosX, initPosY;
-	int32_t initDisplayIndex = loadDisplayInformation(config_data.Display_Preferences,initResX,initResY,initPosX,initPosY);
+	int32_t initDisplayIndex = loadDisplayInformation(Display_Preferences, initResX, initResY, initPosX, initPosY);
 	if (initDisplayIndex == 0) {
 		printCriticalError("init_Render failed to loadDisplayInformation");
 	}
@@ -1283,7 +1294,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		initResX, initResY,
 		initPosX, initPosY
 	);
-	switch (config_data.Display_Preferences.Bootup_Fullscreen) {
+	switch (Display_Preferences.Bootup_Fullscreen) {
 		case Display_Fullscreen::Windowed_Fullscreen:
 			break;
 		case Display_Fullscreen::Windowed:
@@ -1294,19 +1305,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 				initPosX, initPosY
 			);
 	}
-
-
 	//printFlush("\nNew: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
-	{
-		#ifndef MANUAL_FRAME_RATE_OVERRIDE
-			const DisplayInfo* disp = getDisplayFromIndex(initDisplayIndex);
-			if (disp != nullptr) {
-				FRAME_RATE = disp->getRefreshRate() * Default_Frame_Rate_Multiplier;
-			}
-		#endif
-		FRAME_RATE += FRAME_RATE_OFFSET;
-		valueClamp(FRAME_RATE,12.0,1200.0);
-	}
+
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %" PRId32 "MB",SDL_GetSystemRAM());
 	// Allocate Buffers
@@ -1326,7 +1326,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	SDL_RenderSetLogicalSize(renderer, Master.resX, Master.resY);
 	set_Window_Fullscreen_Mode(Display_Fullscreen::Windowed);
-	if ((Display_Fullscreen::Display_Fullscreen_Enum)config_data.Display_Preferences.Bootup_Fullscreen == Display_Fullscreen::Windowed_Fullscreen) {
+	if ((Display_Fullscreen::Display_Fullscreen_Enum)Display_Preferences.Bootup_Fullscreen == Display_Fullscreen::Windowed_Fullscreen) {
 		set_Window_Fullscreen_Mode(Display_Fullscreen::Windowed_Fullscreen);
 	}
 	
@@ -1343,6 +1343,27 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
 	ImGui_ImplSDLRenderer2_Init(renderer);
 	ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+
+	{ /* Init FPS */
+		fp64 initFPS = 60.0; // Default fallback value
+		const DisplayInfo* dispFPS = getInitDisplayRefreshRate(
+			Display_Preferences, window,
+			RESX_Minimum, RESY_Minimum
+		);
+		if (dispFPS == nullptr) {
+			initFPS = Display_Preferences.Constant_RefreshRate_Value;
+		} else {
+			int32_t mult_Value = Display_Preferences.Maximum_FPS_Multiplier;
+			fp64 mult_FPS = 1.0;
+			if (mult_Value >= 1) {
+				mult_FPS = (fp64)(mult_Value + 1);
+			} else if (mult_Value <= -1) {
+				mult_FPS = 1.0 / (fp64)(-mult_Value + 1);
+			}
+			initFPS = dispFPS->getRefreshRate() * mult_FPS;
+		}
+		updateFrameRate(CALC_FRAMERATE_OFFSET(initFPS));
+	}
 
 	// { // Doesn't work
 	// 	int32_t resX, resY, dimX, dimY;

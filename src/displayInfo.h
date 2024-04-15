@@ -155,6 +155,32 @@ const DisplayInfo* getBootupDisplay(
 	int32_t cursorPosX = INT32_MIN, int32_t cursorPosY = INT32_MIN
 );
 
+const DisplayInfo* getInitDisplayRefreshRate(
+	const User_Display_Preferences& Display_Config,
+	dim32_t minResX = 0, dim32_t minResY = 0,
+	int32_t posX = INT32_MIN, int32_t posY = INT32_MIN
+);
+
+const DisplayInfo* getInitDisplayRefreshRate(
+	const User_Display_Preferences& Display_Config,
+	SDL_Window* window,
+	dim32_t minResX = 0, dim32_t minResY = 0
+);
+
+const DisplayInfo* matchDisplayRefreshRate(
+	Display_Bootup::Display_Bootup_Enum type,
+	const User_Display_Preferences& Display_Config,
+	dim32_t minResX = 0, dim32_t minResY = 0,
+	int32_t posX = INT32_MIN, int32_t posY = INT32_MIN
+);
+
+const DisplayInfo* matchDisplayRefreshRate(
+	Display_Bootup::Display_Bootup_Enum type,
+	const User_Display_Preferences& Display_Config,
+	SDL_Window* window,
+	dim32_t minResX = 0, dim32_t minResY = 0
+);
+
 // Used to determine if the display configuration has changed. Returns 0 if parameters are invalid
 uint64_t getDisplayConfigHash();
 

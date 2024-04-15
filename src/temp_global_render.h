@@ -99,11 +99,6 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern ImageBuffer* Secondary_Image;
 	extern ImageBuffer* Secondary_Image_Preview;
 
-	//#define MANUAL_FRAME_RATE_OVERRIDE
-	extern fp64 FRAME_RATE; // Double the max screen refresh rate
-	extern const fp64 FRAME_RATE_OFFSET;
-	extern nano64_t FRAME_RATE_NANO;
-	#define  Default_Frame_Rate_Multiplier 1.0
 	extern fp64 DeltaTime;
 	extern nano64_t END_SLEEP_HEADROOM;
 
@@ -118,7 +113,7 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 	extern TimerBox GUI_FrameTimer;
 	extern nano64_t GUI_FrameTimeNano;
-	extern fp64 GUI_FrameTime;
+	extern fp64 GUI_FrameTimeSeconds;
 	extern fp64 GUI_FrameRate;
 
 /* Fractals */

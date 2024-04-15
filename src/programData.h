@@ -114,6 +114,12 @@ int write_Image_Buffers(ImageBuffer* primary);
 void setRenderDelta(fp64 t);
 fp64 getRenderDelta();
 
+/* Frame Time */
+	nano64_t read_FrameTime();
+	fp64 read_FrameRate();
+	void write_FrameTime(nano64_t frameTime);
+	void write_FrameRate(fp64 frameRate);
+
 /* Image Render */
 	void reset_Image_Render();
 	void send_Image_Render(

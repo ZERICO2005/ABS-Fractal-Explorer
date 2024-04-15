@@ -487,6 +487,79 @@ const DisplayInfo* matchDisplayAttribute(
 	return getBootupDisplay(Display_Config_Copy,minResX,minResY,cursorPosX,cursorPosY);
 }
 
+const DisplayInfo* getInitDisplayRefreshRate(
+	const User_Display_Preferences& Display_Config,
+	dim32_t minResX, dim32_t minResY,
+	int32_t posX, int32_t posY
+) {
+	const DisplayInfo* Select_Display = nullptr;
+	switch(Display_Config.Display_RefreshRate_Type) {
+		case Display_RefreshRate::HighestRefreshRate:
+			Select_Display = matchDisplayAttribute(
+				Display_Bootup::HighFrameRate, Display_Config,
+				minResX, minResY,
+				posX, posY
+			);
+		break;
+		case Display_RefreshRate::LowestRefreshRate:
+			Select_Display = matchDisplayAttribute(
+				Display_Bootup::LowFrameRate, Display_Config,
+				minResX, minResY,
+				posX, posY
+			);
+		break;
+		case Display_RefreshRate::ConstantValue:
+			Select_Display = nullptr;
+		break;
+		case Display_RefreshRate::Automatic:
+		case Display_RefreshRate::CurrentMonitor:
+		default:
+			Select_Display = getDisplayFromPosition(posX, posY);
+	}
+	return Select_Display;
+}
+
+const DisplayInfo* getInitDisplayRefreshRate(
+	const User_Display_Preferences& Display_Config,
+	SDL_Window* window,
+	dim32_t minResX, dim32_t minResY
+) {
+	int32_t posX = INT32_MIN;
+	int32_t posY = INT32_MIN;
+	const DisplayInfo* disp = getDisplayFromWindowPosition(window);
+	if (disp != nullptr) {
+		disp->getPosition(posX, posY);
+	}
+	return getInitDisplayRefreshRate(Display_Config, minResX, minResY, posX, posY);
+}
+
+const DisplayInfo* matchDisplayRefreshRate(
+	Display_Bootup::Display_Bootup_Enum type,
+	const User_Display_Preferences& Display_Config,
+	dim32_t minResX, dim32_t minResY,
+	int32_t posX, int32_t posY
+) {
+	User_Display_Preferences Display_Config_Copy = Display_Config;
+	Display_Config_Copy.Display_Bootup_Type = type;
+	return getInitDisplayRefreshRate(Display_Config_Copy, minResX, minResY, posX, posY);
+}
+
+const DisplayInfo* matchDisplayRefreshRate(
+	Display_Bootup::Display_Bootup_Enum type,
+	const User_Display_Preferences& Display_Config,
+	SDL_Window* window,
+	dim32_t minResX, dim32_t minResY
+) {
+	int32_t posX = INT32_MIN;
+	int32_t posY = INT32_MIN;
+	const DisplayInfo* disp = getDisplayFromWindowPosition(window);
+	if (disp != nullptr) {
+		disp->getPosition(posX, posY);
+	}
+	return matchDisplayRefreshRate(type, Display_Config, minResX, minResY, posX, posY);
+}
+
+
 uint64_t getDisplayConfigHash() {
 	const std::vector<DisplayInfo>& DisplayList = getDisplayList();
 	if (DisplayList.size() == 0) {

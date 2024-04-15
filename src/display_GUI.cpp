@@ -1079,29 +1079,33 @@ void Menu_Settings() {
 			)) {
 
 			}
-			const DisplayInfo* Select_Display = getDisplayFromWindowPosition(window);
+			const DisplayInfo* Select_Display = matchDisplayRefreshRate(
+				(Display_Bootup::Display_Bootup_Enum)Display_Preferences.Display_RefreshRate_Type,
+				config_Display, window, RESX_Minimum, RESY_Minimum
+			);
 
-			switch(Display_Preferences.Display_RefreshRate_Type) {
-				case Display_RefreshRate::HighestRefreshRate:
-					Select_Display = matchDisplayAttribute(
-						Display_Bootup::HighFrameRate, config_Display,
-						RESX_Minimum, RESY_Minimum
-					);
-				break;
-				case Display_RefreshRate::LowestRefreshRate:
-					Select_Display = matchDisplayAttribute(
-						Display_Bootup::LowFrameRate, config_Display,
-						RESX_Minimum, RESY_Minimum
-					);
-				break;
-				case Display_RefreshRate::ConstantValue:
-					Select_Display = nullptr;
-				break;
-				case Display_RefreshRate::Automatic:
-				case Display_RefreshRate::CurrentMonitor:
-				default:
-					Select_Display = getDisplayFromWindowPosition(window);
-			}
+			// switch(Display_Preferences.Display_RefreshRate_Type) {
+			// 	case Display_RefreshRate::HighestRefreshRate:
+			// 		Select_Display = matchDisplayAttribute(
+			// 			Display_Bootup::HighFrameRate, config_Display,
+			// 			RESX_Minimum, RESY_Minimum
+			// 		);
+			// 	break;
+			// 	case Display_RefreshRate::LowestRefreshRate:
+			// 		Select_Display = matchDisplayAttribute(
+			// 			Display_Bootup::LowFrameRate, config_Display,
+			// 			RESX_Minimum, RESY_Minimum
+			// 		);
+			// 	break;
+			// 	case Display_RefreshRate::ConstantValue:
+			// 		Select_Display = nullptr;
+			// 	break;
+			// 	case Display_RefreshRate::Automatic:
+			// 	case Display_RefreshRate::CurrentMonitor:
+			// 	default:
+			// 		Select_Display = getDisplayFromWindowPosition(window);
+			// }
+			
 			printDisplayInfo(Select_Display,false);
 
 			static fp64 FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
@@ -1115,7 +1119,7 @@ void Menu_Settings() {
 				FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
 				if (ImGui::Button("Apply FPS")) {
 					Display_Preferences.Constant_RefreshRate_Value = FPS_Constant_Value;
-					updateFrameRate(Display_Preferences.Constant_RefreshRate_Value + FRAME_RATE_OFFSET);
+					updateFrameRate(CALC_FRAMERATE_OFFSET(Display_Preferences.Constant_RefreshRate_Value));
 				}
 			} else { // Relative
 				ImGui::NewLine(); // Blank Line
@@ -1143,7 +1147,7 @@ void Menu_Settings() {
 				ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
 				if (ImGui::Button("Apply FPS")) {
 					Display_Preferences.Maximum_FPS_Multiplier = temp_frameMultiplier;
-					updateFrameRate(calculatedFPS + FRAME_RATE_OFFSET);
+					updateFrameRate(CALC_FRAMERATE_OFFSET(calculatedFPS));
 				}
 			}
 			ImGui::NewLine(); 

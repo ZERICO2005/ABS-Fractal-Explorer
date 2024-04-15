@@ -20,11 +20,11 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/04/13" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/04/14" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 10
-#define PROGRAM_V_TAG "Rev-1 Alpha"
+#define PROGRAM_V_TAG "Rev-2 Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* OpenCL */
@@ -95,6 +95,14 @@ constexpr size_t IMAGE_BUFFER_CHANNELS = 4;
 
 constexpr fp64 FRAMERATE_MINIMUM = 12.0;
 constexpr fp64 FRAMERATE_MAXIMUM = 1200.0;
+constexpr nano64_t FRAMETIME_MINIMUM = FRAMERATE_TO_NANO(FRAMERATE_MAXIMUM);
+constexpr nano64_t FRAMETIME_MAXIMUM = FRAMERATE_TO_NANO(FRAMERATE_MINIMUM);
+
+constexpr inline fp64 CALC_FRAMERATE_OFFSET(fp64 frameRate) {
+	frameRate += 0.01;
+	valueClamp(frameRate, FRAMERATE_MINIMUM, FRAMERATE_MAXIMUM);
+	return frameRate;
+}
 
 /* Use to correct any magic numbers
 (?<!\d\.)\b3\b

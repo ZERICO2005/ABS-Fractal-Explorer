@@ -19,6 +19,8 @@
 #include "fracMulti.h"
 #include "fracCL.h"
 
+
+TimerBox fracTime;
 Fractal_Data fracData;
 Render_Data primaryRender;
 Render_Data secondaryRender;
@@ -204,7 +206,7 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 	using namespace Key_Function;
 	
-	TimerBox fracTime(1.0 / (60.0 + 0.01));
+	fracTime.setFreq(read_FrameTime());
 	fp64 deltaTime = 0.0;
 
 	int render_update_level = Change_Level::Full_Reset;
@@ -239,7 +241,8 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 		} else {
 			reset_Image_Render();
 		}
-
+		
+		fracTime.setFreq(read_FrameTime());
 		while (fracTime.timerReset() == false) {
 			if (read_Abort_Render_Ongoing() == true) {
 				write_Abort_Render_Ongoing(false);
