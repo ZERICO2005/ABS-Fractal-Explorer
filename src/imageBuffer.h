@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -31,20 +31,20 @@ class ImageBuffer {
 		ImageBuffer(uint8_t* Vram, uint32_t ResX, uint32_t ResY, uint8_t Channels);
 		ImageBuffer(uint8_t* Vram, dim32_t ResX, dim32_t ResY, size_t Channels);
 		void deleteBuffer();
-		bool allocated(); // Returns if buffer is allocated
-		bool bufferSafe(); // Returns if the buffer is safe to write to
+		bool allocated() const; // Returns if buffer is allocated
+		bool bufferSafe() const; // Returns if the buffer is safe to write to
 		void reallocateBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels);
 		void reallocateBuffer(dim32_t ResX, dim32_t ResY, size_t Channels);
 		void resizeBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels); // Reallocates buffer only if more memory is needed
 		void resizeBuffer(dim32_t ResX, dim32_t ResY, size_t Channels); // Reallocates buffer only if more memory is needed
 		void trimBuffer(); // Reallocates buffer to current image size
-		void getBufferBox(BufferBox* buf);
-		void vramCopy(ImageBuffer* buf, bool reallocBuf = false);
+		void getBufferBox(BufferBox* buf) const;
+		void vramCopy(const ImageBuffer* buf, bool reallocBuf = false);
 		void clearBuffer();
 		void clearBuffer(uint8_t r, uint8_t g, uint8_t b);
 		void clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-		size_t getBufferSize();
-		size_t getAllocatedSize();
+		size_t getBufferSize() const;
+		size_t getAllocatedSize() const;
 		// Transformation
 		fp128 x00; fp128 y00;
 		fp128 x11; fp128 y11;
@@ -57,7 +57,7 @@ class ImageBuffer {
 		void setTransformationData(fp64 x00,fp64 y00,fp64 x11,fp64 y11,fp64 x01,fp64 y01,fp64 x10,fp64 y10); // cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
 		void setTransformationData(fp128 x0,fp128 y0,fp128 x1,fp128 y1); // cord{x0,y0} cord{x1,y1}
 		void setTransformationData(fp128 x00,fp128 y00,fp128 x11,fp128 y11,fp128 x01,fp128 y01,fp128 x10,fp128 y10); // cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
-		void setTransformationData(ImageBuffer* buf);
+		void setTransformationData(const ImageBuffer* buf);
 		void printTransformationData(fp64 freq = 0.6);
 		void samplePixel(uint8_t* r,uint8_t* g,uint8_t* b,fp64 x, fp64 y);
 	private:

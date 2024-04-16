@@ -56,141 +56,128 @@ uint64_t getABSValue(uint32_t power) {
 	return 1; // Unknown
 }
 
-void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type) {
-	if (frac == NULL) {
+void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type) {
+	if (frac == nullptr) {
 		printError("Fractal_Data* frac is NULL in setDefaultParameters()");
 		return;
 	}
-	if (type == Fractal_ABS_Mandelbrot) {
-		ABS_Mandelbrot& FRAC = frac->type.abs_mandelbrot;
-		FRAC.juliaSet = false;
-		FRAC.startingZ = true;
-		FRAC.screenSplit = 0;
-		FRAC.swapJuliaSplit = false;
-		FRAC.cursorZValue = false;
-		FRAC.relativeZValue = false;
-		FRAC.showFloatingJulia = false;
-		FRAC.adjustZoomToPower = false;
-		FRAC.polarMandelbrot = false;
-		FRAC.lockToCardioid = false;
-		FRAC.flipCardioidSide = false;
-		/* Coordinates */
-		FRAC.r = 0.0;
-		FRAC.i = 0.0;
-		FRAC.zr = 0.0;
-		FRAC.zi = 0.0;
-		FRAC.zoom = -log10(getABSFractalMaxRadius(2.0));
-		/* Transformation */
-		FRAC.rot = 0.0;
-		FRAC.sX = 1.0;
-		FRAC.sY = 1.0;
-		FRAC.stretch = 0.0;
-		/* Parameters */
-		FRAC.maxItr = 192;
-		FRAC.maxItr_Log2 = log2(192.0);
-		FRAC.power = 2;
-		FRAC.polarPower = 2.0;
-		FRAC.integerPolarPower = false;
-		FRAC.formula = 0;
-		FRAC.breakoutValue = 4096.0;
-		/* Coloring */
+	ABS_Mandelbrot& FRAC = *frac;
+	switch(type) {
+		case Fractal_ABS_Mandelbrot: {
+			FRAC.juliaSet = false;
+			FRAC.startingZ = true;
+			FRAC.screenSplit = 0;
+			FRAC.swapJuliaSplit = false;
+			FRAC.cursorZValue = false;
+			FRAC.relativeZValue = false;
+			FRAC.showFloatingJulia = false;
+			FRAC.adjustZoomToPower = false;
+			FRAC.polarMandelbrot = false;
+			FRAC.lockToCardioid = false;
+			FRAC.flipCardioidSide = false;
+			/* Coordinates */
+			FRAC.r = 0.0;
+			FRAC.i = 0.0;
+			FRAC.zr = 0.0;
+			FRAC.zi = 0.0;
+			FRAC.zoom = -log10(getABSFractalMaxRadius(2.0));
+			/* Transformation */
+			FRAC.rot = 0.0;
+			FRAC.sX = 1.0;
+			FRAC.sY = 1.0;
+			FRAC.stretch = 0.0;
+			/* Parameters */
+			FRAC.maxItr = 192;
+			FRAC.maxItr_Log2 = log2(192.0);
+			FRAC.power = 2;
+			FRAC.polarPower = 2.0;
+			FRAC.integerPolarPower = false;
+			FRAC.formula = 0;
+			FRAC.breakoutValue = 4096.0;
+			/* Coloring */
 
-		FRAC.smoothColoring = true;
-		FRAC.exterior_Alpha = 1.0;
-			FRAC.exterior_R_Amp   = 0.9 ;
-			FRAC.exterior_R_Freq  = 0.45;
-			FRAC.exterior_R_Phase = 0.5 ;
-			FRAC.exterior_G_Amp   = 1.0 ;
-			FRAC.exterior_G_Freq  = 0.45;
-			FRAC.exterior_G_Phase = 0.9 ;
-			FRAC.exterior_B_Amp   = 1.0 ;
-			FRAC.exterior_B_Freq  = 0.45;
-			FRAC.exterior_B_Phase = 0.1 ;
-		FRAC.interior_Alpha = 1.0;
-			FRAC.interior_R_Amp   = 0.0;
-			FRAC.interior_R_Freq  = 0.5;
-			FRAC.interior_R_Phase = 0.0;
-			FRAC.interior_G_Amp   = 0.0;
-			FRAC.interior_G_Freq  = 0.5;
-			FRAC.interior_G_Phase = 0.0;
-			FRAC.interior_B_Amp   = 1.0;
-			FRAC.interior_B_Freq  = 0.5;
-			FRAC.interior_B_Phase = 0.0;
-
-	} else if (type == Fractal_Polar_Mandelbrot) {
-		ABS_Mandelbrot& FRAC = frac->type.abs_mandelbrot;
-		FRAC.juliaSet = false;
-		FRAC.startingZ = true;
-		FRAC.screenSplit = 0;
-		FRAC.swapJuliaSplit = false;
-		FRAC.cursorZValue = false;
-		FRAC.relativeZValue = false;
-		FRAC.showFloatingJulia = false;
-		FRAC.adjustZoomToPower = false;
-		FRAC.polarMandelbrot = true;
-		FRAC.integerPolarPower = false;
-		FRAC.lockToCardioid = false;
-		FRAC.flipCardioidSide = false;
-		/* Coordinates */
-		FRAC.r = 0.0;
-		FRAC.i = 0.0;
-		FRAC.zr = 0.0;
-		FRAC.zi = 0.0;
-		FRAC.zoom = -log10(getABSFractalMaxRadius(3.0));
-		/* Transformation */
-		FRAC.rot = 0.0;
-		FRAC.sX = 1.0;
-		FRAC.sY = 1.0;
-		FRAC.stretch = 0.0;
-		/* Parameters */
-		FRAC.maxItr = 192;
-		FRAC.maxItr_Log2 = log2(192.0);
-		FRAC.power = 3;
-		FRAC.polarPower = 3.0;
-		FRAC.formula = 0;
-		FRAC.breakoutValue = 4096.0;
-		/* Coloring */
-		FRAC.smoothColoring = true;
-		FRAC.exterior_Alpha = 1.0;
-			FRAC.exterior_R_Amp   = 0.875  ;
-			FRAC.exterior_R_Freq  = 0.59375;
-			FRAC.exterior_R_Phase = 0.3125 ;
-			FRAC.exterior_G_Amp   = 0.9375 ;
-			FRAC.exterior_G_Freq  = 0.59375;
-			FRAC.exterior_G_Phase = 0.9375 ;
-			FRAC.exterior_B_Amp   = 1.0    ;
-			FRAC.exterior_B_Freq  = 0.59375;
-			FRAC.exterior_B_Phase = 0.6875 ;
-		FRAC.interior_Alpha = 1.0;
-			FRAC.interior_R_Amp   = 0.0;
-			FRAC.interior_R_Freq  = 0.5;
-			FRAC.interior_R_Phase = 0.0;
-			FRAC.interior_G_Amp   = 0.0;
-			FRAC.interior_G_Freq  = 0.5;
-			FRAC.interior_G_Phase = 0.0;
-			FRAC.interior_B_Amp   = 1.0;
-			FRAC.interior_B_Freq  = 0.5;
-			FRAC.interior_B_Phase = 0.0;
-		
-	} else if (type == Fractal_Sierpinski_Carpet) {
-		Sierpinski_Carpet& FRAC = frac->type.sierpinski_carpet;
-		FRAC.wallisSieve = false;
-		FRAC.renderOutOfBounds = false;
-		FRAC.fixateOnCorner = false;
-		FRAC.x = 0.5;
-		FRAC.y = 0.5;
-		FRAC.zoom = 0.0;
-		FRAC.squareSize = 1.0;
-		FRAC.maxItr = 6;
-		FRAC.baseColor = 0xFF0000;
-		FRAC.lowColor = 0x000000;
-		FRAC.lowColor = 0x00FFFF;
-	} else {
-		printError("Unknown Fractal Type: %d",type);
-		return;
+			FRAC.smoothColoring = true;
+			FRAC.exterior_Alpha = 1.0;
+				FRAC.exterior_R_Amp   = 0.9 ;
+				FRAC.exterior_R_Freq  = 0.45;
+				FRAC.exterior_R_Phase = 0.5 ;
+				FRAC.exterior_G_Amp   = 1.0 ;
+				FRAC.exterior_G_Freq  = 0.45;
+				FRAC.exterior_G_Phase = 0.9 ;
+				FRAC.exterior_B_Amp   = 1.0 ;
+				FRAC.exterior_B_Freq  = 0.45;
+				FRAC.exterior_B_Phase = 0.1 ;
+			FRAC.interior_Alpha = 1.0;
+				FRAC.interior_R_Amp   = 0.0;
+				FRAC.interior_R_Freq  = 0.5;
+				FRAC.interior_R_Phase = 0.0;
+				FRAC.interior_G_Amp   = 0.0;
+				FRAC.interior_G_Freq  = 0.5;
+				FRAC.interior_G_Phase = 0.0;
+				FRAC.interior_B_Amp   = 1.0;
+				FRAC.interior_B_Freq  = 0.5;
+				FRAC.interior_B_Phase = 0.0;
+		} break;
+		case Fractal_Polar_Mandelbrot: {
+			
+		}
+			FRAC.juliaSet = false;
+			FRAC.startingZ = true;
+			FRAC.screenSplit = 0;
+			FRAC.swapJuliaSplit = false;
+			FRAC.cursorZValue = false;
+			FRAC.relativeZValue = false;
+			FRAC.showFloatingJulia = false;
+			FRAC.adjustZoomToPower = false;
+			FRAC.polarMandelbrot = true;
+			FRAC.integerPolarPower = false;
+			FRAC.lockToCardioid = false;
+			FRAC.flipCardioidSide = false;
+			/* Coordinates */
+			FRAC.r = 0.0;
+			FRAC.i = 0.0;
+			FRAC.zr = 0.0;
+			FRAC.zi = 0.0;
+			FRAC.zoom = -log10(getABSFractalMaxRadius(3.0));
+			/* Transformation */
+			FRAC.rot = 0.0;
+			FRAC.sX = 1.0;
+			FRAC.sY = 1.0;
+			FRAC.stretch = 0.0;
+			/* Parameters */
+			FRAC.maxItr = 192;
+			FRAC.maxItr_Log2 = log2(192.0);
+			FRAC.power = 3;
+			FRAC.polarPower = 3.0;
+			FRAC.formula = 0;
+			FRAC.breakoutValue = 4096.0;
+			/* Coloring */
+			FRAC.smoothColoring = true;
+			FRAC.exterior_Alpha = 1.0;
+				FRAC.exterior_R_Amp   = 0.875  ;
+				FRAC.exterior_R_Freq  = 0.59375;
+				FRAC.exterior_R_Phase = 0.3125 ;
+				FRAC.exterior_G_Amp   = 0.9375 ;
+				FRAC.exterior_G_Freq  = 0.59375;
+				FRAC.exterior_G_Phase = 0.9375 ;
+				FRAC.exterior_B_Amp   = 1.0    ;
+				FRAC.exterior_B_Freq  = 0.59375;
+				FRAC.exterior_B_Phase = 0.6875 ;
+			FRAC.interior_Alpha = 1.0;
+				FRAC.interior_R_Amp   = 0.0;
+				FRAC.interior_R_Freq  = 0.5;
+				FRAC.interior_R_Phase = 0.0;
+				FRAC.interior_G_Amp   = 0.0;
+				FRAC.interior_G_Freq  = 0.5;
+				FRAC.interior_G_Phase = 0.0;
+				FRAC.interior_B_Amp   = 1.0;
+				FRAC.interior_B_Freq  = 0.5;
+				FRAC.interior_B_Phase = 0.0;
+		break;
+		default:
+			printError("Unknown Fractal Type: %d",type);
+			return;
 	}
-	frac->type_value = type;
-	frac->type_name = FractalTypeText[type];
 }
 
 void setMaxItr(ABS_Mandelbrot* frac, fp64 val) {

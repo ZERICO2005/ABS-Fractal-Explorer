@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -75,7 +75,7 @@
 	}
 	
 	// Copies the data from another ImageBuffer
-	void ImageBuffer::vramCopy(ImageBuffer* buf, bool reallocBuf) {
+	void ImageBuffer::vramCopy(const ImageBuffer* buf, bool reallocBuf) {
 		if (buf == nullptr || buf->vram == nullptr || buf->allocated() == false) {
 			return;
 		}
@@ -154,9 +154,9 @@
 	}
 
 	// Returns if buffer is allocated
-	bool ImageBuffer::allocated() { return vramAllocated; }
+	bool ImageBuffer::allocated() const { return vramAllocated; }
 	// Returns if the buffer is safe to write to
-	bool ImageBuffer::bufferSafe() {
+	bool ImageBuffer::bufferSafe() const {
 		if (vramAllocated == false) { return false; }
 		if (bytesAllocated == 0) { return false; }
 		if (vram == nullptr) { return false; }
@@ -168,12 +168,12 @@
 	}
 	
 	// Returns the size of the buffer
-	size_t ImageBuffer::getBufferSize() {
+	size_t ImageBuffer::getBufferSize() const {
 		return (size_t)resX * (size_t)resY * channels;
 	}
 	
 	// Returns the current amount of bytes allocated
-	size_t ImageBuffer::getAllocatedSize() {
+	size_t ImageBuffer::getAllocatedSize() const {
 		return bytesAllocated;
 	}
 
@@ -222,7 +222,8 @@
 		}
 	}
 
-	void ImageBuffer::getBufferBox(BufferBox* buf) {
+	void ImageBuffer::getBufferBox(BufferBox* buf) const {
+		if (buf == nullptr) { return; }
 		buf->resX = resX;
 		buf->resY = resY;
 		buf->channels = channels;
@@ -259,7 +260,7 @@
 		x10 = ix10; y10 = iy10;
 	}
 	// Copies transformation data from another ImageBuffer*
-	void ImageBuffer::setTransformationData(ImageBuffer* buf) {
+	void ImageBuffer::setTransformationData(const ImageBuffer* buf) {
 		if (buf == nullptr) { return; }
 		x00 = buf->x00; y00 = buf->y00;
 		x11 = buf->x11; y11 = buf->y11;

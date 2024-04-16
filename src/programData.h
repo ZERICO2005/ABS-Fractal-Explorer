@@ -36,7 +36,7 @@ struct Render_Item {
 	int group;
 	nano64_t time_sent;
 	Render_Data render_data;
-	Fractal_Data fractal_data;
+	ABS_Mandelbrot fractal_data;
 }; typedef Render_Item Render_Item;
 
 enum Render_Queue_Enum { Queue_Primary, Queue_Secondary, Queue_Count};
@@ -46,7 +46,7 @@ struct Render_Task {
 	int group;
 	nano64_t time_sent;
 	Render_Data render_data;
-	Fractal_Data fractal_data;
+	ABS_Mandelbrot fractal_data;
 }; typedef Render_Task Render_Task;
 
 /* Update Level */
@@ -97,19 +97,19 @@ struct Function_Status {
 }; typedef struct Function_Status Function_Status;
 
 int read_Function_Status(Function_Status* list);
-int write_Function_Status(Function_Status* list);
+int write_Function_Status(const Function_Status* list);
 
-void read_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary);
-void write_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary);
+void read_Parameters(ABS_Mandelbrot* frac, Render_Data* primary, Render_Data* secondary);
+void write_Parameters(const ABS_Mandelbrot* frac, const Render_Data* primary, const Render_Data* secondary);
 
 /* Used to ensure buffers are not read during a swap */
 int clear_Render_Buffers();
 int read_Render_Buffers(BufferBox* primary);
-int write_Render_Buffers(BufferBox* primary);
+int write_Render_Buffers(const BufferBox* primary);
 
 int clear_Image_Buffers();
 int read_Image_Buffers(ImageBuffer* primary);
-int write_Image_Buffers(ImageBuffer* primary);
+int write_Image_Buffers(const ImageBuffer* primary);
 
 void setRenderDelta(fp64 t);
 fp64 getRenderDelta();
@@ -123,11 +123,11 @@ fp64 getRenderDelta();
 /* Image Render */
 	void reset_Image_Render();
 	void send_Image_Render(
-		const Fractal_Data* frac, const Render_Data* super,
+		const ABS_Mandelbrot* frac, const Render_Data* super,
 		uint32_t image_file_format, uint8_t image_quality
 	);
 	bool receive_Image_Render(
-		Fractal_Data* frac, Render_Data* super,
+		ABS_Mandelbrot* frac, Render_Data* super,
 		uint32_t* image_file_format, uint8_t* image_quality
 	);
 

@@ -638,7 +638,7 @@ inline void paramToggle(Key_Function::Key_Function_Enum func, bool& toggle, fp64
 int_enum updateFractalParameters() {
 	using namespace Key_Function;
 	using namespace Change_Level;
-	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
+	ABS_Mandelbrot& FRAC = current_Fractal;
 	fp64 temp_breakoutValue = log2(FRAC.breakoutValue);
 	fp64 moveDelta = (DeltaTime < 0.2) ? DeltaTime : 0.2;
 	
@@ -1064,7 +1064,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			}
 			windowResizingCode();
 			updateFractalParameters();
-			write_Parameters(&frac,&primaryRenderData,&secondaryRenderData);
+			write_Parameters(&current_Fractal, &primaryRenderData, &secondaryRenderData);
 			newFrame();
 		}
 	}
@@ -1377,7 +1377,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	// 	}
 	// }
 
-	setDefaultParameters(&frac,Fractal_ABS_Mandelbrot);
+	setDefaultParameters(&current_Fractal, Fractal_ABS_Mandelbrot);
 	Bootup_initRenderData();
 	if (texture != nullptr) {
 		SDL_DestroyTexture(texture);
@@ -1394,7 +1394,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	bootup_Fractal_Frame_Rendered = false;
 	
 	write_Render_Ready(true);
-	write_Parameters(&frac,&primaryRenderData,&secondaryRenderData);
+	write_Parameters(&current_Fractal, &primaryRenderData, &secondaryRenderData);
 	printFlush("\n");
 
 	while (read_Engine_Ready() == false) {
@@ -1574,13 +1574,9 @@ int exportSuperScreenshot() {
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportSuperFractalBuffer == false) {
 		resetTime = getNanoTime();
 		exportSuperFractalBuffer = true;
-		Fractal_Data superFrac = frac;
+		ABS_Mandelbrot superFrac = current_Fractal;
 		Render_Data superRenderData = primaryRenderData;
-		if (superFrac.type_value == Fractal_ABS_Mandelbrot) {
-			superFrac.type.abs_mandelbrot.maxItr = super_screenshot_maxItr;
-		} else if (superFrac.type_value == Fractal_Polar_Mandelbrot) {
-			superFrac.type.polar_mandelbrot.maxItr = super_screenshot_maxItr;
-		}
+		superFrac.maxItr = super_screenshot_maxItr;
 		superRenderData.resX = super_screenshot_resX;
 		superRenderData.resY = super_screenshot_resY;
 		superRenderData.sample = super_screenshot_super_sample;
@@ -1589,13 +1585,12 @@ int exportSuperScreenshot() {
 		const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
 		switch(screenshot_settings.screenshotFileType) {
 			case Image_File_Format::PNG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,(uint8_t)screenshot_settings.PNG_Compression_Level);
+			default:
+				send_Image_Render(&superFrac, &superRenderData, Image_File_Format::PNG, (uint8_t)screenshot_settings.PNG_Compression_Level);
 			break;
 			case Image_File_Format::JPG:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::JPG,(uint8_t)screenshot_settings.JPG_Quality_Level);
+				send_Image_Render(&superFrac, &superRenderData, Image_File_Format::JPG, (uint8_t)screenshot_settings.JPG_Quality_Level);
 			break;
-			default:
-				send_Image_Render(&superFrac,&superRenderData,Image_File_Format::PNG,(uint8_t)screenshot_settings.PNG_Compression_Level);
 		}
 	}
 	return 0;
@@ -1608,7 +1603,7 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
+	ABS_Mandelbrot& FRAC = current_Fractal;
 	static const dim32_t minimumImageResolution = 2;
 	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
 		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
@@ -1650,7 +1645,7 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
 	if (Rendering_Settings.JuliaPoint_Enabled == false) { return; }
-	if (frac.type.abs_mandelbrot.zr == 0.0 && frac.type.abs_mandelbrot.zi == 0.0) { return; }
+	if (current_Fractal.zr == 0.0 && current_Fractal.zi == 0.0) { return; }
 	if (ren == nullptr) {
 		printError("Unable to renderJuliaCordinatePoint(), Render_Data is nullptr");
 		return;
@@ -1666,8 +1661,8 @@ void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	int32_t pointRadius = (int32_t)ceil(Rendering_Settings.JuliaPoint_OuterRadius);
 	int32_t posX, posY;
 	coordinate_to_pixel(
-		frac.type.abs_mandelbrot.zr, frac.type.abs_mandelbrot.zi,
-		&posX, &posY, &frac.type.abs_mandelbrot, ren
+		current_Fractal.zr, current_Fractal.zi,
+		&posX, &posY, &current_Fractal, ren
 	);
 	for (int32_t y = posY - pointRadius; y <= posY + pointRadius; y++) {
 		if (y < 0 || y >= box.resY) { continue; }
@@ -1691,7 +1686,7 @@ int transformFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
-	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
+	ABS_Mandelbrot& FRAC = current_Fractal;
 	static const dim32_t minimumImageResolution = 2;
 	BufferBox blit;
 	BufferBox temp_MASTER;
@@ -1797,15 +1792,14 @@ void newFrame() {
 		printError("Master ImageBuffer is invalid");
 		return;
 	}
-	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) {
-		ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
+	{
+		const ABS_Mandelbrot& FRAC = current_Fractal;
 		Master.clearBuffer(
 			(uint8_t)(FRAC.exterior_R_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_R_Phase))),
 			(uint8_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase))),
 			(uint8_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase)))
 		);
-	} else {
-		Master.clearBuffer();
+		//Master.clearBuffer();
 	}
 
 	if (exportSuperFractalBuffer == true) {
@@ -1864,9 +1858,10 @@ void newFrame() {
 		#endif
 		if (exportFractalBuffer == true) {
 			nano64_t curTime = getNanoTime();
-			size_t size = (size_t)snprintf(nullptr,0,"%s_%" PRIu64,frac.type_name,curTime);
+			const char* fractal_name = (current_Fractal.polarMandelbrot == true) ? FractalTypeFileText[Fractal_ABS_Mandelbrot] : FractalTypeFileText[Fractal_Polar_Mandelbrot];
+			size_t size = (size_t)snprintf(nullptr, 0, "%s_%" PRIu64, fractal_name, curTime);
 			char* name = (char*)calloc(size + 1,sizeof(char));
-			snprintf(name,size,"%s_%" PRIu64,FractalTypeFileText[frac.type_value],curTime);
+			snprintf(name, size, "%s_%" PRIu64, fractal_name, curTime);
 			char path[] = "./";
 			const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
 			switch(screenshot_settings.screenshotFileType) {

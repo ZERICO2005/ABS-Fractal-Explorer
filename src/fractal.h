@@ -15,15 +15,15 @@
 #include "render.h"
 
 enum FractalTypeEnum {
-	Fractal_ABS_Mandelbrot,Fractal_Polar_Mandelbrot,Fractal_Sierpinski_Carpet
+	Fractal_ABS_Mandelbrot, Fractal_Polar_Mandelbrot,
 };
 
 #ifndef BUILD_RELEASE
-	const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot","Sierpinski Carpet"};
-	const char* const FractalTypeFileText[] = {"ABS-Mandelbrot","Polar-Mandelbrot","Sierpinski-Carpet"};
+	const char* const FractalTypeText[] = {"ABS Mandelbrot", "Polar Mandelbrot"};
+	const char* const FractalTypeFileText[] = {"ABS-Mandelbrot", "Polar-Mandelbrot"};
 #else
-	const char* const FractalTypeText[] = {"ABS Mandelbrot","Polar Mandelbrot"};
-	const char* const FractalTypeFileText[] = {"ABS-Mandelbrot","Polar-Mandelbrot"};
+	const char* const FractalTypeText[] = {"ABS Mandelbrot", "Polar Mandelbrot"};
+	const char* const FractalTypeFileText[] = {"ABS-Mandelbrot", "Polar-Mandelbrot"};
 #endif
 
 const char* const PowerText[] = {
@@ -64,7 +64,7 @@ inline fp64 zoomDefault(uint32_t power) {
 }
 
 
-struct _ABS_Mandelbrot {
+struct ABS_Mandelbrot {
 	/* Parameters */
 	bool juliaSet;
 	bool startingZ;
@@ -118,40 +118,9 @@ struct _ABS_Mandelbrot {
 		fp64 interior_B_Amp;
 		fp64 interior_B_Freq;
 		fp64 interior_B_Phase;
-}; typedef struct _ABS_Mandelbrot ABS_Mandelbrot;
+};
 
-struct _Sierpinski_Carpet {
-	/* Parameters */
-	bool wallisSieve;
-	bool renderOutOfBounds;
-	bool fixateOnCorner;
-	/* Coordinates */
-	fp64 x;
-	fp64 y;
-	fp64 zoom;
-	fp64 squareSize;
-	uint32_t maxItr;
-	/* Color */
-	uint32_t baseColor;
-	uint32_t lowColor;
-	uint32_t highColor;
-}; typedef struct _Sierpinski_Carpet Sierpinski_Carpet;
-
-
-union _Fractal_Type {
-	ABS_Mandelbrot abs_mandelbrot;
-	ABS_Mandelbrot polar_mandelbrot;
-	Sierpinski_Carpet sierpinski_carpet;
-}; typedef union _Fractal_Type Fractal_Type;
-
-/* Holds the fractal and rendering parameters */
-struct _Fractal_Data {
-	const char* type_name;
-	uint32_t type_value;
-	Fractal_Type type;
-}; typedef struct _Fractal_Data Fractal_Data;
-
-void setDefaultParameters(Fractal_Data* frac, enum FractalTypeEnum type);
+void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type);
 
 /* Cordinates */
 

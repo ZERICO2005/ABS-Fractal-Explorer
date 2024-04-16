@@ -21,7 +21,7 @@
 
 
 TimerBox fracTime;
-Fractal_Data fracData;
+ABS_Mandelbrot fracData;
 Render_Data primaryRender;
 Render_Data secondaryRender;
 ImageBuffer* currentBuf = nullptr;
@@ -53,7 +53,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 	static uint32_t image_file_format = Image_File_Format::PNG;
 	static uint8_t image_quality = 8;
 	static Render_Data image_render_data = {0};
-	static Fractal_Data image_fractal_data = {0};
+	static ABS_Mandelbrot image_fractal_data = {0};
 	static BufferBox image_box = {0};
 	if (receive_Image_Render(&image_fractal_data,&image_render_data,&image_file_format,&image_quality)) {
 		memset(&image_box,0,sizeof(BufferBox));
@@ -79,11 +79,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 
 		printf("\n\nRendering Super Screenshot:");
 		printf("\n\t%ux%u %u samples",image_box.resX,image_box.resY,image_render_data.sample * image_render_data.sample);
-		if (image_fractal_data.type_value == Fractal_ABS_Mandelbrot) {
-			printf(", %u iterations",image_fractal_data.type.abs_mandelbrot.maxItr);
-		} else if (image_fractal_data.type_value == Fractal_Polar_Mandelbrot) {
-			printf(", %u iterations",image_fractal_data.type.polar_mandelbrot.maxItr);
-		}
+		printf(", %u iterations",image_fractal_data.maxItr);
 		switch(image_render_data.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
 				printf("\n\tFP%u CPU rendering, %u threads",image_render_data.CPU_Precision,image_render_data.CPU_Threads);
@@ -97,15 +93,24 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		nano64_t image_stopwatch = getNanoTime();
 		switch(image_render_data.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
-				if (image_fractal_data.type.abs_mandelbrot.polarMandelbrot == true) {
-					renderCPU_Polar_Mandelbrot(&image_box,image_render_data,image_fractal_data.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+				if (image_fractal_data.polarMandelbrot == true) {
+					renderCPU_Polar_Mandelbrot(
+						&image_box, image_render_data, image_fractal_data,
+						ABORT_RENDERING, primaryRender.CPU_Threads
+					);
 				} else {
-					renderCPU_ABS_Mandelbrot(&image_box,image_render_data,image_fractal_data.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+					renderCPU_ABS_Mandelbrot(
+						&image_box, image_render_data, image_fractal_data,
+						ABORT_RENDERING, primaryRender.CPU_Threads
+					);
 				}
 				break;
 			case Rendering_Method::GPU_Rendering:
 				#ifdef Enable_OpenCL
-					renderOpenCL_ABS_Mandelbrot(&image_box,image_render_data,image_fractal_data.type.abs_mandelbrot,ABORT_RENDERING);
+					renderOpenCL_ABS_Mandelbrot(
+						&image_box, image_render_data, image_fractal_data,
+						ABORT_RENDERING
+					);
 				#endif
 				break;
 			default:
@@ -123,29 +128,26 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			nano64_t curTime = getNanoTime();
 			curTime /= 1000;
 			char id_number[64]; memset(id_number,'\0',sizeof(id_number));
-			if (image_fractal_data.type_value == Fractal_ABS_Mandelbrot) {
-				snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.type.abs_mandelbrot.formula);
-			} else if (image_fractal_data.type_value == Fractal_Polar_Mandelbrot) {
-				snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.type.polar_mandelbrot.formula);
-			}
-			size_t size = (size_t)snprintf(nullptr,0,"Super_%s%s_(%" PRId64 ")",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
+			snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.formula);
+			const char* fractal_name = (image_fractal_data.polarMandelbrot == true) ? FractalTypeFileText[Fractal_ABS_Mandelbrot] : FractalTypeFileText[Fractal_Polar_Mandelbrot];
+			size_t size = (size_t)snprintf(nullptr, 0, "Super_%s%s_(%" PRId64 ")", fractal_name, id_number,curTime);
 			size++;
 			char* name = (char*)calloc(size,sizeof(char));
-			snprintf(name,size,"Super_%s%s_(%" PRIu64 ")",FractalTypeFileText[image_fractal_data.type_value],id_number,curTime);
+			snprintf(name, size, "Super_%s%s_(%" PRIu64 ")", fractal_name, id_number, curTime);
 			char path[] = "./";
 			switch(image_file_format) {
 				case Image_File_Format::PNG:
-					valueClamp(image_quality,1,9);
-					writePNGImage(&image_box,path,name,image_quality);
+					valueClamp(image_quality, 1, 9);
+					writePNGImage(&image_box, path, name, image_quality);
 				break;
 				case Image_File_Format::JPG:
-					valueClamp(image_quality,30,100);
-					writeJPGImage(&image_box,path,name,image_quality);
+					valueClamp(image_quality, 30, 100);
+					writeJPGImage(&image_box, path, name, image_quality);
 				break;
 				default:
 					image_file_format = Image_File_Format::PNG;
 					image_quality = 8;
-					writePNGImage(&image_box,path,name,image_quality);
+					writePNGImage(&image_box, path, name, image_quality);
 			};
 		}
 		FREE(image_box.vram);
@@ -167,22 +169,31 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 
 		switch(primaryRender.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
-				if (fracData.type.abs_mandelbrot.polarMandelbrot == true) {
-					renderCPU_Polar_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+				if (fracData.polarMandelbrot == true) {
+					renderCPU_Polar_Mandelbrot(
+						&renderBox, primaryRender, fracData,
+						ABORT_RENDERING, primaryRender.CPU_Threads
+					);
 				} else {
-					renderCPU_ABS_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING, primaryRender.CPU_Threads);
+					renderCPU_ABS_Mandelbrot(
+						&renderBox, primaryRender, fracData,
+						ABORT_RENDERING, primaryRender.CPU_Threads
+					);
 				}
 				break;
 			case Rendering_Method::GPU_Rendering:
 				#ifdef Enable_OpenCL
-					renderOpenCL_ABS_Mandelbrot(&renderBox,primaryRender,fracData.type.abs_mandelbrot,ABORT_RENDERING);
+					renderOpenCL_ABS_Mandelbrot(
+						&renderBox, primaryRender, fracData,
+						ABORT_RENDERING
+					);
 				#endif
 				break;
 			default:
 			printfInterval(0.5,"Unknown rendering method %u",primaryRender.rendering_method);
 		}
-		if (fracData.type_value == Fractal_ABS_Mandelbrot || fracData.type_value == Fractal_Polar_Mandelbrot) {
-			ABS_Mandelbrot& FRAC = fracData.type.abs_mandelbrot;
+		{
+			ABS_Mandelbrot& FRAC = fracData;
 			fp128 cx00; fp128 cy00;
 			fp128 cx11; fp128 cy11;
 			fp128 cx01; fp128 cy01;
@@ -196,8 +207,6 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * -extraPadding),&cx10,&cy10,&FRAC,&primaryRender);
 			currentBuf->setTransformationData(cx00,cy00,cx11,cy11,cx01,cy01,cx10,cy10);
 			currentBuf->rot = FRAC.rot;
-		} else if (fracData.type_value == Fractal_Sierpinski_Carpet) {
-			Sierpinski_Carpet& CARPET = fracData.type.sierpinski_carpet;
 		}
 	}
 	return 0;

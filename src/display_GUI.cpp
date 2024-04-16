@@ -279,7 +279,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::SameLine(); \
 	ImGui::InputInt(id,ptr,16,256);
 
-	ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
+	ABS_Mandelbrot& FRAC = current_Fractal;
 	uint32_t renderFP = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
 	const char* const renderMethod = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
 	
@@ -338,112 +338,108 @@ void Menu_Coordinates() {
 	ImGui::Begin("Coordinates Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
-	if (frac.type_value == Fractal_ABS_Mandelbrot || frac.type_value == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
-		ImGui::SeparatorText("Cordinates");
-		ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
-		#define NumberTextLen 64
-		
+	ImGui::SeparatorText("Cordinates");
+	ABS_Mandelbrot& FRAC = current_Fractal;
+	#define NumberTextLen 64
+	
+	#ifdef enableFP80andFP128
+		#define Quad_InputText(lbl, num, fmt); \
+			{ \
+				static char Temp_Text_Input_Buf[NumberTextLen]; \
+				quadmath_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
+				if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
+					num = strtoflt128(Temp_Text_Input_Buf, nullptr); \
+				} \
+			}
+	#else
+		#define Quad_InputText(lbl, num, fmt); \
+			{ \
+				static char Temp_Text_Input_Buf[NumberTextLen]; \
+				snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
+				if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
+					num = strtold(Temp_Text_Input_Buf, nullptr); \
+				} \
+			}
+	#endif
+	#define Float_InputText(lbl, num, fmt, func); \
+		{ \
+			static char Temp_Text_Input_Buf[NumberTextLen]; \
+			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
+			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
+				num = func(Temp_Text_Input_Buf, nullptr); \
+			} \
+		}
+	#define Int_InputText(lbl, num, fmt, func, base); \
+		{ \
+			static char Temp_Text_Input_Buf[NumberTextLen]; \
+			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
+			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
+				num = func(Temp_Text_Input_Buf, nullptr, base); \
+			} \
+		}
+	ImGui::Text("Real and Imaginary Coordinate:");
 		#ifdef enableFP80andFP128
-			#define Quad_InputText(lbl, num, fmt); \
-				{ \
-					static char Temp_Text_Input_Buf[NumberTextLen]; \
-					quadmath_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-					if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-						num = strtoflt128(Temp_Text_Input_Buf, nullptr); \
-					} \
-				}
+			Quad_InputText("r",FRAC.r,"%35.32Qf");
+			Quad_InputText("i",FRAC.i,"%35.32Qf");
 		#else
-			#define Quad_InputText(lbl, num, fmt); \
-				{ \
-					static char Temp_Text_Input_Buf[NumberTextLen]; \
-					snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-					if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-						num = strtold(Temp_Text_Input_Buf, nullptr); \
-					} \
-				}
+			Quad_InputText("r",FRAC.r,"%35.32Lf");
+			Quad_InputText("i",FRAC.i,"%35.32Lf");
 		#endif
-		#define Float_InputText(lbl, num, fmt, func); \
-			{ \
-				static char Temp_Text_Input_Buf[NumberTextLen]; \
-				snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-				if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-					num = func(Temp_Text_Input_Buf, nullptr); \
-				} \
+	ImGui::Text("Zoom:");
+		Float_InputText("##zoom_input",FRAC.zoom,"%.5lf",strtod);
+	
+	ImGui::NewLine();
+	ImGui::Text("Julia Coordinate:");
+		static bool useJuliaSliders = true;
+		if (useJuliaSliders == true) {
+			float input_Zreal = (fp32)FRAC.zr; float input_Zimag = (fp32)FRAC.zi;
+			if (ImGui::SliderFloat("zr",&input_Zreal,-2.0,2.0,"%.9f")) { FRAC.zr = (fp64)input_Zreal; }
+			if (ImGui::SliderFloat("zi",&input_Zimag,-2.0,2.0,"%.9f")) { FRAC.zi = (fp64)input_Zimag; }
+			fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
+			if (ImGui::SliderAngle("Julia Angle",&juliaAngle,-360.0f,360.0f,"%.1f deg")) {
+				fp128 juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
+				fp128 juliaTheta = (fp128)juliaAngle;
+				FRAC.zr = juliaMagnitude * cos(juliaTheta);
+				FRAC.zi = juliaMagnitude * sin(juliaTheta);
 			}
-		#define Int_InputText(lbl, num, fmt, func, base); \
-			{ \
-				static char Temp_Text_Input_Buf[NumberTextLen]; \
-				snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-				if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-					num = func(Temp_Text_Input_Buf, nullptr, base); \
-				} \
-			}
-		ImGui::Text("Real and Imaginary Coordinate:");
+		} else {
 			#ifdef enableFP80andFP128
 				Quad_InputText("r",FRAC.r,"%35.32Qf");
 				Quad_InputText("i",FRAC.i,"%35.32Qf");
 			#else
-				Quad_InputText("r",FRAC.r,"%35.32Lf");
-				Quad_InputText("i",FRAC.i,"%35.32Lf");
+				Quad_InputText("##input_Zreal",FRAC.zr,"%35.32Lf");
+				Quad_InputText("##input_zimag",FRAC.zi,"%35.32Lf");
 			#endif
-		ImGui::Text("Zoom:");
-			Float_InputText("##zoom_input",FRAC.zoom,"%.5lf",strtod);
-		
-		ImGui::NewLine();
-		ImGui::Text("Julia Coordinate:");
-			static bool useJuliaSliders = true;
-			if (useJuliaSliders == true) {
-				float input_Zreal = (fp32)FRAC.zr; float input_Zimag = (fp32)FRAC.zi;
-				if (ImGui::SliderFloat("zr",&input_Zreal,-2.0,2.0,"%.9f")) { FRAC.zr = (fp64)input_Zreal; }
-				if (ImGui::SliderFloat("zi",&input_Zimag,-2.0,2.0,"%.9f")) { FRAC.zi = (fp64)input_Zimag; }
-				fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
-				if (ImGui::SliderAngle("Julia Angle",&juliaAngle,-360.0f,360.0f,"%.1f deg")) {
-					fp128 juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
-					fp128 juliaTheta = (fp128)juliaAngle;
-					FRAC.zr = juliaMagnitude * cos(juliaTheta);
-					FRAC.zi = juliaMagnitude * sin(juliaTheta);
-				}
-			} else {
-				#ifdef enableFP80andFP128
-					Quad_InputText("r",FRAC.r,"%35.32Qf");
-					Quad_InputText("i",FRAC.i,"%35.32Qf");
-				#else
-					Quad_InputText("##input_Zreal",FRAC.zr,"%35.32Lf");
-					Quad_InputText("##input_zimag",FRAC.zi,"%35.32Lf");
-				#endif
-			}
-			ImGui::Checkbox("Use Sliders", &useJuliaSliders);
-		ImGui::SeparatorText("Parameters");
-		ImGui::Text("Maximum Iterations:");
-		Int_InputText("##input_maxIter",FRAC.maxItr,"%" PRIu32,stringTo_Uint32,10);
-		ImGui::Text("Fractal Formula:");
-			static bool inputHexadecimal = false;
-			if (inputHexadecimal == true) {
-				Int_InputText("##input_formula",FRAC.formula,"%" PRIX64,stringTo_Uint64,16);
-			} else {
-				Int_InputText("##input_formula",FRAC.formula,"%" PRIu64,stringTo_Uint64,10);
-			}
-			ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
-		/* Power */
-			if (frac.type_value == Fractal_ABS_Mandelbrot) {
-				ImGui::Text("Power: %s",getPowerText((uint32_t)FRAC.power));
-				Int_InputText("##input_power",FRAC.power,"%" PRIu32,stringTo_Uint32,10);
-			} else if (frac.type_value == Fractal_Polar_Mandelbrot) {
-				ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
-				Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
-			}
+		}
+		ImGui::Checkbox("Use Sliders", &useJuliaSliders);
+	ImGui::SeparatorText("Parameters");
+	ImGui::Text("Maximum Iterations:");
+	Int_InputText("##input_maxIter",FRAC.maxItr,"%" PRIu32,stringTo_Uint32,10);
+	ImGui::Text("Fractal Formula:");
+		static bool inputHexadecimal = false;
+		if (inputHexadecimal == true) {
+			Int_InputText("##input_formula",FRAC.formula,"%" PRIX64,stringTo_Uint64,16);
+		} else {
+			Int_InputText("##input_formula",FRAC.formula,"%" PRIu64,stringTo_Uint64,10);
+		}
+		ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
+	/* Power */
+		if (current_Fractal.polarMandelbrot == true) {
+			ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
+			Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
+		} else {
+			ImGui::Text("Power: %s",getPowerText((uint32_t)FRAC.power));
+			Int_InputText("##input_power",FRAC.power,"%" PRIu32,stringTo_Uint32,10);
+		}
 
-		if (FRAC.power == 2) {
-			ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
-			int Combo_Quadractic_Fractals = 0;
-			if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
-				if (Combo_Quadractic_Fractals != 0) {
-					FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
-				}
+	if (FRAC.power == 2) {
+		ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
+		int Combo_Quadractic_Fractals = 0;
+		if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
+			if (Combo_Quadractic_Fractals != 0) {
+				FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
 			}
 		}
-	} else if (frac.type_value == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
-		Sierpinski_Carpet& FRAC = frac.type.sierpinski_carpet;
 	}
 	ImGui::End();
 }
@@ -471,174 +467,158 @@ void Menu_Fractal() {
     if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
 		switch(Combo_FractalType) {
 			case Fractal_ABS_Mandelbrot:
-				setDefaultParameters(&frac,Fractal_ABS_Mandelbrot);
+				setDefaultParameters(&current_Fractal, Fractal_ABS_Mandelbrot);
 			break;
 			case Fractal_Polar_Mandelbrot:
-				setDefaultParameters(&frac,Fractal_Polar_Mandelbrot);
-			break;
-			case Fractal_Sierpinski_Carpet:
-				setDefaultParameters(&frac,Fractal_Sierpinski_Carpet);
+				setDefaultParameters(&current_Fractal, Fractal_Polar_Mandelbrot);
 			break;
 			default:
-			printError("Unknown Fractal Type: %" PRId32,Combo_FractalType);
+			printError("Unknown Fractal Type: %" PRId32, Combo_FractalType);
 		}
     }
 	ImGui::Separator();
-	if (Combo_FractalType == Fractal_ABS_Mandelbrot || Combo_FractalType == Fractal_Polar_Mandelbrot) { /* ABS and Polar */
-		ABS_Mandelbrot& FRAC = frac.type.abs_mandelbrot;
-		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
-		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
-		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
-		ImGui::Text("Cardioid Location: %.6lg",minRadius);
-		if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
-			ImGui::Text("Fractal Power: %s",getPowerText((uint32_t)FRAC.power));
-			int temp_input_power = (int)FRAC.power;
-			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
-			valueClamp(FRAC.power, 2, 6); // Support up to Sextic
-		} else {
-			fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
-			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
-			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
-			if (FRAC.lockToCardioid) {
-				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
-			}
-			ImGui::Checkbox("Integer Powers",&FRAC.integerPolarPower);
+	ABS_Mandelbrot& FRAC = current_Fractal;
+	fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
+	fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
+	ImGui::Text("Fractal Radius: %.6lg",maxRadius);
+	ImGui::Text("Cardioid Location: %.6lg",minRadius);
+	if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
+		ImGui::Text("Fractal Power: %s",getPowerText((uint32_t)FRAC.power));
+		int temp_input_power = (int)FRAC.power;
+		ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
+		valueClamp(FRAC.power, 2, 6); // Support up to Sextic
+	} else {
+		fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
+		ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
+		ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+		ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
+		if (FRAC.lockToCardioid) {
+			ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
 		}
-		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
-		// fp32 temp_input_maxItr = (fp32)log2(FRAC.maxItr);
-		// ImGui::Text("Maximum Iterations: %" PRIu32,FRAC.maxItr);
-		// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
-		// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
-		// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
-		
-		ImGui::NewLine();
-		
-		fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
-		if (FRAC.breakoutValue < 100.0) {
-			ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
-		} else {
-			ImGui::Text("Breakout Value: %.1lf",FRAC.breakoutValue);
-		}
-		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,"");
-		FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
-		ImGui::Separator();
-		ImGui::Text("Julia Set Options:");
-		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
-		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
-		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
-		if (FRAC.cursorZValue) {
-			ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue);
-			Item_Tooltip("Ignores the zoom value when calculating cursor Z values");
-		}
-		
-		ImGui::Separator();
-		#ifndef BUILD_RELEASE
-			static int Combo_JuliaSplit = 1;
-			ImGui::Text("Split Screen:");
-			if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, BufAndLen(WindowDivider))) {
-				if (Combo_JuliaSplit == 7) { /* Floating */
-					FRAC.showFloatingJulia = true;
-				}
-			}
+		ImGui::Checkbox("Integer Powers",&FRAC.integerPolarPower);
+	}
+	ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
+	// fp32 temp_input_maxItr = (fp32)log2(FRAC.maxItr);
+	// ImGui::Text("Maximum Iterations: %" PRIu32,FRAC.maxItr);
+	// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
+	// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
+	// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
+	
+	ImGui::NewLine();
+	
+	fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
+	if (FRAC.breakoutValue < 100.0) {
+		ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
+	} else {
+		ImGui::Text("Breakout Value: %.1lf",FRAC.breakoutValue);
+	}
+	ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,"");
+	FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
+	ImGui::Separator();
+	ImGui::Text("Julia Set Options:");
+	ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
+	ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
+	ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
+	if (FRAC.cursorZValue) {
+		ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue);
+		Item_Tooltip("Ignores the zoom value when calculating cursor Z values");
+	}
+	
+	ImGui::Separator();
+	#ifndef BUILD_RELEASE
+		static int Combo_JuliaSplit = 1;
+		ImGui::Text("Split Screen:");
+		if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, BufAndLen(WindowDivider))) {
 			if (Combo_JuliaSplit == 7) { /* Floating */
-				ImGui::Checkbox("Show floating Julia Set window",&FRAC.showFloatingJulia);
+				FRAC.showFloatingJulia = true;
 			}
-			ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&FRAC.swapJuliaSplit);
-			static int Combo_JuliaBehaviour = 0;
-			ImGui::Text("Julia Set behaviour:");
-			if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
-
-			}
-			ImGui::Separator();
-		#endif
-		ImGui::SeparatorText("Coloring"); {
-			struct Temp_Color {
-				fp32 exterior_Alpha;
-					fp32 exterior_R_Amp; fp32 exterior_R_Freq; fp32 exterior_R_Phase;
-					fp32 exterior_G_Amp; fp32 exterior_G_Freq; fp32 exterior_G_Phase;
-					fp32 exterior_B_Amp; fp32 exterior_B_Freq; fp32 exterior_B_Phase;
-				fp32 interior_Alpha;
-					fp32 interior_R_Amp; fp32 interior_R_Freq; fp32 interior_R_Phase;
-					fp32 interior_G_Amp; fp32 interior_G_Freq; fp32 interior_G_Phase;
-					fp32 interior_B_Amp; fp32 interior_B_Freq; fp32 interior_B_Phase;
-			};
-			Temp_Color temp_Color;
-			temp_Color.exterior_Alpha = (fp32)FRAC.exterior_Alpha;
-				temp_Color.exterior_R_Amp = (fp32)FRAC.exterior_R_Amp; temp_Color.exterior_R_Freq = (fp32)FRAC.exterior_R_Freq; temp_Color.exterior_R_Phase = (fp32)FRAC.exterior_R_Phase;
-				temp_Color.exterior_G_Amp = (fp32)FRAC.exterior_G_Amp; temp_Color.exterior_G_Freq = (fp32)FRAC.exterior_G_Freq; temp_Color.exterior_G_Phase = (fp32)FRAC.exterior_G_Phase;
-				temp_Color.exterior_B_Amp = (fp32)FRAC.exterior_B_Amp; temp_Color.exterior_B_Freq = (fp32)FRAC.exterior_B_Freq; temp_Color.exterior_B_Phase = (fp32)FRAC.exterior_B_Phase;
-			temp_Color.interior_Alpha = (fp32)FRAC.interior_Alpha;
-				temp_Color.interior_R_Amp = (fp32)FRAC.interior_R_Amp; temp_Color.interior_R_Freq = (fp32)FRAC.interior_R_Freq; temp_Color.interior_R_Phase = (fp32)FRAC.interior_R_Phase;
-				temp_Color.interior_G_Amp = (fp32)FRAC.interior_G_Amp; temp_Color.interior_G_Freq = (fp32)FRAC.interior_G_Freq; temp_Color.interior_G_Phase = (fp32)FRAC.interior_G_Phase;
-				temp_Color.interior_B_Amp = (fp32)FRAC.interior_B_Amp; temp_Color.interior_B_Freq = (fp32)FRAC.interior_B_Freq; temp_Color.interior_B_Phase = (fp32)FRAC.interior_B_Phase;
-			
-			ImGui::Text("EXTERIOR COLORING:");
-				constexpr fp32 Maximum_Exterior_Freq = 2.0f;
-				ImGui::Text("Amplitude:");
-					fp32 exterior_Amp[4] = {temp_Color.exterior_R_Amp, temp_Color.exterior_G_Amp, temp_Color.exterior_B_Amp, temp_Color.exterior_Alpha};
-					ImGui::ColorEdit4("##exterior_Amp", exterior_Amp);
-						temp_Color.exterior_R_Amp = exterior_Amp[0];
-						temp_Color.exterior_G_Amp = exterior_Amp[1];
-						temp_Color.exterior_B_Amp = exterior_Amp[2];
-						temp_Color.exterior_Alpha = exterior_Amp[3];
-				ImGui::Text("Frequency:");
-					fp32 exterior_Freq[3] = {temp_Color.exterior_R_Freq, temp_Color.exterior_G_Freq, temp_Color.exterior_B_Freq};
-					ImGui::SliderFloat3("##exterior_Freq", exterior_Freq, 0.0f, Maximum_Exterior_Freq, "%.4f");
-						temp_Color.exterior_R_Freq = exterior_Freq[0];
-						temp_Color.exterior_G_Freq = exterior_Freq[1];
-						temp_Color.exterior_B_Freq = exterior_Freq[2];
-				ImGui::Text("Phase:");
-					fp32 exterior_Phase[3] = {temp_Color.exterior_R_Phase, temp_Color.exterior_G_Phase, temp_Color.exterior_B_Phase};
-					ImGui::SliderFloat3("##exterior_Phase", exterior_Phase, 0.0f, 1.0f, "%.4f");
-						temp_Color.exterior_R_Phase = exterior_Phase[0];
-						temp_Color.exterior_G_Phase = exterior_Phase[1];
-						temp_Color.exterior_B_Phase = exterior_Phase[2];
-				ImGui::NewLine();
-			
-			ImGui::Text("INTERIOR COLORING:");
-				constexpr fp32 Maximum_Interior_Freq = 3.0f;
-				ImGui::Text("Amplitude:");
-					fp32 interior_Amp[4] = {temp_Color.interior_R_Amp, temp_Color.interior_G_Amp, temp_Color.interior_B_Amp, temp_Color.interior_Alpha};
-					ImGui::ColorEdit4("##interior_Amp", interior_Amp);
-						temp_Color.interior_R_Amp = interior_Amp[0];
-						temp_Color.interior_G_Amp = interior_Amp[1];
-						temp_Color.interior_B_Amp = interior_Amp[2];
-						temp_Color.interior_Alpha = interior_Amp[3];
-				ImGui::Text("Frequency:");
-					fp32 interior_Freq[3] = {temp_Color.interior_R_Freq, temp_Color.interior_G_Freq, temp_Color.interior_B_Freq};
-					ImGui::SliderFloat3("##interior_Freq", interior_Freq, 0.0f, Maximum_Interior_Freq, "%.4f");
-						temp_Color.interior_R_Freq = interior_Freq[0];
-						temp_Color.interior_G_Freq = interior_Freq[1];
-						temp_Color.interior_B_Freq = interior_Freq[2];
-				ImGui::Text("Phase:");
-					fp32 interior_Phase[3] = {temp_Color.interior_R_Phase, temp_Color.interior_G_Phase, temp_Color.interior_B_Phase};
-					ImGui::SliderFloat3("##interior_Phase", interior_Phase, 0.0f, 1.0f, "%.4f");
-						temp_Color.interior_R_Phase = interior_Phase[0];
-						temp_Color.interior_G_Phase = interior_Phase[1];
-						temp_Color.interior_B_Phase = interior_Phase[2];
-				ImGui::NewLine();
-			
-			FRAC.exterior_Alpha = (fp64)temp_Color.exterior_Alpha;
-				FRAC.exterior_R_Amp = (fp64)temp_Color.exterior_R_Amp; FRAC.exterior_R_Freq = (fp64)temp_Color.exterior_R_Freq; FRAC.exterior_R_Phase = (fp64)temp_Color.exterior_R_Phase;
-				FRAC.exterior_G_Amp = (fp64)temp_Color.exterior_G_Amp; FRAC.exterior_G_Freq = (fp64)temp_Color.exterior_G_Freq; FRAC.exterior_G_Phase = (fp64)temp_Color.exterior_G_Phase;
-				FRAC.exterior_B_Amp = (fp64)temp_Color.exterior_B_Amp; FRAC.exterior_B_Freq = (fp64)temp_Color.exterior_B_Freq; FRAC.exterior_B_Phase = (fp64)temp_Color.exterior_B_Phase;
-			FRAC.interior_Alpha = (fp64)temp_Color.interior_Alpha;
-				FRAC.interior_R_Amp = (fp64)temp_Color.interior_R_Amp; FRAC.interior_R_Freq = (fp64)temp_Color.interior_R_Freq; FRAC.interior_R_Phase = (fp64)temp_Color.interior_R_Phase;
-				FRAC.interior_G_Amp = (fp64)temp_Color.interior_G_Amp; FRAC.interior_G_Freq = (fp64)temp_Color.interior_G_Freq; FRAC.interior_G_Phase = (fp64)temp_Color.interior_G_Phase;
-				FRAC.interior_B_Amp = (fp64)temp_Color.interior_B_Amp; FRAC.interior_B_Freq = (fp64)temp_Color.interior_B_Freq; FRAC.interior_B_Phase = (fp64)temp_Color.interior_B_Phase;
 		}
-	} else if (Combo_FractalType == Fractal_Sierpinski_Carpet) { /* Sierpinski Carpet */
-		Sierpinski_Carpet& FRAC = frac.type.sierpinski_carpet;
-		static bool wallisSieve = false;
-		static bool renderOutOfBounds = false;
-		static bool fixateOnCorner = false;
-		static fp64 squareSize = 1.0; fp32 temp_squareSize = (fp32)FRAC.squareSize;
-		ImGui::Checkbox("Wallis Sieve",&FRAC.wallisSieve);
-		ImGui::Checkbox("Render out of bounds",&FRAC.renderOutOfBounds);
-		ImGui::Checkbox("Fixate on top-left corner",&FRAC.fixateOnCorner);
-		ImGui::Text("Square Size Multiplier:");
-		ImGui::SliderFloat("##input_squareSize",&temp_squareSize,1.0e-4f,1.0f,"%.4f"); FRAC.squareSize = (fp64)temp_squareSize;
+		if (Combo_JuliaSplit == 7) { /* Floating */
+			ImGui::Checkbox("Show floating Julia Set window",&FRAC.showFloatingJulia);
+		}
+		ImGui::Checkbox("Swicth Mandelbrot and Julia Set",&FRAC.swapJuliaSplit);
+		static int Combo_JuliaBehaviour = 0;
+		ImGui::Text("Julia Set behaviour:");
+		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
+
+		}
+		ImGui::Separator();
+	#endif
+	ImGui::SeparatorText("Coloring"); {
+		struct Temp_Color {
+			fp32 exterior_Alpha;
+				fp32 exterior_R_Amp; fp32 exterior_R_Freq; fp32 exterior_R_Phase;
+				fp32 exterior_G_Amp; fp32 exterior_G_Freq; fp32 exterior_G_Phase;
+				fp32 exterior_B_Amp; fp32 exterior_B_Freq; fp32 exterior_B_Phase;
+			fp32 interior_Alpha;
+				fp32 interior_R_Amp; fp32 interior_R_Freq; fp32 interior_R_Phase;
+				fp32 interior_G_Amp; fp32 interior_G_Freq; fp32 interior_G_Phase;
+				fp32 interior_B_Amp; fp32 interior_B_Freq; fp32 interior_B_Phase;
+		};
+		Temp_Color temp_Color;
+		temp_Color.exterior_Alpha = (fp32)FRAC.exterior_Alpha;
+			temp_Color.exterior_R_Amp = (fp32)FRAC.exterior_R_Amp; temp_Color.exterior_R_Freq = (fp32)FRAC.exterior_R_Freq; temp_Color.exterior_R_Phase = (fp32)FRAC.exterior_R_Phase;
+			temp_Color.exterior_G_Amp = (fp32)FRAC.exterior_G_Amp; temp_Color.exterior_G_Freq = (fp32)FRAC.exterior_G_Freq; temp_Color.exterior_G_Phase = (fp32)FRAC.exterior_G_Phase;
+			temp_Color.exterior_B_Amp = (fp32)FRAC.exterior_B_Amp; temp_Color.exterior_B_Freq = (fp32)FRAC.exterior_B_Freq; temp_Color.exterior_B_Phase = (fp32)FRAC.exterior_B_Phase;
+		temp_Color.interior_Alpha = (fp32)FRAC.interior_Alpha;
+			temp_Color.interior_R_Amp = (fp32)FRAC.interior_R_Amp; temp_Color.interior_R_Freq = (fp32)FRAC.interior_R_Freq; temp_Color.interior_R_Phase = (fp32)FRAC.interior_R_Phase;
+			temp_Color.interior_G_Amp = (fp32)FRAC.interior_G_Amp; temp_Color.interior_G_Freq = (fp32)FRAC.interior_G_Freq; temp_Color.interior_G_Phase = (fp32)FRAC.interior_G_Phase;
+			temp_Color.interior_B_Amp = (fp32)FRAC.interior_B_Amp; temp_Color.interior_B_Freq = (fp32)FRAC.interior_B_Freq; temp_Color.interior_B_Phase = (fp32)FRAC.interior_B_Phase;
+		
+		ImGui::Text("EXTERIOR COLORING:");
+			constexpr fp32 Maximum_Exterior_Freq = 2.0f;
+			ImGui::Text("Amplitude:");
+				fp32 exterior_Amp[4] = {temp_Color.exterior_R_Amp, temp_Color.exterior_G_Amp, temp_Color.exterior_B_Amp, temp_Color.exterior_Alpha};
+				ImGui::ColorEdit4("##exterior_Amp", exterior_Amp);
+					temp_Color.exterior_R_Amp = exterior_Amp[0];
+					temp_Color.exterior_G_Amp = exterior_Amp[1];
+					temp_Color.exterior_B_Amp = exterior_Amp[2];
+					temp_Color.exterior_Alpha = exterior_Amp[3];
+			ImGui::Text("Frequency:");
+				fp32 exterior_Freq[3] = {temp_Color.exterior_R_Freq, temp_Color.exterior_G_Freq, temp_Color.exterior_B_Freq};
+				ImGui::SliderFloat3("##exterior_Freq", exterior_Freq, 0.0f, Maximum_Exterior_Freq, "%.4f");
+					temp_Color.exterior_R_Freq = exterior_Freq[0];
+					temp_Color.exterior_G_Freq = exterior_Freq[1];
+					temp_Color.exterior_B_Freq = exterior_Freq[2];
+			ImGui::Text("Phase:");
+				fp32 exterior_Phase[3] = {temp_Color.exterior_R_Phase, temp_Color.exterior_G_Phase, temp_Color.exterior_B_Phase};
+				ImGui::SliderFloat3("##exterior_Phase", exterior_Phase, 0.0f, 1.0f, "%.4f");
+					temp_Color.exterior_R_Phase = exterior_Phase[0];
+					temp_Color.exterior_G_Phase = exterior_Phase[1];
+					temp_Color.exterior_B_Phase = exterior_Phase[2];
+			ImGui::NewLine();
+		
+		ImGui::Text("INTERIOR COLORING:");
+			constexpr fp32 Maximum_Interior_Freq = 3.0f;
+			ImGui::Text("Amplitude:");
+				fp32 interior_Amp[4] = {temp_Color.interior_R_Amp, temp_Color.interior_G_Amp, temp_Color.interior_B_Amp, temp_Color.interior_Alpha};
+				ImGui::ColorEdit4("##interior_Amp", interior_Amp);
+					temp_Color.interior_R_Amp = interior_Amp[0];
+					temp_Color.interior_G_Amp = interior_Amp[1];
+					temp_Color.interior_B_Amp = interior_Amp[2];
+					temp_Color.interior_Alpha = interior_Amp[3];
+			ImGui::Text("Frequency:");
+				fp32 interior_Freq[3] = {temp_Color.interior_R_Freq, temp_Color.interior_G_Freq, temp_Color.interior_B_Freq};
+				ImGui::SliderFloat3("##interior_Freq", interior_Freq, 0.0f, Maximum_Interior_Freq, "%.4f");
+					temp_Color.interior_R_Freq = interior_Freq[0];
+					temp_Color.interior_G_Freq = interior_Freq[1];
+					temp_Color.interior_B_Freq = interior_Freq[2];
+			ImGui::Text("Phase:");
+				fp32 interior_Phase[3] = {temp_Color.interior_R_Phase, temp_Color.interior_G_Phase, temp_Color.interior_B_Phase};
+				ImGui::SliderFloat3("##interior_Phase", interior_Phase, 0.0f, 1.0f, "%.4f");
+					temp_Color.interior_R_Phase = interior_Phase[0];
+					temp_Color.interior_G_Phase = interior_Phase[1];
+					temp_Color.interior_B_Phase = interior_Phase[2];
+			ImGui::NewLine();
+		
+		FRAC.exterior_Alpha = (fp64)temp_Color.exterior_Alpha;
+			FRAC.exterior_R_Amp = (fp64)temp_Color.exterior_R_Amp; FRAC.exterior_R_Freq = (fp64)temp_Color.exterior_R_Freq; FRAC.exterior_R_Phase = (fp64)temp_Color.exterior_R_Phase;
+			FRAC.exterior_G_Amp = (fp64)temp_Color.exterior_G_Amp; FRAC.exterior_G_Freq = (fp64)temp_Color.exterior_G_Freq; FRAC.exterior_G_Phase = (fp64)temp_Color.exterior_G_Phase;
+			FRAC.exterior_B_Amp = (fp64)temp_Color.exterior_B_Amp; FRAC.exterior_B_Freq = (fp64)temp_Color.exterior_B_Freq; FRAC.exterior_B_Phase = (fp64)temp_Color.exterior_B_Phase;
+		FRAC.interior_Alpha = (fp64)temp_Color.interior_Alpha;
+			FRAC.interior_R_Amp = (fp64)temp_Color.interior_R_Amp; FRAC.interior_R_Freq = (fp64)temp_Color.interior_R_Freq; FRAC.interior_R_Phase = (fp64)temp_Color.interior_R_Phase;
+			FRAC.interior_G_Amp = (fp64)temp_Color.interior_G_Amp; FRAC.interior_G_Freq = (fp64)temp_Color.interior_G_Freq; FRAC.interior_G_Phase = (fp64)temp_Color.interior_G_Phase;
+			FRAC.interior_B_Amp = (fp64)temp_Color.interior_B_Amp; FRAC.interior_B_Freq = (fp64)temp_Color.interior_B_Freq; FRAC.interior_B_Phase = (fp64)temp_Color.interior_B_Phase;
 	}
 
 	ImGui::End();

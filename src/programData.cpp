@@ -83,7 +83,7 @@
 		if (Cycle_Buffer[buf].read_pos == Cycle_Buffer[buf].write_pos) {
 			printCriticalError(
 				"next_Read_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%d].read_pos == Cycle_Buffer[%d].write_pos",
-				Cycle_Buffer[buf].read_pos,Cycle_Buffer[buf].write_pos
+				Cycle_Buffer[buf].read_pos, Cycle_Buffer[buf].write_pos
 			);
 			return -1;
 		}
@@ -101,8 +101,8 @@
 		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
 		if (Cycle_Buffer[buf].read_pos == Cycle_Buffer[buf].write_pos) {
 			printCriticalError(
-				"next_Read_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%d].read_pos == Cycle_Buffer[%d].write_pos",
-				Cycle_Buffer[buf].read_pos,Cycle_Buffer[buf].write_pos
+				"next_Write_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%d].read_pos == Cycle_Buffer[%d].write_pos",
+				Cycle_Buffer[buf].read_pos, Cycle_Buffer[buf].write_pos
 			);
 			return -1;
 		}
@@ -188,7 +188,7 @@ int read_Function_Status(Function_Status* list) {
 	return 0;
 }
 
-int write_Function_Status(Function_Status* list) {
+int write_Function_Status(const Function_Status* list) {
 	std::lock_guard<std::mutex> lock(pDat_Function_Status_Mutex);
 	memcpy(pDat_Function_Status,list,sizeof(pDat_Function_Status));
 	return 0;
@@ -197,30 +197,29 @@ int write_Function_Status(Function_Status* list) {
 /* Parameters */
 
 std::mutex pDat_Parameter_Mutex;
-Fractal_Data pDat_Fractal_Data;
+ABS_Mandelbrot pDat_Fractal_Data;
 Render_Data pDat_Primary_Render_Data;
 Render_Data pDat_Secondary_Render_Data;
 
-void read_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary) {
+void read_Parameters(ABS_Mandelbrot* frac, Render_Data* primary, Render_Data* secondary) {
 	std::lock_guard<std::mutex> lock(pDat_Parameter_Mutex);
-	if (frac != NULL) { memcpy(frac,&pDat_Fractal_Data,sizeof(Fractal_Data)); }
-	if (primary != NULL) { memcpy(primary,&pDat_Primary_Render_Data,sizeof(Render_Data)); }
-	if (secondary != NULL) { memcpy(secondary,&pDat_Secondary_Render_Data,sizeof(Render_Data)); }
+	if (frac != nullptr     ) { memcpy(frac     , &pDat_Fractal_Data         , sizeof(ABS_Mandelbrot)); }
+	if (primary != nullptr  ) { memcpy(primary  , &pDat_Primary_Render_Data  , sizeof(Render_Data   )); }
+	if (secondary != nullptr) { memcpy(secondary, &pDat_Secondary_Render_Data, sizeof(Render_Data   )); }
 }
 
-void write_Parameters(Fractal_Data* frac, Render_Data* primary, Render_Data* secondary) {
+void write_Parameters(const ABS_Mandelbrot* frac, const Render_Data* primary, const Render_Data* secondary) {
 	std::lock_guard<std::mutex> lock(pDat_Parameter_Mutex);
-	if (frac != NULL) { memcpy(&pDat_Fractal_Data,frac,sizeof(Fractal_Data)); }
-	if (primary != NULL) { memcpy(&pDat_Primary_Render_Data,primary,sizeof(Render_Data)); }
-	if (secondary != NULL) { memcpy(&pDat_Secondary_Render_Data,secondary,sizeof(Render_Data)); }
+	if (frac != nullptr     ) { memcpy(&pDat_Fractal_Data         , frac     , sizeof(ABS_Mandelbrot)); }
+	if (primary != nullptr  ) { memcpy(&pDat_Primary_Render_Data  , primary  , sizeof(Render_Data   )); }
+	if (secondary != nullptr) { memcpy(&pDat_Secondary_Render_Data, secondary, sizeof(Render_Data   )); }
 }
-
 
 /* Render Buffers */
 
 std::mutex pDat_Render_Buffers_Mutex;
-BufferBox pDat_primary = {NULL,0,0,IMAGE_BUFFER_CHANNELS,0};
-BufferBox pDat_secondary = {NULL,0,0,IMAGE_BUFFER_CHANNELS,0};
+BufferBox pDat_primary =   {nullptr, 0, 0, IMAGE_BUFFER_CHANNELS, 0};
+BufferBox pDat_secondary = {nullptr, 0, 0, IMAGE_BUFFER_CHANNELS, 0};
 bool pDat_Render_Buffer_Read = false;
 
 int read_Render_Buffers(BufferBox* primary) {
@@ -251,7 +250,7 @@ int clear_Render_Buffers() {
 	return 0;
 }
 
-int write_Render_Buffers(BufferBox* primary) {
+int write_Render_Buffers(const BufferBox* primary) {
 	std::lock_guard<std::mutex> lock(pDat_Render_Buffers_Mutex);
 	if (primary == NULL) { // Nothing to do
 		printError("BufferBox* primary is NULL in write_Render_Buffers()");
@@ -314,7 +313,7 @@ int read_Image_Buffers(ImageBuffer* primary) {
 	return 0;
 }
 
-int write_Image_Buffers(ImageBuffer* primary) {
+int write_Image_Buffers(const ImageBuffer* primary) {
 	if (primary == NULL) { // Nothing to do
 		printError("ImageBuffer* primary is NULL in write_Render_Buffers()");
 		return -1;	
@@ -343,7 +342,7 @@ fp64 getRenderDelta() {
 
 /* Image Render */
 	std::mutex pDat_Image_Render_Mutex;
-	Fractal_Data pDat_Image_Render_Fractal;
+	ABS_Mandelbrot pDat_Image_Render_Fractal;
 	Render_Data pDat_Image_Render_Data;
 	bool pDat_Image_Render_Ready = false;
 	uint32_t pDat_Image_File_Format = 0;
@@ -352,12 +351,12 @@ fp64 getRenderDelta() {
 	void reset_Image_Render() {
 		std::lock_guard<std::mutex> lock(pDat_Image_Render_Mutex);
 		pDat_Image_Render_Ready = false;
-		memset(&pDat_Image_Render_Fractal,0,sizeof(Fractal_Data));
-		memset(&pDat_Image_Render_Data,0,sizeof(Render_Data));
+		memset(&pDat_Image_Render_Fractal, 0, sizeof(ABS_Mandelbrot));
+		memset(&pDat_Image_Render_Data   , 0, sizeof(Render_Data   ));
 	}
 
 	void send_Image_Render(
-		const Fractal_Data* frac, const Render_Data* super,
+		const ABS_Mandelbrot* frac, const Render_Data* super,
 		uint32_t image_file_format, uint8_t image_quality
 	) {
 		if (frac == nullptr || super == nullptr) {
@@ -371,7 +370,7 @@ fp64 getRenderDelta() {
 	}
 
 	bool receive_Image_Render(
-		Fractal_Data* frac, Render_Data* super, uint32_t* image_file_format, uint8_t* image_quality
+		ABS_Mandelbrot* frac, Render_Data* super, uint32_t* image_file_format, uint8_t* image_quality
 	) {
 		if (frac == nullptr || super == nullptr || image_file_format == nullptr || image_quality == nullptr) {
 			return false;

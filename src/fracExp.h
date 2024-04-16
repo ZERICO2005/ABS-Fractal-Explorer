@@ -17,7 +17,7 @@ struct _Fractal_Header {
 	uint64_t hash[4];
 	char* name;
 	char* description;
-	Fractal_Data fractal;
+	ABS_Mandelbrot fractal;
 }; typedef struct _Fractal_Header Fractal_Header;
 
 /* Contains lots of metadata */

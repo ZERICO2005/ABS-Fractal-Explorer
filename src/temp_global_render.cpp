@@ -118,7 +118,7 @@ Frame_Pacer GUI_Frame_Pacer;
 
 /* Fractals */
 
-	Fractal_Data frac = {0};
+	ABS_Mandelbrot current_Fractal = {0};
 	Render_Data primaryRenderData = {0};
 	Render_Data secondaryRenderData = {0};
 	

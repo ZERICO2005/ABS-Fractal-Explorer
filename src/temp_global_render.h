@@ -118,7 +118,7 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 /* Fractals */
 
-	extern Fractal_Data frac;
+	extern ABS_Mandelbrot current_Fractal;
 	extern Render_Data primaryRenderData;
 	extern Render_Data secondaryRenderData;
 

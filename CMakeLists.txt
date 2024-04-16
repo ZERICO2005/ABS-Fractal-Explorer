@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.12)
 set(SRC_DIR "./src")
 set(IMGUI_DIR "./imgui")
 
-set(CMAKE_BUILD_TYPE Debug)
 set(PROJECT_NAME "ABS-Fractal-Explorer")
 project(${PROJECT_NAME})
 
@@ -47,9 +46,8 @@ include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR})
 set(OPT_FLAG -g -O3)
 set(MARCH_FLAGS "")
 
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=always")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare)
 set(WARNING_IGNORE_FLAGS -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-comment -Wno-missing-braces)
 

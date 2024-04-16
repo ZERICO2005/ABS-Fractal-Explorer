@@ -404,16 +404,21 @@ int import_config_data(User_Configuration_Data& config_data, const char* path) {
 		return -1;
 	}
 
+	// Arbitrary minimum for blank/empty file detection
+	constexpr size_t Minimum_User_Config_File_Size = 10;
+	// Arbitrary maximum for invalid file-type detection
+	constexpr size_t Maximum_User_Config_File_Size = 250000;
+
 	fseek(file, 0, SEEK_END);
 
 	long ftell_len = ftell(file);
 	size_t fileSize = (ftell_len >= 0) ? (size_t)ftell_len : 0;
 	rewind(file);
-	if (fileSize >= 250000) {
+	if (fileSize >= Maximum_User_Config_File_Size) {
 		printError("config file is abnormally large (%zubytes)",fileSize);
 		fclose(file);
 		return -1;
-	} else if (fileSize <= 10) {
+	} else if (fileSize <= Minimum_User_Config_File_Size) {
 		printError("config file is too small (%zubytes)",fileSize);
 		fclose(file);
 		return -1;
