@@ -10,9 +10,12 @@
 
 #include "Common_Def.h"
 #include "Program_Def.h"
+#include "copyBuffer.h"
 
 #include "fractal.h"
 #include "render.h"
+/* Rendering Modes */
+	#define ENABLE_SSE2_RENDERING
 
 const uint64_t factorialLUT[] = {
 	/*        0! */ 1,
@@ -28,15 +31,18 @@ const uint64_t factorialLUT[] = {
 
 #define FractalParameters(fpX, fpColor) uint8_t* data, const PreCalc_Param<fpX, fpColor> param, size_t p0, const size_t p1, std::atomic<bool>& ABORT_RENDERING
 
-constexpr inline fp64 inverse_log2(fp64 p) { return 1.0 / log2(p); }
+template<typename fpX>
+constexpr inline fpX inverse_log2(fpX p) { return (fpX)1.0 / log2(p); }
 
 template<typename fpX, typename fpColor>
 struct PreCalc_Param {
 	/* Header */
 		uint64_t formula;
 		uint32_t power;
-		dim32_t resX;
-		dim32_t resY;
+		dim32_t Image_ResX;
+		dim32_t Image_ResY;
+		dim32_t Cord_ResX;
+		dim32_t Cord_ResY;
 		int32_t sample;
 		uint32_t maxItr;
 		bool juliaSet;
@@ -59,28 +65,108 @@ struct PreCalc_Param {
 		fpX polarPowerHalf;
 	/* Coloring */
 		fpColor inverse_log2_power;
-		fpColor sampleDiv;
+		fpColor alphaDiv;
 
-		fpColor exterior_Alpha;
-			fpColor exterior_R_Amp;
-			fpColor exterior_R_Freq;
-			fpColor exterior_R_Phase;
-			fpColor exterior_G_Amp;
-			fpColor exterior_G_Freq;
-			fpColor exterior_G_Phase;
-			fpColor exterior_B_Amp;
-			fpColor exterior_B_Freq;
-			fpColor exterior_B_Phase;
-		fpColor interior_Alpha;
-			fpColor interior_R_Amp;
-			fpColor interior_R_Freq;
-			fpColor interior_R_Phase;
-			fpColor interior_G_Amp;
-			fpColor interior_G_Freq;
-			fpColor interior_G_Phase;
-			fpColor interior_B_Amp;
-			fpColor interior_B_Freq;
-			fpColor interior_B_Phase;
+		fpColor Exterior_Alpha;
+			fpColor Exterior_R_Amp_mult_Exterior_Alpha;
+			fpColor Exterior_R_Freq_mult_TAU;
+			fpColor Exterior_R_Phase_mult_TAU;
+			fpColor Exterior_G_Amp_mult_Exterior_Alpha;
+			fpColor Exterior_G_Freq_mult_TAU;
+			fpColor Exterior_G_Phase_mult_TAU;
+			fpColor Exterior_B_Amp_mult_Exterior_Alpha;
+			fpColor Exterior_B_Freq_mult_TAU;
+			fpColor Exterior_B_Phase_mult_TAU;
+		fpColor Interior_Alpha;
+			fpColor Interior_R_Amp_mult_Interior_Alpha;
+			fpColor Interior_R_Freq;
+			fpColor Interior_R_Phase;
+			fpColor Interior_G_Amp_mult_Interior_Alpha;
+			fpColor Interior_G_Freq;
+			fpColor Interior_G_Phase;
+			fpColor Interior_B_Amp_mult_Interior_Alpha;
+			fpColor Interior_B_Freq;
+			fpColor Interior_B_Phase;
 };
+
+template <typename fpX, typename fpColor>
+void Generate_PreCalc_Param(
+	PreCalc_Param<fpX,fpColor>& preCalc_Param,
+	const BufferBox* buf, const Render_Data& ren, const ABS_Mandelbrot& param
+) {
+	if (buf == nullptr) { return; }
+	/* Header */
+		preCalc_Param.formula = param.formula;
+		preCalc_Param.power = param.power;
+		preCalc_Param.Image_ResX = buf->resX;
+		preCalc_Param.Image_ResY = buf->resY;
+		preCalc_Param.Cord_ResX = buf->resX * ren.sample;
+		preCalc_Param.Cord_ResY = buf->resY * ren.sample;
+		preCalc_Param.sample = ren.sample;
+		preCalc_Param.maxItr = param.maxItr;
+		preCalc_Param.juliaSet = param.juliaSet;
+		preCalc_Param.power = param.power;
+	/* Coordinates */
+		preCalc_Param.realCord = (fpX)param.r;
+		preCalc_Param.imagCord = (fpX)param.i;
+		preCalc_Param.realJulia = (fpX)param.zr;
+		preCalc_Param.imagJulia = (fpX)param.zi;
+		preCalc_Param.zoom_PC = (fpX)pow((fpCord)10.0, (fpCord)param.zoom);
+		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);
+		preCalc_Param.rotCos_PC = (fpX)cos((fpCord)param.rot);
+		const dim32_t sResX = preCalc_Param.Cord_ResX - 1;
+		const dim32_t sResY = preCalc_Param.Cord_ResY - 1;
+		preCalc_Param.numY = ((fpX)sResY / (fpX)2.0);
+		preCalc_Param.numX = ((fpX)sResX / (fpX)2.0);
+		const fpX numT = (sResX >= sResY) ?
+			(preCalc_Param.numY * preCalc_Param.zoom_PC) :
+			(preCalc_Param.numX * preCalc_Param.zoom_PC);
+		preCalc_Param.recip_numZ = ((fpX)param.sX / numT);
+		preCalc_Param.neg_recip_numW = -((fpX)param.sY / numT);
+		preCalc_Param.breakoutValue = (fpX)param.breakoutValue;
+	/* Polar */
+		preCalc_Param.polarPower = (fpX)param.polarPower;
+		preCalc_Param.polarPowerHalf = (fpX)param.polarPower / (fpX)2.0;
+	/* Coloring */
+		preCalc_Param.inverse_log2_power = (fpColor)1.0 / log2((fpColor)param.polarPower);
+		preCalc_Param.alphaDiv = (fpColor)(ren.sample * ren.sample);
+
+		preCalc_Param.Exterior_Alpha = (fpColor)param.exterior_Alpha;
+			preCalc_Param.Exterior_R_Amp_mult_Exterior_Alpha = (fpColor)(param.exterior_R_Amp * param.exterior_Alpha);
+			preCalc_Param.Exterior_R_Freq_mult_TAU           = (fpColor)(param.exterior_R_Freq  * TAU               );
+			preCalc_Param.Exterior_R_Phase_mult_TAU          = (fpColor)(param.exterior_R_Phase * TAU               );
+			preCalc_Param.Exterior_G_Amp_mult_Exterior_Alpha = (fpColor)(param.exterior_G_Amp * param.exterior_Alpha);
+			preCalc_Param.Exterior_G_Freq_mult_TAU           = (fpColor)(param.exterior_G_Freq  * TAU               );
+			preCalc_Param.Exterior_G_Phase_mult_TAU          = (fpColor)(param.exterior_G_Phase * TAU               );
+			preCalc_Param.Exterior_B_Amp_mult_Exterior_Alpha = (fpColor)(param.exterior_B_Amp * param.exterior_Alpha);
+			preCalc_Param.Exterior_B_Freq_mult_TAU           = (fpColor)(param.exterior_B_Freq  * TAU               );
+			preCalc_Param.Exterior_B_Phase_mult_TAU          = (fpColor)(param.exterior_B_Phase * TAU               );
+		preCalc_Param.Interior_Alpha = (fpColor)param.interior_Alpha;
+			preCalc_Param.Interior_R_Amp_mult_Interior_Alpha = (fpColor)(param.interior_R_Amp * param.interior_Alpha);
+			preCalc_Param.Interior_R_Freq                    = (fpColor) param.interior_R_Freq                       ;
+			preCalc_Param.Interior_R_Phase                   = (fpColor) param.interior_R_Phase                      ;
+			preCalc_Param.Interior_G_Amp_mult_Interior_Alpha = (fpColor)(param.interior_G_Amp * param.interior_Alpha);
+			preCalc_Param.Interior_G_Freq                    = (fpColor) param.interior_G_Freq                       ;
+			preCalc_Param.Interior_G_Phase                   = (fpColor) param.interior_G_Phase                      ;
+			preCalc_Param.Interior_B_Amp_mult_Interior_Alpha = (fpColor)(param.interior_B_Amp * param.interior_Alpha);
+			preCalc_Param.Interior_B_Freq                    = (fpColor) param.interior_B_Freq                       ;
+			preCalc_Param.Interior_B_Phase                   = (fpColor) param.interior_B_Phase                      ;
+		
+		#ifdef MONOCHROME_MODE
+			preCalc_Param.Exterior_G_Amp_mult_Exterior_Alpha = preCalc_Param.Exterior_R_Amp_mult_Exterior_Alpha;
+			preCalc_Param.Exterior_G_Freq_mult_TAU           = preCalc_Param.Exterior_R_Freq_mult_TAU          ;
+			preCalc_Param.Exterior_G_Phase_mult_TAU          = preCalc_Param.Exterior_R_Phase_mult_TAU         ;
+			preCalc_Param.Exterior_B_Amp_mult_Exterior_Alpha = preCalc_Param.Exterior_R_Amp_mult_Exterior_Alpha;
+			preCalc_Param.Exterior_B_Freq_mult_TAU           = preCalc_Param.Exterior_R_Freq_mult_TAU          ;
+			preCalc_Param.Exterior_B_Phase_mult_TAU          = preCalc_Param.Exterior_R_Phase_mult_TAU         ;
+
+			preCalc_Param.Interior_R_Amp_mult_Interior_Alpha = preCalc_Param.Interior_B_Amp_mult_Interior_Alpha;
+			preCalc_Param.Interior_R_Freq                    = preCalc_Param.Interior_B_Freq                   ;
+			preCalc_Param.Interior_R_Phase                   = preCalc_Param.Interior_B_Phase                  ;
+			preCalc_Param.Interior_G_Amp_mult_Interior_Alpha = preCalc_Param.Interior_B_Amp_mult_Interior_Alpha;
+			preCalc_Param.Interior_G_Freq                    = preCalc_Param.Interior_B_Freq                   ;
+			preCalc_Param.Interior_G_Phase                   = preCalc_Param.Interior_B_Phase                  ;
+		#endif
+}
 
 #endif /* FRAC_MULTI_INTERNAL_H */

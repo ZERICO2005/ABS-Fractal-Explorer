@@ -17,219 +17,500 @@
 
 #include <xmmintrin.h>
 
-void CPU_Interior_Coloring_SSE2_FP32(
-	fp32& outR, fp32& outG, fp32& outB, fp32& outA,
-	const PreCalc_Param<fp32,fp32>& param,
-	fp32 low
-) {
-	outR += param.interior_R_Amp * param.interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.interior_R_Freq + param.interior_R_Phase));
-	outG += param.interior_G_Amp * param.interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.interior_G_Freq + param.interior_G_Phase));
-	outB += param.interior_B_Amp * param.interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.interior_B_Freq + param.interior_B_Phase));
-	outA += param.interior_Alpha;
-}
-			
-void CPU_Exterior_Coloring_SSE2_FP32(
-	fp32& outR, fp32& outG, fp32& outB, fp32& outA,
-	const PreCalc_Param<fp32,fp32>& param,
-	uint32_t itr, fp32 zs, fp32 inverse_log2_power
-) {
-	fp32 smooth = log1pf(fmaxf(0.0f, (fp32)itr - log2f(log2f(zs) / 2.0f) * inverse_log2_power));
-	outR += param.exterior_R_Amp * param.exterior_Alpha * (0.5f - 0.5f * cosf((fp32)TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));
-	outG += param.exterior_G_Amp * param.exterior_Alpha * (0.5f - 0.5f * cosf((fp32)TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase)));
-	outB += param.exterior_B_Amp * param.exterior_Alpha * (0.5f - 0.5f * cosf((fp32)TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase)));
-	outA += param.exterior_Alpha;
-}
+/* Debug Tools */
+	/* Floats */
+		#define printf_m128_fp32(x) \
+			printFlush("\n" STR_M(x) ": %f %f %f %f", ((fp32*)((void*)(&x)))[0], ((fp32*)((void*)(&x)))[1], ((fp32*)((void*)(&x)))[2], ((fp32*)((void*)(&x)))[3]);
 
-void quadraticRender_SSE2_FP64(FractalParameters(fp64, fp64));
+		#define printfInterval_m128_fp32(freq, x) \
+			printfInterval(freq, "\n" STR_M(x) ": %f %f %f %f", ((fp32*)((void*)(&x)))[0], ((fp32*)((void*)(&x)))[1], ((fp32*)((void*)(&x)))[2], ((fp32*)((void*)(&x)))[3]);
 
-#define printf_m128_fp32(x) \
-	printFlush("\n" STR_M(x) ": %f %f %f %f", ((fp32*)((void*)(&x)))[0], ((fp32*)((void*)(&x)))[1], ((fp32*)((void*)(&x)))[2], ((fp32*)((void*)(&x)))[3]);
+		#define printf_m128_fp64(x) \
+			printFlush("\n" STR_M(x) ": %lf %lf", ((fp64*)((void*)(&x)))[0], ((fp64*)((void*)(&x)))[1]);
 
-#define printfInterval_m128_fp32(freq, x) \
-	printfInterval(freq, "\n" STR_M(x) ": %f %f %f %f", ((fp32*)((void*)(&x)))[0], ((fp32*)((void*)(&x)))[1], ((fp32*)((void*)(&x)))[2], ((fp32*)((void*)(&x)))[3]);
+		#define printfInterval_m128_fp64(freq, x) \
+			printfInterval(freq, "\n" STR_M(x) ": %lf %lf", ((fp64*)((void*)(&x)))[0], ((fp64*)((void*)(&x)))[1]);
+	/* Integers */
 
-#define printf_m128_u32(x) \
-	printFlush("\n" STR_M(x) ": %08X %08X %08X %08X", ((uint32_t*)((void*)(&x)))[0], ((uint32_t*)((void*)(&x)))[1], ((uint32_t*)((void*)(&x)))[2], ((uint32_t*)((void*)(&x)))[3]);
+		#define printf_m128_u32(x) \
+			printFlush("\n" STR_M(x) ": %08X %08X %08X %08X", ((uint32_t*)((void*)(&x)))[0], ((uint32_t*)((void*)(&x)))[1], ((uint32_t*)((void*)(&x)))[2], ((uint32_t*)((void*)(&x)))[3]);
 
-#define printfInterval_m128_u32(freq, x) \
-	printfInterval(freq, "\n" STR_M(x) ": %08X %08X %08X %08X", ((uint32_t*)((void*)(&x)))[0], ((uint32_t*)((void*)(&x)))[1], ((uint32_t*)((void*)(&x)))[2], ((uint32_t*)((void*)(&x)))[3]);
+		#define printfInterval_m128_u32(freq, x) \
+			printfInterval(freq, "\n" STR_M(x) ": %08X %08X %08X %08X", ((uint32_t*)((void*)(&x)))[0], ((uint32_t*)((void*)(&x)))[1], ((uint32_t*)((void*)(&x)))[2], ((uint32_t*)((void*)(&x)))[3]);
 
+		#define printf_m128_u64(x) \
+			printFlush("\n" STR_M(x) ": %016X %016X", ((uint64_t*)((void*)(&x)))[0], ((uint64_t*)((void*)(&x)))[1]);
 
-void quadraticRender_SSE2_FP32(FractalParameters(fp32, fp32)) {
+		#define printfInterval_m128_u64(freq, x) \
+			printfInterval(freq, "\n" STR_M(x) ": %016X %016X", ((uint64_t*)((void*)(&x)))[0], ((uint64_t*)((void*)(&x)))[1]);
 
-	const fp32 inverse_log2_power = inverse_log2(2.0);
-	
-	const __m128 realCord         = _mm_set_ps1(param.realCord        );
-	const __m128 imagCord         = _mm_set_ps1(param.imagCord        );
-	const __m128 realJulia        = _mm_set_ps1(param.realJulia       );
-	const __m128 imagJulia        = _mm_set_ps1(param.imagJulia       );
-	const __m128 zoom_PC          = _mm_set_ps1(param.zoom_PC         );
-	const __m128 rotSin_PC        = _mm_set_ps1(param.rotSin_PC       );
-	const __m128 rotCos_PC        = _mm_set_ps1(param.rotCos_PC       );
-	const __m128 breakoutValue    = _mm_set_ps1(param.breakoutValue   );
-	const __m128 numY             = _mm_set_ps1(param.numY            );
-	const __m128 numX             = _mm_set_ps1(param.numX            );
-	const __m128 recip_numZ       = _mm_set_ps1(param.recip_numZ      );
-	const __m128 neg_recip_numW   = _mm_set_ps1(param.neg_recip_numW  );
-	const __m128 polarPower       = _mm_set_ps1(param.polarPower      );
-	const __m128 polarPowerHalf   = _mm_set_ps1(param.polarPowerHalf  );
-	const __m128 sampleDiv        = _mm_set_ps1(param.sampleDiv       );
-	const __m128 exterior_Alpha   = _mm_set_ps1(param.exterior_Alpha  );
-	const __m128 exterior_R_Amp   = _mm_set_ps1(param.exterior_R_Amp  );
-	const __m128 exterior_R_Freq  = _mm_set_ps1(param.exterior_R_Freq );
-	const __m128 exterior_R_Phase = _mm_set_ps1(param.exterior_R_Phase);
-	const __m128 exterior_G_Amp   = _mm_set_ps1(param.exterior_G_Amp  );
-	const __m128 exterior_G_Freq  = _mm_set_ps1(param.exterior_G_Freq );
-	const __m128 exterior_G_Phase = _mm_set_ps1(param.exterior_G_Phase);
-	const __m128 exterior_B_Amp   = _mm_set_ps1(param.exterior_B_Amp  );
-	const __m128 exterior_B_Freq  = _mm_set_ps1(param.exterior_B_Freq );
-	const __m128 exterior_B_Phase = _mm_set_ps1(param.exterior_B_Phase);
-	const __m128 interior_Alpha   = _mm_set_ps1(param.interior_Alpha  );
-	const __m128 interior_R_Amp   = _mm_set_ps1(param.interior_R_Amp  );
-	const __m128 interior_R_Freq  = _mm_set_ps1(param.interior_R_Freq );
-	const __m128 interior_R_Phase = _mm_set_ps1(param.interior_R_Phase);
-	const __m128 interior_G_Amp   = _mm_set_ps1(param.interior_G_Amp  );
-	const __m128 interior_G_Freq  = _mm_set_ps1(param.interior_G_Freq );
-	const __m128 interior_G_Phase = _mm_set_ps1(param.interior_G_Phase);
-	const __m128 interior_B_Amp   = _mm_set_ps1(param.interior_B_Amp  );
-	const __m128 interior_B_Freq  = _mm_set_ps1(param.interior_B_Freq );
-	const __m128 interior_B_Phase = _mm_set_ps1(param.interior_B_Phase);
+/* SSE2 FP64 */
 
-	__m128 zr1, zr2, zi1, zi2;
-
-	bool f[8];
-	for (uint8_t q = 0; q < 8; q++) {
-		f[q] = ((param.formula >> q) & 1) ? true : false;
+	void CPU_Interior_Coloring_SSE2_FP64(
+		fp64& outR, fp64& outG, fp64& outB, fp64& outA,
+		const PreCalc_Param<fp64, fp64>& param,
+		fp64 low
+	) {
+		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_R_Freq + param.Interior_R_Phase));
+		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_G_Freq + param.Interior_G_Phase));
+		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_B_Freq + param.Interior_B_Phase));
+		outA += param.Interior_Alpha;
 	}
-	
-	const __m128 s1 = (f[0]) ? _mm_set_ps1(-1.0f) : _mm_set_ps1(1.0f);
-	const __m128 s2 = (f[1]) ? _mm_set_ps1(-1.0f) : _mm_set_ps1(1.0f);
-	const __m128 s3 = (f[2]) ? _mm_set_ps1(-2.0f) : _mm_set_ps1(2.0f);
-	
-	const __m128 zr1_mask = (f[3]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
-	const __m128 zi1_mask = (f[4]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
-	const __m128 zr2_mask = (f[5]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
-	const __m128 zi2_mask = (f[6]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
-	const __m128 zr_mask = (f[7]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
-	
-	// printf_m128_fp32(s1);
-	// printf_m128_fp32(s2);
-	// printf_m128_fp32(s3);
-	// printf_m128_u32(zr1_mask);
-	// printf_m128_u32(zr1_mask);
-	// printf_m128_u32(zi1_mask);
-	// printf_m128_u32(zr2_mask);
-	// printf_m128_u32(zi2_mask);
-	// printf_m128_u32(zr_mask);
+				
+	void CPU_Exterior_Coloring_SSE2_FP64(
+		fp64& outR, fp64& outG, fp64& outB, fp64& outA,
+		const PreCalc_Param<fp64, fp64>& param,
+		uint32_t itr, fp64 zs, fp64 inverse_log2_power
+	) {
+		// TAU = 2 * PI
+		fp64 smooth = log1p(fmax(0.0, (fp64)itr - log2(log2(zs) / 2.0) * inverse_log2_power));
+		outR += param.Exterior_R_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));
+		outG += param.Exterior_G_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));
+		outB += param.Exterior_B_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));
+		outA += param.Exterior_Alpha;
+	}
 
-	size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;
-	int32_t y = (int32_t)(p0 / (size_t)param.resX);
-	int32_t x = (int32_t)(p0 % (size_t)param.resX);
-	x *= param.sample;
-	y *= param.sample;
-	for (; y < param.resY; y++) {
-		fp32 y_val = (fp32)y;
-		for (; x < param.resX; x += 4) {
-			fp32 x_val = (fp32)x;
-			if (p0 >= p1 || ABORT_RENDERING == true) {
-				return;
+	void quadraticRender_SSE2_FP64(FractalParameters(fp64, fp64)) {
+		constexpr size_t SIMD_Spacing = 2; // 2 Registers in SSE2 FP64
+		
+		constexpr fp64 inverse_log2_power = inverse_log2(2.0); // Quadratic == 2
+		
+		// Load Precalculated constants
+		const __m128d realCord       = _mm_set_pd1(param.realCord     );
+		const __m128d imagCord       = _mm_set_pd1(param.imagCord     );
+		const __m128d realJulia      = _mm_set_pd1(param.realJulia    );
+		const __m128d imagJulia      = _mm_set_pd1(param.imagJulia    );
+		const __m128d zoom_PC        = _mm_set_pd1(param.zoom_PC      );
+		const __m128d rotSin_PC      = _mm_set_pd1(param.rotSin_PC    );
+		const __m128d rotCos_PC      = _mm_set_pd1(param.rotCos_PC    );
+		const __m128d breakoutValue  = _mm_set_pd1(param.breakoutValue);
+		// numX, numY, numZ, and numW are constants used to caluculate the cordinates
+		const __m128d numY           = _mm_set_pd1(param.numY          );
+		const __m128d numX           = _mm_set_pd1(param.numX          );
+		const __m128d recip_numZ     = _mm_set_pd1(param.recip_numZ    );
+		const __m128d neg_recip_numW = _mm_set_pd1(param.neg_recip_numW);
+		// Polar
+		const __m128d polarPower     = _mm_set_pd1(param.polarPower    );
+		const __m128d polarPowerHalf = _mm_set_pd1(param.polarPowerHalf);
+		// Constant used to divide Alpha (sample * sample)
+		const __m128d alphaDiv       = _mm_set_pd1(param.alphaDiv      );
+		// Color Values
+		const __m128d Exterior_Alpha = _mm_set_pd1(param.Exterior_Alpha);
+			const __m128d Exterior_R_Amp_mult_Exterior_Alpha = _mm_set_pd1(param.Exterior_R_Amp_mult_Exterior_Alpha);
+			const __m128d Exterior_R_Freq_mult_TAU           = _mm_set_pd1(param.Exterior_R_Freq_mult_TAU          );
+			const __m128d Exterior_R_Phase_mult_TAU          = _mm_set_pd1(param.Exterior_R_Phase_mult_TAU         );
+			const __m128d Exterior_G_Amp_mult_Exterior_Alpha = _mm_set_pd1(param.Exterior_G_Amp_mult_Exterior_Alpha);
+			const __m128d Exterior_G_Freq_mult_TAU           = _mm_set_pd1(param.Exterior_G_Freq_mult_TAU          );
+			const __m128d Exterior_G_Phase_mult_TAU          = _mm_set_pd1(param.Exterior_G_Phase_mult_TAU         );
+			const __m128d Exterior_B_Amp_mult_Exterior_Alpha = _mm_set_pd1(param.Exterior_B_Amp_mult_Exterior_Alpha);
+			const __m128d Exterior_B_Freq_mult_TAU           = _mm_set_pd1(param.Exterior_B_Freq_mult_TAU          );
+			const __m128d Exterior_B_Phase_mult_TAU          = _mm_set_pd1(param.Exterior_B_Phase_mult_TAU         );
+		const __m128d Interior_Alpha = _mm_set_pd1(param.Exterior_Alpha);
+			const __m128d Interior_R_Amp_mult_Interior_Alpha = _mm_set_pd1(param.Interior_R_Amp_mult_Interior_Alpha);
+			const __m128d Interior_R_Freq                    = _mm_set_pd1(param.Interior_R_Freq                   );
+			const __m128d Interior_R_Phase                   = _mm_set_pd1(param.Interior_R_Phase                  );
+			const __m128d Interior_G_Amp_mult_Interior_Alpha = _mm_set_pd1(param.Interior_G_Amp_mult_Interior_Alpha);
+			const __m128d Interior_G_Freq                    = _mm_set_pd1(param.Interior_G_Freq                   );
+			const __m128d Interior_G_Phase                   = _mm_set_pd1(param.Interior_G_Phase                  );
+			const __m128d Interior_B_Amp_mult_Interior_Alpha = _mm_set_pd1(param.Interior_B_Amp_mult_Interior_Alpha);
+			const __m128d Interior_B_Freq                    = _mm_set_pd1(param.Interior_B_Freq                   );
+			const __m128d Interior_B_Phase                   = _mm_set_pd1(param.Interior_B_Phase                  );
+
+		__m128d zr1, zr2, zi1, zi2;
+
+		bool f[8]; // 8 bit formula
+		for (uint8_t q = 0; q < 8; q++) {
+			f[q] = ((param.formula >> q) & 1) ? true : false;
+		}
+		
+		// Bits 0-2 will flip signage
+		const __m128d s1 = (f[0]) ? _mm_set_pd1(-1.0) : _mm_set_pd1(1.0);
+		const __m128d s2 = (f[1]) ? _mm_set_pd1(-1.0) : _mm_set_pd1(1.0);
+		const __m128d s3 = (f[2]) ? _mm_set_pd1(-2.0) : _mm_set_pd1(2.0);
+		
+		// Bits 3-7 will apply fabs() via a mask
+		const __m128d zr1_mask = (f[3]) ? _mm_set_pd1(-0.0) : _mm_set_pd1(0.0);
+		const __m128d zi1_mask = (f[4]) ? _mm_set_pd1(-0.0) : _mm_set_pd1(0.0);
+		const __m128d zr2_mask = (f[5]) ? _mm_set_pd1(-0.0) : _mm_set_pd1(0.0);
+		const __m128d zi2_mask = (f[6]) ? _mm_set_pd1(-0.0) : _mm_set_pd1(0.0);
+		const __m128d zr_mask = (f[7]) ? _mm_set_pd1(-0.0) : _mm_set_pd1(0.0);
+
+		size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS; // Determines the starting image offset/index
+		int32_t y = (int32_t)(p0 / (size_t)param.Image_ResX); // Determines the starting y offset/index
+		int32_t x = (int32_t)(p0 % (size_t)param.Image_ResX); // Determines the starting x offset/index
+		x *= param.sample; // Scales x by the samples per pixel
+		y *= param.sample; // Scales x by the samples per pixel
+		for (; y < param.Cord_ResY; y += param.sample) {
+			for (; x < param.Cord_ResX; x += (int32_t)SIMD_Spacing * param.sample) {
+				// returns once the image offset/index reaches the end offset/index
+				if (p0 >= p1 || ABORT_RENDERING == true) {
+					return;
+				}
+				// Store the output color values
+					__m128d outR = _mm_setzero_pd();
+					__m128d outG = _mm_setzero_pd();
+					__m128d outB = _mm_setzero_pd();
+					__m128d outA = _mm_setzero_pd();
+				// Calculates 4 pixels (with super sampling) at a time
+				for (int32_t v = 0; v < param.sample; v++) {
+					// Calculates y cordinate-value
+					__m128d yCord = _mm_set_pd1((fp64)y);
+					yCord = _mm_sub_pd(yCord, numY);
+					yCord = _mm_mul_pd(yCord, neg_recip_numW);
+
+					for (int32_t u = 0; u < param.sample; u++) {
+						// Calculates the 4 x cordinate-values
+						__m128d xCord = _mm_set_pd(
+							(fp64)(x + 0 * param.sample),
+							(fp64)(x + 1 * param.sample)
+						);
+						xCord = _mm_sub_pd(xCord, numX);
+						xCord = _mm_mul_pd(xCord, recip_numZ);
+
+						// Transforms the x and y cordinate-values into the cordinates
+						// `cr` and `ci` are swapped with `zr` and `zi` if `param.juliaSet == true`
+						__m128d cr = (!param.juliaSet) ? _mm_add_pd(_mm_sub_pd(_mm_mul_pd(xCord, rotCos_PC), _mm_mul_pd(yCord, rotSin_PC)), realCord) : realJulia;
+						__m128d ci = (!param.juliaSet) ? _mm_add_pd(_mm_add_pd(_mm_mul_pd(yCord, rotCos_PC), _mm_mul_pd(xCord, rotSin_PC)), imagCord) : imagJulia;
+						__m128d zr = (param.juliaSet) ? _mm_add_pd(_mm_sub_pd(_mm_mul_pd(xCord, rotCos_PC), _mm_mul_pd(yCord, rotSin_PC)), realCord) : realJulia;
+						__m128d zi = (param.juliaSet) ? _mm_add_pd(_mm_add_pd(_mm_mul_pd(yCord, rotCos_PC), _mm_mul_pd(xCord, rotSin_PC)), imagCord) : imagJulia;
+					
+						__m128d low = _mm_set_pd1(4.0);
+						__m128d zs = _mm_setzero_pd();
+						//__m128d temp_zr = _mm_setzero_pd();
+						__m128d current_value_mask = _mm_cmpeq_pd(_mm_setzero_pd(), _mm_setzero_pd());
+						for (uint32_t itr = 0; itr < param.maxItr; itr++) {
+							// Applies fabs() to zr and zi
+							zr1 = _mm_andnot_pd(zr1_mask, zr);
+							zr2 = _mm_andnot_pd(zr2_mask, zr);
+							zi1 = _mm_andnot_pd(zi1_mask, zi);
+							zi2 = _mm_andnot_pd(zi2_mask, zi);
+							
+							// Calculates the new zr and zi
+							zr = _mm_add_pd(_mm_andnot_pd(zr_mask, _mm_mul_pd(s1, _mm_sub_pd(_mm_mul_pd(zr1, zr),  _mm_mul_pd(s2, _mm_mul_pd(zi1, zi))))), cr);
+							zi = _mm_add_pd(_mm_mul_pd(_mm_mul_pd(zr2, zi2), s3), ci);
+							
+							// calculates Z^2 = `zr * zr + zi * zi`
+							zs = _mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
+
+							// Tracks the lowest value
+							low = _mm_min_pd(zs, low);
+							
+							// Excludes any Z^2 values that have already exceeded the breakout value by setting them to 0.0
+							zs = _mm_and_pd(zs, current_value_mask);
+							// Gets a mask with all the Z^2 values that exceeded the breakout value
+							int break_mask = _mm_movemask_pd(_mm_cmpgt_pd(zs, breakoutValue));
+
+							if (break_mask != 0) {
+								// Z^2 values that exceeded the breakout value will use `Exterior_Coloring`
+								for (int i = 0; i < (int)SIMD_Spacing; i++) {
+									if (break_mask & (1 << i)) {
+										CPU_Exterior_Coloring_SSE2_FP64(
+											((fp64*)((void*)(&outR)))[i], ((fp64*)((void*)(&outG)))[i], ((fp64*)((void*)(&outB)))[i], ((fp64*)((void*)(&outA)))[i],
+											param,
+											itr, ((fp64*)((void*)(&zs)))[i], inverse_log2_power
+										);
+										((fp64*)((void*)(&current_value_mask)))[i] = 0.0; // Removes the Z^2 value from the list of Z^2 values that have Not exceeded the breakout value
+									}
+								}
+								if (_mm_movemask_pd(_mm_cmpeq_pd(current_value_mask, _mm_setzero_pd())) == 0) {
+									break; // If all the Z^2 values have exceeded the breakout value, break the loop
+								}
+							}
+						}
+						// Checks if any values did Not exceed the breakout value
+						int inside_value_mask = _mm_movemask_pd(_mm_cmpneq_pd(current_value_mask, _mm_setzero_pd()));
+						if (inside_value_mask != 0) {
+							// Z^2 values that did Not exceed the breakout value will use `Interior_Coloring`
+							for (int i = 0; i < (int)SIMD_Spacing; i++) {
+								if (inside_value_mask & (1 << i)) {
+									CPU_Interior_Coloring_SSE2_FP64(
+										((fp64*)((void*)(&outR)))[i], ((fp64*)((void*)(&outG)))[i], ((fp64*)((void*)(&outB)))[i], ((fp64*)((void*)(&outA)))[i],
+										param,
+										((fp64*)((void*)(&low)))[i]
+									);
+								}
+							}
+						}
+						x++;
+					}
+					x -= param.sample;
+					y++;
+				}
+				y -= param.sample;
+				
+				// Code to write the colors to the image buffer
+
+				// Divide R, G, and B by Alpha
+					outR = _mm_div_pd(outR, outA);
+					outG = _mm_div_pd(outG, outA);
+					outB = _mm_div_pd(outB, outA);
+				// If division by zero occured, set values to 0
+					const __m128d div_zero_mask = _mm_cmpeq_pd(outA, _mm_setzero_pd());
+					outR = _mm_andnot_pd(div_zero_mask, outR);
+					outG = _mm_andnot_pd(div_zero_mask, outG);
+					outB = _mm_andnot_pd(div_zero_mask, outB);
+				
+				// Normilizes alpha to 0.0 - 1.0
+					outA = _mm_div_pd(outA, alphaDiv); 
+				// Normilizes alpha to 0.0 - 1.0
+					const __m128d color_mult = _mm_set_pd1(255.0);
+					outR = _mm_mul_pd(outR, color_mult);
+					outG = _mm_mul_pd(outG, color_mult);
+					outB = _mm_mul_pd(outB, color_mult);
+					outA = _mm_mul_pd(outA, color_mult);
+				
+				size_t valuesToWrite = SIMD_Spacing;
+				if (param.Cord_ResX - x < (int32_t)SIMD_Spacing && param.Cord_ResX - x >= 0) {
+					valuesToWrite = (size_t)(param.Cord_ResX - x);
+				}
+				// Writes colors in the order 3, 2, 1, 0. I am not sure why it had to be reversed
+				for (int i = (int)valuesToWrite - 1; i >= 0; i--) {
+					// Writes in the equivilant of SDL_PIXELFORMAT_ABGR8888
+					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outR)))[i]; dataPtr++;
+					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outG)))[i]; dataPtr++;
+					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outB)))[i]; dataPtr++;
+					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outA)))[i]; dataPtr++;
+				}
+				// Increases the image offset/index
+				p0 += valuesToWrite;
 			}
-			__m128 outR = _mm_setzero_ps();
-			__m128 outG = _mm_setzero_ps();
-			__m128 outB = _mm_setzero_ps();
-			__m128 outA = _mm_setzero_ps();
-			// for (int32_t v = 0; v < param.sample; v++) {
-			// 	for (int32_t u = 0; u < param.sample; u++) {
-					__m128 xCord = _mm_set_ps(x_val, x_val + 1, x_val + 2, x_val + 3);
-					xCord = _mm_sub_ps(xCord, numX);
-					xCord = _mm_mul_ps(xCord, recip_numZ);
-					__m128 yCord = _mm_set_ps1(y_val);
+			x = 0;
+		}
+	}
+
+/* SSE2 FP32 */
+
+	void CPU_Interior_Coloring_SSE2_FP32(
+		fp32& outR, fp32& outG, fp32& outB, fp32& outA,
+		const PreCalc_Param<fp32,fp32>& param,
+		fp32 low
+	) {
+		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_R_Freq + param.Interior_R_Phase));
+		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_G_Freq + param.Interior_G_Phase));
+		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_B_Freq + param.Interior_B_Phase));
+		outA += param.Interior_Alpha;
+	}
+				
+	void CPU_Exterior_Coloring_SSE2_FP32(
+		fp32& outR, fp32& outG, fp32& outB, fp32& outA,
+		const PreCalc_Param<fp32,fp32>& param,
+		uint32_t itr, fp32 zs, fp32 inverse_log2_power
+	) {
+		// TAU = 2 * PI
+		fp32 smooth = log1pf(fmaxf(0.0f, (fp32)itr - log2f(log2f(zs) / 2.0f) * inverse_log2_power));
+		outR += param.Exterior_R_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));
+		outG += param.Exterior_G_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));
+		outB += param.Exterior_B_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));
+		outA += param.Exterior_Alpha;
+	}
+
+	void quadraticRender_SSE2_FP32(FractalParameters(fp32, fp32)) {
+		constexpr size_t SIMD_Spacing = 4; // 4 Registers in SSE2 FP32
+		
+		constexpr fp32 inverse_log2_power = inverse_log2(2.0f); // Quadratic == 2
+		
+		// Load Precalculated constants
+		const __m128 realCord       = _mm_set_ps1(param.realCord     );
+		const __m128 imagCord       = _mm_set_ps1(param.imagCord     );
+		const __m128 realJulia      = _mm_set_ps1(param.realJulia    );
+		const __m128 imagJulia      = _mm_set_ps1(param.imagJulia    );
+		const __m128 zoom_PC        = _mm_set_ps1(param.zoom_PC      );
+		const __m128 rotSin_PC      = _mm_set_ps1(param.rotSin_PC    );
+		const __m128 rotCos_PC      = _mm_set_ps1(param.rotCos_PC    );
+		const __m128 breakoutValue  = _mm_set_ps1(param.breakoutValue);
+		// numX, numY, numZ, and numW are constants used to caluculate the cordinates
+		const __m128 numY           = _mm_set_ps1(param.numY          );
+		const __m128 numX           = _mm_set_ps1(param.numX          );
+		const __m128 recip_numZ     = _mm_set_ps1(param.recip_numZ    );
+		const __m128 neg_recip_numW = _mm_set_ps1(param.neg_recip_numW);
+		// Polar
+		const __m128 polarPower     = _mm_set_ps1(param.polarPower    );
+		const __m128 polarPowerHalf = _mm_set_ps1(param.polarPowerHalf);
+		// Constant used to divide Alpha (sample * sample)
+		const __m128 alphaDiv       = _mm_set_ps1(param.alphaDiv      );
+		
+		// Color Values
+		const __m128 Exterior_Alpha = _mm_set_ps1(param.Exterior_Alpha);
+			const __m128 Exterior_R_Amp_mult_Exterior_Alpha = _mm_set_ps1(param.Exterior_R_Amp_mult_Exterior_Alpha);
+			const __m128 Exterior_R_Freq_mult_TAU           = _mm_set_ps1(param.Exterior_R_Freq_mult_TAU          );
+			const __m128 Exterior_R_Phase_mult_TAU          = _mm_set_ps1(param.Exterior_R_Phase_mult_TAU         );
+			const __m128 Exterior_G_Amp_mult_Exterior_Alpha = _mm_set_ps1(param.Exterior_G_Amp_mult_Exterior_Alpha);
+			const __m128 Exterior_G_Freq_mult_TAU           = _mm_set_ps1(param.Exterior_G_Freq_mult_TAU          );
+			const __m128 Exterior_G_Phase_mult_TAU          = _mm_set_ps1(param.Exterior_G_Phase_mult_TAU         );
+			const __m128 Exterior_B_Amp_mult_Exterior_Alpha = _mm_set_ps1(param.Exterior_B_Amp_mult_Exterior_Alpha);
+			const __m128 Exterior_B_Freq_mult_TAU           = _mm_set_ps1(param.Exterior_B_Freq_mult_TAU          );
+			const __m128 Exterior_B_Phase_mult_TAU          = _mm_set_ps1(param.Exterior_B_Phase_mult_TAU         );
+		const __m128 Interior_Alpha = _mm_set_ps1(param.Exterior_Alpha);
+			const __m128 Interior_R_Amp_mult_Interior_Alpha = _mm_set_ps1(param.Interior_R_Amp_mult_Interior_Alpha);
+			const __m128 Interior_R_Freq                    = _mm_set_ps1(param.Interior_R_Freq                   );
+			const __m128 Interior_R_Phase                   = _mm_set_ps1(param.Interior_R_Phase                  );
+			const __m128 Interior_G_Amp_mult_Interior_Alpha = _mm_set_ps1(param.Interior_G_Amp_mult_Interior_Alpha);
+			const __m128 Interior_G_Freq                    = _mm_set_ps1(param.Interior_G_Freq                   );
+			const __m128 Interior_G_Phase                   = _mm_set_ps1(param.Interior_G_Phase                  );
+			const __m128 Interior_B_Amp_mult_Interior_Alpha = _mm_set_ps1(param.Interior_B_Amp_mult_Interior_Alpha);
+			const __m128 Interior_B_Freq                    = _mm_set_ps1(param.Interior_B_Freq                   );
+			const __m128 Interior_B_Phase                   = _mm_set_ps1(param.Interior_B_Phase                  );
+
+		__m128 zr1, zr2, zi1, zi2;
+
+		bool f[8]; // 8 bit formula
+		for (uint8_t q = 0; q < 8; q++) {
+			f[q] = ((param.formula >> q) & 1) ? true : false;
+		}
+		
+		// Bits 0-2 will flip signage
+		const __m128 s1 = (f[0]) ? _mm_set_ps1(-1.0f) : _mm_set_ps1(1.0f);
+		const __m128 s2 = (f[1]) ? _mm_set_ps1(-1.0f) : _mm_set_ps1(1.0f);
+		const __m128 s3 = (f[2]) ? _mm_set_ps1(-2.0f) : _mm_set_ps1(2.0f);
+		
+		// Bits 3-7 will apply fabs() via a mask
+		const __m128 zr1_mask = (f[3]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
+		const __m128 zi1_mask = (f[4]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
+		const __m128 zr2_mask = (f[5]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
+		const __m128 zi2_mask = (f[6]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
+		const __m128 zr_mask = (f[7]) ? _mm_set_ps1(-0.0f) : _mm_set_ps1(0.0f);
+
+		size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS; // Determines the starting image offset/index
+		int32_t y = (int32_t)(p0 / (size_t)param.Image_ResX); // Determines the starting y offset/index
+		int32_t x = (int32_t)(p0 % (size_t)param.Image_ResX); // Determines the starting x offset/index
+		x *= param.sample; // Scales x by the samples per pixel
+		y *= param.sample; // Scales x by the samples per pixel
+		for (; y < param.Cord_ResY; y += param.sample) {
+			for (; x < param.Cord_ResX; x += (int32_t)SIMD_Spacing * param.sample) {
+				// returns once the image offset/index reaches the end offset/index
+				if (p0 >= p1 || ABORT_RENDERING == true) {
+					return;
+				}
+				// Store the output color values
+					__m128 outR = _mm_setzero_ps();
+					__m128 outG = _mm_setzero_ps();
+					__m128 outB = _mm_setzero_ps();
+					__m128 outA = _mm_setzero_ps();
+				// Calculates 4 pixels (with super sampling) at a time
+				for (int32_t v = 0; v < param.sample; v++) {
+					// Calculates y cordinate-value
+					__m128 yCord = _mm_set_ps1((fp32)y);
 					yCord = _mm_sub_ps(yCord, numY);
 					yCord = _mm_mul_ps(yCord, neg_recip_numW);
 
-					__m128 cr = (!param.juliaSet) ? _mm_add_ps(_mm_sub_ps(_mm_mul_ps(xCord, rotCos_PC), _mm_mul_ps(yCord, rotSin_PC)), realCord) : realJulia;
-					__m128 ci = (!param.juliaSet) ? _mm_add_ps(_mm_add_ps(_mm_mul_ps(yCord, rotCos_PC), _mm_mul_ps(xCord, rotSin_PC)), imagCord) : imagJulia;
-					__m128 zr = (param.juliaSet) ? _mm_add_ps(_mm_sub_ps(_mm_mul_ps(xCord, rotCos_PC), _mm_mul_ps(yCord, rotSin_PC)), realCord) : realJulia;
-					__m128 zi = (param.juliaSet) ? _mm_add_ps(_mm_add_ps(_mm_mul_ps(yCord, rotCos_PC), _mm_mul_ps(xCord, rotSin_PC)), imagCord) : imagJulia;
-				
-					__m128 low = _mm_set_ps1(4.0f);
-					__m128 zs = _mm_setzero_ps();
-					__m128 temp_zr = _mm_setzero_ps();
-					__m128 current_value_mask = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps());
-					for (uint32_t itr = 0; itr < param.maxItr; itr++) {
-						// zr1 = zr; //_mm_andnot_ps(zr1_mask, zr);
-						// zr2 = zr; //_mm_andnot_ps(zr2_mask, zr);
-						// zi1 = zi; //_mm_andnot_ps(zi1_mask, zi);
-						// zi2 = zi; //_mm_andnot_ps(zi2_mask, zi);
-						//printfInterval(0.3,"\ncr: %f ci: %f", ((float*)((void*)(&cr)))[0], ((float*)((void*)(&ci)))[0]);
-						//zr = _mm_add_ps(_mm_andnot_ps(zr_mask, _mm_mul_ps(s1, _mm_add_ps(_mm_mul_ps(zr1, zr),  _mm_mul_ps(s2, _mm_mul_ps(zi1, zi))))), cr);
-						//zr = _mm_add_ps(_mm_mul_ps(s1, _mm_add_ps(_mm_mul_ps(zr1, zr),  _mm_mul_ps(s2, _mm_mul_ps(zi1, zi)))), cr);
-						//zi = _mm_add_ps(_mm_mul_ps(_mm_mul_ps(zr2, zi2), s3), ci);
-						
-						temp_zr = _mm_add_ps(_mm_sub_ps(_mm_mul_ps(zr, zr),  _mm_mul_ps(zi, zi)), cr);
-						zi = _mm_add_ps(_mm_mul_ps(_mm_mul_ps(zr, zi), s3), ci);
-						zr = temp_zr;
+					for (int32_t u = 0; u < param.sample; u++) {
+						// Calculates the 4 x cordinate-values
+						__m128 xCord = _mm_set_ps(
+							(fp32)(x + 0 * param.sample),
+							(fp32)(x + 1 * param.sample),
+							(fp32)(x + 2 * param.sample),
+							(fp32)(x + 3 * param.sample)
+						);
+						xCord = _mm_sub_ps(xCord, numX);
+						xCord = _mm_mul_ps(xCord, recip_numZ);
 
-						zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi)); 
-						low = _mm_min_ps(zs, low);
-						zs = _mm_and_ps(zs, current_value_mask);
-						int break_mask = _mm_movemask_ps(_mm_cmpgt_ps(zs, breakoutValue));
-						if (break_mask != 0) {
-							for (int i = 0; i < 4; i++) {
-								if (break_mask & (1 << i)) {
-									CPU_Exterior_Coloring_SSE2_FP32(
-										((float*)((void*)(&outR)))[i], ((float*)((void*)(&outG)))[i], ((float*)((void*)(&outB)))[i], ((float*)((void*)(&outA)))[i],
-										param,
-										itr, ((float*)((void*)(&zs)))[i], inverse_log2_power
-									);
-									((float*)((void*)(&current_value_mask)))[i] = 0.0f;
+						// Transforms the x and y cordinate-values into the cordinates
+						// `cr` and `ci` are swapped with `zr` and `zi` if `param.juliaSet == true`
+						__m128 cr = (!param.juliaSet) ? _mm_add_ps(_mm_sub_ps(_mm_mul_ps(xCord, rotCos_PC), _mm_mul_ps(yCord, rotSin_PC)), realCord) : realJulia;
+						__m128 ci = (!param.juliaSet) ? _mm_add_ps(_mm_add_ps(_mm_mul_ps(yCord, rotCos_PC), _mm_mul_ps(xCord, rotSin_PC)), imagCord) : imagJulia;
+						__m128 zr = (param.juliaSet) ? _mm_add_ps(_mm_sub_ps(_mm_mul_ps(xCord, rotCos_PC), _mm_mul_ps(yCord, rotSin_PC)), realCord) : realJulia;
+						__m128 zi = (param.juliaSet) ? _mm_add_ps(_mm_add_ps(_mm_mul_ps(yCord, rotCos_PC), _mm_mul_ps(xCord, rotSin_PC)), imagCord) : imagJulia;
+					
+						__m128 low = _mm_set_ps1(4.0f);
+						__m128 zs = _mm_setzero_ps();
+						//__m128 temp_zr = _mm_setzero_ps();
+						__m128 current_value_mask = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps());
+						for (uint32_t itr = 0; itr < param.maxItr; itr++) {
+							// Applies fabs() to zr and zi
+							zr1 = _mm_andnot_ps(zr1_mask, zr);
+							zr2 = _mm_andnot_ps(zr2_mask, zr);
+							zi1 = _mm_andnot_ps(zi1_mask, zi);
+							zi2 = _mm_andnot_ps(zi2_mask, zi);
+							
+							// Calculates the new zr and zi
+							zr = _mm_add_ps(_mm_andnot_ps(zr_mask, _mm_mul_ps(s1, _mm_sub_ps(_mm_mul_ps(zr1, zr),  _mm_mul_ps(s2, _mm_mul_ps(zi1, zi))))), cr);
+							zi = _mm_add_ps(_mm_mul_ps(_mm_mul_ps(zr2, zi2), s3), ci);
+							
+							// calculates Z^2 = `zr * zr + zi * zi`
+							zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi));
+
+							// Tracks the lowest value
+							low = _mm_min_ps(zs, low);
+							
+							// Excludes any Z^2 values that have already exceeded the breakout value by setting them to 0.0f
+							zs = _mm_and_ps(zs, current_value_mask);
+							// Gets a mask with all the Z^2 values that exceeded the breakout value
+							int break_mask = _mm_movemask_ps(_mm_cmpgt_ps(zs, breakoutValue));
+
+							if (break_mask != 0) {
+								// Z^2 values that exceeded the breakout value will use `Exterior_Coloring`
+								for (int i = 0; i < (int)SIMD_Spacing; i++) {
+									if (break_mask & (1 << i)) {
+										CPU_Exterior_Coloring_SSE2_FP32(
+											((fp32*)((void*)(&outR)))[i], ((fp32*)((void*)(&outG)))[i], ((fp32*)((void*)(&outB)))[i], ((fp32*)((void*)(&outA)))[i],
+											param,
+											itr, ((fp32*)((void*)(&zs)))[i], inverse_log2_power
+										);
+										((fp32*)((void*)(&current_value_mask)))[i] = 0.0f; // Removes the Z^2 value from the list of Z^2 values that have Not exceeded the breakout value
+									}
+								}
+								if (_mm_movemask_ps(_mm_cmpeq_ps(current_value_mask, _mm_setzero_ps())) == 0) {
+									break; // If all the Z^2 values have exceeded the breakout value, break the loop
 								}
 							}
-							if (_mm_movemask_ps(_mm_cmpeq_ps(current_value_mask, _mm_setzero_ps())) == 0) {
-								break;
+						}
+						// Checks if any values did Not exceed the breakout value
+						int inside_value_mask = _mm_movemask_ps(_mm_cmpneq_ps(current_value_mask, _mm_setzero_ps()));
+						if (inside_value_mask != 0) {
+							// Z^2 values that did Not exceed the breakout value will use `Interior_Coloring`
+							for (int i = 0; i < (int)SIMD_Spacing; i++) {
+								if (inside_value_mask & (1 << i)) {
+									CPU_Interior_Coloring_SSE2_FP32(
+										((fp32*)((void*)(&outR)))[i], ((fp32*)((void*)(&outG)))[i], ((fp32*)((void*)(&outB)))[i], ((fp32*)((void*)(&outA)))[i],
+										param,
+										((fp32*)((void*)(&low)))[i]
+									);
+								}
 							}
 						}
+						x++;
 					}
-					int inside_value_mask = _mm_movemask_ps(_mm_cmpneq_ps(current_value_mask, _mm_setzero_ps()));
-					if (inside_value_mask != 0) {
-						for (int i = 0; i < 4; i++) {
-							if (inside_value_mask & (1 << i)) {
-								CPU_Interior_Coloring_SSE2_FP32(
-									((float*)((void*)(&outR)))[i], ((float*)((void*)(&outG)))[i], ((float*)((void*)(&outB)))[i], ((float*)((void*)(&outA)))[i],
-									param,
-									((float*)((void*)(&low)))[i]
-								);
-							}
-						}
-					}
-			// 		x++;
-			// 	}
-			// 	x -= param.sample;
-			// 	y++;
-			// }
-			// y -= param.sample;
-			const __m128 div_zero_mask = _mm_cmpeq_ps(outA, _mm_setzero_ps());
-			outR = _mm_div_ps(outR, outA);
-			outG = _mm_div_ps(outG, outA);
-			outB = _mm_div_ps(outB, outA);
-			outR = _mm_andnot_ps(div_zero_mask, outR);
-			outG = _mm_andnot_ps(div_zero_mask, outG);
-			outB = _mm_andnot_ps(div_zero_mask, outB);
-			outA = _mm_div_ps(outA, sampleDiv);
-			const __m128 color_mult = _mm_set_ps1(255.0f);
-			outR = _mm_mul_ps(outR, color_mult);
-			outG = _mm_mul_ps(outG, color_mult);
-			outB = _mm_mul_ps(outB, color_mult);
-			outA = _mm_mul_ps(outA, color_mult);
-			for (int i = 4 - 1; i >= 0; i--) {
-				data[dataPtr] = (uint8_t)((float*)((void*)(&outR)))[i]; dataPtr++;
-				data[dataPtr] = (uint8_t)((float*)((void*)(&outG)))[i]; dataPtr++;
-				data[dataPtr] = (uint8_t)((float*)((void*)(&outB)))[i]; dataPtr++;
-				data[dataPtr] = (uint8_t)((float*)((void*)(&outA)))[i]; dataPtr++;
+					x -= param.sample;
+					y++;
+				}
+				y -= param.sample;
+				
+				// Code to write the colors to the image buffer
+
+				// Divide R, G, and B by Alpha
+					outR = _mm_div_ps(outR, outA);
+					outG = _mm_div_ps(outG, outA);
+					outB = _mm_div_ps(outB, outA);
+				// If division by zero occured, set values to 0
+					const __m128 div_zero_mask = _mm_cmpeq_ps(outA, _mm_setzero_ps());
+					outR = _mm_andnot_ps(div_zero_mask, outR);
+					outG = _mm_andnot_ps(div_zero_mask, outG);
+					outB = _mm_andnot_ps(div_zero_mask, outB);
+				
+				// Normilizes alpha to 0.0f - 1.0f
+					outA = _mm_div_ps(outA, alphaDiv); 
+				// Normilizes alpha to 0.0f - 1.0f
+					const __m128 color_mult = _mm_set_ps1(255.0f);
+					outR = _mm_mul_ps(outR, color_mult);
+					outG = _mm_mul_ps(outG, color_mult);
+					outB = _mm_mul_ps(outB, color_mult);
+					outA = _mm_mul_ps(outA, color_mult);
+				
+				size_t valuesToWrite = SIMD_Spacing;
+				if (param.Cord_ResX - x < (int32_t)SIMD_Spacing && param.Cord_ResX - x >= 0) {
+					valuesToWrite = (size_t)(param.Cord_ResX - x);
+				}
+				// Writes colors in the order 3, 2, 1, 0. I am not sure why it had to be reversed
+				for (int i = (int)valuesToWrite - 1; i >= 0; i--) {
+					// Writes in the equivilant of SDL_PIXELFORMAT_ABGR8888
+					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outR)))[i]; dataPtr++;
+					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outG)))[i]; dataPtr++;
+					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outB)))[i]; dataPtr++;
+					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outA)))[i]; dataPtr++;
+				}
+				// Increases the image offset/index
+				p0 += valuesToWrite;
 			}
-			//dataPtr += 4;
-			p0 += 4;
+			x = 0;
 		}
-		x = 0;\
 	}
-}

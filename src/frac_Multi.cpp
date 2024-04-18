@@ -20,45 +20,30 @@
 
 /* BOILERPLATE */
 
-	#ifdef MONOCHROME_MODE
-		#define CPU_Interior_Coloring(fpX, fpColor); \
-			outR += param.interior_B_Amp * param.interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.interior_B_Freq + param.interior_B_Phase));\
-			outG += param.interior_B_Amp * param.interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.interior_B_Freq + param.interior_B_Phase));\
-			outB += param.interior_B_Amp * param.interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.interior_B_Freq + param.interior_B_Phase));\
-			outA += param.interior_Alpha;
+	#define CPU_Interior_Coloring(fpX, fpColor); \
+		outR += param.Interior_R_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_R_Freq + param.Interior_R_Phase));\
+		outG += param.Interior_G_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_G_Freq + param.Interior_G_Phase));\
+		outB += param.Interior_B_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_B_Freq + param.Interior_B_Phase));\
+		outA += param.Interior_Alpha;
 
-		#define CPU_Exterior_Coloring(fpX, fpColor, inverse_log2_power); \
-			fpColor smooth = (fpColor)log1p((fpColor)fmax((fpColor)0.0, (fpColor)itr - (fpColor)log2(log2(zs) / (fpX)2.0) * inverse_log2_power));\
-			outR += param.exterior_R_Amp * param.exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
-			outG += param.exterior_R_Amp * param.exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
-			outB += param.exterior_R_Amp * param.exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
-			outA += param.exterior_Alpha;
-	#else
-		#define CPU_Interior_Coloring(fpX, fpColor); \
-			outR += param.interior_R_Amp * param.interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.interior_R_Freq + param.interior_R_Phase));\
-			outG += param.interior_G_Amp * param.interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.interior_G_Freq + param.interior_G_Phase));\
-			outB += param.interior_B_Amp * param.interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.interior_B_Freq + param.interior_B_Phase));\
-			outA += param.interior_Alpha;
-
-		#define CPU_Exterior_Coloring(fpX, fpColor, inverse_log2_power); \
-			fpColor smooth = (fpColor)log1p((fpColor)fmax((fpColor)0.0, (fpColor)itr - (fpColor)log2(log2(zs) / (fpX)2.0) * inverse_log2_power));\
-			outR += param.exterior_R_Amp * param.exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(TAU * (param.exterior_R_Freq * smooth + param.exterior_R_Phase)));\
-			outG += param.exterior_G_Amp * param.exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(TAU * (param.exterior_G_Freq * smooth + param.exterior_G_Phase)));\
-			outB += param.exterior_B_Amp * param.exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(TAU * (param.exterior_B_Freq * smooth + param.exterior_B_Phase)));\
-			outA += param.exterior_Alpha;
-	#endif
+	#define CPU_Exterior_Coloring(fpX, fpColor, inverse_log2_power); \
+		fpColor smooth = (fpColor)log1p((fpColor)fmax((fpColor)0.0, (fpColor)itr - (fpColor)log2(log2(zs) / (fpX)2.0) * inverse_log2_power));\
+		outR += param.Exterior_R_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));\
+		outG += param.Exterior_G_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));\
+		outB += param.Exterior_B_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));\
+		outA += param.Exterior_Alpha;
 
 #define Block_Init(fpX, fpColor);
 
 #define Block_BeginLoop(fpX, fpColor); \
 	size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
-	int32_t y = (int32_t)(p0 / (size_t)param.resX);\
-	int32_t x = (int32_t)(p0 % (size_t)param.resX);\
+	int32_t y = (int32_t)(p0 / (size_t)param.Image_ResX);\
+	int32_t x = (int32_t)(p0 % (size_t)param.Image_ResX);\
 	x *= param.sample;\
 	y *= param.sample;\
-	for (; y < param.resY; y += param.sample) {\
-		for (; x < param.resX; x += param.sample) {\
-			if (p0 == p1 || ABORT_RENDERING == true) {\
+	for (; y < param.Cord_ResY; y += param.sample) {\
+		for (; x < param.Cord_ResX; x += param.sample) {\
+			if (p0 >= p1 || ABORT_RENDERING == true) {\
 				return;\
 			}\
 			fpColor outR = (fpColor)0.0;\
@@ -67,8 +52,8 @@
 			fpColor outA = (fpColor)0.0;\
 			for (int32_t v = 0; v < param.sample; v++) {\
 				for (int32_t u = 0; u < param.sample; u++) {\
-					fpX xCord = (((fpX)x - param.numX) * param.recip_numZ);\
 					fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);\
+					fpX xCord = (((fpX)x - param.numX) * param.recip_numZ);\
 					fpX cr = (!param.juliaSet) ? ((xCord * param.rotCos_PC - yCord * param.rotSin_PC) + param.realCord) : param.realJulia;\
 					fpX ci = (!param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;\
 					fpX zr = (param.juliaSet) ? ((xCord * param.rotCos_PC - yCord * param.rotSin_PC) + param.realCord) : param.realJulia;\
@@ -101,7 +86,7 @@
 				outR = outR / outA;\
 				outG = outG / outA;\
 				outB = outB / outA;\
-				outA = outA / param.sampleDiv;\
+				outA = outA / param.alphaDiv;\
 			}\
 			outR *= (fpColor)255.0;\
 			outG *= (fpColor)255.0;\
@@ -139,11 +124,10 @@ void quadraticRender(FractalParameters(fpX, fpColor)) {
 		zi1 = (f[4]) ? fabs(zi) : zi;
 		zr2 = (f[5]) ? fabs(zr) : zr;
 		zi2 = (f[6]) ? fabs(zi) : zi;
-		temp_zr = (f[7]) ?
+		zr = (f[7]) ?
 			(s1 * fabs((zr1 * zr) - s2 * (zi1 * zi)) + cr) :
 			(s1 *     ((zr1 * zr) - s2 * (zi1 * zi)) + cr);
 		zi = (zr2 * zi2 * s3) + ci;
-		zr = temp_zr;
 	
 	Block_EndLoop(fpX, fpColor, inverse_log2(2.0));
 }
@@ -480,7 +464,7 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // 				outR = outR / outA;
 // 				outG = outG / outA;
 // 				outB = outB / outA;
-// 				outA = outA / param.sampleDiv;
+// 				outA = outA / param.alphaDiv;
 // 			}
 // 			outR *= (fpColor)255.0;
 // 			outG *= (fpColor)255.0;
@@ -519,15 +503,15 @@ constexpr inline fpX polarAngle(fpX zr, fpX zi) {
 template<typename fpX, typename fpColor>
 void polarRender(FractalParameters(fpX, fpColor)) {
 	size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;
-	int32_t y = (int32_t)(p0 / (size_t)param.resX);
-	int32_t x = (int32_t)(p0 % (size_t)param.resX);
+	int32_t y = (int32_t)(p0 / (size_t)param.Image_ResX);
+	int32_t x = (int32_t)(p0 % (size_t)param.Image_ResX);
 	x *= param.sample;
 	y *= param.sample;
 	const fpX power = param.polarPower;
 	const fpX powerHalf = param.polarPowerHalf;
-	for (; y < param.resY; y += param.sample) {
-		for (; x < param.resX; x += param.sample) {
-			if (p0 == p1 || ABORT_RENDERING == true) {
+	for (; y < param.Cord_ResY; y += param.sample) {
+		for (; x < param.Cord_ResX; x += param.sample) {
+			if (p0 >= p1 || ABORT_RENDERING == true) {
 				return;
 			}
 			fp64 outR = 0.0;
@@ -572,7 +556,7 @@ void polarRender(FractalParameters(fpX, fpColor)) {
 				outR = outR / outA;
 				outG = outG / outA;
 				outB = outB / outA;
-				outA = outA / param.sampleDiv;
+				outA = outA / param.alphaDiv;
 			}
 			outR *= (fpColor)255.0;
 			outG *= (fpColor)255.0;
@@ -586,68 +570,6 @@ void polarRender(FractalParameters(fpX, fpColor)) {
 		}
 		x = 0;
 	}
-}
-
-template <typename fpX, typename fpColor>
-void Generate_PreCalc_Param(
-	PreCalc_Param<fpX,fpColor>& preCalc_Param,
-	const BufferBox* buf, const Render_Data& ren, const ABS_Mandelbrot& param
-) {
-	if (buf == nullptr) { return; }
-	/* Header */
-		preCalc_Param.formula = param.formula;
-		preCalc_Param.power = param.power;
-		preCalc_Param.resX = buf->resX * ren.sample;
-		preCalc_Param.resY = buf->resY * ren.sample;
-		preCalc_Param.sample = ren.sample;
-		preCalc_Param.maxItr = param.maxItr;
-		preCalc_Param.juliaSet = param.juliaSet;
-		preCalc_Param.power = param.power;
-	/* Coordinates */
-		preCalc_Param.realCord = (fpX)param.r;
-		preCalc_Param.imagCord = (fpX)param.i;
-		preCalc_Param.realJulia = (fpX)param.zr;
-		preCalc_Param.imagJulia = (fpX)param.zi;
-		preCalc_Param.zoom_PC = (fpX)pow((fpCord)10.0, (fpCord)param.zoom);
-		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);
-		preCalc_Param.rotCos_PC = (fpX)cos((fpCord)param.rot);
-		const dim32_t sResX = preCalc_Param.resX - 1;
-		const dim32_t sResY = preCalc_Param.resY - 1;
-		preCalc_Param.numY = ((fpX)sResY / (fpX)2.0);
-		preCalc_Param.numX = ((fpX)sResX / (fpX)2.0);
-		const fpX numT = (sResX >= sResY) ?
-			(preCalc_Param.numY * preCalc_Param.zoom_PC) :
-			(preCalc_Param.numX * preCalc_Param.zoom_PC);
-		preCalc_Param.recip_numZ = ((fpX)param.sX / numT);
-		preCalc_Param.neg_recip_numW = -((fpX)param.sY / numT);
-		preCalc_Param.breakoutValue = (fpX)param.breakoutValue;
-	/* Polar */
-		preCalc_Param.polarPower = (fpX)param.polarPower;
-		preCalc_Param.polarPowerHalf = (fpX)param.polarPower / (fpX)2.0;
-	/* Coloring */
-		preCalc_Param.inverse_log2_power = (fpColor)1.0 / log2((fpColor)param.polarPower);
-		preCalc_Param.sampleDiv = (fpColor)(ren.sample * ren.sample);
-
-		preCalc_Param.exterior_Alpha = (fpColor)param.exterior_Alpha;
-			preCalc_Param.exterior_R_Amp   = (fpColor)param.exterior_R_Amp  ;
-			preCalc_Param.exterior_R_Freq  = (fpColor)param.exterior_R_Freq ;
-			preCalc_Param.exterior_R_Phase = (fpColor)param.exterior_R_Phase;
-			preCalc_Param.exterior_G_Amp   = (fpColor)param.exterior_G_Amp  ;
-			preCalc_Param.exterior_G_Freq  = (fpColor)param.exterior_G_Freq ;
-			preCalc_Param.exterior_G_Phase = (fpColor)param.exterior_G_Phase;
-			preCalc_Param.exterior_B_Amp   = (fpColor)param.exterior_B_Amp  ;
-			preCalc_Param.exterior_B_Freq  = (fpColor)param.exterior_B_Freq ;
-			preCalc_Param.exterior_B_Phase = (fpColor)param.exterior_B_Phase;
-		preCalc_Param.interior_Alpha = (fpColor)param.interior_Alpha;
-			preCalc_Param.interior_R_Amp   = (fpColor)param.interior_R_Amp  ;
-			preCalc_Param.interior_R_Freq  = (fpColor)param.interior_R_Freq ;
-			preCalc_Param.interior_R_Phase = (fpColor)param.interior_R_Phase;
-			preCalc_Param.interior_G_Amp   = (fpColor)param.interior_G_Amp  ;
-			preCalc_Param.interior_G_Freq  = (fpColor)param.interior_G_Freq ;
-			preCalc_Param.interior_G_Phase = (fpColor)param.interior_G_Phase;
-			preCalc_Param.interior_B_Amp   = (fpColor)param.interior_B_Amp  ;
-			preCalc_Param.interior_B_Freq  = (fpColor)param.interior_B_Freq ;
-			preCalc_Param.interior_B_Phase = (fpColor)param.interior_B_Phase;
 }
 
 void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING, uint32_t threadCount) {
@@ -711,22 +633,67 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 			case 64: generateThreads(polarRender, fp128, fp64); break;
 		};
 	} else {
+
+
+		// In the progress of adding this in
+		// switch(ren.CPU_Precision) {
+		// 	case 32: {
+				
+		// 		switch(param.power) {
+		// 			#ifdef ENABLE_SSE2_RENDERING
+		// 				case 2: generateThreads_Alternate(quadraticRender_SSE2_FP32, fp32, fp32, 4); break;
+		// 				case 3: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 				case 4: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 				case 5: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 				case 6: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 			#else
+		// 				case 2: generateThreads          (quadraticRender          , fp32, fp32   ); break;
+		// 				case 3: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 				case 4: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 				case 5: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 				case 6: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+		// 			#endif
+		// 			default:
+		// 				printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
+		// 				return;
+		// 		}
+		// 	} break;
+		// 	default:
+		// 	case 64: {
+
+		// 	} break;
+
+		// 	case 80: {
+
+		// 	} break;
+
+		// 	case 128: {
+
+		// 	} break;
+
+		// }
+
 		switch(param.power) {
 			case 2:
 				switch(ren.CPU_Precision) {
 					case 32:
-						if (ren.sample == 1) {
+						#ifdef ENABLE_SSE2_RENDERING
 							generateThreads_Alternate(quadraticRender_SSE2_FP32, fp32, fp32, 4);
-						} else {
+						#else
 							generateThreads(quadraticRender, fp32, fp32);
-						}
+						#endif
 					break;
 					#ifdef enableFP80andFP128
 					case 80: generateThreads(quadraticRender, fp80, fp64); break;
 					case 128: generateThreads(quadraticRender, fp128, fp64); break;
 					#endif
 					default:
-					case 64: generateThreads(quadraticRender, fp64, fp64); break;
+					case 64:
+						#ifdef ENABLE_SSE2_RENDERING
+							generateThreads_Alternate(quadraticRender_SSE2_FP64, fp64, fp64, 2);
+						#else
+							generateThreads(quadraticRender, fp64, fp64);
+						#endif
 				};
 			break;
 			case 3:

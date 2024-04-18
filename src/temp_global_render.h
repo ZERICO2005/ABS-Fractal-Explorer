@@ -78,6 +78,9 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 /* Rendering */
 
+	// Rounds the initial screen resolution for debug purposes
+	//#define ROUND_INIT_WINDOW_RESX
+
 	#define Use_OpenCV_Scaler
 	
 	extern SDL_Texture* scale_tex;

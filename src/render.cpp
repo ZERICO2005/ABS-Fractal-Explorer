@@ -1267,6 +1267,10 @@ void calculate_init_window_size(
 	}
 	initPosX += (dispResX - initResX) / 2;
 	initPosY += (dispResY - initResY) / 2;
+	// Rounds the initial screen resolution for debug purposes
+	#ifdef ROUND_INIT_WINDOW_RESX
+		initResX = (initResX / 16) * 16;
+	#endif
 }
 
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
@@ -1306,7 +1310,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			);
 	}
 	//printFlush("\nNew: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
-
 	printf("\n\tOperating System: %s",SDL_GetPlatform());
 	printf("\n\tSystem RAM: %" PRId32 "MB",SDL_GetSystemRAM());
 	// Allocate Buffers
