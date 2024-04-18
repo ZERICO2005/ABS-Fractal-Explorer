@@ -49,7 +49,7 @@ set(MARCH_FLAGS "")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=always")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare)
-set(WARNING_IGNORE_FLAGS -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-comment -Wno-missing-braces)
+set(WARNING_IGNORE_FLAGS -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-comment -Wno-missing-braces -Wno-strict-aliasing)
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
 target_link_libraries(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL quadmath ${OpenCV_LIBS} IMGUI_LIB)

@@ -59,6 +59,7 @@ class ImageBuffer {
 		void setTransformationData(fp128 x00,fp128 y00,fp128 x11,fp128 y11,fp128 x01,fp128 y01,fp128 x10,fp128 y10); // cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
 		void setTransformationData(const ImageBuffer* buf);
 		void printTransformationData(fp64 freq = 0.6);
+		
 		void samplePixel(uint8_t* r,uint8_t* g,uint8_t* b,fp64 x, fp64 y);
 	private:
 		bool vramAllocated;

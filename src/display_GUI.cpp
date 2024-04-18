@@ -412,35 +412,44 @@ void Menu_Coordinates() {
 			#endif
 		}
 		ImGui::Checkbox("Use Sliders", &useJuliaSliders);
+		ImGui::NewLine();
 	ImGui::SeparatorText("Parameters");
-	ImGui::Text("Maximum Iterations:");
-	Int_InputText("##input_maxIter",FRAC.maxItr,"%" PRIu32,stringTo_Uint32,10);
-	ImGui::Text("Fractal Formula:");
-		static bool inputHexadecimal = false;
-		if (inputHexadecimal == true) {
-			Int_InputText("##input_formula",FRAC.formula,"%" PRIX64,stringTo_Uint64,16);
-		} else {
-			Int_InputText("##input_formula",FRAC.formula,"%" PRIu64,stringTo_Uint64,10);
-		}
-		ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
-	/* Power */
-		if (current_Fractal.polarMandelbrot == true) {
-			ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
-			Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
-		} else {
-			ImGui::Text("Power: %s",getPowerText((uint32_t)FRAC.power));
-			Int_InputText("##input_power",FRAC.power,"%" PRIu32,stringTo_Uint32,10);
-		}
+		ImGui::Text("Maximum Iterations:");
+		Int_InputText("##input_maxIter",FRAC.maxItr,"%" PRIu32,stringTo_Uint32,10);
+		ImGui::Text("Fractal Formula:");
+			static bool inputHexadecimal = false;
+			if (inputHexadecimal == true) {
+				Int_InputText("##input_formula",FRAC.formula,"%" PRIX64,stringTo_Uint64,16);
+			} else {
+				Int_InputText("##input_formula",FRAC.formula,"%" PRIu64,stringTo_Uint64,10);
+			}
+			ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
+		/* Power */
+			if (current_Fractal.polarMandelbrot == true) {
+				ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
+				Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
+			} else {
+				ImGui::Text("Power: %s",getPowerText((uint32_t)FRAC.power));
+				Int_InputText("##input_power",FRAC.power,"%" PRIu32,stringTo_Uint32,10);
+			}
 
-	if (FRAC.power == 2) {
-		ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
-		int Combo_Quadractic_Fractals = 0;
-		if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
-			if (Combo_Quadractic_Fractals != 0) {
-				FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+		if (FRAC.power == 2) {
+			ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
+			int Combo_Quadractic_Fractals = 0;
+			if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
+				if (Combo_Quadractic_Fractals != 0) {
+					FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+				}
 			}
 		}
-	}
+		ImGui::NewLine();
+	ImGui::SeparatorText("Transformations");
+		fp32 image_rotation = (fp32)FRAC.rot;
+		ImGui::Text("Rotate Image:");
+		if (ImGui::SliderAngle("##RotateImage", &image_rotation, -360.0f, 360.0f, "%.1f deg")) {
+			FRAC.rot = (fp64)image_rotation;
+		}
+		ImGui::NewLine();
 	ImGui::End();
 }
 

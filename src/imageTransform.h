@@ -17,9 +17,9 @@
 
 // Output BufferBox, Input ImageBuffer, src{{x00,y00},{x01,y01},{x10,y10}} dst{{x00,y00},{x01,y01},{x10,y10}}
 int Image_Scaler_Parallelogram(
-	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
 	uint32_t backgroundColor,
-	BufferBox* backgroundImage, BufferBox* foregroundImage,
+	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
@@ -29,9 +29,9 @@ int Image_Scaler_Parallelogram(
 
 // Output BufferBox, Input ImageBuffer, src{{x00,y00},{x11,y11},{x01,y01},{x10,y10}} dst{{x00,y00},{x11,y11},{x01,y01},{x10,y10}}
 int Image_Scaler_Quadrilateral(
-	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
 	uint32_t backgroundColor,
-	BufferBox* backgroundImage, BufferBox* foregroundImage,
+	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,

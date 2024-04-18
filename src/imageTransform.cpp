@@ -13,7 +13,7 @@
 #include "render.h"
 #include <opencv2/opencv.hpp>
 
-int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, BufferBox* backgroundImage, BufferBox* foregroundImage) {
+int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, const BufferBox* backgroundImage, const BufferBox* foregroundImage) {
 	
 	initBufferBox(buf, nullptr, Mat_Render.cols, Mat_Render.rows, (size_t)Mat_Render.channels());
 	buf->vram = (uint8_t*)malloc(Mat_Render.total() * Mat_Render.elemSize());
@@ -25,7 +25,7 @@ int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t bac
 }
 
 cv::Mat Image_Place_Parallelogram(
-	ImageBuffer* img, Render_Data* ren,
+	const ImageBuffer* img, const Render_Data* ren,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
@@ -57,7 +57,7 @@ cv::Mat Image_Place_Parallelogram(
 }
 
 cv::Mat Image_Place_Quadrilateral(
-	ImageBuffer* img, Render_Data* ren,
+	const ImageBuffer* img, const Render_Data* ren,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
@@ -84,9 +84,9 @@ cv::Mat Image_Place_Quadrilateral(
 }
 
 int Image_Scaler_Parallelogram(
-	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
 	uint32_t backgroundColor,
-	BufferBox* backgroundImage, BufferBox* foregroundImage,
+	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
@@ -111,9 +111,9 @@ int Image_Scaler_Parallelogram(
 }
 
 int Image_Scaler_Quadrilateral(
-	BufferBox* buf, ImageBuffer* img, Render_Data* ren,
+	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
 	uint32_t backgroundColor,
-	BufferBox* backgroundImage, BufferBox* foregroundImage,
+	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
 	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,

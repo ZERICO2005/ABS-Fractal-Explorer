@@ -285,4 +285,5 @@
 	void ImageBuffer::samplePixel(uint8_t* r, uint8_t* g, uint8_t* b, fp64 x, fp64 y) {
 		
 	}
+
 /* ImageBuffer */

@@ -20,11 +20,11 @@
 //#define MONOCHROME_MODE
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/04/15" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/04/18" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
-#define PROGRAM_V_PATCH 10
-#define PROGRAM_V_TAG "Rev-4 Alpha"
+#define PROGRAM_V_PATCH 11
+#define PROGRAM_V_TAG "Rev-0 Developer Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* OpenCL */
@@ -80,7 +80,7 @@
 	#define strtoflt128 strtold
 	typedef long double fp128;
 	typedef long double fp80;
-	typedef fp80 fpCord;
+	typedef long double fpCord;
 	typedef int64_t int128_t;
 	typedef uint64_t uint128_t;
 	typedef int64_t i128;

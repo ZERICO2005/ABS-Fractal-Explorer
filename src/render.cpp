@@ -1681,7 +1681,7 @@ void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	}
 }
 
-int transformFracImage(ImageBuffer* image, Render_Data* ren) {
+int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }

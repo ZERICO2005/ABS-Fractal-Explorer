@@ -16,7 +16,7 @@
 
 #include "fileManager.h"
 
-#include "fracMulti.h"
+#include "frac_Multi.h"
 #include "fracCL.h"
 
 
@@ -93,17 +93,10 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		nano64_t image_stopwatch = getNanoTime();
 		switch(image_render_data.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
-				if (image_fractal_data.polarMandelbrot == true) {
-					renderCPU_Polar_Mandelbrot(
-						&image_box, image_render_data, image_fractal_data,
-						ABORT_RENDERING, primaryRender.CPU_Threads
-					);
-				} else {
 					renderCPU_ABS_Mandelbrot(
 						&image_box, image_render_data, image_fractal_data,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
-				}
 				break;
 			case Rendering_Method::GPU_Rendering:
 				#ifdef Enable_OpenCL
@@ -169,17 +162,10 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 
 		switch(primaryRender.rendering_method) {
 			case Rendering_Method::CPU_Rendering:
-				if (fracData.polarMandelbrot == true) {
-					renderCPU_Polar_Mandelbrot(
-						&renderBox, primaryRender, fracData,
-						ABORT_RENDERING, primaryRender.CPU_Threads
-					);
-				} else {
 					renderCPU_ABS_Mandelbrot(
 						&renderBox, primaryRender, fracData,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
-				}
 				break;
 			case Rendering_Method::GPU_Rendering:
 				#ifdef Enable_OpenCL
