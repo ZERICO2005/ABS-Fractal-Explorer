@@ -92,8 +92,6 @@ Frame_Pacer GUI_Frame_Pacer;
 	bool Waiting_To_Abort_Rendering = false;
 	ImageBuffer Master;
 	
-	BufferBox TestGraphic = {0};
-	
 	ImageBuffer* Primary_Image = nullptr;
 	ImageBuffer* Primary_Image_Preview = nullptr;
 	ImageBuffer* Secondary_Image = nullptr;

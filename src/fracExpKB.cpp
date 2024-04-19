@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023 - 2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -95,7 +95,7 @@ const char* const FracExpKB_WriteSDL_ScancodeWebsite {
 	"# https://wiki.libsdl.org/SDL2/SDL_Scancode"
 };
 
-int create_FracExpKB_Preset(FracExpKB_File* frac, char* fracExpKB_raw, Param_List* param_list, size_t param_len);
+int create_FracExpKB_Preset(FracExpKB_File* frac, const char* fracExpKB_raw, const Param_List* param_list, size_t param_len);
 
 int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 	if (frac == nullptr) { printError("Unable to create_FracExp_File since FracExpKB_File* frac is NULL"); return -1; }
@@ -130,9 +130,9 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 		FREE(pathF);
 	Param_List* param_list; size_t param_len = 0;
 	generate_Param_List(fracExpKB_raw,len,&param_list,&param_len);
-	static char fileExtension[64];
+	static char fileExtension[64]; memset(fileExtension, '\0', sizeof(fileExtension));
 	//printFlush("\n\nRetriving Data\n");
-	Param_List* item = NULL;
+	const Param_List* item = NULL;
 	#define integerFromParam(output,cast,base) output = (cast)((item != NULL) ? getNumberFromText(&fracExpKB_raw[item->pos], item->len,(base)) : 0)
 	#define stringFromParam(buf) getTextFromParam(fracExpKB_raw, item, (buf), ARRAY_LENGTH(buf))
 	#define getParam(data) getParameter(fracExpKB_raw,(char*)(data),param_list,param_len)
@@ -199,13 +199,13 @@ int create_FracExpKB_File(FracExpKB_File* frac, char* path) {
 	return 0;
 }
 
-int create_FracExpKB_Preset(FracExpKB_File* frac, char* fracExpKB_raw, Param_List* param_list, size_t param_len) {
+int create_FracExpKB_Preset(FracExpKB_File* frac, const char* fracExpKB_raw, const Param_List* param_list, size_t param_len) {
 	if (frac == nullptr) { printError("FracExpKB_File* frac is NULL"); return -1; }
 	if (fracExpKB_raw == nullptr) { printError("char* fracExpKB_raw is NULL"); return -1; }
 	if (param_list == nullptr) { printError("Param_List* param_list is NULL"); return -1; }
 	if (param_len == 0) { printError("param_len is 0"); return -1; }
 	{ // Insert some sort of loop here
-		Param_List* item = nullptr;
+		const Param_List* item = nullptr;
 		
 		#define Key_Function_Skip 0
 		#define SDL_Scancode_Skip 0
@@ -215,7 +215,7 @@ int create_FracExpKB_Preset(FracExpKB_File* frac, char* fracExpKB_raw, Param_Lis
 		//#define bindData(index) frac->KeyBind_Preset_List[0].list[index]
 		KeyBind_Preset fPreset;
 		item = getParam("KeyBind_List/Preset/Name");
-		static char temp_fPreset_name[96]; memset(temp_fPreset_name,'\0',96);
+		static char temp_fPreset_name[96]; memset(temp_fPreset_name, '\0', 96);
 		stringFromParam(temp_fPreset_name);
 		fPreset.name = temp_fPreset_name;
 		size_t bindCount = 0;

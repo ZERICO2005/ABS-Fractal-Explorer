@@ -95,8 +95,6 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern bool Waiting_To_Abort_Rendering;
 	extern ImageBuffer Master;
 	
-	extern BufferBox TestGraphic;
-	
 	extern ImageBuffer* Primary_Image;
 	extern ImageBuffer* Primary_Image_Preview;
 	extern ImageBuffer* Secondary_Image;

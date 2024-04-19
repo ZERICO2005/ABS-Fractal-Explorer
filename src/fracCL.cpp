@@ -230,51 +230,49 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	uint32_t formula = (polarMandelbrotBool << 30) | (juliaSetBool << 29) | formula32;
 	fp32 power = (param.polarMandelbrot == true) ? (fp32)param.polarPower : (fp32)param.power;
 	int32_t sample = ren.sample;
-	fp32 rot = (fp32)param.rot;
-	fp32 numZ;
-	fp32 numW;
+	fp32 rot_Sin = (fp32)sin((fpCord)param.rot);
+	fp32 rot_Cos = (fp32)cos((fpCord)param.rot);
+	
+	fp32 recip_numZ;
+	fp32 neg_recip_numW;
 	{
-		fp64 T_zoomP = pow(10.0, param.zoom);
-		fp64 T_numX = ((fp64)((resX * sample) - 1) / 2.0);
-		fp64 T_numY = ((fp64)((resY * sample) - 1) / 2.0);
-		fp64 T_num0 = (resX >= resY) ? T_numY * T_zoomP : T_numX * T_zoomP; // 0 looks like Theta lol
-		numZ = (fp32)(T_num0 / param.sX);
-		numW = (fp32)(T_num0 / param.sY);
+		fpCord T_zoomP = pow((fpCord)10.0, (fpCord)param.zoom);
+		fpCord T_numX = ((fpCord)((resX * sample) - 1) / (fpCord)2.0);
+		fpCord T_numY = ((fpCord)((resY * sample) - 1) / (fpCord)2.0);
+		fpCord T_num0 = (resX >= resY) ? T_numY * T_zoomP : T_numX * T_zoomP; // 0 looks like Theta lol
+		recip_numZ = (fp32)((fpCord)param.sX / T_num0);
+		neg_recip_numW = (fp32)(-((fpCord)param.sY / T_num0));
 	}
-	fp32 sX = (fp32)param.sX;
-	fp32 sY = (fp32)param.sY;
+
 	fp32 breakoutValue = (fp32)param.breakoutValue;
 	valueClamp(breakoutValue,0.25f,65536.0f);
 	uint32_t kArg = 0;
 
-	const uint32_t debug_val_0x00 = 0x10;
-	const uint32_t debug_val_0xFF = 0xFF;
-	const fp32 debug_val_0f = 0.0f;
-	const fp32 debug_val_1f = 1.0f;
-
+	__attribute__((unused)) const uint32_t debug_val_0x00 = 0x00;
+	__attribute__((unused)) const uint32_t debug_val_0xFF = 0xFF;
+	__attribute__((unused)) const fp32 debug_val_0f = 0.0f;
+	__attribute__((unused)) const fp32 debug_val_1f = 1.0f;
 
 	struct Temp_Color {
-		fp32 exterior_Alpha;
-			fp32 exterior_R_Amp; fp32 exterior_R_Freq; fp32 exterior_R_Phase;
-			fp32 exterior_G_Amp; fp32 exterior_G_Freq; fp32 exterior_G_Phase;
-			fp32 exterior_B_Amp; fp32 exterior_B_Freq; fp32 exterior_B_Phase;
-		fp32 interior_Alpha;
-			fp32 interior_R_Amp; fp32 interior_R_Freq; fp32 interior_R_Phase;
-			fp32 interior_G_Amp; fp32 interior_G_Freq; fp32 interior_G_Phase;
-			fp32 interior_B_Amp; fp32 interior_B_Freq; fp32 interior_B_Phase;
+		fp32 Exterior_Alpha;
+			fp32 Exterior_R_Amp_mult_Exterior_Alpha; fp32 Exterior_R_Freq_mult_TAU; fp32 Exterior_R_Phase_mult_TAU;
+			fp32 Exterior_G_Amp_mult_Exterior_Alpha; fp32 Exterior_G_Freq_mult_TAU; fp32 Exterior_G_Phase_mult_TAU;
+			fp32 Exterior_B_Amp_mult_Exterior_Alpha; fp32 Exterior_B_Freq_mult_TAU; fp32 Exterior_B_Phase_mult_TAU;
+		fp32 Interior_Alpha;
+			fp32 Interior_R_Amp_mult_Interior_Alpha; fp32 Interior_R_Freq; fp32 Interior_R_Phase;
+			fp32 Interior_G_Amp_mult_Interior_Alpha; fp32 Interior_G_Freq; fp32 Interior_G_Phase;
+			fp32 Interior_B_Amp_mult_Interior_Alpha; fp32 Interior_B_Freq; fp32 Interior_B_Phase;
 	};
-	Temp_Color temp_Color = {
+	const Temp_Color temp_Color = {
 		(fp32)param.exterior_Alpha,
-			(fp32)param.exterior_R_Amp, (fp32)param.exterior_R_Freq, (fp32)param.exterior_R_Phase,
-			(fp32)param.exterior_G_Amp, (fp32)param.exterior_G_Freq, (fp32)param.exterior_G_Phase,
-			(fp32)param.exterior_B_Amp, (fp32)param.exterior_B_Freq, (fp32)param.exterior_B_Phase,
+			(fp32)(param.exterior_R_Amp * param.exterior_Alpha), (fp32)(param.exterior_R_Freq * TAU), (fp32)(param.exterior_R_Phase * TAU),
+			(fp32)(param.exterior_G_Amp * param.exterior_Alpha), (fp32)(param.exterior_G_Freq * TAU), (fp32)(param.exterior_G_Phase * TAU),
+			(fp32)(param.exterior_B_Amp * param.exterior_Alpha), (fp32)(param.exterior_B_Freq * TAU), (fp32)(param.exterior_B_Phase * TAU),
 		(fp32)param.interior_Alpha,
-			(fp32)param.interior_R_Amp, (fp32)param.interior_R_Freq, (fp32)param.interior_R_Phase,
-			(fp32)param.interior_G_Amp, (fp32)param.interior_G_Freq, (fp32)param.interior_G_Phase,
-			(fp32)param.interior_B_Amp, (fp32)param.interior_B_Freq, (fp32)param.interior_B_Phase
+			(fp32)(param.interior_R_Amp * param.interior_Alpha), (fp32)param.interior_R_Freq, (fp32)param.interior_R_Phase,
+			(fp32)(param.interior_G_Amp * param.interior_Alpha), (fp32)param.interior_G_Freq, (fp32)param.interior_G_Phase,
+			(fp32)(param.interior_B_Amp * param.interior_Alpha), (fp32)param.interior_B_Freq, (fp32)param.interior_B_Phase
 	};
-	uint32_t exterior_Alpha = (uint32_t)(param.exterior_Alpha * 255.0);
-	uint32_t interior_Alpha = (uint32_t)(param.interior_Alpha * 255.0);
 	
 	err = clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &r);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &i);
@@ -286,34 +284,35 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &formula);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &power);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &sample);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &rot);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &rot_Sin);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &rot_Cos);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &breakoutValue);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &numZ);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &numW);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &recip_numZ);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &neg_recip_numW);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(cl_mem), &deviceResultBuf);
 
 	/* Exterior Color */
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_R_Freq );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_R_Phase);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_R_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_G_Freq );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_G_Phase);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_G_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_B_Freq );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_B_Phase);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_B_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.exterior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Freq_mult_TAU          );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Phase_mult_TAU         );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Freq_mult_TAU          );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Phase_mult_TAU         );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Freq_mult_TAU          );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Phase_mult_TAU         );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_Alpha);
 	/* Interior Color */
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_R_Freq );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_R_Phase);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_R_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_G_Freq );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_G_Phase);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_G_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_B_Freq );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_B_Phase);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_B_Amp  );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.interior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Freq                   );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Phase                  );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Freq                   );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Phase                  );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Freq                   );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Phase                  );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_Alpha);
 
 	printErrorChange("\nKernelArgs: %" PRId32,err);
 

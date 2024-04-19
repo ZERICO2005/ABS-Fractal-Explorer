@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023 - 2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -10,7 +10,7 @@
 #include "Common_Def.h"
 #include "fracExp_Internal.h"
 
-void printText(char* text, size_t len) {
+void printText(const char* text, size_t len) {
 	if (text == NULL || len == 0) {
 		printfDebug("\n");
 		fflushDebug(stdout);
@@ -30,12 +30,12 @@ void printText(char* text, size_t len) {
 // size_t param_start;  size_t param_end;
 
 
-void printParamText(char* raw, Param_List* item) {
+void printParamText(const char* raw, const Param_List* item) {
 	for (size_t p = 0; p < item->len; p++) { printfDebug("%c",raw[p + item->pos]); }
 	fflushDebug(stdout);
 }
 
-void printParamTextN(char* raw, Param_List* item) {
+void printParamTextN(const char* raw, const Param_List* item) {
 	printfDebug("\n");
 	for (size_t p = 0; p < item->len; p++) { printfDebug("%c",raw[p + item->pos]); }
 	fflushDebug(stdout);
@@ -117,7 +117,7 @@ size_t clean_frac_raw(char* raw, size_t len) { // Removes comments and blank lin
 	return posW;
 }
 
-void generate_Param_List(char* raw, size_t len,Param_List** param_list_ptr,size_t* param_len_ptr) {
+void generate_Param_List(char* raw, size_t len, Param_List** param_list_ptr, size_t* param_len_ptr) {
 	if (param_len_ptr == NULL || param_list_ptr == NULL) {
 		printError("\nparam_len_ptr and/or param_list_ptr are/is NULL");
 		return;
@@ -141,7 +141,7 @@ void generate_Param_List(char* raw, size_t len,Param_List** param_list_ptr,size_
 	}
 	printFlushDebug("\nTotal Rows: %" PRIu64,rowCount);
 	param_len = rowCount;
-	param_list = (Param_List*)malloc(param_len * sizeof(Param_List));
+	param_list = (Param_List*)calloc(param_len, sizeof(Param_List));
 	
 	// Write data to param_list
 	prev = '\n';
@@ -186,7 +186,7 @@ void generate_Param_List(char* raw, size_t len,Param_List** param_list_ptr,size_
 	*param_list_ptr = param_list;
 }
 
-bool strictCompareText(char* strA, size_t lenA, char* strB, size_t lenB) {
+bool strictCompareText(const char* strA, size_t lenA, const char* strB, size_t lenB) {
 	// printf("\nstrA: ");
 	// for (size_t p = 0; p < lenA; p++) { printf("%c",strA[p]); }
 	// printf(" strB: ");
@@ -206,7 +206,7 @@ bool strictCompareText(char* strA, size_t lenA, char* strB, size_t lenB) {
 	return true;
 }
 
-int64_t getNumberFromText(char* str, size_t len, uint8_t base) {
+int64_t getNumberFromText(const char* str, size_t len, uint8_t base) {
 	if (base < 2 || base > 36) { return 0; }
 	size_t pos = 0;
 	while (pos < len && str[pos] == ' ') { // Skips whitespace
@@ -235,7 +235,7 @@ int64_t getNumberFromText(char* str, size_t len, uint8_t base) {
 	return (sign == true) ? -acc : acc;
 }
 
-char paramCharAt(char* raw, Param_List* item, size_t index) { // Returns '\0' for out of range values
+char paramCharAt(const char* raw, const Param_List* item, size_t index) { // Returns '\0' for out of range values
 	if (index >= item->len) {
 		return '\0';
 	}
@@ -243,7 +243,7 @@ char paramCharAt(char* raw, Param_List* item, size_t index) { // Returns '\0' fo
 }
 
 // Returns size of text
-size_t getTextFromParam(char* raw, Param_List* item, char* buf, size_t len) {
+size_t getTextFromParam(const char* raw, const Param_List* item, char* buf, size_t len) {
 	if (raw == NULL) {
 		return 0;
 	}
@@ -270,7 +270,7 @@ size_t getTextFromParam(char* raw, Param_List* item, char* buf, size_t len) {
 	return (len < item->len) ? len : item->len;
 }
 
-Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t param_len) { /* For exporting a singular value */
+const Param_List* getParameter(const char* raw, const char* path, const Param_List* param_list, size_t param_len) { /* For exporting a singular value */
 	if (param_len == 0 || param_list == NULL) {
 		printError("\nparam_len and/or param_list are/is 0/NULL");
 		return NULL;
@@ -357,7 +357,7 @@ Param_List* getParameter(char* raw, char* path,  Param_List* param_list, size_t 
 }
 
 /* */
-size_t getParameterArrayLength(char* raw, Param_List* item, Param_List* list, size_t len) {
+size_t getParameterArrayLength(const char* raw, const Param_List* item, const Param_List* list, size_t len) {
 	if (len == 0) { printError("Param_List* list length is 0"); return 0; }
 	if (list == NULL) { printError("Param_List* list is NULL"); return 0; }
 	if (item == NULL) { printError("Param_List* item is NULL"); return 0; }
@@ -384,7 +384,7 @@ size_t getParameterArrayLength(char* raw, Param_List* item, Param_List* list, si
 }
 
 
-void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
+void copyHex(const char* raw, const Param_List* item, uint64_t* hex, size_t len) {
 	if (raw == NULL || hex == NULL) {
 		return;
 	}
@@ -402,7 +402,7 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
 		}
 		return;
 	}
-	char* p = &raw[item->pos + 2]; // 0x
+	const char* p = &raw[item->pos + 2]; // 0x
 	for (size_t b = 0; b < len; b++) {
 		hex[b] = 0;
 		for (size_t x = 0; x < 16; x++) {
@@ -430,7 +430,7 @@ void copyHex(char* raw, Param_List* item, uint64_t* hex, size_t len) {
 	}
 }
 
-int correctWindowsFileName(char** ret, char* path) {
+int correctWindowsFileName(char** ret, const char* path) {
 	if (ret == NULL) {
 		printError("char** buf is NULL");
 		return -1;
@@ -450,7 +450,7 @@ int correctWindowsFileName(char** ret, char* path) {
 		}
 		index++;
 	}
-	buf = (char*)calloc(bufPtr + 1,sizeof(char));
+	buf = (char*)calloc(bufPtr + 1, sizeof(char));
 	if (buf == NULL) {
 		printError("Failed to allocate memory for file path");
 		return -1;
@@ -472,7 +472,7 @@ int correctWindowsFileName(char** ret, char* path) {
 	return 0;
 }
 
-int checkFileName(char* input) {
+int checkFileName(const char* input) {
 	FILE *fptr;
 	fptr = fopen(input, "r");
 	if (fptr) {
@@ -486,7 +486,7 @@ int checkFileName(char* input) {
 }
 
 // Turns \ into \\ and removes any odd characters
-int fixWindowsFileName(char** ret, char* path) {
+int fixWindowsFileName(char** ret, const char* path) {
 	if (ret == NULL) {
 		printError("char** buf is NULL");
 		return -1;
@@ -505,8 +505,10 @@ int fixWindowsFileName(char** ret, char* path) {
 			(path[index] >= '0' && path[index] <= '9') ||
 			(path[index] == ' ') || (path[index] == '-') || (path[index] == '_') || (path[index] == '/') || (path[index] == '.') ||
 			(path[index] == '(') || (path[index] == ')') || (path[index] == '[') || (path[index] == ']') || (path[index] == '{') || (path[index] == '}') ||
+			(path[index] == '<') || (path[index] == '>') || 
+			(path[index] == '|') || (path[index] == '+') || (path[index] == '=') ||
 			(path[index] == ';') || (path[index] == ':') || (path[index] == ',') || (path[index] == '`') || (path[index] == '~') || 
-			(path[index] == '!') || (path[index] == '@') || (path[index] == '#') || (path[index] == '$') || (path[index] == '%') ||  (path[index] == '^') || (path[index] == '&')
+			(path[index] == '!') || (path[index] == '@') || (path[index] == '#') || (path[index] == '$') || (path[index] == '%') || (path[index] == '^') || (path[index] == '&')
 		) {
 			bufPtr++;
 		} else if (path[index] == '\\') {
@@ -514,7 +516,7 @@ int fixWindowsFileName(char** ret, char* path) {
 		}
 		index++;
 	}
-	buf = (char*)malloc(bufPtr + 1);
+	buf = (char*)calloc(bufPtr + 1, sizeof(char));
 	*ret = buf;
 	if (buf == NULL) {
 		printError("Failed to allocate memory for file path");
@@ -530,8 +532,10 @@ int fixWindowsFileName(char** ret, char* path) {
 			(path[index] >= '0' && path[index] <= '9') ||
 			(path[index] == ' ') || (path[index] == '-') || (path[index] == '_') || (path[index] == '/') || (path[index] == '.') ||
 			(path[index] == '(') || (path[index] == ')') || (path[index] == '[') || (path[index] == ']') || (path[index] == '{') || (path[index] == '}') ||
+			(path[index] == '<') || (path[index] == '>') || 
+			(path[index] == '|') || (path[index] == '+') || (path[index] == '=') ||
 			(path[index] == ';') || (path[index] == ':') || (path[index] == ',') || (path[index] == '`') || (path[index] == '~') || 
-			(path[index] == '!') || (path[index] == '@') || (path[index] == '#') || (path[index] == '$') || (path[index] == '%') ||  (path[index] == '^') || (path[index] == '&')
+			(path[index] == '!') || (path[index] == '@') || (path[index] == '#') || (path[index] == '$') || (path[index] == '%') || (path[index] == '^') || (path[index] == '&')
 		) {
 			buf[bufPtr] = path[index]; bufPtr++;
 		} else if (path[index] == '\\') {

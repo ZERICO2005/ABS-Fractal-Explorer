@@ -184,13 +184,13 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			fp128 cx11; fp128 cy11;
 			fp128 cx01; fp128 cy01;
 			fp128 cx10; fp128 cy10;
-			i32 offX = (i32)(currentBuf->resX * primaryRender.subSample);
-			i32 offY = (i32)(currentBuf->resY * primaryRender.subSample);
+			int32_t offX = (int32_t)(currentBuf->resX * primaryRender.subSample);
+			int32_t offY = (int32_t)(currentBuf->resY * primaryRender.subSample);
 			fp64 extraPadding = 0.0;
-			pixel_to_coordinate((i32)((fp64)offX * -extraPadding),(i32)((fp64)offY * -extraPadding),&cx00,&cy00,&FRAC,&primaryRender);
-			pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * (extraPadding + 1.0)),&cx11,&cy11,&FRAC,&primaryRender);
-			pixel_to_coordinate((i32)((fp64)offX * -extraPadding),(i32)((fp64)offY * (extraPadding + 1.0)),&cx01,&cy01,&FRAC,&primaryRender);
-			pixel_to_coordinate((i32)((fp64)offX * (extraPadding + 1.0)),(i32)((fp64)offY * -extraPadding),&cx10,&cy10,&FRAC,&primaryRender);
+			pixel_to_coordinate((int32_t)((fp64)offX * -extraPadding       ),(int32_t)((fp64)offY * -extraPadding       ),&cx00,&cy00,&FRAC,&primaryRender);
+			pixel_to_coordinate((int32_t)((fp64)offX * (extraPadding + 1.0)),(int32_t)((fp64)offY * (extraPadding + 1.0)),&cx11,&cy11,&FRAC,&primaryRender);
+			pixel_to_coordinate((int32_t)((fp64)offX * -extraPadding       ),(int32_t)((fp64)offY * (extraPadding + 1.0)),&cx01,&cy01,&FRAC,&primaryRender);
+			pixel_to_coordinate((int32_t)((fp64)offX * (extraPadding + 1.0)),(int32_t)((fp64)offY * -extraPadding       ),&cx10,&cy10,&FRAC,&primaryRender);
 			currentBuf->setTransformationData(cx00,cy00,cx11,cy11,cx01,cy01,cx10,cy10);
 			currentBuf->rot = FRAC.rot;
 		}

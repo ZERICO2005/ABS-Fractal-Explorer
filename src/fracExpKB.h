@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023 - 2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -26,12 +26,12 @@
 struct KeyBind {
 	Key_Function::Key_Function_Enum func;
 	SDL_Scancode key;
-}; typedef struct KeyBind KeyBind;
+};
 
 struct KeyBind_Preset {
 	std::string name;
 	std::list<KeyBind> kList;
-}; typedef KeyBind_Preset KeyBind_Preset;
+};
 
 /* Key-bind List Functions */
 	// Default Key-binds for ABS-Fractal-Explorer

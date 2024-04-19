@@ -17,6 +17,15 @@
 #include "frac_Multi_Internal.h"
 
 void quadraticRender_SSE2_FP32(FractalParameters(fp32, fp32));
+void     cubicRender_SSE2_FP32(FractalParameters(fp32, fp32));
+void   quarticRender_SSE2_FP32(FractalParameters(fp32, fp32));
+void   quinticRender_SSE2_FP32(FractalParameters(fp32, fp32));
+void    sexticRender_SSE2_FP32(FractalParameters(fp32, fp32));
+
 void quadraticRender_SSE2_FP64(FractalParameters(fp64, fp64));
+void     cubicRender_SSE2_FP64(FractalParameters(fp64, fp64));
+void   quarticRender_SSE2_FP64(FractalParameters(fp64, fp64));
+void   quinticRender_SSE2_FP64(FractalParameters(fp64, fp64));
+void    sexticRender_SSE2_FP64(FractalParameters(fp64, fp64));
 
 #endif /* FRAC_MULTI_SSE2_H */

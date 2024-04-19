@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2023)
+**	Author: zerico2005 (2023 - 2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -13,15 +13,15 @@
 #include "fractal.h"
 
 /* Contains the fractals data along with its hash, name, and description */
-struct _Fractal_Header {
+struct Fractal_Header {
 	uint64_t hash[4];
 	char* name;
 	char* description;
 	ABS_Mandelbrot fractal;
-}; typedef struct _Fractal_Header Fractal_Header;
+};
 
 /* Contains lots of metadata */
-struct _FracExp_File {
+struct FracExp_File {
 	/* Header */
 		/* FracExp */
 			uint32_t FracExp_Version_Major;
@@ -57,7 +57,7 @@ struct _FracExp_File {
 	/* Fractal_List */
 		uint32_t fractal_count;
 		Fractal_Header* fractal_list;
-}; typedef struct _FracExp_File FracExp_File;
+};
 
 int write_FracExp_File(FracExp_File* ptr, char* path);
 int read_FracExp_File(FracExp_File* ptr, char* path);

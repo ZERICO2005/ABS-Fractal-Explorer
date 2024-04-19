@@ -308,6 +308,17 @@ int setup_fracExpKB(int argc, char* argv[]) {
 // 	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
 // #endif
 
+void getRenderBufferBoxFromMaster(BufferBox& box) {
+	Master.getBufferBox(&box);
+	if (
+		(validateBufferBox(&box, true) == false) ||
+		(RESY_UI > Master.resY)
+	) { return; }
+	box.resY = Master.resY - RESY_UI;
+	size_t pitch = getBufferBoxPitch(&box);
+	box.vram = &box.vram[pitch * (size_t)RESY_UI];
+}
+
 void force_resizeWindow(dim32_t resX, dim32_t resY) {
 		if (resX < RESX_Minimum) { resX = RESX_Minimum; }
 		if (resY < RESY_Minimum) { resY = RESY_Minimum; }
@@ -319,10 +330,6 @@ void force_resizeWindow(dim32_t resX, dim32_t resY) {
 		SDL_RenderSetLogicalSize(renderer, resX, resY);
 		Master.resX = resX;
 		Master.resY = resY;
-		TestGraphic.resX = resX;
-		TestGraphic.resY = resY - RESY_UI;
-		// printFlush("\n%" PRId32 " %" PRId32 " | %" PRIu64,x,y,getBufferBoxSize(&TestGraphic));
-		TestGraphic.vram = (uint8_t*)realloc((void*)(TestGraphic.vram), getBufferBoxSize(&TestGraphic));
 
 		updateRenderData(&primaryRenderData);
 		updateRenderData(&secondaryRenderData);
@@ -1315,9 +1322,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	// Allocate Buffers
 	//initBufferBox(&Master,NULL,initResX,initResY,IMAGE_BUFFER_CHANNELS);
 	Master = ImageBuffer(initResX,initResY,IMAGE_BUFFER_CHANNELS);
-	initBufferBox(&TestGraphic,nullptr,Master.resX,Master.resY - RESY_UI,IMAGE_BUFFER_CHANNELS);
 	
-	TestGraphic.vram = (uint8_t*)malloc(getBufferBoxSize(&TestGraphic));
 	window = SDL_CreateWindow(
 		PROGRAM_NAME " v" PROGRAM_VERSION " " PROGRAM_DATE,
 		initPosX, initPosY,
@@ -1439,7 +1444,6 @@ int terminate_Render() {
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-	FREE(TestGraphic.vram);
 	return 0;
 }
 
@@ -1450,7 +1454,11 @@ void setRenderedBufferBox(BufferBox* box) {
 
 
 
-void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
+void renderTestGraphic(BufferBox& buf, fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
+	if (printValidateBufferBox(&buf) == false) {
+		printError("renderTestGraphic() failed");
+		return;
+	}
 	// nano64_t startTimer = getNanoTime();
 	static fp64 f = 0.0;
 	fp64 halfDiff = (maxSpeed - minSpeed) / 2.0;
@@ -1460,33 +1468,33 @@ void renderTestGraphic(fp64 cycleSpeed, fp64 minSpeed, fp64 maxSpeed) {
 	size_t z = 0;
 
 	static constexpr size_t patternLength = 256;
-	static constexpr size_t patternSize = patternLength * IMAGE_BUFFER_CHANNELS;
+	__attribute__((unused)) static constexpr size_t patternSize = patternLength * IMAGE_BUFFER_CHANNELS;
 
-	size_t dimX = ((size_t)TestGraphic.resX > patternLength) ? patternLength : (size_t)TestGraphic.resX;
-	size_t dimY = ((size_t)TestGraphic.resY > patternLength) ? patternLength : (size_t)TestGraphic.resY;
-	size_t pitch = ((size_t)TestGraphic.resX * IMAGE_BUFFER_CHANNELS);
+	size_t dimX = ((size_t)buf.resX > patternLength) ? patternLength : (size_t)buf.resX;
+	size_t dimY = ((size_t)buf.resY > patternLength) ? patternLength : (size_t)buf.resY;
+	size_t pitch = ((size_t)buf.resX * IMAGE_BUFFER_CHANNELS);
 	size_t offset = 0;
 	for (size_t y = 0; y < dimY; y++) {
 		z = offset;
 		for (size_t x = 0; x < dimX; x++) {
 			#ifdef fullColorTestGraphic
-				TestGraphic.vram[z] = (uint8_t)((x - w) % 256); TestGraphic.vram[z] /= color_square_divider; z++;
-				TestGraphic.vram[z] = (uint8_t)((w - y) % 256); TestGraphic.vram[z] /= color_square_divider; z++;
+				buf.vram[z] = (uint8_t)((x - w) % 256); buf.vram[z] /= color_square_divider; z++;
+				buf.vram[z] = (uint8_t)((w - y) % 256); buf.vram[z] /= color_square_divider; z++;
 			#else
-				TestGraphic.vram[z] = 0; z++;
-				TestGraphic.vram[z] = 0; z++;
+				buf.vram[z] = 0; z++;
+				buf.vram[z] = 0; z++;
 			#endif
-			TestGraphic.vram[z] = (uint8_t)((w + x + y) % 256); TestGraphic.vram[z] /= color_square_divider; z++;
-			TestGraphic.vram[z] = 0xFF; z++;
+			buf.vram[z] = (uint8_t)((w + x + y) % 256); buf.vram[z] /= color_square_divider; z++;
+			buf.vram[z] = 0xFF; z++;
 		}
-		inPlacePatternMemcpy(&TestGraphic.vram[offset], pitch, (dimX * IMAGE_BUFFER_CHANNELS));
+		inPlacePatternMemcpy(&buf.vram[offset], pitch, (dimX * IMAGE_BUFFER_CHANNELS));
 		offset += pitch;
 	}
-	if ((size_t)TestGraphic.resY > patternLength) {
+	if ((size_t)buf.resY > patternLength) {
 		inPlacePatternMemcpy(
-			TestGraphic.vram,
-			(size_t)TestGraphic.resX * (size_t)TestGraphic.resY * TestGraphic.channels,
-			patternLength * (size_t)TestGraphic.resX * (size_t)TestGraphic.channels
+			buf.vram,
+			(size_t)buf.resX * (size_t)buf.resY * buf.channels,
+			patternLength * (size_t)buf.resX * (size_t)buf.channels
 		);
 	}
 	// nano64_t finishTimer = getNanoTime();
@@ -1497,8 +1505,8 @@ namespace Status_Graphic {
 	enum Status_Graphic_Enum {Graphic_Abort, Graphic_Pause, Graphic_Loading, Graphic_Count};
 }
 
-void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp64 speed) {
-	if (printValidateBufferBox(&TestGraphic) == false) {
+void renderStatusGraphic(BufferBox& buf, Status_Graphic::Status_Graphic_Enum status_graphic, fp64 speed) {
+	if (printValidateBufferBox(&buf) == false) {
 		printError("renderStatusGraphic() failed");
 		return;
 	}
@@ -1539,23 +1547,23 @@ void renderStatusGraphic(Status_Graphic::Status_Graphic_Enum status_graphic, fp6
 	};
 	size_t offset = 0;
 	size_t shift = 0;
-	size_t pitch = ((size_t)TestGraphic.resX * (size_t)TestGraphic.channels);
-	size_t dimY = ((size_t)TestGraphic.resY > patternLength) ? patternLength : (size_t)TestGraphic.resY;
+	size_t pitch = ((size_t)buf.resX * (size_t)buf.channels);
+	size_t dimY = ((size_t)buf.resY > patternLength) ? patternLength : (size_t)buf.resY;
 	for (size_t y = 0; y < dimY; y++) {
 		size_t dimX = (pitch > shift) ? shift : pitch;
-		memcpy(&TestGraphic.vram[offset], &pattern[patternSize - shift], dimX);
+		memcpy(&buf.vram[offset], &pattern[patternSize - shift], dimX);
 		if (shift <= pitch) {
-			patternMemcpy(&TestGraphic.vram[offset + shift], pitch - shift, pattern, patternSize);
+			patternMemcpy(&buf.vram[offset + shift], pitch - shift, pattern, patternSize);
 		}
 		offset += pitch;
 		shift += IMAGE_BUFFER_CHANNELS;
 		shift %= patternSize;
 	}
-	if ((size_t)TestGraphic.resY > patternLength) {
+	if ((size_t)buf.resY > patternLength) {
 		inPlacePatternMemcpy(
-			TestGraphic.vram,
-			(size_t)TestGraphic.resX * (size_t)TestGraphic.resY * TestGraphic.channels,
-			patternLength * (size_t)TestGraphic.resX * TestGraphic.channels
+			buf.vram,
+			(size_t)buf.resX * (size_t)buf.resY * buf.channels,
+			patternLength * (size_t)buf.resX * buf.channels
 		);
 	}
 }
@@ -1599,52 +1607,6 @@ int exportSuperScreenshot() {
 	return 0;
 }
 
-
-
-int displayFracImage(ImageBuffer* image, Render_Data* ren) {
-	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
-	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
-	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	ABS_Mandelbrot& FRAC = current_Fractal;
-	static const dim32_t minimumImageResolution = 2;
-	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
-		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
-		return 1;
-	}
-	i32 fx0 = 0; i32 fy0 = 0;
-	i32 fx1 = 0; i32 fy1 = 0;
-	coordinate_to_pixel(image->x00 - FRAC.r,image->y00 - FRAC.i,&fx0,&fy0,&FRAC,ren);
-	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&fx1,&fy1,&FRAC,ren);
-	if (fx0 > fx1) { i32 temp = fx0; fx0 = fx1; fx1 = temp; }
-	if (fy0 > fy1) { i32 temp = fy0; fy0 = fy1; fy1 = temp; }
-	i32 fxA = (fx0 + fx1) / 2;
-	i32 fyA = (fy0 + fy1) / 2;
-	if ((fx1 < minimumImageResolution || fy1 < minimumImageResolution)) {
-		return 1;
-	}
-	if ((image->rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
-		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
-			image->vram,
-			image->resX, image->resY,
-			(int32_t)(image->channels * 8),
-			(int32_t)(image->channels * (size_t)image->resX),
-			SDL_PIXELFORMAT_ABGR8888
-		);
-		fx1 -= fx0;
-		fy1 -= fy0;
-		SDL_Rect srcRect = {0, 0, image->resX, image->resY};
-		SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
-		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
-		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
-			printf("\nrenderCopy: %s",SDL_GetError()); fflush(stdout);
-		}
-		SDL_DestroyTexture(scale_tex);
-		SDL_FreeSurface(scale_surface);
-	}
-	return 0;
-}
-
 void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
 	if (Rendering_Settings.JuliaPoint_Enabled == false) { return; }
@@ -1684,6 +1646,52 @@ void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	}
 }
 
+/* Legacy Frame Transformation */
+int displayFracImage(ImageBuffer* image, Render_Data* ren) {
+	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
+	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
+	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
+	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
+	ABS_Mandelbrot& FRAC = current_Fractal;
+	static const dim32_t minimumImageResolution = 2;
+	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
+		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
+		return 1;
+	}
+	int32_t fx0 = 0; int32_t fy0 = 0;
+	int32_t fx1 = 0; int32_t fy1 = 0;
+	coordinate_to_pixel(image->x00 - FRAC.r,image->y00 - FRAC.i,&fx0,&fy0,&FRAC,ren);
+	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&fx1,&fy1,&FRAC,ren);
+	if (fx0 > fx1) { int32_t temp = fx0; fx0 = fx1; fx1 = temp; }
+	if (fy0 > fy1) { int32_t temp = fy0; fy0 = fy1; fy1 = temp; }
+	int32_t fxCenter = (fx0 + fx1) / 2;
+	int32_t fyCenter = (fy0 + fy1) / 2;
+	if ((fx1 < minimumImageResolution || fy1 < minimumImageResolution)) {
+		return 1;
+	}
+	if ((image->rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
+		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
+			image->vram,
+			image->resX, image->resY,
+			(int32_t)(image->channels * 8),
+			(int32_t)(image->channels * (size_t)image->resX),
+			SDL_PIXELFORMAT_ABGR8888
+		);
+		fx1 -= fx0;
+		fy1 -= fy0;
+		SDL_Rect srcRect = {0, 0, image->resX, image->resY};
+		SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
+		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
+		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
+			printf("\nrenderCopy: %s",SDL_GetError()); fflush(stdout);
+		}
+		SDL_DestroyTexture(scale_tex);
+		SDL_FreeSurface(scale_surface);
+	}
+	return 0;
+}
+
+/* OpenCV Frame Transformation */
 int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
@@ -1719,10 +1727,10 @@ int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	// );
 	fp32 dimX = ((fp32)ren->resX / (fp32)ren->subSample);
 	fp32 dimY = ((fp32)ren->resY / (fp32)ren->subSample);
-	fp32 sx00 = 0.0f; fp32 sy00 = 0.0f;
+	fp32 sx00 =       0.0f; fp32 sy00 =       0.0f;
 	fp32 sx11 = (fp32)resX; fp32 sy11 = (fp32)resY;
-	fp32 sx01 = 0.0f; fp32 sy01 = (fp32)resY;
-	fp32 sx10 = (fp32)resX; fp32 sy10 = 0.0f;
+	fp32 sx01 =       0.0f; fp32 sy01 = (fp32)resY;
+	fp32 sx10 = (fp32)resX; fp32 sy10 =       0.0f;
 	// image->printTransformationData(0.6);
 	// printfInterval(0.6,"\nsrc: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
 	// printfInterval(0.6,"\ndst: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
@@ -1822,21 +1830,17 @@ void newFrame() {
 	if (Abort_Rendering_Flag == true) {
 		//primaryBufferValid = false;
 		Waiting_To_Abort_Rendering = read_Abort_Render_Ongoing();
+		BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
 		if (Waiting_To_Abort_Rendering == true) {
-			renderStatusGraphic(Status_Graphic::Graphic_Abort, 0.3);
+			renderStatusGraphic(render_Area, Status_Graphic::Graphic_Abort, 0.3);
 		} else {
-			renderStatusGraphic(Status_Graphic::Graphic_Pause, 0.4);
+			renderStatusGraphic(render_Area, Status_Graphic::Graphic_Pause, 0.4);
 			//renderTestGraphic(0.2,0.4,1.0);
 		}
-		BufferBox temp_MASTER;
-		Master.getBufferBox(&temp_MASTER);
-		copyBuffer_VeritcalOffset(temp_MASTER,TestGraphic,(size_t)RESY_UI);
 		exportFractalBuffer = false;
 	} else if (primaryBufferValid == false) {
-		renderStatusGraphic(Status_Graphic::Graphic_Loading,1.0); // Renders a loading screen if Fractal buffers are unavailable
-		BufferBox temp_MASTER;
-		Master.getBufferBox(&temp_MASTER);
-		copyBuffer_VeritcalOffset(temp_MASTER,TestGraphic,(size_t)RESY_UI);
+		BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
+		renderStatusGraphic(render_Area, Status_Graphic::Graphic_Loading,1.0); // Renders a loading screen if Fractal buffers are unavailable
 		exportFractalBuffer = false;
 	}
 	#ifdef Use_OpenCV_Scaler

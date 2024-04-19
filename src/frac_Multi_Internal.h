@@ -94,6 +94,7 @@ void Generate_PreCalc_Param(
 	PreCalc_Param<fpX,fpColor>& preCalc_Param,
 	const BufferBox* buf, const Render_Data& ren, const ABS_Mandelbrot& param
 ) {
+	// nano64_t startTimer = getNanoTime();
 	if (buf == nullptr) { return; }
 	/* Header */
 		preCalc_Param.formula = param.formula;
@@ -111,24 +112,33 @@ void Generate_PreCalc_Param(
 		preCalc_Param.imagCord = (fpX)param.i;
 		preCalc_Param.realJulia = (fpX)param.zr;
 		preCalc_Param.imagJulia = (fpX)param.zi;
-		preCalc_Param.zoom_PC = (fpX)pow((fpCord)10.0, (fpCord)param.zoom);
+		const fpCord zoom_PC = pow((fpCord)10.0, (fpCord)param.zoom);
+		preCalc_Param.zoom_PC = (fpX)zoom_PC;
 		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);
 		preCalc_Param.rotCos_PC = (fpX)cos((fpCord)param.rot);
-		const dim32_t sResX = preCalc_Param.Cord_ResX - 1;
-		const dim32_t sResY = preCalc_Param.Cord_ResY - 1;
-		preCalc_Param.numY = ((fpX)sResY / (fpX)2.0);
-		preCalc_Param.numX = ((fpX)sResX / (fpX)2.0);
-		const fpX numT = (sResX >= sResY) ?
-			(preCalc_Param.numY * preCalc_Param.zoom_PC) :
-			(preCalc_Param.numX * preCalc_Param.zoom_PC);
-		preCalc_Param.recip_numZ = ((fpX)param.sX / numT);
-		preCalc_Param.neg_recip_numW = -((fpX)param.sY / numT);
 		preCalc_Param.breakoutValue = (fpX)param.breakoutValue;
+		
+		const dim32_t sResY = preCalc_Param.Cord_ResY - 1;
+		const dim32_t sResX = preCalc_Param.Cord_ResX - 1;
+		const fpCord numY = ((fpCord)sResY / (fpCord)2.0);
+		const fpCord numX = ((fpCord)sResX / (fpCord)2.0);
+		const fpCord numT = (sResX >= sResY) ?
+			(numY * zoom_PC) :
+			(numX * zoom_PC);
+		preCalc_Param.numY = (fpX)numY;
+		preCalc_Param.numX = (fpX)numX;
+		preCalc_Param.recip_numZ = (fpX)((fpCord)param.sX / numT);
+		preCalc_Param.neg_recip_numW = (fpX)(-((fpCord)param.sY / numT));
+		
 	/* Polar */
 		preCalc_Param.polarPower = (fpX)param.polarPower;
 		preCalc_Param.polarPowerHalf = (fpX)param.polarPower / (fpX)2.0;
 	/* Coloring */
-		preCalc_Param.inverse_log2_power = (fpColor)1.0 / log2((fpColor)param.polarPower);
+		if (param.polarMandelbrot == true) {
+			preCalc_Param.inverse_log2_power = (fpColor)1.0 / log2((fpColor)param.polarPower);
+		} else {
+			preCalc_Param.inverse_log2_power = (fpColor)1.0 / log2((fpColor)param.power);
+		}
 		preCalc_Param.alphaDiv = (fpColor)(ren.sample * ren.sample);
 
 		preCalc_Param.Exterior_Alpha = (fpColor)param.exterior_Alpha;
@@ -167,6 +177,10 @@ void Generate_PreCalc_Param(
 			preCalc_Param.Interior_G_Freq                    = preCalc_Param.Interior_B_Freq                   ;
 			preCalc_Param.Interior_G_Phase                   = preCalc_Param.Interior_B_Phase                  ;
 		#endif
+	// nano64_t finishTimer = getNanoTime();
+	// printfInterval(0.3,"\nPreCalc: %.3lfus %.3lf",
+	// 	NANO_TO_SECONDS(finishTimer - startTimer) * 1.0e6, NANO_TO_FRAMERATE(finishTimer - startTimer)
+	// );
 }
 
 #endif /* FRAC_MULTI_INTERNAL_H */

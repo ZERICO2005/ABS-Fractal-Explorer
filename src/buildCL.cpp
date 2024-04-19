@@ -23,15 +23,6 @@ const char* const FractalOpenCL_SRC = "\
 	typedef int		int32_t;\n\
 	typedef long	int64_t;\n\
 \n\
-	typedef uchar	u8;\n\
-	typedef ushort	u16;\n\
-	typedef uint	u32;\n\
-	typedef ulong	u64;\n\
-	typedef char	i8;\n\
-	typedef short	i16;\n\
-	typedef int		i32;\n\
-	typedef long	i64;\n\
-\n\
 	typedef half	fp16;\n\
 	typedef float	fp32;\n\
 	typedef double	fp64;\n\
@@ -47,30 +38,31 @@ const char* const FractalOpenCL_SRC = "\
 \n\
  __kernel void renderFracCLPoint(\n\
 			fp32 r, fp32 i,\n\
-			u32 maxItr,\n\
-			u32 resX, u32 resY,\n\
+			uint32_t maxItr,\n\
+			uint32_t resX, uint32_t resY,\n\
 			fp32 zr0, fp32 zi0,\n\
 			uint32_t formula, fp32 power, uint32_t sample,\n\
-			fp32 rot,\n\
+			fp32 rSin,\n\
+			fp32 rCos,\n\
 			fp32 breakoutValue,\n\
-			fp32 numZ,fp32 numW,\n\
+			fp32 recip_numZ, fp32 neg_recip_numW,\n\
 			__global uint8_t* resultBuf,\n\
-			fp32 exterior_R_Freq,fp32 exterior_R_Phase,fp32 exterior_R_Amp,\n\
-			fp32 exterior_G_Freq,fp32 exterior_G_Phase,fp32 exterior_G_Amp,\n\
-			fp32 exterior_B_Freq,fp32 exterior_B_Phase,fp32 exterior_B_Amp,\n\
-			fp32 exterior_Alpha,\n\
-			fp32 interior_R_Freq,fp32 interior_R_Phase,fp32 interior_R_Amp,\n\
-			fp32 interior_G_Freq,fp32 interior_G_Phase,fp32 interior_G_Amp,\n\
-			fp32 interior_B_Freq,fp32 interior_B_Phase,fp32 interior_B_Amp,\n\
-			fp32 interior_Alpha\n\
+			fp32 Exterior_R_Freq_mult_TAU, fp32 Exterior_R_Phase_mult_TAU, fp32 Exterior_R_Amp_mult_Exterior_Alpha,\n\
+			fp32 Exterior_G_Freq_mult_TAU, fp32 Exterior_G_Phase_mult_TAU, fp32 Exterior_G_Amp_mult_Exterior_Alpha,\n\
+			fp32 Exterior_B_Freq_mult_TAU, fp32 Exterior_B_Phase_mult_TAU, fp32 Exterior_B_Amp_mult_Exterior_Alpha,\n\
+			fp32 Exterior_Alpha,\n\
+			fp32 Interior_R_Freq, fp32 Interior_R_Phase, fp32 Interior_R_Amp_mult_Interior_Alpha,\n\
+			fp32 Interior_G_Freq, fp32 Interior_G_Phase, fp32 Interior_G_Amp_mult_Interior_Alpha,\n\
+			fp32 Interior_B_Freq, fp32 Interior_B_Phase, fp32 Interior_B_Amp_mult_Interior_Alpha,\n\
+			fp32 Interior_Alpha\n\
 ) { // Some values like zoom are embeded into precalculated constants\n\
-	u32 id = get_global_id(0);\n\
+	uint32_t id = get_global_id(0);\n\
 	fp32 outR = 0.0f;\n\
 	fp32 outG = 0.0f;\n\
 	fp32 outB = 0.0f;\n\
 	fp32 outA = 0.0f;\n\
-	fp32 smooth = 0.0;\n\
-	u8 type = (formula & 0x40000000) ? 1 : (uint8_t)power;\n\
+	fp32 smooth = 0.0f;\n\
+	uint8_t type = (formula & 0x40000000) ? 1 : (uint8_t)power;\n\
 	fp32 y = (fp32)(id / resX);\n\
 	fp32 x = (fp32)(id % resX);\n\
 	\n\
@@ -82,13 +74,11 @@ const char* const FractalOpenCL_SRC = "\
 	y *= sample;\n\
 	const fp32 numY = ((fp32)resY / 2.0f);\n\
 	const fp32 numX = ((fp32)resX / 2.0f);\n\
-	const fp32 rSin = sin(rot);\n\
-	const fp32 rCos = cos(rot);\n\
 	x -= numX;\n\
 	y -= numY;\n\
 \n\
-	for (u32 v = 0; v < sample; v++) {\n\
-		for (u32 u = 0; u < sample; u++) {\n\
+	for (uint32_t v = 0; v < sample; v++) {\n\
+		for (uint32_t u = 0; u < sample; u++) {\n\
 			if (id >= resX * resY) {\n\
 				return;\n\
 			}\n\
@@ -97,8 +87,8 @@ const char* const FractalOpenCL_SRC = "\
 			fp32 temp = 0.0f;\n\
 			fp32 zs = 0.0f;\n\
 \n\
-			fp32 xC = (x / numZ);\n\
-    		fp32 yC = -(y / numW);\n\
+			fp32 xC = x * recip_numZ;\n\
+    		fp32 yC = y * neg_recip_numW;\n\
 			if (formula & 0x20000000) { // Julia Set // Optimized Coordinate Formula\n\
 				zr = (xC * rCos - yC * rSin) + r;\n\
 				zi = (yC * rCos + xC * rSin) + i;\n\
@@ -114,7 +104,7 @@ const char* const FractalOpenCL_SRC = "\
 			if (type == 1) {\n\
 				zs = (zr * zr + zi * zi); // Otherwise Julia Sets don't work\n\
 				fp32 za = 0.0f;\n\
-				fp32 powerHalf = power / 2.0f;\n\
+				const fp32 powerHalf = power / 2.0f;\n\
 				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
 					za = atan2(zi, zr) * power;\n\
 					zr = pow(zs, powerHalf) * cos(za) + cr;\n\
@@ -136,20 +126,18 @@ const char* const FractalOpenCL_SRC = "\
 				s1 = (f[0]) ? -1.0f : 1.0f;\n\
 				s2 = (f[1]) ? -1.0f : 1.0f;\n\
 				s3 = (f[2]) ? -2.0f : 2.0f;\n\
-				for (u32 itr = 0; itr < maxItr; itr++) {\n\
+				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (f[3]) ? fabs(zr) : zr;\n\
 					zi1 = (f[4]) ? fabs(zi) : zi;\n\
 					zr2 = (f[5]) ? fabs(zr) : zr;\n\
 					zi2 = (f[6]) ? fabs(zi) : zi;\n\
 					\n\
 					if (f[7] == 0) {\n\
-						temp = s1 * ((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
+						zr = s1 * ((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
 						zi = (zr2 * zi2 * s3) + ci;\n\
-						zr = temp;\n\
 					} else {\n\
-						temp = s1 * fabs((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
+						zr = s1 * fabs((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
 						zi = (zr2 * zi2 * s3) + ci;\n\
-						zr = temp;\n\
 					}\n\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
@@ -171,7 +159,7 @@ const char* const FractalOpenCL_SRC = "\
 				s4 = (f[3]) ? -1.0f: 1.0f;\n\
 				s5 = (f[4]) ? -1.0f: 1.0f;\n\
 				s6 = (f[5]) ? -1.0f: 1.0f;\n\
-				for (u32 itr = 0; itr < maxItr; itr++) {\n\
+				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (f[6]) ? fabs(zr) : zr;\n\
 					zi1 = (f[7]) ? fabs(zi) : zi;\n\
 					zr2 = (f[8]) ? fabs(zr) : zr;\n\
@@ -179,25 +167,25 @@ const char* const FractalOpenCL_SRC = "\
 					zr3 = (f[10]) ? fabs(zr) : zr;\n\
 					zi3 = (f[11]) ? fabs(zi) : zi;\n\
 					if (f[12] == 0) {\n\
-						if (f[13] == 0) {\n\
-						temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-						zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-						zr = temp;\n\
+							if (f[13] == 0) {\n\
+							temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+							zr = temp;\n\
 						} else {\n\
-						temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-						zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-						zr = temp;\n\
-						}\n\
+							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+							zr = temp;\n\
+							}\n\
 					} else {\n\
-						if (f[13] == 0) {\n\
-						temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-						zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-						zr = temp;\n\
+							if (f[13] == 0) {\n\
+							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+							zr = temp;\n\
 						} else {\n\
-						temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-						zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-						zr = temp;\n\
-						}\n\
+							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+							zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+							zr = temp;\n\
+							}\n\
 					}\n\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\
@@ -220,7 +208,7 @@ const char* const FractalOpenCL_SRC = "\
 				s5 = (f[4]) ? -4.0f: 4.0f;\n\
 				s6 = (f[5]) ? -1.0f: 1.0f;\n\
 				s7 = (f[6]) ? -1.0f: 1.0f;\n\
-				for (u32 itr = 0; itr < maxItr; itr++) {\n\
+				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (f[7]) ? fabs(zr) : zr;\n\
 					zi1 = (f[8]) ? fabs(zi) : zi;\n\
 					zr2 = (f[9]) ? fabs(zr) : zr;\n\
@@ -284,7 +272,7 @@ const char* const FractalOpenCL_SRC = "\
 				s6 = (fS[5]) ? -1.0f: 1.0f;\n\
 				s7 = (fO[0]) ? -1.0f: 1.0f;\n\
 				s8 = (fO[1]) ? -1.0f: 1.0f;\n\
-				for (u32 itr = 0; itr < maxItr; itr++) {\n\
+				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (fA[0]) ? fabs(zr) : zr;\n\
 					zi1 = (fA[1]) ? fabs(zi) : zi;\n\
 					zr2 = (fA[2]) ? fabs(zr) : zr;\n\
@@ -351,7 +339,7 @@ const char* const FractalOpenCL_SRC = "\
 				s7 = (fS[6]) ? -6.0f : 6.0f;\n\
 				s8 = (fO[0]) ? -1.0f : 1.0f;\n\
 				s9 = (fO[1]) ? -1.0f : 1.0f;\n\
-				for (u32 itr = 0; itr < maxItr; itr++) {\n\
+				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
 					zr1 = (fA[0]) ? fabs(zr) : zr;\n\
 					zi1 = (fA[1]) ? fabs(zi) : zi;\n\
 					zr2 = (fA[2]) ? fabs(zr) : zr;\n\
@@ -397,15 +385,15 @@ const char* const FractalOpenCL_SRC = "\
 			}\n\
 			\n\
 			if (zs > breakoutValue) {\n\
-				outR += exterior_R_Amp * exterior_Alpha * (0.5f - 0.5f * cos(TAU * (exterior_R_Freq * smooth + exterior_R_Phase)));\n\
-				outG += exterior_G_Amp * exterior_Alpha * (0.5f - 0.5f * cos(TAU * (exterior_G_Freq * smooth + exterior_G_Phase)));\n\
-				outB += exterior_B_Amp * exterior_Alpha * (0.5f - 0.5f * cos(TAU * (exterior_B_Freq * smooth + exterior_B_Phase)));\n\
-				outA += exterior_Alpha;\n\
+				outR += Exterior_R_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_R_Freq_mult_TAU * smooth + Exterior_R_Phase_mult_TAU));\n\
+				outG += Exterior_G_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_G_Freq_mult_TAU * smooth + Exterior_G_Phase_mult_TAU));\n\
+				outB += Exterior_B_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_B_Freq_mult_TAU * smooth + Exterior_B_Phase_mult_TAU));\n\
+				outA += Exterior_Alpha;\n\
 			} else {\n\
-				outR += interior_R_Amp * interior_Alpha * (0.5f - 0.5f * cos(log(low) * interior_R_Freq + interior_R_Phase));\n\
-				outG += interior_G_Amp * interior_Alpha * (0.5f - 0.5f * cos(log(low) * interior_G_Freq + interior_G_Phase));\n\
-				outB += interior_B_Amp * interior_Alpha * (0.5f - 0.5f * cos(log(low) * interior_B_Freq + interior_B_Phase));\n\
-				outA += interior_Alpha;\n\
+				outR += Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_R_Freq + Interior_R_Phase));\n\
+				outG += Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_G_Freq + Interior_G_Phase));\n\
+				outB += Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_B_Freq + Interior_B_Phase));\n\
+				outA += Interior_Alpha;\n\
 			}\n\
 			x++;\n\
 		}\n\

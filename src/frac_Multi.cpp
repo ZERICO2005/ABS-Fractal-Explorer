@@ -60,8 +60,8 @@
 					fpX zi = (param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;\
 					\
 					fpX low = (fpX)4.0;\
-					fpX temp_zr = (fpX)0.0;\
 					fpX zs = (fpX)0.0;\
+					fpX __attribute__((unused)) temp_zr = (fpX)0.0;\
 					for (uint32_t itr = 0; itr < param.maxItr; itr++) {
 
 #define Block_EndLoop(fpX, fpColor, l); \
@@ -329,41 +329,22 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 */
 
 // template <typename fpX, typename fpColor>
-// void polynomialRender(FractalParameters) {
-// 	uint8_t* data = buf->vram;
-// 	uint32_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;
-// 	uint32_t maxItr = param.maxItr;
-// 	fpX r = (fpX)param.r;
-// 	fpX i = (fpX)param.i;
-// 	fpX zoom = (fpX)param.zoom;
-// 	uint32_t y = p0 / resX;
-// 	uint32_t x = p0 % resX;
-// 	uint32_t sample = ren.sample;
-// 	uint32_t power = param.power;
-// 	fpX cr = (fpX)0.0;
-// 	fpX ci = (fpX)0.0;
-// 	fpX zr = (fpX)0.0;
-// 	fpX zi = (fpX)0.0;
-// 	resX *= sample;
-// 	resY *= sample;
-// 	x *= sample;
-// 	y *= sample;
-
-// 	const fp64 powerLog2 = 1.0 / log2((fp64)power);
-// 	size_t sizeOuter = 4;
-// 	size_t sizeSign = power + 1;
-// 	size_t sizeAbs = power * 2;
+// void polynomialRender(FractalParameters(fpX, fpColor)) {
+// 	const uint32_t power = param.power;
+// 	constexpr size_t sizeOuter = 4;
+// 	const size_t sizeSign = power + 1;
+// 	const size_t sizeAbs = power * 2;
 // 	bool fOuter[sizeOuter];
 // 	fpX* fSign = (fpX*)calloc(sizeSign, sizeof(fpX));
 // 	bool* fAbs = (bool*)calloc(sizeAbs, sizeof(bool));
 // 	{
 // 		size_t sIndex = 0;
-// 		for (size_t s = 0; s < sizeSign; s += 2) { /* Real Coefficients*/
+// 		for (size_t s = 0; s < sizeSign; s += 2) { // Real Coefficients
 // 			fSign[sIndex] = (fpX)nCr(power,s);
 // 			fSign[sIndex] *= (param.formula & (0x1 << s)) ? (fpX)(-1.0) : (fpX)(1.0);
 // 			sIndex++;
 // 		}
-// 		for (size_t s = 1; s < sizeSign; s += 2) { /* Imag Coefficients */
+// 		for (size_t s = 1; s < sizeSign; s += 2) { // Imag Coefficients
 // 			fSign[sIndex] = (fpX)nCr(power,s);
 // 			fSign[sIndex] *= (param.formula & (0x1 << s)) ? (fpX)(-1.0) : (fpX)(1.0);
 // 			sIndex++;
@@ -371,40 +352,44 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // 		for (size_t a = 0; a < sizeAbs; a++) {
 // 			fAbs[a] = (param.formula & (0x1 << (sizeSign + 2 + a)));
 // 		}
-// 		fOuter[0] = (param.formula & (0x1 << (sizeSign))); /* Real Sign */
-// 		fOuter[1] = (param.formula & (0x1 << (sizeSign + 1))); /* Imag Sign */
-// 		fOuter[2] = (param.formula & (0x1 << (sizeSign + 2 + sizeAbs))); /* Real Abs */
-// 		fOuter[3] = (param.formula & (0x1 << (sizeSign + 2 + sizeAbs + 1))); /* Imag Abs */
+// 		fOuter[0] = (param.formula & (0x1 << (sizeSign))); // Real Sign
+// 		fOuter[1] = (param.formula & (0x1 << (sizeSign + 1))); // Imag Sign
+// 		fOuter[2] = (param.formula & (0x1 << (sizeSign + 2 + sizeAbs))); // Real Abs
+// 		fOuter[3] = (param.formula & (0x1 << (sizeSign + 2 + sizeAbs + 1))); // Imag Abs
 // 	}
 // 	uint32_t realTerms = (power + 2) / 2;
 // 	uint32_t imagTerms = (power + 1) / 2;
 	
-// 	for (; y < param.resY; y += sample) {
-// 		for (; x < param.resX; x += sample) {
+// 	size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;
+// 	int32_t y = (int32_t)(p0 / (size_t)param.Image_ResX);
+// 	int32_t x = (int32_t)(p0 % (size_t)param.Image_ResX);
+// 	x *= param.sample;
+// 	y *= param.sample;
+// 	for (; y < param.Cord_ResY; y += param.sample) {
+// 		for (; x < param.Cord_ResX; x += param.sample) {
 // 			if (p0 == p1 || ABORT_RENDERING == true) {
 // 				FREE(fSign);
 // 				FREE(fAbs);
 // 				return;
 // 			}
-// 			fpColor outR = 0;
-// 			fpColor outG = 0;
-// 			fpColor outB = 0;
-// 			fpColor outA = 0;
-// 			for (uint32_t v = 0; v < sample; v++) {
-// 				for (uint32_t u = 0; u < sample; u++) {
-// 					if (param.juliaSet == true) {
-// 						cpu_pixel_to_coordinate(x, y, &zr, &zi, &param, resX, resY, subSample);
-// 						cr = (fpX)param.zr;
-// 						ci = (fpX)param.zi;
-// 					} else {
-// 						cpu_pixel_to_coordinate(x, y, &cr, &ci, &param, resX, resY, subSample);
-// 						zr = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zr;
-// 						zi = (param.startingZ == false) ? (fpX)0.0 : (fpX)param.zi;
-// 					}
+// 			fp64 outR = 0.0;
+// 			fp64 outG = 0.0;
+// 			fp64 outB = 0.0;
+// 			fp64 outA = 0.0;
+// 			for (int32_t v = 0; v < param.sample; v++) {
+// 				for (int32_t u = 0; u < param.sample; u++) {
+// 					fpX xCord = (((fpX)x - param.numX) * param.recip_numZ);
+// 					fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);
+
+// 					fpX cr = (!param.juliaSet) ? ((xCord * param.rotCos_PC - yCord * param.rotSin_PC) + param.realCord) : param.realJulia;
+// 					fpX ci = (!param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;
+// 					fpX zr = (param.juliaSet) ? ((xCord * param.rotCos_PC - yCord * param.rotSin_PC) + param.realCord) : param.realJulia;
+// 					fpX zi = (param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;
+
 // 					fpX low = (fpX)4.0;
 // 					fpX temp_zr;
 // 					fpX zs = (fpX)0.0;
-// 					for (uint32_t itr = 0; itr < maxItr; itr++) {
+// 					for (uint32_t itr = 0; itr < param.maxItr; itr++) {
 // 						size_t absR = 0;
 // 						size_t absI = 1;
 // 						fpX zrAcc = (fpX)0.0;
@@ -432,7 +417,7 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // 							fpX acc = (fpX)1.0;
 // 							acc *= fSign[iT];
 // 							ziAcc += acc;
-// 						} /* sample * sample * 4 */
+// 						}
 						
 // 						ziAcc = zr * zi * 2;
 // 						zrAcc = (fOuter[2]) ? fabs(zrAcc) : zrAcc;
@@ -447,7 +432,7 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // 						if (zs < low) {
 // 							low = zs;
 // 						} else if (zs > param.breakoutValue) {
-// 							CPU_Exterior_Coloring(fpX, fpColor, powerLog2);
+// 							CPU_Exterior_Coloring(fpX, fpColor, param.inverse_log2_power);
 // 							break;
 // 						}
 // 					}
@@ -456,10 +441,10 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // 					}
 // 					x++;
 // 				}
-// 				x -= sample;
+// 				x -= param.sample;
 // 				y++;
 // 			}
-// 			y-= sample;
+// 			y-= param.sample;
 // 			if (outA != 0.0) {
 // 				outR = outR / outA;
 // 				outG = outG / outA;
@@ -481,24 +466,6 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // 	FREE(fSign);
 // 	FREE(fAbs);
 // }
-
-template <typename fpX>
-constexpr inline fpX polarAngle(fpX zr, fpX zi) {
-	fpX angle;
-	if (zi == (fpX)0.0) {
-		return (fpX)0.0;
-	}
-	if (zr > (fpX)0.0) {
-		angle = (fpX)atan(zi / zr);
-	} else {
-		if (zi > (fpX)0.0) {
-			angle = (fpX)PI + (fpX)atan(zi / zr);
-		} else {
-			angle = (fpX)atan(zi / zr) - (fpX)PI;
-		}
-	}
-	return angle;
-}
 
 template<typename fpX, typename fpColor>
 void polarRender(FractalParameters(fpX, fpColor)) {
@@ -633,117 +600,77 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 			case 64: generateThreads(polarRender, fp128, fp64); break;
 		};
 	} else {
-
-
-		// In the progress of adding this in
-		// switch(ren.CPU_Precision) {
-		// 	case 32: {
-				
-		// 		switch(param.power) {
-		// 			#ifdef ENABLE_SSE2_RENDERING
-		// 				case 2: generateThreads_Alternate(quadraticRender_SSE2_FP32, fp32, fp32, 4); break;
-		// 				case 3: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 				case 4: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 				case 5: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 				case 6: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 			#else
-		// 				case 2: generateThreads          (quadraticRender          , fp32, fp32   ); break;
-		// 				case 3: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 				case 4: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 				case 5: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 				case 6: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-		// 			#endif
-		// 			default:
-		// 				printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
-		// 				return;
-		// 		}
-		// 	} break;
-		// 	default:
-		// 	case 64: {
-
-		// 	} break;
-
-		// 	case 80: {
-
-		// 	} break;
-
-		// 	case 128: {
-
-		// 	} break;
-
-		// }
-
-		switch(param.power) {
-			case 2:
-				switch(ren.CPU_Precision) {
-					case 32:
-						#ifdef ENABLE_SSE2_RENDERING
-							generateThreads_Alternate(quadraticRender_SSE2_FP32, fp32, fp32, 4);
-						#else
-							generateThreads(quadraticRender, fp32, fp32);
-						#endif
-					break;
-					#ifdef enableFP80andFP128
-					case 80: generateThreads(quadraticRender, fp80, fp64); break;
-					case 128: generateThreads(quadraticRender, fp128, fp64); break;
+		switch(ren.CPU_Precision) {
+			case 32: {
+				switch(param.power) {
+					#ifdef ENABLE_SSE2_RENDERING
+						case 2: generateThreads_Alternate(quadraticRender_SSE2_FP32, fp32, fp32, 4); break;
+						case 3: generateThreads_Alternate(    cubicRender_SSE2_FP32, fp32, fp32, 4); break;
+						case 4: generateThreads_Alternate(  quarticRender_SSE2_FP32, fp32, fp32, 4); break;
+						case 5: generateThreads_Alternate(  quinticRender_SSE2_FP32, fp32, fp32, 4); break;
+						case 6: generateThreads_Alternate(   sexticRender_SSE2_FP32, fp32, fp32, 4); break;
+					#else
+						case 2: generateThreads          (quadraticRender          , fp32, fp32   ); break;
+						case 3: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+						case 4: generateThreads          (  quarticRender          , fp32, fp32   ); break;
+						case 5: generateThreads          (  quinticRender          , fp32, fp32   ); break;
+						case 6: generateThreads          (   sexticRender          , fp32, fp32   ); break;
 					#endif
 					default:
-					case 64:
-						#ifdef ENABLE_SSE2_RENDERING
-							generateThreads_Alternate(quadraticRender_SSE2_FP64, fp64, fp64, 2);
-						#else
-							generateThreads(quadraticRender, fp64, fp64);
-						#endif
-				};
-			break;
-			case 3:
-				switch(ren.CPU_Precision) {
-					case 32: generateThreads(cubicRender, fp32, fp32); break;
-					#ifdef enableFP80andFP128
-					case 80: generateThreads(cubicRender, fp80, fp64); break;
-					case 128: generateThreads(cubicRender, fp128, fp64); break;
-					#endif
-					default:
-					case 64: generateThreads(cubicRender, fp64, fp64); break;
-				};
-			break;
-			case 4:
-				switch(ren.CPU_Precision) {
-					case 32: generateThreads(quarticRender, fp32, fp32); break;
-					#ifdef enableFP80andFP128
-					case 80: generateThreads(quarticRender, fp80, fp64); break;
-					case 128: generateThreads(quarticRender, fp128, fp64); break;
-					#endif
-					default:
-					case 64: generateThreads(quinticRender, fp64, fp64); break;
-				};
-			break;
-			case 5:
-				switch(ren.CPU_Precision) {
-					case 32: generateThreads(quinticRender, fp32, fp32); break;
-					#ifdef enableFP80andFP128
-					case 80: generateThreads(quinticRender, fp80, fp64); break;
-					case 128: generateThreads(quinticRender, fp128, fp64); break;
-					#endif
-					default:
-					case 64: generateThreads(quinticRender, fp64, fp64); break;
-				};
-			break;
-			case 6:
-				switch(ren.CPU_Precision) {
-					case 32: generateThreads(sexticRender, fp32, fp32); break;
-					#ifdef enableFP80andFP128
-					case 80: generateThreads(sexticRender, fp80, fp64); break;
-					case 128: generateThreads(sexticRender, fp128, fp64); break;
-					#endif
-					default:
-					case 64: generateThreads(sexticRender, fp64, fp64); break;
-				};
-			break;
+						printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
+						return;
+				}
+			} break;
 			default:
-				printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
-				return;
-		};
+			case 64: {
+				switch(param.power) {
+					#ifdef ENABLE_SSE2_RENDERING
+						case 2: generateThreads_Alternate(quadraticRender_SSE2_FP64, fp64, fp64, 2); break;
+						case 3: generateThreads_Alternate(    cubicRender_SSE2_FP64, fp64, fp64, 2); break;
+						case 4: generateThreads_Alternate(  quarticRender_SSE2_FP64, fp64, fp64, 2); break;
+						case 5: generateThreads_Alternate(  quinticRender_SSE2_FP64, fp64, fp64, 2); break;
+						case 6: generateThreads_Alternate(   sexticRender_SSE2_FP64, fp64, fp64, 2); break;
+					#else
+						case 2: generateThreads          (quadraticRender          , fp64, fp64   ); break;
+						case 3: generateThreads          (    cubicRender          , fp64, fp64   ); break;
+						case 4: generateThreads          (  quarticRender          , fp64, fp64   ); break;
+						case 5: generateThreads          (  quinticRender          , fp64, fp64   ); break;
+						case 6: generateThreads          (   sexticRender          , fp64, fp64   ); break;
+					#endif
+					default:
+						printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
+						return;
+				}
+			} break;
+			#ifdef enableFP80andFP128
+			case 80: {
+				switch(param.power) {
+						case 2: generateThreads(quadraticRender, fp80, fp80); break;
+						case 3: generateThreads(    cubicRender, fp80, fp80); break;
+						case 4: generateThreads(  quarticRender, fp80, fp80); break;
+						case 5: generateThreads(  quinticRender, fp80, fp80); break;
+						case 6: generateThreads(   sexticRender, fp80, fp80); break;
+					default:
+						printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
+						return;
+				}
+			} break;
+			#endif
+			#ifdef enableFP80andFP128
+			case 128: {
+				switch(param.power) {
+						case 2: generateThreads(quadraticRender, fp128, fp128); break;
+						case 3: generateThreads(    cubicRender, fp128, fp128); break;
+						case 4: generateThreads(  quarticRender, fp128, fp128); break;
+						case 5: generateThreads(  quinticRender, fp128, fp128); break;
+						case 6: generateThreads(   sexticRender, fp128, fp128); break;
+					default:
+						printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
+						return;
+				}
+			} break;
+			#endif
+		}
 	}
 
 	for (uint32_t t = 0; t < threadCount; t++) {

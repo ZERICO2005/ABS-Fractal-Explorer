@@ -1304,7 +1304,7 @@ void Menu_Keybinds() {
 	{
 		constexpr dim32_t kMaxResX = 1440;
 		constexpr dim32_t kMinResX = 300;
-		constexpr dim32_t kMinResY = 140;
+		__attribute__((unused)) constexpr dim32_t kMinResY = 140;
 		
 		//static uint32_t kX = kMargin;
 		//static uint32_t kY = 0;
