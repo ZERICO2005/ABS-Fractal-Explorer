@@ -78,6 +78,7 @@ const char* const FractalOpenCL_SRC = "\
 	y -= numY;\n\
 \n\
 	for (uint32_t v = 0; v < sample; v++) {\n\
+		fp32 yC = y * neg_recip_numW;\n\
 		for (uint32_t u = 0; u < sample; u++) {\n\
 			if (id >= resX * resY) {\n\
 				return;\n\
@@ -88,7 +89,6 @@ const char* const FractalOpenCL_SRC = "\
 			fp32 zs = 0.0f;\n\
 \n\
 			fp32 xC = x * recip_numZ;\n\
-    		fp32 yC = y * neg_recip_numW;\n\
 			if (formula & 0x20000000) { // Julia Set // Optimized Coordinate Formula\n\
 				zr = (xC * rCos - yC * rSin) + r;\n\
 				zi = (yC * rCos + xC * rSin) + i;\n\
@@ -167,17 +167,17 @@ const char* const FractalOpenCL_SRC = "\
 					zr3 = (f[10]) ? fabs(zr) : zr;\n\
 					zi3 = (f[11]) ? fabs(zi) : zi;\n\
 					if (f[12] == 0) {\n\
-							if (f[13] == 0) {\n\
+						if (f[13] == 0) {\n\
 							temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
 							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
 							zr = temp;\n\
 						} else {\n\
-							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+							temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+							zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
 							zr = temp;\n\
 							}\n\
 					} else {\n\
-							if (f[13] == 0) {\n\
+						if (f[13] == 0) {\n\
 							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
 							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
 							zr = temp;\n\
@@ -185,7 +185,7 @@ const char* const FractalOpenCL_SRC = "\
 							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
 							zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
 							zr = temp;\n\
-							}\n\
+						}\n\
 					}\n\
 					zs = zr * zr + zi * zi;\n\
 					if (zs < low) {\n\

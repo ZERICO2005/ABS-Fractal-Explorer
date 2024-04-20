@@ -33,9 +33,9 @@
 		outB += param.Exterior_B_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));\
 		outA += param.Exterior_Alpha;
 
-#define Block_Init(fpX, fpColor);
+#define Block_Init_Generic(fpX, fpColor);
 
-#define Block_BeginLoop(fpX, fpColor); \
+#define Block_BeginLoop_Generic(fpX, fpColor); \
 	size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;\
 	int32_t y = (int32_t)(p0 / (size_t)param.Image_ResX);\
 	int32_t x = (int32_t)(p0 % (size_t)param.Image_ResX);\
@@ -51,8 +51,8 @@
 			fpColor outB = (fpColor)0.0;\
 			fpColor outA = (fpColor)0.0;\
 			for (int32_t v = 0; v < param.sample; v++) {\
+				fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);\
 				for (int32_t u = 0; u < param.sample; u++) {\
-					fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);\
 					fpX xCord = (((fpX)x - param.numX) * param.recip_numZ);\
 					fpX cr = (!param.juliaSet) ? ((xCord * param.rotCos_PC - yCord * param.rotSin_PC) + param.realCord) : param.realJulia;\
 					fpX ci = (!param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;\
@@ -64,7 +64,7 @@
 					fpX __attribute__((unused)) temp_zr = (fpX)0.0;\
 					for (uint32_t itr = 0; itr < param.maxItr; itr++) {
 
-#define Block_EndLoop(fpX, fpColor, l); \
+#define Block_EndLoop_Generic(fpX, fpColor, l); \
 						zs = zr * zr + zi * zi;\
 						if (zs < low) {\
 							low = zs;\
@@ -106,7 +106,7 @@
 template<typename fpX, typename fpColor>
 void quadraticRender(FractalParameters(fpX, fpColor)) {
 
-	Block_Init(fpX, fpColor);
+	Block_Init_Generic(fpX, fpColor);
 
 		fpX zr1, zr2, zi1, zi2, s1, s2, s3;
 		bool f[8];
@@ -118,7 +118,7 @@ void quadraticRender(FractalParameters(fpX, fpColor)) {
 		s2 = (f[1]) ? (fpX)-1.0 : (fpX)1.0;
 		s3 = (f[2]) ? (fpX)-2.0 : (fpX)2.0;
 		
-	Block_BeginLoop(fpX, fpColor);
+	Block_BeginLoop_Generic(fpX, fpColor);
 
 		zr1 = (f[3]) ? fabs(zr) : zr;
 		zi1 = (f[4]) ? fabs(zi) : zi;
@@ -129,13 +129,13 @@ void quadraticRender(FractalParameters(fpX, fpColor)) {
 			(s1 *     ((zr1 * zr) - s2 * (zi1 * zi)) + cr);
 		zi = (zr2 * zi2 * s3) + ci;
 	
-	Block_EndLoop(fpX, fpColor, inverse_log2(2.0));
+	Block_EndLoop_Generic(fpX, fpColor, inverse_log2(2.0));
 }
 	
 template<typename fpX, typename fpColor>
 void cubicRender(FractalParameters(fpX, fpColor)) {
 	
-	Block_Init(fpX, fpColor);
+	Block_Init_Generic(fpX, fpColor);
 
 		fpX zr1, zr2, zr3, zi1, zi2, zi3, s1, s2, s3, s4, s5, s6;
 		bool f[14];
@@ -149,7 +149,7 @@ void cubicRender(FractalParameters(fpX, fpColor)) {
 		s5 = (f[4]) ? (fpX)-1.0 : (fpX)1.0;
 		s6 = (f[5]) ? (fpX)-1.0 : (fpX)1.0;
 	
-	Block_BeginLoop(fpX, fpColor);
+	Block_BeginLoop_Generic(fpX, fpColor);
 
 		zr1 = (f[6]) ? fabs(zr) : zr;
 		zi1 = (f[7]) ? fabs(zi) : zi;
@@ -165,13 +165,13 @@ void cubicRender(FractalParameters(fpX, fpColor)) {
 			(s6 *     ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci);
 		zr = temp_zr;
 	
-	Block_EndLoop(fpX, fpColor, inverse_log2(3.0));
+	Block_EndLoop_Generic(fpX, fpColor, inverse_log2(3.0));
 }
 	
 template<typename fpX, typename fpColor>
 void quarticRender(FractalParameters(fpX, fpColor)) {
 
-	Block_Init(fpX, fpColor);
+	Block_Init_Generic(fpX, fpColor);
 
 		fpX zr1, zr2, zr3, zr4, zi1, zi2, zi3, zi4, s1, s2, s3, s4, s5, s6, s7;
 		bool f[17];
@@ -186,7 +186,7 @@ void quarticRender(FractalParameters(fpX, fpColor)) {
 		s6 = (f[5]) ? (fpX)-1.0 : (fpX)1.0;
 		s7 = (f[6]) ? (fpX)-1.0 : (fpX)1.0;
 	
-	Block_BeginLoop(fpX, fpColor);
+	Block_BeginLoop_Generic(fpX, fpColor);
 
 		zr1 = (f[7]) ? fabs(zr) : zr;
 		zi1 = (f[8]) ? fabs(zi) : zi;
@@ -205,13 +205,13 @@ void quarticRender(FractalParameters(fpX, fpColor)) {
 			(s7 *     (s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci);
 		zr = temp_zr;
 	
-	Block_EndLoop(fpX, fpColor, inverse_log2(4.0));
+	Block_EndLoop_Generic(fpX, fpColor, inverse_log2(4.0));
 }
 	
 template<typename fpX, typename fpColor>
 void quinticRender(FractalParameters(fpX, fpColor)) {
 
-	Block_Init(fpX, fpColor);
+	Block_Init_Generic(fpX, fpColor);
 
 		fpX zr1, zr2, zr3, zr4, zr5, zi1, zi2, zi3, zi4, zi5, s1, s2, s3, s4, s5, s6, s7, s8;
 		bool fS[6];
@@ -238,7 +238,7 @@ void quinticRender(FractalParameters(fpX, fpColor)) {
 		s7 = (fO[0]) ? (fpX)-1.0 : (fpX)1.0;
 		s8 = (fO[1]) ? (fpX)-1.0 : (fpX)1.0;
 	
-	Block_BeginLoop(fpX, fpColor);
+	Block_BeginLoop_Generic(fpX, fpColor);
 
 		zr1 = (fA[0]) ? fabs(zr) : zr;
 		zi1 = (fA[1]) ? fabs(zi) : zi;
@@ -259,13 +259,13 @@ void quinticRender(FractalParameters(fpX, fpColor)) {
 			(s8 *     (s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci);
 		zr = temp_zr;
 	
-	Block_EndLoop(fpX, fpColor, inverse_log2(5.0));
+	Block_EndLoop_Generic(fpX, fpColor, inverse_log2(5.0));
 }
 
 template<typename fpX, typename fpColor>
 void sexticRender(FractalParameters(fpX, fpColor)) {
 
-	Block_Init(fpX, fpColor);
+	Block_Init_Generic(fpX, fpColor);
 
 		fpX zr1, zr2, zr3, zr4, zr5, zr6, zi1, zi2, zi3, zi4, zi5, zi6, s1, s2, s3, s4, s5, s6, s7, s8, s9;
 		bool fS[7];
@@ -293,7 +293,7 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 		s8 = (fO[0]) ? (fpX)-1.0 : (fpX)1.0;
 		s9 = (fO[1]) ? (fpX)-1.0 : (fpX)1.0;
 	
-	Block_BeginLoop(fpX, fpColor);
+	Block_BeginLoop_Generic(fpX, fpColor);
 
 		zr1 = (fA[0]) ? fabs(zr) : zr;
 		zi1 = (fA[1]) ? fabs(zi) : zi;
@@ -316,7 +316,7 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 			(s9 *     (s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci);
 		zr = temp_zr;
 
-	Block_EndLoop(fpX, fpColor, inverse_log2(6.0));
+	Block_EndLoop_Generic(fpX, fpColor, inverse_log2(6.0));
 }
 
 /*
@@ -377,9 +377,9 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // 			fp64 outB = 0.0;
 // 			fp64 outA = 0.0;
 // 			for (int32_t v = 0; v < param.sample; v++) {
+// 				fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);
 // 				for (int32_t u = 0; u < param.sample; u++) {
 // 					fpX xCord = (((fpX)x - param.numX) * param.recip_numZ);
-// 					fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);
 
 // 					fpX cr = (!param.juliaSet) ? ((xCord * param.rotCos_PC - yCord * param.rotSin_PC) + param.realCord) : param.realJulia;
 // 					fpX ci = (!param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;
@@ -486,9 +486,9 @@ void polarRender(FractalParameters(fpX, fpColor)) {
 			fp64 outB = 0.0;
 			fp64 outA = 0.0;
 			for (int32_t v = 0; v < param.sample; v++) {
+				fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);
 				for (int32_t u = 0; u < param.sample; u++) {
 					fpX xCord = (((fpX)x - param.numX) * param.recip_numZ);
-					fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);
 
 					fpX cr = (!param.juliaSet) ? ((xCord * param.rotCos_PC - yCord * param.rotSin_PC) + param.realCord) : param.realJulia;
 					fpX ci = (!param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;

@@ -15,6 +15,8 @@
 #include "fractal.h"
 #include "render.h"
 
+#ifdef ENABLE_SSE2_RENDERING
+
 #include <xmmintrin.h>
 
 /* 
@@ -133,8 +135,8 @@
 					return;\
 				}\
 				size_t valuesToWrite = SIMD_Spacing;\
-				if (param.Cord_ResX - x < (int32_t)SIMD_Spacing && param.Cord_ResX - x > 0) {\
-					valuesToWrite = (size_t)(param.Cord_ResX - x);\
+				if (((param.Cord_ResX - x) / param.sample) < (int32_t)SIMD_Spacing && ((param.Cord_ResX - x) / param.sample) > 0) {\
+					valuesToWrite = (size_t)((param.Cord_ResX - x) / param.sample);\
 				}\
 				/* Store the output color values */\
 					__m128d outR = _mm_setzero_pd();\
@@ -339,8 +341,8 @@
 					return;\
 				}\
 				size_t valuesToWrite = SIMD_Spacing;\
-				if (param.Cord_ResX - x < (int32_t)SIMD_Spacing && param.Cord_ResX - x > 0) {\
-					valuesToWrite = (size_t)(param.Cord_ResX - x);\
+				if (((param.Cord_ResX - x) / param.sample) < (int32_t)SIMD_Spacing && ((param.Cord_ResX - x) / param.sample) > 0) {\
+					valuesToWrite = (size_t)((param.Cord_ResX - x) / param.sample);\
 				}\
 				/* Store the output color values */\
 					__m128 outR = _mm_setzero_ps();\
@@ -1212,3 +1214,5 @@
 
 		Block_EndLoop_SSE2_FP32();
 	}
+
+#endif /* ENABLE_SSE2_RENDERING */

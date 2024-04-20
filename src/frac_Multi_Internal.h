@@ -14,8 +14,11 @@
 
 #include "fractal.h"
 #include "render.h"
+
 /* Rendering Modes */
 	#define ENABLE_SSE2_RENDERING
+	// #define ENABLE_AVX_RENDERING
+	// #define ENABLE_AVX512F_RENDERING
 
 const uint64_t factorialLUT[] = {
 	/*        0! */ 1,

@@ -5,6 +5,7 @@
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
 */
+
 #ifndef FRAC_MULTI_H
 #define FRAC_MULTI_H
 
