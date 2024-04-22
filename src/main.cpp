@@ -61,6 +61,12 @@ int main(int argc, char* argv[]) {
 	if (argc >= 2) {
 		printFlush("\nArgument Count: %d\n",argc - 1);
 	}
+
+	const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
+	if (count_Supported_CPU_Instruction(Available_CPU_Instruction) == 0) {
+		printWarning("Unable to obtain available CPU instruction set extensions");
+	}
+	
 	//write_ini_file("./ABS-Fractal-Explorer.ini");
 	int ret_init = init_Fractal_Engine(argc, argv);
 	int ret_terminate = terminate_Fractal_Engine();

@@ -280,8 +280,8 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::InputInt(id,ptr,16,256);
 
 	ABS_Mandelbrot& FRAC = current_Fractal;
-	uint32_t renderFP = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
-	const char* const renderMethod = (primaryRenderData.rendering_method == Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
+	uint32_t renderFP = (primaryRenderData.rendering_method == Legacy_Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
+	const char* const renderMethod = (primaryRenderData.rendering_method == Legacy_Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
 	
 	static char powerText[64];
 	if (FRAC.polarMandelbrot) {
@@ -652,6 +652,9 @@ void SubMenu_SuperScreenshot() {
 	}
 }
 
+constexpr inline const char* Enable_Text(const bool& b) { return b ? "Enabled" : "Disabled"; }
+constexpr inline const char* Available_Text(const bool& b) { return b ? "Available" : "Unavailable"; }
+
 void Menu_Rendering() {
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
@@ -683,59 +686,175 @@ void Menu_Rendering() {
 	ImGui::Begin("Rendering Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
-	ImGui::Text("CPU Rendering Mode:");
-	if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
-		switch (Combo_CPU_RenderingMode) {
-			case 0:
-				primaryRenderData.CPU_Precision = 32;
-			break;
-			case 1:
-				primaryRenderData.CPU_Precision = 64;
-			break;
-			case 2:
-				primaryRenderData.CPU_Precision = 80;
-			break;
-			case 3:
-				primaryRenderData.CPU_Precision = 128;
-			break;
-		};
-	}
-	if (ImGui::CollapsingHeader("CPU MULTI-THREADING SETTINGS")) {
-		ImGui::Text("Note: Only modify these settings if you know what you are doing.");
-		ImGui::Text("Maximum Threads:");
-		ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
-		ImGui::Text("Thread Multiplier:");
-		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,16);
-		ImGui::NewLine();
-		ImGui::Text("Super Screenshot:");
-		ImGui::Text("Maximum Threads:");
-		ImGui::SliderInt("##input_CPU_MaxThreads",&input_super_CPU_MaxThreads,1,CPU_ThreadCount);
-		ImGui::Text("Thread Multiplier:");
-		ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
-		ImGui::NewLine();
-	}
-	primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
-	super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
-	super_screenshot_maxThreads = input_CPU_MaxThreads;
-	ImGui::Separator();
+	ImGui::SeparatorText("CPU Information"); {
+		const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
+		
+		ImGui::Text("CPU Threads: %u", std::thread::hardware_concurrency());
 
-	ImGui::Text("GPU Rendering Mode:");
-	if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, BufAndLen(GPU_RenderingModes))) {
-		switch (Combo_GPU_RenderingMode) {
-			#ifndef BUILD_RELEASE
+		ImGui::Text("SSE2 Rendering: %s",
+			Enable_Text(Available_CPU_Instruction.SSE_Family.SSE2)
+		); Item_Tooltip("SSE2 allows the CPU to process 4 32bit floats or 2 64bit floats at a time."\
+			"\nSSE2 Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.SSE_Family.SSE2)
+		);
+		ImGui::Text("AVX Rendering: %s",
+			Enable_Text(Available_CPU_Instruction.AVX_Family.AVX)
+		); Item_Tooltip("AVX allows the CPU to process 8 32bit floats or 4 64bit floats at a time."\
+			"\nAVX Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX_Family.AVX)
+		);
+		ImGui::Text("AVX512F Rendering: %s",
+			Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+		); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
+			"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+		);
+		ImGui::NewLine();
+
+		if (ImGui::CollapsingHeader("CPU Instruction Sets")) {
+			ImGui::BeginChild(
+				"CPU_InstructionList", ImVec2(0.0f, 108.0f), true
+			);
+				
+			ImGui::Text("CPU Signature: <%s>", Available_CPU_Instruction.CPU_Signature);
+			ImGui::NewLine();
+			ImGui::Text("SSE Family:"); {
+				const Supported_SSE_Family_Instruction& SSE_Family = Available_CPU_Instruction.SSE_Family;
+				size_t count = 0;
+				if (Available_CPU_Instruction.MMX) {
+					ImGui::SameLine(); ImGui::Text("MMX"); count++;
+				}
+				if (SSE_Family.SSE   ) { ImGui::SameLine(); ImGui::Text("SSE"   ); count++; }
+				if (SSE_Family.SSE2  ) { ImGui::SameLine(); ImGui::Text("SSE2"  ); count++; }
+				if (SSE_Family.SSE3  ) { ImGui::SameLine(); ImGui::Text("SSE3"  ); count++; }
+				if (SSE_Family.SSSE3 ) { ImGui::SameLine(); ImGui::Text("SSSE3" ); count++; }
+				if (SSE_Family.SSE4_1) { ImGui::SameLine(); ImGui::Text("SSE4_1"); count++; }
+				if (SSE_Family.SSE4_2) { ImGui::SameLine(); ImGui::Text("SSE4_2"); count++; }
+				if (SSE_Family.SSE4a ) { ImGui::SameLine(); ImGui::Text("SSE4a" ); count++; }
+				if (count == 0) {
+					ImGui::SameLine(); ImGui::Text("<None>");
+				}
+			}
+			ImGui::Text("AVX Family:"); {
+				const Supported_AVX_Family_Instruction& AVX_Family = Available_CPU_Instruction.AVX_Family;
+				size_t count = 0;
+				if (AVX_Family.AVX           ) { ImGui::SameLine(); ImGui::Text("AVX"           ); count++; }
+				if (AVX_Family.F16C          ) { ImGui::SameLine(); ImGui::Text("F16C"          ); count++; }
+				if (AVX_Family.FMA           ) { ImGui::SameLine(); ImGui::Text("FMA"           ); count++; }
+				if (AVX_Family.AVX2          ) { ImGui::SameLine(); ImGui::Text("AVX2"          ); count++; }
+				if (AVX_Family.AVX_VNNI      ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI"      ); count++; }
+				if (AVX_Family.AVX_VNNI_INT8 ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI_INT8" ); count++; }
+				if (AVX_Family.AVX_NE_CONVERT) { ImGui::SameLine(); ImGui::Text("AVX_NE_CONVERT"); count++; }
+				if (AVX_Family.AVX_IFMA      ) { ImGui::SameLine(); ImGui::Text("AVX_IFMA"      ); count++; }
+				if (count == 0) {
+					ImGui::SameLine(); ImGui::Text("<None>");
+				}
+			}
+			ImGui::Text("AVX512 Family:"); {
+				const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
+				size_t count = 0;
+				if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
+				if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
+				if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
+				if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
+				if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
+				if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
+				if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
+				if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
+				if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
+				if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
+				if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
+				if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
+				if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
+				if (count == 0) {
+					ImGui::SameLine(); ImGui::Text("<None>");
+				}
+			}
+			ImGui::EndChild();
+			ImGui::NewLine();
+		}
+
+		if (ImGui::CollapsingHeader("CPU MULTI-THREADING SETTINGS")) {
+			ImGui::Text("Note: Only modify these settings if you know what you are doing.");
+			ImGui::Text("Maximum Threads:");
+			ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
+			ImGui::Text("Thread Multiplier:");
+			ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_CPU_ThreadMultiplier,1,16);
+			ImGui::NewLine();
+			ImGui::Text("Super Screenshot:");
+			ImGui::Text("Maximum Threads:");
+			ImGui::SliderInt("##input_CPU_MaxThreads",&input_super_CPU_MaxThreads,1,CPU_ThreadCount);
+			ImGui::Text("Thread Multiplier:");
+			ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
+			ImGui::NewLine();
+		}
+		primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
+		super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
+		super_screenshot_maxThreads = input_CPU_MaxThreads;
+		ImGui::NewLine();
+	}
+	
+	ImGui::SeparatorText("GPU Information"); {
+		ImGui::Text("Not Implemented");
+		ImGui::NewLine();
+	}
+	ImGui::SeparatorText("Rendering Configuration"); {
+		static int_enum Combo_Rendering_Precision = Rendering_Configuration::Precision_Automatic;
+		ImGui::Text("Rendering Precision (Unimplemented):");
+		ImGui::Combo("##renderingPrecision", &Combo_Rendering_Precision,
+			Rendering_Configuration::Rendering_Precision_Text,
+			ARRAY_LENGTH(Rendering_Configuration::Rendering_Precision_Text)
+		);
+		static int_enum Combo_Rendering_Method = Rendering_Configuration::Render_Method_Automatic;
+		ImGui::Text("Rendering Method (Unimplemented):");
+		ImGui::Combo("##renderingMethod", &Combo_Rendering_Method,
+			Rendering_Configuration::Rendering_Method_Text,
+			ARRAY_LENGTH(Rendering_Configuration::Rendering_Method_Text)
+		);
+		static int_enum Combo_Rendering_Preset = Rendering_Configuration::Render_Preset_Automatic;
+		ImGui::Text("Rendering Preset (Unimplemented):");
+		ImGui::Combo("##renderingPreset", &Combo_Rendering_Preset,
+			Rendering_Configuration::Rendering_Preset_Text,
+			ARRAY_LENGTH(Rendering_Configuration::Rendering_Preset_Text)
+		);
+		ImGui::NewLine();
+	}
+	
+	ImGui::SeparatorText("Legacy Rendering Settings");
+	if (ImGui::CollapsingHeader("LEGACY RENDERING SETTINGS")) {
+		ImGui::Text("CPU Rendering Mode:");
+		if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
+			switch (Combo_CPU_RenderingMode) {
 				case 0:
-					primaryRenderData.GPU_Precision = 16;
+					primaryRenderData.CPU_Precision = 32;
 				break;
-			#endif
-			case 1:
-				primaryRenderData.GPU_Precision = 32;
-			break;
-			#ifndef BUILD_RELEASE
+				case 1:
+					primaryRenderData.CPU_Precision = 64;
+				break;
 				case 2:
-					primaryRenderData.GPU_Precision = 64;
+					primaryRenderData.CPU_Precision = 80;
 				break;
-			#endif
-		};
+				case 3:
+					primaryRenderData.CPU_Precision = 128;
+				break;
+			};
+		}
+		ImGui::Text("GPU Rendering Mode:");
+		if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, BufAndLen(GPU_RenderingModes))) {
+			switch (Combo_GPU_RenderingMode) {
+				#ifndef BUILD_RELEASE
+					case 0:
+						primaryRenderData.GPU_Precision = 16;
+					break;
+				#endif
+				case 1:
+					primaryRenderData.GPU_Precision = 32;
+				break;
+				#ifndef BUILD_RELEASE
+					case 2:
+						primaryRenderData.GPU_Precision = 64;
+					break;
+				#endif
+			};
+		}
+		ImGui::NewLine();
 	}
 
 	#ifndef BUILD_RELEASE
@@ -753,6 +872,7 @@ void Menu_Rendering() {
 		}
 	#endif
 
+	ImGui::NewLine();
 	ImGui::SeparatorText("Super Screenshot Settings");
 	
 	ImGui::Text("Sub Sample: %" PRId32, input_subSample * input_subSample);
@@ -868,7 +988,7 @@ void Menu_Settings() {
 	User_GUI_Settings& config_GUI_Settings = config_data.GUI_Settings;
 	User_Display_Preferences& config_Display = config_data.Display_Preferences;
 
-	ImGui::Text("ABS-Fractal-Explorer v%s", PROGRAM_VERSION);
+	ImGui::Text("ABS-Fractal-Explorer v%s (%s)", PROGRAM_VERSION, PROGRAM_DATE);
 	ImGui::Separator();
 	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
 	ImGui::NewLine();
@@ -950,7 +1070,7 @@ void Menu_Settings() {
 		int32_t cursorPosX, cursorPosY; SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
 		int32_t windowPosX, windowPosY; SDL_GetWindowPosition(window, &windowPosX, &windowPosY);
 		int32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
-		ImGui::Text("Display Count: %" PRId32,getDisplayCount());
+		ImGui::Text("Display Count: %" PRId32, getDisplayCount());
 		
 		static bool changesToDisplayList = false;
 		static nano64_t displayTimer = 0;
@@ -985,7 +1105,6 @@ void Menu_Settings() {
 				printDisplayInfo(&DisplayList[(size_t)i], false);
 			}
 			ImGui::EndChild();
-			
 		}
 		ImGui::NewLine();
 		ImGui::SeparatorText("Bootup-Diplay"); {
@@ -1072,28 +1191,6 @@ void Menu_Settings() {
 				(Display_Bootup::Display_Bootup_Enum)Display_Preferences.Display_RefreshRate_Type,
 				config_Display, window, RESX_Minimum, RESY_Minimum
 			);
-
-			// switch(Display_Preferences.Display_RefreshRate_Type) {
-			// 	case Display_RefreshRate::HighestRefreshRate:
-			// 		Select_Display = matchDisplayAttribute(
-			// 			Display_Bootup::HighFrameRate, config_Display,
-			// 			RESX_Minimum, RESY_Minimum
-			// 		);
-			// 	break;
-			// 	case Display_RefreshRate::LowestRefreshRate:
-			// 		Select_Display = matchDisplayAttribute(
-			// 			Display_Bootup::LowFrameRate, config_Display,
-			// 			RESX_Minimum, RESY_Minimum
-			// 		);
-			// 	break;
-			// 	case Display_RefreshRate::ConstantValue:
-			// 		Select_Display = nullptr;
-			// 	break;
-			// 	case Display_RefreshRate::Automatic:
-			// 	case Display_RefreshRate::CurrentMonitor:
-			// 	default:
-			// 		Select_Display = getDisplayFromWindowPosition(window);
-			// }
 			
 			printDisplayInfo(Select_Display,false);
 
@@ -1187,6 +1284,12 @@ void Menu_Settings() {
 		} else if (screenshot_settings.screenshotFileType == Image_File_Format::TGA || screenshot_settings.screenshotFileType == Image_File_Format::BMP) {
 			ImGui::Text("Note: Super Screenshots only support PNG and JPG.");
 		}
+		
+		#ifndef BUILD_RELEASE
+			ImGui::NewLine();
+			ImGui::Text("Save screenshots to directory:");
+			ImGui::Text("<Unimplemented>");
+		#endif
 
 		ImGui::NewLine(); ImGui::Separator(); ImGui::NewLine();
 		ImGui::Text("Super Screenshot Settings:");
@@ -1715,17 +1818,106 @@ void Menu_Status() {
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	ImGui::Text("NOT IMPLEMENTED YET");
+
+
 	ImGui::NewLine();
-	ImGui::SeparatorText("Information");
+	ImGui::SeparatorText("Basic Information");
 		ImGui::Text("Program: %s", PROGRAM_NAME);
 		ImGui::Text("Version: %s", PROGRAM_VERSION);
 		ImGui::Text("Date: %s", PROGRAM_DATE);
 		ImGui::NewLine();
-	ImGui::SeparatorText("System Hardware");
-		ImGui::Text("CPU Threads: %u", std::thread::hardware_concurrency());
+
+	ImGui::SeparatorText("System Hardware"); {
 		ImGui::Text("System RAM: %dMiB", SDL_GetSystemRAM());
 		ImGui::Text("Display Count: %d", SDL_GetNumVideoDisplays());
 		ImGui::NewLine();
+	}
+
+	ImGui::SeparatorText("CPU Information"); {
+		ImGui::Text("CPU Threads: %u", std::thread::hardware_concurrency());
+		const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
+
+		ImGui::Text("SSE2 Rendering: %s",
+			Enable_Text(Available_CPU_Instruction.SSE_Family.SSE2)
+		); Item_Tooltip("SSE2 allows the CPU to process 4 32bit floats or 2 64bit floats at a time."\
+			"\nSSE2 Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.SSE_Family.SSE2)
+		);
+		ImGui::Text("AVX Rendering: %s",
+			Enable_Text(Available_CPU_Instruction.AVX_Family.AVX)
+		); Item_Tooltip("AVX allows the CPU to process 8 32bit floats or 4 64bit floats at a time."\
+			"\nAVX Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX_Family.AVX)
+		);
+		ImGui::Text("AVX512F Rendering: %s",
+			Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+		); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
+			"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+		);
+		ImGui::NewLine();
+
+		if (ImGui::CollapsingHeader("CPU Instruction Sets")) {
+			ImGui::BeginChild(
+				"CPU_InstructionList", ImVec2(0.0f, 108.0f), true
+			);
+				
+			ImGui::Text("CPU Signature: <%s>", Available_CPU_Instruction.CPU_Signature);
+			ImGui::NewLine();
+			ImGui::Text("SSE Family:"); {
+				const Supported_SSE_Family_Instruction& SSE_Family = Available_CPU_Instruction.SSE_Family;
+				size_t count = 0;
+				if (Available_CPU_Instruction.MMX) {
+					ImGui::SameLine(); ImGui::Text("MMX"); count++;
+				}
+				if (SSE_Family.SSE   ) { ImGui::SameLine(); ImGui::Text("SSE"   ); count++; }
+				if (SSE_Family.SSE2  ) { ImGui::SameLine(); ImGui::Text("SSE2"  ); count++; }
+				if (SSE_Family.SSE3  ) { ImGui::SameLine(); ImGui::Text("SSE3"  ); count++; }
+				if (SSE_Family.SSSE3 ) { ImGui::SameLine(); ImGui::Text("SSSE3" ); count++; }
+				if (SSE_Family.SSE4_1) { ImGui::SameLine(); ImGui::Text("SSE4_1"); count++; }
+				if (SSE_Family.SSE4_2) { ImGui::SameLine(); ImGui::Text("SSE4_2"); count++; }
+				if (SSE_Family.SSE4a ) { ImGui::SameLine(); ImGui::Text("SSE4a" ); count++; }
+				if (count == 0) {
+					ImGui::SameLine(); ImGui::Text("<None>");
+				}
+			}
+			ImGui::Text("AVX Family:"); {
+				const Supported_AVX_Family_Instruction& AVX_Family = Available_CPU_Instruction.AVX_Family;
+				size_t count = 0;
+				if (AVX_Family.AVX           ) { ImGui::SameLine(); ImGui::Text("AVX"           ); count++; }
+				if (AVX_Family.F16C          ) { ImGui::SameLine(); ImGui::Text("F16C"          ); count++; }
+				if (AVX_Family.FMA           ) { ImGui::SameLine(); ImGui::Text("FMA"           ); count++; }
+				if (AVX_Family.AVX2          ) { ImGui::SameLine(); ImGui::Text("AVX2"          ); count++; }
+				if (AVX_Family.AVX_VNNI      ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI"      ); count++; }
+				if (AVX_Family.AVX_VNNI_INT8 ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI_INT8" ); count++; }
+				if (AVX_Family.AVX_NE_CONVERT) { ImGui::SameLine(); ImGui::Text("AVX_NE_CONVERT"); count++; }
+				if (AVX_Family.AVX_IFMA      ) { ImGui::SameLine(); ImGui::Text("AVX_IFMA"      ); count++; }
+				if (count == 0) {
+					ImGui::SameLine(); ImGui::Text("<None>");
+				}
+			}
+			ImGui::Text("AVX512 Family:"); {
+				const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
+				size_t count = 0;
+				if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
+				if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
+				if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
+				if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
+				if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
+				if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
+				if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
+				if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
+				if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
+				if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
+				if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
+				if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
+				if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
+				if (count == 0) {
+					ImGui::SameLine(); ImGui::Text("<None>");
+				}
+			}
+			ImGui::EndChild();
+			ImGui::NewLine();
+		}
+	}
+
 	ImGui::SeparatorText("GPU Hardware");
 		ImGui::Text("OpenCL Enabled: %s", "<Not Implemented>");
 		ImGui::Text("GPU Name: %s", "<Not Implemented>");

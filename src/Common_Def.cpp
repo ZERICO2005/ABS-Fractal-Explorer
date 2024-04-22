@@ -8,6 +8,19 @@
 
 #include "Common_Def.h"
 
+
+/* CPU Information */
+	static Supported_CPU_Instruction Available_CPU_Instruction;
+	static bool initialized_Available_CPU_Instruction = false;
+
+	const Supported_CPU_Instruction& get_Available_CPU_Instruction() {
+		if (initialized_Available_CPU_Instruction == false) {
+			get_Supported_CPU_Instruction(Available_CPU_Instruction);
+			initialized_Available_CPU_Instruction = true;
+		}
+		return Available_CPU_Instruction;
+	}
+
 /* Functions */
 	// Fills a buffer with a repeating pattern of N bytes
 	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize) {

@@ -42,6 +42,13 @@
 #include <stdexcept>
 #include <climits>
 
+/* CPU Information */
+
+#include "CPU_Information.h"
+
+// Returns the list of Available x86 CPU Instruction Sets. Automatically Initializes
+const Supported_CPU_Instruction& get_Available_CPU_Instruction();
+
 /* Typedefs */
 
 typedef float fp32;

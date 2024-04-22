@@ -9,7 +9,8 @@
 #ifndef FRACEXP_INTERNAL_H
 #define FRACEXP_INTERNAL_H
 
-#include "Common_Def.h"
+#include "../Common_Def.h"
+#include "../fractal.h"
 
 //#define FracExp_Internal_Debug_Print
 

@@ -24,7 +24,7 @@
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 11
-#define PROGRAM_V_TAG "Rev-6 Developer Debug Alpha"
+#define PROGRAM_V_TAG "Rev-7 Developer Debug Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* OpenCL */

@@ -18,7 +18,7 @@
 #include "fractal.h"
 #include "keybind.h"
 #include "engine.h"
-#include "fracExpKB.h"
+#include "fracExp_Files/fracExpKB.h"
 #include "fileManager.h"
 #include "imageBuffer.h"
 #include "imageTransform.h"

@@ -16,17 +16,63 @@
 
 #include "CPU_Information.h"
 
+// The commented out sections of code are to ensure compatibility with GCC and Clang
+
+// Debug function
+inline void print_Registers(unsigned int info[4]) {
+	printf("\nRegisters: %08X %08X %08X %08X", info[0], info[1], info[2], info[3]);
+}
+
 inline void cpuid_func(unsigned int info[4], unsigned int InfoType) {
 	__cpuid_count(InfoType, 0, info[0], info[1], info[2], info[3]);
 }
 
-void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instruction_list) {
+struct CPU_Signature_Info {
+	const char* CPU_Signature;
+	unsigned int REG_EBX;
+	unsigned int REG_ECX;
+	unsigned int REG_EDX;
+};
+
+const CPU_Signature_Info CPU_Signature_List[] = {
+	{"Unknown CPU ", 0x00000000           , 0x00000000           , 0x00000000           },
+	{"AuthenticAMD", signature_AMD_ebx    , signature_AMD_ecx    , signature_AMD_edx    },
+	{"CentaurHauls", signature_CENTAUR_ebx, signature_CENTAUR_ecx, signature_CENTAUR_edx},
+	{"CyrixInstead", signature_CYRIX_ebx  , signature_CYRIX_ecx  , signature_CYRIX_edx  },
+	{"GenuineIntel", signature_INTEL_ebx  , signature_INTEL_ecx  , signature_INTEL_edx  },
+	{"TransmetaCPU", signature_TM1_ebx    , signature_TM1_ecx    , signature_TM1_edx    },
+	{"GenuineTMx86", signature_TM2_ebx    , signature_TM2_ecx    , signature_TM2_edx    },
+	{"Geode by NSC", signature_NSC_ebx    , signature_NSC_ecx    , signature_NSC_edx    },
+	{"NexGenDriven", signature_NEXGEN_ebx , signature_NEXGEN_ecx , signature_NEXGEN_edx },
+	{"RiseRiseRise", signature_RISE_ebx   , signature_RISE_ecx   , signature_RISE_edx   },
+	{"SiS SiS SiS ", signature_SIS_ebx    , signature_SIS_ecx    , signature_SIS_edx    },
+	{"UMC UMC UMC ", signature_UMC_ebx    , signature_UMC_ecx    , signature_UMC_edx    },
+	{"VIA VIA VIA ", signature_VIA_ebx    , signature_VIA_ecx    , signature_VIA_edx    },
+	{"Vortex86 SoC", signature_VORTEX_ebx , signature_VORTEX_ecx , signature_VORTEX_edx }
+};
+
+const char* get_CPU_Name(unsigned int REG_EBX, unsigned int REG_ECX, unsigned int REG_EDX) {
+	for (size_t i = 0; i < sizeof(CPU_Signature_List) / sizeof(CPU_Signature_Info); i++) {
+		if (
+			(CPU_Signature_List[i].REG_EBX == REG_EBX) &&
+			(CPU_Signature_List[i].REG_ECX == REG_ECX) &&
+			(CPU_Signature_List[i].REG_EDX == REG_EDX)
+		) {
+			return CPU_Signature_List[i].CPU_Signature;
+		}
+	}
+	printf("\nUnknown CPU Signature: %08X %08X %08X", REG_EBX, REG_ECX, REG_EDX);
+	return CPU_Signature_List[0].CPU_Signature;
+}
+
+void get_Supported_CPU_Instruction(Supported_CPU_Instruction& instruction_list) {
 	memset(&instruction_list, 0, sizeof(instruction_list));
 	enum Registers {
 		EAX, EBX, ECX, EDX
 	};
-	unsigned int info[4] = {0x0, 0x0, 0x0, 0x0};
-	cpuid_func(info, 0x0);
+	unsigned int info[4] = {0x00000000, 0x00000000, 0x00000000, 0x00000000};
+	cpuid_func(info, 0x00000000);
+	instruction_list.CPU_Signature = get_CPU_Name(info[EBX], info[ECX], info[EDX]);
 	const unsigned int Feature_ID = info[EAX];
 	cpuid_func(info, 0x80000000);
 	const unsigned Extended_Feature_ID = info[EAX];
@@ -51,7 +97,7 @@ void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instructi
 		/* AVX512 Family */
 			instruction_list.AVX512_Family.AVX512_BF16 = (info[EAX] & bit_AVX512BF16) ? true : false;
 		/* AMX Family */
-			instruction_list.AMX_Family.AMX_FP16 = (info[EAX] & bit_AMX_FP16) ? true : false;
+			// instruction_list.AMX_Family.AMX_FP16 = (info[EAX] & bit_AMX_FP16) ? true : false;
 		/* Others */
 			instruction_list.MMX = (info[EDX] & bit_MMX) ? true : false;
 	}
@@ -71,19 +117,69 @@ void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instructi
 			instruction_list.AVX512_Family.AVX512_VBMI         = (info[ECX] & bit_AVX512VBMI        ) ? true : false;
 			instruction_list.AVX512_Family.AVX512_VBMI2        = (info[ECX] & bit_AVX512VBMI2       ) ? true : false;
 			instruction_list.AVX512_Family.AVX512_VNNI         = (info[ECX] & bit_AVX512VNNI        ) ? true : false;
-			instruction_list.AVX512_Family.AVX512_VP2INTERSECT = (info[EDX] & bit_AVX512VP2INTERSECT) ? true : false;
+			// instruction_list.AVX512_Family.AVX512_VP2INTERSECT = (info[EDX] & bit_AVX512VP2INTERSECT) ? true : false;
 			instruction_list.AVX512_Family.AVX512_FP16         = (info[EDX] & bit_AVX512FP16        ) ? true : false;
 		/* AMX Family */
-			instruction_list.AMX_Family.AMX_BF16    = (info[EDX] & bit_AMX_BF16   ) ? true : false;
-			instruction_list.AMX_Family.AMX_INT8    = (info[EDX] & bit_AMX_INT8   ) ? true : false;
-			instruction_list.AMX_Family.AMX_TILE    = (info[EDX] & bit_AMX_TILE   ) ? true : false;
-			instruction_list.AMX_Family.AMX_COMPLEX = (info[EDX] & bit_AMX_COMPLEX) ? true : false;
+			// instruction_list.AMX_Family.AMX_BF16    = (info[EDX] & bit_AMX_BF16   ) ? true : false;
+			// instruction_list.AMX_Family.AMX_INT8    = (info[EDX] & bit_AMX_INT8   ) ? true : false;
+			// instruction_list.AMX_Family.AMX_TILE    = (info[EDX] & bit_AMX_TILE   ) ? true : false;
+			// instruction_list.AMX_Family.AMX_COMPLEX = (info[EDX] & bit_AMX_COMPLEX) ? true : false;
 	}
 	if (Extended_Feature_ID >= 0x80000001) {
 		/* SSE Family */
 		cpuid_func(info, 0x80000001);
 		instruction_list.SSE_Family.SSE4a = (info[ECX] & bit_SSE4a) ? true : false;
 	}
+}
+
+size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list) {
+	size_t count = 0;
+	/* SSE Family */
+		count += (instruction_list.SSE_Family.SSE == true) ? 1 : 0;
+		count += (instruction_list.SSE_Family.SSE2 == true) ? 1 : 0;
+		count += (instruction_list.SSE_Family.SSE3 == true) ? 1 : 0;
+		count += (instruction_list.SSE_Family.SSSE3 == true) ? 1 : 0;
+		count += (instruction_list.SSE_Family.SSE4_1 == true) ? 1 : 0;
+		count += (instruction_list.SSE_Family.SSE4_2 == true) ? 1 : 0;
+		count += (instruction_list.SSE_Family.SSE4a == true) ? 1 : 0;
+	/* AVX Family */
+		count += (instruction_list.AVX_Family.AVX == true) ? 1 : 0;
+		count += (instruction_list.AVX_Family.F16C == true) ? 1 : 0;
+		count += (instruction_list.AVX_Family.FMA == true) ? 1 : 0;
+		count += (instruction_list.AVX_Family.AVX2 == true) ? 1 : 0;
+		count += (instruction_list.AVX_Family.AVX_VNNI == true) ? 1 : 0;
+		count += (instruction_list.AVX_Family.AVX_VNNI_INT8 == true) ? 1 : 0;
+		count += (instruction_list.AVX_Family.AVX_NE_CONVERT == true) ? 1 : 0;
+		count += (instruction_list.AVX_Family.AVX_IFMA == true) ? 1 : 0;
+		// count += (instruction_list.AVX_Family.AVX_VNNI_INT16 == true) ? 1 : 0;
+		// count += (instruction_list.AVX_Family.SHA512 == true) ? 1 : 0;
+		// count += (instruction_list.AVX_Family.SM3 == true) ? 1 : 0;
+		// count += (instruction_list.AVX_Family.SM4 == true) ? 1 : 0;
+	/* AVX512 Family */
+		count += (instruction_list.AVX512_Family.AVX512_F == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_BW == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_CD == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_DQ == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_IFMA52 == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_VL == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_VPOPCNTDQ == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_BF16 == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_BITALG == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_VBMI == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_VBMI2 == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_VNNI == true) ? 1 : 0;
+		// count += (instruction_list.AVX512_Family.AVX512_VP2INTERSECT == true) ? 1 : 0;
+		count += (instruction_list.AVX512_Family.AVX512_FP16 == true) ? 1 : 0;
+	/* AMX Family */
+		// count += (instruction_list.AMX_Family.AMX_BF16 == true) ? 1 : 0;
+		// count += (instruction_list.AMX_Family.AMX_INT8 == true) ? 1 : 0;
+		// count += (instruction_list.AMX_Family.AMX_TILE == true) ? 1 : 0;
+		// count += (instruction_list.AMX_Family.AMX_FP16 == true) ? 1 : 0;
+		// count += (instruction_list.AMX_Family.AMX_COMPLEX == true) ? 1 : 0;
+	/* Others */
+		count += (instruction_list.MMX == true) ? 1 : 0;
+
+	return count;
 }
 
 /* Print Instruction List */
@@ -127,6 +223,7 @@ void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instructi
 
 	void print_Supported_AVX512_Family_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		const Supported_AVX512_Family_Instruction& AVX512_Family = instruction_list.AVX512_Family;
+		/*
 		printf(
 			"\nAVX512 Family:"\
 			"\n\tF     | BW     | CD    | DQ    | IFMA52 | VL           | VPOPCNTDQ"\
@@ -147,9 +244,30 @@ void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instructi
 			bool_Text(AVX512_Family.AVX512_VNNI), bool_Text(AVX512_Family.AVX512_VP2INTERSECT), 
 			bool_Text(AVX512_Family.AVX512_FP16)
 		);
+		*/
+		printf(
+			"\nAVX512 Family:"\
+			"\n\tF     | BW     | CD    | DQ    | IFMA52 | VL    | VPOPCNTDQ"\
+			"\n\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s | %-5s",
+			bool_Text(AVX512_Family.AVX512_F), bool_Text(AVX512_Family.AVX512_BW),
+			bool_Text(AVX512_Family.AVX512_CD), bool_Text(AVX512_Family.AVX512_DQ),
+			bool_Text(AVX512_Family.AVX512_IFMA52), bool_Text(AVX512_Family.AVX512_VL),
+			bool_Text(AVX512_Family.AVX512_VPOPCNTDQ)
+		);
+		printf(
+			"\n\t==========================================================="
+		);
+		printf(
+			"\n\tBF16  | BITALG | VBMI  | VBMI2 | VNNI   | FP16"\
+			"\n\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s",
+			bool_Text(AVX512_Family.AVX512_BF16), bool_Text(AVX512_Family.AVX512_BITALG),
+			bool_Text(AVX512_Family.AVX512_VBMI), bool_Text(AVX512_Family.AVX512_VBMI2),
+			bool_Text(AVX512_Family.AVX512_VNNI), bool_Text(AVX512_Family.AVX512_FP16)
+		);
 		printf("\n");
 	}
 
+	/*
 	void print_Supported_AMX_Family_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		const Supported_AMX_Family_Instruction& AMX_Family = instruction_list.AMX_Family;
 		printf(
@@ -162,6 +280,7 @@ void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instructi
 		);
 		printf("\n");
 	}
+	*/
 
 	void print_Supported_Other_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		printf(
@@ -180,6 +299,6 @@ void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instructi
 		print_Supported_SSE_Family_Instruction   (instruction_list);
 		print_Supported_AVX_Family_Instruction   (instruction_list);
 		print_Supported_AVX512_Family_Instruction(instruction_list);
-		print_Supported_AMX_Family_Instruction   (instruction_list);
+		//print_Supported_AMX_Family_Instruction   (instruction_list);
 		print_Supported_Other_Instruction        (instruction_list);
 	}

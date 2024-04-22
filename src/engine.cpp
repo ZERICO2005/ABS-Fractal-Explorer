@@ -16,10 +16,9 @@
 
 #include "fileManager.h"
 
-#include "CPU_Information.h"
-
 #include "render_CPU/frac_Multi.h"
-#include "fracCL.h"
+
+#include "render_GPU/fracCL.h"
 
 TimerBox fracTime;
 ABS_Mandelbrot fracData;
@@ -32,9 +31,22 @@ void get_GPU_Hardware_Hash(uint64_t& hash) {
 	//calculate_GPU_Hardware_Hash(hash);
 }
 
-// void render_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param);
-
-// void renderFractal(BufferBox* buf, fp64 r, fp64 i, fp64 zoom, uint32_t maxItr);
+Rendering_Configuration::Rendering_Preset validate_Rendering_Preset(
+	Rendering_Configuration::Rendering_Preset render_preset
+) {
+	using namespace Rendering_Configuration;
+	Rendering_Preset default_Rendering_Preset = Rendering_Configuration::Render_Preset_CPU_Generic_Float64;
+	bool repeatLoop = false;
+	while (repeatLoop == true) {
+		switch(render_preset) {
+			default:
+				printWarning("Unknown Rendering Preset: %d", render_preset);
+				return default_Rendering_Preset;
+		}
+		
+	};
+	return default_Rendering_Preset;
+}
 
 int setup_fracExp(int argc, char* argv[]) {
 	if (argc >= 2) {
@@ -82,10 +94,10 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		printf("\n\t%ux%u %u samples",image_box.resX,image_box.resY,image_render_data.sample * image_render_data.sample);
 		printf(", %u iterations",image_fractal_data.maxItr);
 		switch(image_render_data.rendering_method) {
-			case Rendering_Method::CPU_Rendering:
+			case Legacy_Rendering_Method::CPU_Rendering:
 				printf("\n\tFP%u CPU rendering, %u threads",image_render_data.CPU_Precision,image_render_data.CPU_Threads);
 			break;
-			case Rendering_Method::GPU_Rendering:
+			case Legacy_Rendering_Method::GPU_Rendering:
 				printf("\n\tFP%u GPU rendering",image_render_data.GPU_Precision);
 			break;
 		};
@@ -93,13 +105,13 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		fflush(stdout);
 		nano64_t image_stopwatch = getNanoTime();
 		switch(image_render_data.rendering_method) {
-			case Rendering_Method::CPU_Rendering:
+			case Legacy_Rendering_Method::CPU_Rendering:
 					renderCPU_ABS_Mandelbrot(
 						&image_box, image_render_data, image_fractal_data,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
 				break;
-			case Rendering_Method::GPU_Rendering:
+			case Legacy_Rendering_Method::GPU_Rendering:
 				#ifdef Enable_OpenCL
 					renderOpenCL_ABS_Mandelbrot(
 						&image_box, image_render_data, image_fractal_data,
@@ -162,13 +174,13 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 		//printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %" PRIu64,FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
 
 		switch(primaryRender.rendering_method) {
-			case Rendering_Method::CPU_Rendering:
+			case Legacy_Rendering_Method::CPU_Rendering:
 					renderCPU_ABS_Mandelbrot(
 						&renderBox, primaryRender, fracData,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
 				break;
-			case Rendering_Method::GPU_Rendering:
+			case Legacy_Rendering_Method::GPU_Rendering:
 				#ifdef Enable_OpenCL
 					renderOpenCL_ABS_Mandelbrot(
 						&renderBox, primaryRender, fracData,
@@ -269,9 +281,7 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
-	Supported_CPU_Instruction instruction_list;
-	get_CPU_Supported_Instruction_Set_List(instruction_list);
-	print_Supported_CPU_Instruction(instruction_list);
+	
 	start_Engine(QUIT_FLAG,ABORT_RENDERING);
 	return 0;
 }

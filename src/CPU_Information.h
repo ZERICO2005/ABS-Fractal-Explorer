@@ -6,7 +6,12 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
+#ifndef CPU_INFORMATION_H
+#define CPU_INFORMATION_H
+
 #include <cstddef>
+
+// The commented out sections of code are to ensure compatibility with GCC and Clang
 
 struct Supported_SSE_Family_Instruction {
 	bool SSE;
@@ -46,27 +51,34 @@ struct Supported_AVX512_Family_Instruction {
 	bool AVX512_VBMI;
 	bool AVX512_VBMI2;
 	bool AVX512_VNNI;
-	bool AVX512_VP2INTERSECT;
+	// bool AVX512_VP2INTERSECT;
 	bool AVX512_FP16;
 };
 
-struct Supported_AMX_Family_Instruction {
-	bool AMX_BF16;
-	bool AMX_INT8;
-	bool AMX_TILE;
-	bool AMX_FP16;
-	bool AMX_COMPLEX;
-};
+// struct Supported_AMX_Family_Instruction {
+// 	bool AMX_BF16;
+// 	bool AMX_INT8;
+// 	bool AMX_TILE;
+// 	bool AMX_FP16;
+// 	bool AMX_COMPLEX;
+// };
 
 struct Supported_CPU_Instruction {
+	const char* CPU_Signature;
 	Supported_SSE_Family_Instruction SSE_Family;
 	Supported_AVX_Family_Instruction AVX_Family;
 	Supported_AVX512_Family_Instruction AVX512_Family;
-	Supported_AMX_Family_Instruction AMX_Family;
+	// Supported_AMX_Family_Instruction AMX_Family;
 	bool MMX;
 };
 
-void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instruction_list);
+void get_Supported_CPU_Instruction(Supported_CPU_Instruction& instruction_list);
+
+/**
+ * @brief Counts the number of available CPU instruction sets.
+ * @note Should return 0 if `instruction_list` is unitialized or `__cpuid_count()` fails (Apart from the rare circumstance that the CPU is old enough to not support anything)
+ */
+size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list);
 
 /* Print Instruction List */
 
@@ -79,11 +91,13 @@ void get_CPU_Supported_Instruction_Set_List(Supported_CPU_Instruction& instructi
 	// Formatted to fit on an 80 column screen
 	void print_Supported_AVX512_Family_Instruction(const Supported_CPU_Instruction& instruction_list);
 	
-	// Formatted to fit on an 80 column screen
-	void print_Supported_AMX_Family_Instruction   (const Supported_CPU_Instruction& instruction_list);
+	// // Formatted to fit on an 80 column screen
+	// void print_Supported_AMX_Family_Instruction   (const Supported_CPU_Instruction& instruction_list);
 	
 	// Formatted to fit on an 80 column screen
 	void print_Supported_Other_Instruction        (const Supported_CPU_Instruction& instruction_list);
 
 	// Prints all available CPU instruction sets, formatted to fit on an 80 column screen.
 	void print_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list);
+
+#endif /* CPU_INFORMATION_H */

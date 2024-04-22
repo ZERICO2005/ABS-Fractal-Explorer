@@ -9,9 +9,9 @@
 #ifndef FRACEXPKB_H
 #define FRACEXPKB_H
 
-#include "Common_Def.h"
-#include "fractal.h"
-#include "engine.h"
+#include "../Common_Def.h"
+#include "../fractal.h"
+#include "../engine.h"
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_scancode.h>
 

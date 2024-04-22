@@ -6,8 +6,6 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-
-#include "Common_Def.h"
 #include "fracExp_Internal.h"
 
 void printText(const char* text, size_t len) {

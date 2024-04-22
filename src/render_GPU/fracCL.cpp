@@ -6,12 +6,12 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#include "Common_Def.h"
-#include "Program_Def.h"
+#include "fracCL_Internal.h"
+
 #include "fracCL.h"
 #include "buildCL.h"
-#include "fractal.h"
-#include "user_data.h"
+#include "../fractal.h"
+#include "../user_data.h"
 
 bool initialized_OpenCL = false;
 

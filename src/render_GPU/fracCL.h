@@ -8,18 +8,19 @@
 #ifndef FRAC_CL_H
 #define FRAC_CL_H
 
-#include "Common_Def.h"
-#include "Program_Def.h"
-#include "fractal.h"
-#include "copyBuffer.h"
+#include <cstddef>
+#include <cstdint>
+#include <atomic>
+
+struct BufferBox;
+struct Render_Data;
+struct ABS_Mandelbrot;
 
 int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING);
 
 int32_t init_OpenCL();
 int32_t terminate_OpenCL();
 void queryOpenCL_GPU();
-
-#define writefToLog(...) //printFlush(__VA_ARGS__)
 
 void calculate_GPU_Hardware_Hash(uint64_t& hash);
 

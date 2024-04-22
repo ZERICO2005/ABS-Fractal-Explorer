@@ -16,7 +16,7 @@
 #include "fractal.h"
 #include "keybind.h"
 #include "engine.h"
-#include "fracExpKB.h"
+#include "fracExp_Files/fracExpKB.h"
 #include "fileManager.h"
 #include "imageBuffer.h"
 #include "imageTransform.h"
@@ -66,7 +66,7 @@ void initRenderData(Render_Data* rDat) {
 	rDat->previewRender = false;
 	rDat->areaMult = 1.0;
 	rDat->resDiv = 1;
-	rDat->rendering_method = Rendering_Method::GPU_Rendering;
+	rDat->rendering_method = Legacy_Rendering_Method::GPU_Rendering;
 	rDat->CPU_Precision = 64;
 	if ((uint32_t)std::thread::hardware_concurrency() <= 1) {
 		rDat->CPU_Threads = 1;
@@ -553,10 +553,10 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 		Update_Level(update_level, Change_Level::Method_of_Rendering);
 	} else if (
 		(
-			(ren->rendering_method == Rendering_Method::CPU_Rendering) &&
+			(ren->rendering_method == Legacy_Rendering_Method::CPU_Rendering) &&
 			((ren->CPU_Precision != ren0.CPU_Precision) || (ren->CPU_Threads != ren0.CPU_Threads))
 		) && (
-			(ren->rendering_method == Rendering_Method::GPU_Rendering) &&
+			(ren->rendering_method == Legacy_Rendering_Method::GPU_Rendering) &&
 			(ren->GPU_Precision != ren0.GPU_Precision)
 		)
 	) {
@@ -921,7 +921,7 @@ int_enum updateFractalParameters() {
 		valueClamp(primaryRenderData.sample,1,24);
 	/* Rendering Method */
 	{
-		using namespace Rendering_Method;
+		using namespace Legacy_Rendering_Method;
 		if (funcTimeDelay(fp32CpuRendering,0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 32;

@@ -49,8 +49,8 @@ struct Render_Data {
 	uint32_t GPU_Partitions;
 }; typedef struct Render_Data Render_Data;
 
-namespace Rendering_Method {
-	enum Rendering_Method_Enum {
+namespace Legacy_Rendering_Method {
+	enum Legacy_Rendering_Method_Enum {
 		CPU_Rendering, GPU_Rendering, Rendering_Method_Count
 	};
 }

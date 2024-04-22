@@ -7,10 +7,9 @@
 #ifndef BUILD_CL_H
 #define BUILD_CL_H
 
-#include "Common_Def.h"
-#include "Program_Def.h"
+#include "fracCL_Internal.h"
 
-#define PROGRAM_FILE "src/fracCL.cl"
+#define PROGRAM_FILE "src/render_GPU/fracCL.cl"
 #define KERNEL_FUNC "renderFracCLPoint"
 #define CL_TARGET_OPENCL_VERSION 120
 

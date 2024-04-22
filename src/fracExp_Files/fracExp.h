@@ -9,8 +9,8 @@
 #ifndef FRACEXP_H
 #define FRACEXP_H
 
-#include "Common_Def.h"
-#include "fractal.h"
+#include "../Common_Def.h"
+#include "../fractal.h"
 
 /* Contains the fractals data along with its hash, name, and description */
 struct Fractal_Header {
