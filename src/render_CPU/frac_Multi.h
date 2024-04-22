@@ -14,7 +14,6 @@
 #include <atomic>
 
 struct BufferBox;
-
 struct Render_Data;
 struct ABS_Mandelbrot;
 

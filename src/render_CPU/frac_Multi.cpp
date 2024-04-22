@@ -9,7 +9,7 @@
 #include "frac_Multi_Internal.h"
 #include "frac_Multi.h"
 
-#include "frac_Multi_Generic.h"
+#include "frac_Multi_Generic.hpp"
 #include "frac_Multi_SSE2.h"
 #include "frac_Multi_AVX.h"
 #include "frac_Multi_AVX512F.h"
@@ -66,13 +66,13 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 	// Default is FP64
 	if (param.polarMandelbrot == true) {
 		switch(ren.CPU_Precision) {
-			case 32: generateThreads(polarRender, fp32, fp32); break;
+			case 32: generateThreads(polarRender_Generic, fp32, fp32); break;
 			#ifdef enableFP80andFP128
-			case 80: generateThreads(polarRender, fp80, fp64); break;
-			case 128: generateThreads(polarRender, fp128, fp64); break;
+			case 80: generateThreads(polarRender_Generic, fp80, fp64); break;
+			case 128: generateThreads(polarRender_Generic, fp128, fp64); break;
 			#endif
 			default:
-			case 64: generateThreads(polarRender, fp128, fp64); break;
+			case 64: generateThreads(polarRender_Generic, fp128, fp64); break;
 		};
 	} else {
 		switch(ren.CPU_Precision) {

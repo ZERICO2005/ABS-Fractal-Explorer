@@ -6,8 +6,10 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
+#ifndef FRAC_MULTI_GENERIC_HPP
+#define FRAC_MULTI_GENERIC_HPP
+
 #include "frac_Multi_Internal.h"
-#include "frac_Multi_Generic.h"
 
 /* BOILERPLATE */
 
@@ -95,7 +97,7 @@
 /* BOILERPLATE */
 
 template<typename fpX, typename fpColor>
-void quadraticRender(FractalParameters(fpX, fpColor)) {
+void quadraticRender_Generic(FractalParameters(fpX, fpColor)) {
 
 	Block_Init_Generic(fpX, fpColor);
 
@@ -124,7 +126,7 @@ void quadraticRender(FractalParameters(fpX, fpColor)) {
 }
 	
 template<typename fpX, typename fpColor>
-void cubicRender(FractalParameters(fpX, fpColor)) {
+void cubicRender_Generic(FractalParameters(fpX, fpColor)) {
 	
 	Block_Init_Generic(fpX, fpColor);
 
@@ -160,7 +162,7 @@ void cubicRender(FractalParameters(fpX, fpColor)) {
 }
 	
 template<typename fpX, typename fpColor>
-void quarticRender(FractalParameters(fpX, fpColor)) {
+void quarticRender_Generic(FractalParameters(fpX, fpColor)) {
 
 	Block_Init_Generic(fpX, fpColor);
 
@@ -200,7 +202,7 @@ void quarticRender(FractalParameters(fpX, fpColor)) {
 }
 	
 template<typename fpX, typename fpColor>
-void quinticRender(FractalParameters(fpX, fpColor)) {
+void quinticRender_Generic(FractalParameters(fpX, fpColor)) {
 
 	Block_Init_Generic(fpX, fpColor);
 
@@ -254,7 +256,7 @@ void quinticRender(FractalParameters(fpX, fpColor)) {
 }
 
 template<typename fpX, typename fpColor>
-void sexticRender(FractalParameters(fpX, fpColor)) {
+void sexticRender_Generic(FractalParameters(fpX, fpColor)) {
 
 	Block_Init_Generic(fpX, fpColor);
 
@@ -320,7 +322,7 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 */
 
 // template <typename fpX, typename fpColor>
-// void polynomialRender(FractalParameters(fpX, fpColor)) {
+// void polynomialRender_Generic(FractalParameters(fpX, fpColor)) {
 // 	const uint32_t power = param.power;
 // 	constexpr size_t sizeOuter = 4;
 // 	const size_t sizeSign = power + 1;
@@ -459,7 +461,7 @@ void sexticRender(FractalParameters(fpX, fpColor)) {
 // }
 
 template<typename fpX, typename fpColor>
-void polarRender(FractalParameters(fpX, fpColor)) {
+void polarRender_Generic(FractalParameters(fpX, fpColor)) {
 	size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS;
 	int32_t y = (int32_t)(p0 / (size_t)param.Image_ResX);
 	int32_t x = (int32_t)(p0 % (size_t)param.Image_ResX);
@@ -530,42 +532,4 @@ void polarRender(FractalParameters(fpX, fpColor)) {
 	}
 }
 
-/* Build */
-
-template void  quadraticRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-template void      cubicRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-template void    quarticRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-template void    quinticRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-template void     sexticRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-template void     sexticRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-// template void polynomialRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-template void      polarRender_Generic<fp32,fp32>(FractalParameters(fp32, fp32));
-
-template void  quadraticRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-template void      cubicRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-template void    quarticRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-template void    quinticRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-template void     sexticRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-template void     sexticRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-// template void polynomialRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-template void      polarRender_Generic<fp64,fp64>(FractalParameters(fp64, fp64));
-
-#ifdef enableFP80andFP128
-	template void  quadraticRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-	template void      cubicRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-	template void    quarticRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-	template void    quinticRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-	template void     sexticRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-	template void     sexticRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-	// template void polynomialRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-	template void      polarRender_Generic<fp80,fp80>(FractalParameters(fp80, fp80));
-
-	template void  quadraticRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-	template void      cubicRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-	template void    quarticRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-	template void    quinticRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-	template void     sexticRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-	template void     sexticRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-	// template void polynomialRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-	template void      polarRender_Generic<fp128,fp128>(FractalParameters(fp128, fp128));
-#endif /* enableFP80andFP128 */
+#endif /* FRAC_MULTI_GENERIC_HPP */

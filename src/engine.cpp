@@ -16,6 +16,8 @@
 
 #include "fileManager.h"
 
+#include "CPU_Information.h"
+
 #include "render_CPU/frac_Multi.h"
 #include "fracCL.h"
 
@@ -237,6 +239,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 		}
 		
 		fracTime.setFreq(read_FrameTime());
+
 		while (fracTime.timerReset() == false) {
 			if (read_Abort_Render_Ongoing() == true) {
 				write_Abort_Render_Ongoing(false);
@@ -266,6 +269,9 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
+	Supported_CPU_Instruction instruction_list;
+	get_CPU_Supported_Instruction_Set_List(instruction_list);
+	print_Supported_CPU_Instruction(instruction_list);
 	start_Engine(QUIT_FLAG,ABORT_RENDERING);
 	return 0;
 }
