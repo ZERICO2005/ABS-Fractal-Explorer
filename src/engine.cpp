@@ -16,9 +16,8 @@
 
 #include "fileManager.h"
 
-#include "frac_Multi.h"
+#include "render_CPU/frac_Multi.h"
 #include "fracCL.h"
-
 
 TimerBox fracTime;
 ABS_Mandelbrot fracData;
@@ -31,9 +30,9 @@ void get_GPU_Hardware_Hash(uint64_t& hash) {
 	//calculate_GPU_Hardware_Hash(hash);
 }
 
-void render_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param);
+// void render_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param);
 
-void renderFractal(BufferBox* buf, fp64 r, fp64 i, fp64 zoom, uint32_t maxItr);
+// void renderFractal(BufferBox* buf, fp64 r, fp64 i, fp64 zoom, uint32_t maxItr);
 
 int setup_fracExp(int argc, char* argv[]) {
 	if (argc >= 2) {

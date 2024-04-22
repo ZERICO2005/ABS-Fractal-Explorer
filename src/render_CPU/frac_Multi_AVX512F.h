@@ -9,12 +9,6 @@
 #ifndef FRAC_MULTI_AVX512F_H
 #define FRAC_MULTI_AVX512F_H
 
-#include "Common_Def.h"
-#include "Program_Def.h"
-
-#include "fractal.h"
-#include "copyBuffer.h"
-
 #include "frac_Multi_Internal.h"
 
 #ifdef ENABLE_AVX512F_RENDERING

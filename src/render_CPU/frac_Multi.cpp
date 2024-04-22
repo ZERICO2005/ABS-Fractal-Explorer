@@ -6,15 +6,12 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#include "Common_Def.h"
-#include "Program_Def.h"
-
 #include "frac_Multi_Internal.h"
 #include "frac_Multi.h"
-#include "frac_Multi_SSE2.h"
 
-#include "fractal.h"
-#include "render.h"
+#include "frac_Multi_SSE2.h"
+#include "frac_Multi_AVX.h"
+#include "frac_Multi_AVX512F.h"
 
 /* General Formulas */
 
@@ -603,18 +600,26 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 		switch(ren.CPU_Precision) {
 			case 32: {
 				switch(param.power) {
-					#ifdef ENABLE_SSE2_RENDERING
-						case 2: generateThreads_Alternate(quadraticRender_SSE2_FP32, fp32, fp32, 4); break;
-						case 3: generateThreads_Alternate(    cubicRender_SSE2_FP32, fp32, fp32, 4); break;
-						case 4: generateThreads_Alternate(  quarticRender_SSE2_FP32, fp32, fp32, 4); break;
-						case 5: generateThreads_Alternate(  quinticRender_SSE2_FP32, fp32, fp32, 4); break;
-						case 6: generateThreads_Alternate(   sexticRender_SSE2_FP32, fp32, fp32, 4); break;
+					#ifdef ENABLE_AVX_RENDERING
+						case 2: generateThreads_Alternate(quadraticRender_AVX_FP32 , fp32, fp32, 8); break;
+						case 3: generateThreads_Alternate(    cubicRender_AVX_FP32 , fp32, fp32, 8); break;
+						case 4: generateThreads_Alternate(  quarticRender_AVX_FP32 , fp32, fp32, 8); break;
+						case 5: generateThreads_Alternate(  quinticRender_AVX_FP32 , fp32, fp32, 8); break;
+						case 6: generateThreads_Alternate(   sexticRender_AVX_FP32 , fp32, fp32, 8); break;
 					#else
-						case 2: generateThreads          (quadraticRender          , fp32, fp32   ); break;
-						case 3: generateThreads          (    cubicRender          , fp32, fp32   ); break;
-						case 4: generateThreads          (  quarticRender          , fp32, fp32   ); break;
-						case 5: generateThreads          (  quinticRender          , fp32, fp32   ); break;
-						case 6: generateThreads          (   sexticRender          , fp32, fp32   ); break;
+						#ifdef ENABLE_SSE2_RENDERING
+							case 2: generateThreads_Alternate(quadraticRender_SSE2_FP32, fp32, fp32, 4); break;
+							case 3: generateThreads_Alternate(    cubicRender_SSE2_FP32, fp32, fp32, 4); break;
+							case 4: generateThreads_Alternate(  quarticRender_SSE2_FP32, fp32, fp32, 4); break;
+							case 5: generateThreads_Alternate(  quinticRender_SSE2_FP32, fp32, fp32, 4); break;
+							case 6: generateThreads_Alternate(   sexticRender_SSE2_FP32, fp32, fp32, 4); break;
+						#else
+							case 2: generateThreads          (quadraticRender          , fp32, fp32   ); break;
+							case 3: generateThreads          (    cubicRender          , fp32, fp32   ); break;
+							case 4: generateThreads          (  quarticRender          , fp32, fp32   ); break;
+							case 5: generateThreads          (  quinticRender          , fp32, fp32   ); break;
+							case 6: generateThreads          (   sexticRender          , fp32, fp32   ); break;
+						#endif
 					#endif
 					default:
 						printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);
@@ -624,18 +629,26 @@ void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot pa
 			default:
 			case 64: {
 				switch(param.power) {
-					#ifdef ENABLE_SSE2_RENDERING
-						case 2: generateThreads_Alternate(quadraticRender_SSE2_FP64, fp64, fp64, 2); break;
-						case 3: generateThreads_Alternate(    cubicRender_SSE2_FP64, fp64, fp64, 2); break;
-						case 4: generateThreads_Alternate(  quarticRender_SSE2_FP64, fp64, fp64, 2); break;
-						case 5: generateThreads_Alternate(  quinticRender_SSE2_FP64, fp64, fp64, 2); break;
-						case 6: generateThreads_Alternate(   sexticRender_SSE2_FP64, fp64, fp64, 2); break;
+					#ifdef ENABLE_AVX_RENDERING
+						case 2: generateThreads_Alternate(quadraticRender_AVX_FP64 , fp64, fp64, 4); break;
+						case 3: generateThreads_Alternate(    cubicRender_AVX_FP64 , fp64, fp64, 4); break;
+						case 4: generateThreads_Alternate(  quarticRender_AVX_FP64 , fp64, fp64, 4); break;
+						case 5: generateThreads_Alternate(  quinticRender_AVX_FP64 , fp64, fp64, 4); break;
+						case 6: generateThreads_Alternate(   sexticRender_AVX_FP64 , fp64, fp64, 4); break;
 					#else
-						case 2: generateThreads          (quadraticRender          , fp64, fp64   ); break;
-						case 3: generateThreads          (    cubicRender          , fp64, fp64   ); break;
-						case 4: generateThreads          (  quarticRender          , fp64, fp64   ); break;
-						case 5: generateThreads          (  quinticRender          , fp64, fp64   ); break;
-						case 6: generateThreads          (   sexticRender          , fp64, fp64   ); break;
+						#ifdef ENABLE_SSE2_RENDERING
+							case 2: generateThreads_Alternate(quadraticRender_SSE2_FP64, fp64, fp64, 2); break;
+							case 3: generateThreads_Alternate(    cubicRender_SSE2_FP64, fp64, fp64, 2); break;
+							case 4: generateThreads_Alternate(  quarticRender_SSE2_FP64, fp64, fp64, 2); break;
+							case 5: generateThreads_Alternate(  quinticRender_SSE2_FP64, fp64, fp64, 2); break;
+							case 6: generateThreads_Alternate(   sexticRender_SSE2_FP64, fp64, fp64, 2); break;
+						#else
+							case 2: generateThreads          (quadraticRender          , fp64, fp64   ); break;
+							case 3: generateThreads          (    cubicRender          , fp64, fp64   ); break;
+							case 4: generateThreads          (  quarticRender          , fp64, fp64   ); break;
+							case 5: generateThreads          (  quinticRender          , fp64, fp64   ); break;
+							case 6: generateThreads          (   sexticRender          , fp64, fp64   ); break;
+						#endif
 					#endif
 					default:
 						printfInterval(0.5,"\nError: Unknown render parameters\nPower: %u CPU_Precision: %u",param.power,ren.CPU_Precision);

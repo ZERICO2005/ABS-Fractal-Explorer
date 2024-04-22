@@ -27,7 +27,7 @@ add_library(IMGUI_LIB OBJECT ${IMGUI_FILES})
 target_compile_options(IMGUI_LIB PRIVATE -g -O3 -Wall -Wshadow)
 
 # Source Files
-file(GLOB SRC_FILES "${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp")
+file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp")
 
 
 
@@ -45,7 +45,7 @@ include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR})
 # Compiler Flags Debug(-g -O0) Release(-O3)
 set(OPT_FLAG -g -O3)
 
-set(MARCH_FLAGS -msse2)
+set(MARCH_FLAGS -msse2 -mavx)
 
 set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare)
 set(WARNING_IGNORE_FLAGS -Wno-unused-parameter -Wno-unused-variable -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces -Wno-strict-aliasing)

@@ -6,14 +6,8 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#include "Common_Def.h"
-#include "Program_Def.h"
-
 #include "frac_Multi_Internal.h"
 #include "frac_Multi_SSE2.h"
-
-#include "fractal.h"
-#include "render.h"
 
 #ifdef ENABLE_SSE2_RENDERING
 
@@ -176,9 +170,6 @@
 						for (uint32_t itr = 0; itr < param.maxItr; itr++) {
 
 	#define Block_EndLoop_SSE2_FP64(); \
-							/* calculates Z^2 = `zr * zr + zi * zi` */\
-							zs = _mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));\
-							\
 							/* Tracks the lowest value */\
 							low = _mm_min_pd(zs, low);\
 							\
@@ -384,9 +375,6 @@
 						for (uint32_t itr = 0; itr < param.maxItr; itr++) {
 
 		#define Block_EndLoop_SSE2_FP32(); \
-							/* calculates Z^2 = `zr * zr + zi * zi` */\
-							zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi));\
-							\
 							/* Tracks the lowest value */\
 							low = _mm_min_ps(zs, low);\
 							\
@@ -470,7 +458,6 @@
 /* Fractal Rendering SSE2 FP64 */
 
 	void quadraticRender_SSE2_FP64(FractalParameters(fp64, fp64)) {
-		#define Remove_temp_zr
 
 		Block_Init_SSE2_FP64();
 
@@ -511,10 +498,10 @@
 				)
 			)), cr);
 			zi = _mm_add_pd(_mm_mul_pd(_mm_mul_pd(zr2, zi2), s3), ci);
+
+			zs = _mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
 		
 		Block_EndLoop_SSE2_FP64();
-
-		#undef Remove_temp_zr
 	}
 
 	void cubicRender_SSE2_FP64(FractalParameters(fp64, fp64)) {
@@ -564,6 +551,8 @@
 				)
 			)), ci);
 			zr = temp_zr;
+
+			zs = _mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
 		
 		Block_EndLoop_SSE2_FP64();
 	}
@@ -607,14 +596,14 @@
 			zr4 = _mm_andnot_pd(zr4_mask, zr);
 			zi4 = _mm_andnot_pd(zi4_mask, zi);
 
-			temp_zr = _mm_add_pd(_mm_mul_pd(s6, _mm_andnot_pd(zr_mask ,
+			temp_zr = _mm_add_pd(_mm_mul_pd(s6, _mm_andnot_pd(zr_mask,
 				_mm_add_pd(
 					_mm_sub_pd(
 						_mm_mul_pd(s1,
-							_mm_mul_pd(_mm_mul_pd(zr1, zr), _mm_mul_pd(zr, zr))
+							_mm_mul_pd(_mm_mul_pd(zr1, zr ), _mm_mul_pd(zr, zr))
 						),
 						_mm_mul_pd(s2,
-							_mm_mul_pd(_mm_mul_pd(zr2, zr), _mm_mul_pd(zi1, zi))
+							_mm_mul_pd(_mm_mul_pd(zr2, zi1), _mm_mul_pd(zr, zi))
 						)
 					),
 					_mm_mul_pd(s3,
@@ -625,7 +614,7 @@
 			zi      = _mm_add_pd(_mm_mul_pd(s7, _mm_andnot_pd(zi_mask,
 				_mm_sub_pd(
 					_mm_mul_pd(s4,
-						_mm_mul_pd(_mm_mul_pd(zr3, zr), _mm_mul_pd(zr, zi3))
+						_mm_mul_pd(_mm_mul_pd(zr3, zi3), _mm_mul_pd(zr, zr))
 					),
 					_mm_mul_pd(s5,
 						_mm_mul_pd(_mm_mul_pd(zr4, zi4), _mm_mul_pd(zi, zi))
@@ -633,6 +622,8 @@
 				)
 			)), ci);
 			zr = temp_zr;
+
+			zs = _mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
 
 		Block_EndLoop_SSE2_FP64();
 	}
@@ -729,6 +720,8 @@
 				)
 			)), ci);
 			zr = temp_zr;
+
+			zs = _mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
 		
 		Block_EndLoop_SSE2_FP64();
 	}
@@ -838,13 +831,14 @@
 			)), ci);
 			zr = temp_zr;
 
+			zs = _mm_add_pd(_mm_mul_pd(zr, zr), _mm_mul_pd(zi, zi));
+
 		Block_EndLoop_SSE2_FP64();
 	}
 
 /* Fractal Rendering SSE2 FP32 */
 
 	void quadraticRender_SSE2_FP32(FractalParameters(fp32, fp32)) {
-		#define Remove_temp_zr
 
 		__m128 zr1, zr2, zi1, zi2;
 
@@ -885,10 +879,10 @@
 				)
 			)), cr);
 			zi = _mm_add_ps(_mm_mul_ps(_mm_mul_ps(zr2, zi2), s3), ci);
+
+			zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi));
 		
 		Block_EndLoop_SSE2_FP32();
-
-		#undef Remove_temp_zr
 	}
 
 	void cubicRender_SSE2_FP32(FractalParameters(fp32, fp32)) {
@@ -938,6 +932,8 @@
 				)
 			)), ci);
 			zr = temp_zr;
+
+			zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi));
 		
 		Block_EndLoop_SSE2_FP32();
 	}
@@ -988,7 +984,7 @@
 							_mm_mul_ps(_mm_mul_ps(zr1, zr), _mm_mul_ps(zr, zr))
 						),
 						_mm_mul_ps(s2,
-							_mm_mul_ps(_mm_mul_ps(zr2, zr), _mm_mul_ps(zi1, zi))
+							_mm_mul_ps(_mm_mul_ps(zr2, zi1), _mm_mul_ps(zr, zi))
 						)
 					),
 					_mm_mul_ps(s3,
@@ -999,7 +995,7 @@
 			zi      = _mm_add_ps(_mm_mul_ps(s7, _mm_andnot_ps(zi_mask,
 				_mm_sub_ps(
 					_mm_mul_ps(s4,
-						_mm_mul_ps(_mm_mul_ps(zr3, zr), _mm_mul_ps(zr, zi3))
+						_mm_mul_ps(_mm_mul_ps(zr3, zi3), _mm_mul_ps(zr, zr))
 					),
 					_mm_mul_ps(s5,
 						_mm_mul_ps(_mm_mul_ps(zr4, zi4), _mm_mul_ps(zi, zi))
@@ -1007,6 +1003,8 @@
 				)
 			)), ci);
 			zr = temp_zr;
+
+			zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi));
 
 		Block_EndLoop_SSE2_FP32();
 	}
@@ -1103,6 +1101,8 @@
 				)
 			)), ci);
 			zr = temp_zr;
+
+			zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi));
 		
 		Block_EndLoop_SSE2_FP32();
 	}
@@ -1211,6 +1211,8 @@
 				)
 			)), ci);
 			zr = temp_zr;
+
+			zs = _mm_add_ps(_mm_mul_ps(zr, zr), _mm_mul_ps(zi, zi));
 
 		Block_EndLoop_SSE2_FP32();
 	}

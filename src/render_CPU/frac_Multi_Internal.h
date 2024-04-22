@@ -8,16 +8,19 @@
 #ifndef FRAC_MULTI_INTERNAL_H
 #define FRAC_MULTI_INTERNAL_H
 
-#include "Common_Def.h"
-#include "Program_Def.h"
-#include "copyBuffer.h"
-
-#include "fractal.h"
-#include "render.h"
+#include "../Common_Def.h"
+#include "../Program_Def.h"
+#include "../copyBuffer.h"
+#include "../fractal.h"
+#include "../render.h"
 
 /* Rendering Modes */
+
 	#define ENABLE_SSE2_RENDERING
-	// #define ENABLE_AVX_RENDERING
+	
+	#define ENABLE_AVX_RENDERING
+
+	// Development for AVX512F will be held off for a bit as I don't have any CPU's to test it on. Although I have heard Intel has a CPU emulator that I could use to test AVX512F
 	// #define ENABLE_AVX512F_RENDERING
 
 const uint64_t factorialLUT[] = {
