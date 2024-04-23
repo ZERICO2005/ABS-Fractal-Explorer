@@ -6,11 +6,10 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#include "Common_Def.h"
-#include "Program_Def.h"
+#include "display_GUI_Internal.h"
 
 #include "display_GUI.h"
-#include "temp_global_render.h"
+#include "../temp_global_render.h"
 
 #include <SDL.h>
 // #include <opencv2/opencv.hpp>
@@ -19,10 +18,10 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
-#include "displayInfo.h"
+#include "../displayInfo.h"
 
-#include "render.h"
-#include "fractal_video.h"
+#include "../render.h"
+#include "../fractal_video.h"
 
 // #include "copyBuffer.h"
 // #include "fractal.h"

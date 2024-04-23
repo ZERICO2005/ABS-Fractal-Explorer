@@ -11,7 +11,7 @@
 #include "user_data.h"
 
 /* Headers containing enums for default values */
-	#include "display_GUI.h"
+	#include "menu_Interface/display_GUI.h"
 	#include "render.h"
 	#include "displayInfo.h"
 

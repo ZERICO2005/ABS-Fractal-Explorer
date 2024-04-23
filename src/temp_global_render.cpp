@@ -32,21 +32,21 @@
 
 #include "user_data.h"
 
-#include "display_GUI.h"
+#include "menu_Interface/display_GUI.h"
 
 #include "framePacer.hpp"
 
 Frame_Pacer GUI_Frame_Pacer;
 
 /* Resolution */
-	// #define RESX_Default 800
-	// #define RESY_Default 600
-	// #define RESX_Minimum 400
-	// #define RESY_Minimum 320
-	// #define RESX_Maximum 8192
-	// #define RESY_Maximum 4608
-	// #define RESX_Margin 16
-	// #define RESY_Margin 16
+	// constexpr dim32_t RESX_Default = 800;
+	// constexpr dim32_t RESY_Default = 600;
+	// constexpr dim32_t RESX_Minimum = 400;
+	// constexpr dim32_t RESY_Minimum = 320;
+	// constexpr dim32_t RESX_Maximum = 8192;
+	// constexpr dim32_t RESY_Maximum = 4608;
+	// constexpr dim32_t RESX_Margin = 16;
+	// constexpr dim32_t RESY_Margin = 16;
 
 /* Screenshots */
 

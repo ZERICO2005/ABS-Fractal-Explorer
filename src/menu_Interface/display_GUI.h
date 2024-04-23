@@ -9,9 +9,6 @@
 #ifndef DISPLAY_GUI_H
 #define DISPLAY_GUI_H
 
-#include "Common_Def.h"
-#include "Program_Def.h"
-#include "user_data.h"
 #include "imgui.h"
 
 // struct Display_GUI {
@@ -21,6 +18,9 @@
 // }; typedef struct Display_GUI Display_GUI;
 
 int render_IMGUI();
+
+struct User_Configuration_Data;
+
 void refresh_IMGUI(User_Configuration_Data& config);
 
 namespace Display_GUI {

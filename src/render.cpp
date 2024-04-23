@@ -30,10 +30,8 @@
 #include "programData.h"
 #include "user_data.h"
 
-#include "display_GUI.h"
+#include "menu_Interface/display_GUI.h"
 #include "displayInfo.h"
-
-
 
 constexpr uint8_t color_square_divider = 2; // 5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 

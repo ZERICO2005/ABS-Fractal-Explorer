@@ -12,7 +12,7 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 
-#include "display_GUI.h"
+#include "menu_Interface/display_GUI.h"
 #include "displayInfo.h"
 
 #include <SDL_keycode.h>
