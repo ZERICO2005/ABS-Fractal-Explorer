@@ -20,6 +20,8 @@
 
 #include "render_GPU/fracCL.h"
 
+#include "render_Configuration.hpp"
+
 TimerBox fracTime;
 ABS_Mandelbrot fracData;
 Render_Data primaryRender;
@@ -29,23 +31,6 @@ ImageBuffer* previewBuf = nullptr;
 
 void get_GPU_Hardware_Hash(uint64_t& hash) { 
 	//calculate_GPU_Hardware_Hash(hash);
-}
-
-Rendering_Configuration::Rendering_Preset validate_Rendering_Preset(
-	Rendering_Configuration::Rendering_Preset render_preset
-) {
-	using namespace Rendering_Configuration;
-	Rendering_Preset default_Rendering_Preset = Rendering_Configuration::Render_Preset_CPU_Generic_Float64;
-	bool repeatLoop = false;
-	while (repeatLoop == true) {
-		switch(render_preset) {
-			default:
-				printWarning("Unknown Rendering Preset: %d", render_preset);
-				return default_Rendering_Preset;
-		}
-		
-	};
-	return default_Rendering_Preset;
 }
 
 int setup_fracExp(int argc, char* argv[]) {

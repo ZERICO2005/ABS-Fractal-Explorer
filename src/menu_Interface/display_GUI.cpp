@@ -23,6 +23,8 @@
 #include "../render.h"
 #include "../fractal_video.h"
 
+#include "../render_Configuration.hpp"
+
 // #include "copyBuffer.h"
 // #include "fractal.h"
 // #include "keybind.h"
@@ -795,7 +797,7 @@ void Menu_Rendering() {
 		ImGui::NewLine();
 	}
 	ImGui::SeparatorText("Rendering Configuration"); {
-		static int_enum Combo_Rendering_Precision = Rendering_Configuration::Precision_Automatic;
+		static int_enum Combo_Rendering_Precision = Rendering_Configuration::Render_Precision_Automatic;
 		ImGui::Text("Rendering Precision (Unimplemented):");
 		ImGui::Combo("##renderingPrecision", &Combo_Rendering_Precision,
 			Rendering_Configuration::Rendering_Precision_Text,
