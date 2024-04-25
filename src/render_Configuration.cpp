@@ -34,7 +34,6 @@ using namespace Rendering_Configuration;
 		) {
 			Render_Precision = Render_Precision_Automatic;
 			Render_Method = Render_Method_Automatic;
-			Render_Preset = Render_Preset_Automatic;
 
 			set_GPU_Configuration(
 				enable_GPU_Float16,
@@ -173,7 +172,46 @@ using namespace Rendering_Configuration;
 					render_precision,
 					render_method
 			);
+			if (render_preset == Render_Preset_Unknown) { return false; }
 			return validate_Rendering_Preset(render_preset);
+		}
+
+		bool Render_Configurator::validate_Rendering_Precision(
+			Rendering_Precision render_precision
+		) const {
+			switch (render_precision) {
+				case Render_Precision_Float16:
+					return (GPU_Float16_Enabled || CPU_Float16_Enabled || CPU_AVX512_FP16_Enabled)
+						? true : false;
+				case Render_Precision_Float32:
+					return true; // Always supported
+				case Render_Precision_Float64:
+					return true; // Always supported
+				case Render_Precision_Float80:
+					return (CPU_Float80_Enabled) ? true : false;
+				case Render_Precision_Float128:
+					return (CPU_Float128_Enabled) ? true : false;
+				default:
+					return false;
+			}
+		}
+		bool Render_Configurator::validate_Rendering_Method(
+			Rendering_Method render_method
+		) const {
+			switch (render_method) {
+				case Render_Method_GPU:
+					return (GPU_Float16_Enabled || GPU_Float32_Enabled || GPU_Float64_Enabled) ? true : false;
+				case Render_Method_CPU_Generic:
+					return true; // Always supported
+				case Render_Method_CPU_SSE2:
+					return (CPU_SSE2_Enabled) ? true : false;
+				case Render_Method_CPU_AVX:
+					return (CPU_AVX_Enabled) ? true : false;
+				case Render_Method_CPU_AVX512:
+					return (CPU_AVX512_F_Enabled) ? true : false;
+				default:
+					return false;
+			}
 		}
 
 	/* Calculation */
@@ -183,10 +221,11 @@ using namespace Rendering_Configuration;
 			Rendering_Precision& output_precision,
 			Rendering_Method& output_method
 		) const {
+			output_precision = input_precision;
 			bool repeatLoop = false;
 			do {
 				repeatLoop = false;
-				switch (input_precision) {
+				switch (output_precision) {
 					case Render_Precision_Automatic: {
 						resolve_Automatic_Render_Precision(output_precision);
 						repeatLoop = true;
@@ -231,23 +270,115 @@ using namespace Rendering_Configuration;
 			output_method = Render_Method_Unknown;
 		}
 
+		void Render_Configurator::calculate_Rendering_Precision_and_Method(
+			const Rendering_Precision input_precision,
+			const Rendering_Method input_method,
+			Rendering_Precision& output_precision,
+			Rendering_Method& output_method
+		) const {
+			if (
+				(input_method == Render_Method_Automatic) ||
+				(validate_Rendering_Method(input_method) == false)
+			 ) {
+				calculate_Rendering_Precision_and_Method(
+					input_precision,
+					output_precision,
+					output_method
+				);
+				return;
+			}
+			if (
+				validate_Rendering_Precision_and_Method(input_precision, input_method) == true
+			) { return; }
+			// Rendering_Precision current_precision = input_precision;
+			// // If render_precision and render_method failed validation
+			// bool repeatLoop = false;
+			// do {
+			// 	// This loop will try to find the closest precision that uses a given method
+			// 	repeatLoop = false;
+			// 	calculate_Rendering_Precision_and_Method(
+			// 		current_precision,
+			// 		output_precision,
+			// 		output_method
+			// 	);
+			// 	switch (output_precision) {
+			// 		case Render_Precision_Automatic:
+			// 			continue; // Gives up
+			// 		case Render_Precision_Float16: {
+			// 			if (output_method == input_method) { return; }
+			// 			current_precision = Render_Precision_Float32;
+			// 			repeatLoop = true;
+			// 			continue;
+			// 		}
+			// 		case Render_Precision_Float32:
+			// 			continue; // Gives up
+			// 		case Render_Precision_Float64:
+			// 			continue; // Gives up
+			// 		case Render_Precision_Float80: {
+			// 			if (output_method == input_method) { return; }
+			// 			current_precision = Render_Precision_Float64;
+			// 			repeatLoop = true;
+			// 			continue;
+			// 		}
+			// 		case Render_Precision_Float128: {
+			// 			if (output_method == input_method) { return; }
+			// 			current_precision = Render_Precision_Float80;
+			// 			repeatLoop = true;
+			// 			continue;
+			// 		}
+			// 	}
+			// } while (repeatLoop == true);
+
+			// Proitizes searching the most common precisions first
+			constexpr Rendering_Precision Render_Precision_Attempt_Order[] = {
+				Render_Precision_Float64,
+				Render_Precision_Float32,
+				Render_Precision_Float80,
+				Render_Precision_Float128,
+				Render_Precision_Float16
+			};
+			// Attempts to find any precision that supports the render_method
+			for (size_t i = 0; i < sizeof(Render_Precision_Attempt_Order) / sizeof(Rendering_Precision); i++) {
+				if (validate_Rendering_Precision_and_Method(Render_Precision_Attempt_Order[i], input_method)) {
+					output_precision = Render_Precision_Attempt_Order[i];
+					output_method = input_method;
+					return; // Match was found
+				}
+			}
+			// If no results are found
+			calculate_Rendering_Precision_and_Method(
+				input_precision,
+				output_precision,
+				output_method
+			);
+		}
+
 	/* Read Configuartion */
 
-		Rendering_Preset Render_Configurator::get_Render_Preset() const {
-			return Render_Preset;
-		}
 		Rendering_Precision Render_Configurator::get_Render_Precision() const {
 			return Render_Precision;
 		}
 		Rendering_Method Render_Configurator::get_Render_Method() const {
 			return Render_Method;
 		}
-
+		Rendering_Preset Render_Configurator::get_Render_Preset() const {
+			return get_Rendering_Preset_from_Precision_and_Method(
+				Render_Precision, Render_Method
+			);
+		}
+		
+		bool Render_Configurator::current_Render_Method_GPU() const {
+			return (Render_Method == Render_Method_GPU) ? true : false;
+		}
+		bool Render_Configurator::current_Render_Method_CPU() const {
+			return (Render_Method != Render_Method_GPU) ? true : false;
+		}
+		
 		void Render_Configurator::print_Rendering_Configuration() const {
 			printf(
-				"\nRendering Configuration: %s %s",
-				Rendering_Method_Text[Render_Method],
-				Rendering_Precision_Text[Render_Precision]
+				"\nRendering Configuration: %s | %s",
+				Rendering_Precision_Text[Render_Precision],
+				Rendering_Method_Text[Render_Method]
 			);
 		}
 
@@ -283,6 +414,19 @@ using namespace Rendering_Configuration;
 			const Rendering_Precision render_precision,
 			const Rendering_Method render_method
 		) {
+			if (validate_Rendering_Precision_and_Method(
+					render_precision, render_method
+			)) {
+				if (
+					(Render_Precision == render_precision) &&
+					(Render_Method == render_method)
+				) { return false; }
+				Render_Precision = render_precision;
+				Render_Method = render_method;
+				return true;
+			}
+
+			// If render_precision and render_method failed validation
 			Rendering_Precision temp_precision = render_precision;
 			Rendering_Method temp_method = render_method;
 			calculate_Rendering_Precision_and_Method(
@@ -311,9 +455,30 @@ using namespace Rendering_Configuration;
 		bool Render_Configurator::suggest_Render_Method(
 			const Rendering_Method render_method
 		) {
-			return suggest_Render_Precision_and_Method(
-				Render_Precision, render_method
+			if (validate_Rendering_Precision_and_Method(
+					Render_Precision, render_method
+			)) {
+				if (Render_Method == render_method) { return false; }
+				Render_Method = render_method;
+				return true;
+			}
+
+			// If Render_Precision and render_method failed validation
+			Rendering_Precision temp_precision = Render_Precision;
+			Rendering_Method temp_method = render_method;
+			calculate_Rendering_Precision_and_Method(
+				temp_precision,
+				temp_method,
+				temp_precision,
+				temp_method
 			);
+			bool changes_detected = (
+				(temp_precision != Render_Precision) &&
+				(temp_method != Render_Method)
+			) ? true : false;
+			Render_Precision = temp_precision;
+			Render_Method = temp_method;
+			return changes_detected;
 		}
 
 		bool Render_Configurator::suggest_Render_Preset(

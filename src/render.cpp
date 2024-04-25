@@ -1282,6 +1282,12 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	init_config_data();
 	const User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
 
+	Render_Config.reset_Render_Configurator(
+		/* Float16 */ false,
+		/* Float32 */ true,
+		/* Float64 */ false
+	);
+
 	//SDL_Init(SDL_INIT_VIDEO);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
@@ -1315,8 +1321,8 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			);
 	}
 	//printFlush("\nNew: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
-	printf("\n\tOperating System: %s",SDL_GetPlatform());
-	printf("\n\tSystem RAM: %" PRId32 "MB",SDL_GetSystemRAM());
+	printf("\n\tOperating System: %s", SDL_GetPlatform());
+	printf("\n\tSystem RAM: %" PRId32 "MB", SDL_GetSystemRAM());
 	// Allocate Buffers
 	//initBufferBox(&Master,NULL,initResX,initResY,IMAGE_BUFFER_CHANNELS);
 	Master = ImageBuffer(initResX,initResY,IMAGE_BUFFER_CHANNELS);

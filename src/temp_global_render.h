@@ -36,6 +36,8 @@
 
 #include "framePacer.hpp"
 
+#include "render_Configuration.hpp"
+
 extern Frame_Pacer GUI_Frame_Pacer;
 
 /* Resolution */
@@ -83,6 +85,8 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 	#define Use_OpenCV_Scaler
 	
+	extern Render_Configurator Render_Config;
+
 	extern SDL_Texture* scale_tex;
 	extern SDL_Surface* scale_surface;
 	

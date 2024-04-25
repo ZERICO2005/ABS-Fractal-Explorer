@@ -79,6 +79,8 @@ Frame_Pacer GUI_Frame_Pacer;
 /* Rendering */
 
 	//#define Use_OpenCV_Scaler
+
+	Render_Configurator Render_Config;
 	
 	SDL_Texture* scale_tex = nullptr;
 	SDL_Surface* scale_surface = nullptr;

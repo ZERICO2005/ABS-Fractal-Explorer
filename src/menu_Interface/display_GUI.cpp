@@ -99,6 +99,11 @@ void refresh_IMGUI(User_Configuration_Data& config) {
 	set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config.GUI_Settings.GUI_Theme);
 }
 
+ImVec4 get_Theme_Highlight_Color() {
+	bool useLightThemeColors = (config_data.GUI_Settings.GUI_Theme == Display_GUI::IMGUI_Theme_Light) ? true : false;
+	return useLightThemeColors ? ImVec4{1.0,0.0,0.0,1.0} : ImVec4{0.0,1.0,1.0,1.0};
+}
+
 int render_IMGUI() {
 	if (window == nullptr) {
 		printError("render_IMGUI(): window == nullptr");
@@ -796,25 +801,109 @@ void Menu_Rendering() {
 		ImGui::Text("Not Implemented");
 		ImGui::NewLine();
 	}
+
 	ImGui::SeparatorText("Rendering Configuration"); {
-		static int_enum Combo_Rendering_Precision = Rendering_Configuration::Render_Precision_Automatic;
-		ImGui::Text("Rendering Precision (Unimplemented):");
-		ImGui::Combo("##renderingPrecision", &Combo_Rendering_Precision,
-			Rendering_Configuration::Rendering_Precision_Text,
-			ARRAY_LENGTH(Rendering_Configuration::Rendering_Precision_Text)
+		using namespace Rendering_Configuration;
+
+		int_enum Combo_Rendering_Precision = Render_Config.get_Render_Precision();
+		int_enum Combo_Rendering_Method = Render_Config.get_Render_Method();
+		int_enum Combo_Rendering_Preset = Render_Config.get_Render_Preset();
+
+		constexpr nano64_t Rendering_Precision_Error_Message_Duration = SECONDS_TO_NANO(2.5);
+		constexpr nano64_t Rendering_Method_Error_Message_Duration = SECONDS_TO_NANO(2.5);
+		constexpr nano64_t Rendering_Selection_Error_Message_Duration = SECONDS_TO_NANO(2.5);
+		static std::string message_Rendering_Precision = "";
+		static std::string message_Rendering_Method = "";
+		static std::string message_Rendering_Preset = "";
+		static nano64_t timer_Rendering_Precision = 0;
+		static nano64_t timer_Rendering_Method = 0;
+		static nano64_t timer_Rendering_Preset = 0;
+
+		ImGui::TextWrapped(
+			"Note: The closest available rendering configuration will be used if the entered rendering configuration is unsupported/unavailable."
 		);
-		static int_enum Combo_Rendering_Method = Rendering_Configuration::Render_Method_Automatic;
-		ImGui::Text("Rendering Method (Unimplemented):");
-		ImGui::Combo("##renderingMethod", &Combo_Rendering_Method,
-			Rendering_Configuration::Rendering_Method_Text,
-			ARRAY_LENGTH(Rendering_Configuration::Rendering_Method_Text)
+		ImGui::NewLine();
+		ImGui::Text("Rendering Precision:"); ImGui::SameLine(); ImGui::TextColored(
+			get_Theme_Highlight_Color(), "%s",
+			Rendering_Precision_Text[Render_Config.get_Render_Precision()]
 		);
-		static int_enum Combo_Rendering_Preset = Rendering_Configuration::Render_Preset_Automatic;
-		ImGui::Text("Rendering Preset (Unimplemented):");
-		ImGui::Combo("##renderingPreset", &Combo_Rendering_Preset,
-			Rendering_Configuration::Rendering_Preset_Text,
-			ARRAY_LENGTH(Rendering_Configuration::Rendering_Preset_Text)
+		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Precision) {
+			ImGui::Button(message_Rendering_Precision.c_str());
+		} else {
+			if (ImGui::Combo("##renderingPrecision", &Combo_Rendering_Precision,
+				Rendering_Precision_Text,
+				ARRAY_LENGTH(Rendering_Precision_Text)
+			)) {
+				if (
+					(Render_Config.validate_Rendering_Precision(
+						(Rendering_Precision)Combo_Rendering_Precision
+					) == false) && (Combo_Rendering_Precision != Render_Precision_Automatic)
+				) {
+					timer_Rendering_Precision = getNanoTime();
+					message_Rendering_Precision = "[";
+					message_Rendering_Precision += Rendering_Precision_Name[Combo_Rendering_Precision];
+					message_Rendering_Precision += "] is not available on your hardware";
+				}
+				Render_Config.suggest_Render_Precision(
+					(Rendering_Precision)Combo_Rendering_Precision
+				);
+			}
+		}
+		
+		ImGui::Text("Rendering Method:"); ImGui::SameLine(); ImGui::TextColored(
+			get_Theme_Highlight_Color(), "%s",
+			Rendering_Method_Text[Render_Config.get_Render_Method()]
 		);
+		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Method) {
+			ImGui::Button(message_Rendering_Method.c_str());
+		} else {
+			if (ImGui::Combo("##renderingMethod", &Combo_Rendering_Method,
+				Rendering_Method_Text,
+				ARRAY_LENGTH(Rendering_Method_Text)
+			)) {
+				if (
+					(Render_Config.validate_Rendering_Method(
+						(Rendering_Method)Combo_Rendering_Method
+					) == false) && (Combo_Rendering_Method != Render_Method_Automatic)
+				) {
+					timer_Rendering_Method = getNanoTime();
+					message_Rendering_Method = "[";
+					message_Rendering_Method += Rendering_Method_Name[Combo_Rendering_Method];
+					message_Rendering_Method += "] is not available on your hardware";
+				}
+				Render_Config.suggest_Render_Method(
+					(Rendering_Method)Combo_Rendering_Method
+				);
+			}
+		}
+		
+		ImGui::Text("Rendering Preset:"); ImGui::SameLine(); ImGui::TextColored(
+			get_Theme_Highlight_Color(), "%s",
+			Rendering_Preset_Text[Render_Config.get_Render_Preset()]
+		);
+		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Preset) {
+			ImGui::Button(message_Rendering_Preset.c_str());
+		} else {
+			if (ImGui::Combo("##renderingPreset", &Combo_Rendering_Preset,
+				Rendering_Preset_Text,
+				ARRAY_LENGTH(Rendering_Preset_Text)
+			)) {
+				if (
+					(Render_Config.validate_Rendering_Preset(
+						(Rendering_Preset)Combo_Rendering_Preset
+					) == false) && (Combo_Rendering_Preset != Render_Preset_Automatic)
+				) {
+					timer_Rendering_Preset = getNanoTime();
+					message_Rendering_Preset = "[";
+					message_Rendering_Preset += Rendering_Preset_Name[Combo_Rendering_Preset];
+					message_Rendering_Preset += "] is not available on your hardware";
+				}
+				Render_Config.suggest_Render_Preset(
+					(Rendering_Preset)Combo_Rendering_Preset
+				);
+			}
+		}
+
 		ImGui::NewLine();
 	}
 	
@@ -1522,8 +1611,7 @@ void Menu_Keybinds() {
 			}
 		//}
 
-		bool useLightThemeColors = (config_data.GUI_Settings.GUI_Theme == Display_GUI::IMGUI_Theme_Light) ? true : false;
-		ImVec4 bind_select_color = useLightThemeColors ? ImVec4{1.0,0.0,0.0,1.0} : ImVec4{0.0,1.0,1.0,1.0};
+		ImVec4 bind_select_color = get_Theme_Highlight_Color();
 
 		if (Combo_function_Select != Key_Function::NONE && keyClick != SDL_SCANCODE_UNKNOWN) {
 			//ImGui::Text("Bind key %s to function %s",Scancode_Name[keyClick],Key_Function::Key_Function_Text[Combo_functionSelect]);
