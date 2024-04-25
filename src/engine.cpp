@@ -29,6 +29,81 @@ Render_Data secondaryRender;
 ImageBuffer* currentBuf = nullptr;
 ImageBuffer* previewBuf = nullptr;
 
+static Render_Configurator Engine_Config;
+static Render_Configurator Super_Engine_Config;
+
+void calculate_Render_Config(
+	Render_Configurator& Config,
+	const Render_Data& ren
+) {
+	return;
+	/*
+	**	TEMPORARY CODE DISABLING!
+	**	TEMPORARY CODE DISABLING!
+	**	TEMPORARY CODE DISABLING!
+	**	TEMPORARY CODE DISABLING!
+	**	TEMPORARY CODE DISABLING!
+	**	TEMPORARY CODE DISABLING!
+	*/
+	using namespace Rendering_Configuration;
+	Rendering_Precision render_precision = Render_Precision_Automatic;
+	Rendering_Method render_method = Render_Method_Automatic;
+	if (ren.rendering_method == Legacy_Rendering_Method::GPU_Rendering) {
+		switch(ren.GPU_Precision) {
+			case 16:
+				render_precision = Render_Precision_Float16;
+				break;
+			case 32:
+			default:
+				render_precision = Render_Precision_Float32;
+				break;
+			case 64:
+				render_precision = Render_Precision_Float64;
+				break;
+		}
+		render_method = Render_Method_GPU;
+	} else {
+
+		switch(ren.CPU_Precision) {
+			case 16:
+				render_precision = Render_Precision_Float16;
+				break;
+			case 32:
+				render_precision = Render_Precision_Float32;
+				break;
+			case 64:
+			default:
+				render_precision = Render_Precision_Float64;
+				break;
+			case 80:
+				render_precision = Render_Precision_Float80;
+				break;
+			case 128:
+				render_precision = Render_Precision_Float128;
+				break;
+		}
+		if (render_precision == Render_Precision_Float32 || render_precision == Render_Precision_Float64) {
+			if (Config.validate_Rendering_Method(Render_Method_CPU_AVX512)) {
+				render_method = Render_Method_CPU_AVX512;
+			} else if (Config.validate_Rendering_Method(Render_Method_CPU_AVX)) {
+				render_method = Render_Method_CPU_AVX;
+			} else if (Config.validate_Rendering_Method(Render_Method_CPU_SSE2)) {
+				render_method = Render_Method_CPU_SSE2;
+			} else {
+				render_method = Render_Method_CPU_Generic;
+			}
+		} else {
+			render_method = Render_Method_CPU_Generic;
+		}
+	}
+	Config.calculate_Rendering_Precision_and_Method(
+		render_precision, render_method, render_precision, render_method
+	);
+	Config.suggest_Render_Precision_and_Method(
+		render_precision, render_method
+	);
+}
+
 void get_GPU_Hardware_Hash(uint64_t& hash) { 
 	//calculate_GPU_Hardware_Hash(hash);
 }
@@ -54,6 +129,9 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 	static ABS_Mandelbrot image_fractal_data = {0};
 	static BufferBox image_box = {0};
 	if (receive_Image_Render(&image_fractal_data,&image_render_data,&image_file_format,&image_quality)) {
+		Super_Engine_Config.suggest_Render_Preset(
+			(Rendering_Configuration::Rendering_Preset)image_render_data.render_preset
+		);
 		memset(&image_box,0,sizeof(BufferBox));
 		image_box.resX = image_render_data.resX;
 		image_box.resY = image_render_data.resY;
@@ -73,7 +151,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			printError("Unable to allocate memory for super screenshot");
 			return -1;
 		}
-		memset(image_box.vram,0,image_box_size);
+		memset(image_box.vram, 0, image_box_size);
 
 		printf("\n\nRendering Super Screenshot:");
 		printf("\n\t%ux%u %u samples",image_box.resX,image_box.resY,image_render_data.sample * image_render_data.sample);
@@ -89,11 +167,16 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		printf("\n\tClick \"Abort Rendering\" (or use task manager) to cancel.");
 		fflush(stdout);
 		nano64_t image_stopwatch = getNanoTime();
+		calculate_Render_Config(
+			Super_Engine_Config,
+			image_render_data
+		);
+		
 		switch(image_render_data.rendering_method) {
 			case Legacy_Rendering_Method::CPU_Rendering:
 					renderCPU_ABS_Mandelbrot(
 						&image_box, image_render_data, image_fractal_data,
-						Rendering_Configuration::Render_Preset_Automatic,
+						Super_Engine_Config,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
 				break;
@@ -121,7 +204,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			curTime /= 1000;
 			char id_number[64]; memset(id_number,'\0',sizeof(id_number));
 			snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.formula);
-			const char* fractal_name = (image_fractal_data.polarMandelbrot == true) ? FractalTypeFileText[Fractal_ABS_Mandelbrot] : FractalTypeFileText[Fractal_Polar_Mandelbrot];
+			const char* fractal_name = (image_fractal_data.polarMandelbrot == true) ? FractalTypeFileText[Fractal_Polar_Mandelbrot] : FractalTypeFileText[Fractal_ABS_Mandelbrot];
 			size_t size = (size_t)snprintf(nullptr, 0, "Super_%s%s_(%" PRId64 ")", fractal_name, id_number,curTime);
 			size++;
 			char* name = (char*)calloc(size,sizeof(char));
@@ -158,12 +241,15 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 	if (ABORT_RENDERING == false) {
 		//ABS_Mandelbrot& FRAC = fracData.type.abs_mandelbrot;
 		//printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %" PRIu64,FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
-
+		calculate_Render_Config(
+			Engine_Config,
+			primaryRender
+		);
 		switch(primaryRender.rendering_method) {
 			case Legacy_Rendering_Method::CPU_Rendering:
 					renderCPU_ABS_Mandelbrot(
 						&renderBox, primaryRender, fracData,
-						Rendering_Configuration::Render_Preset_Automatic,
+						Engine_Config,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
 				break;
@@ -210,6 +296,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 		/* Update things */
 		read_Parameters(&fracData,&primaryRender,&secondaryRender);
 		//render_update_level = read_Update_Level();
+
 		if (render_update_timecode != read_Update_Timecode() && ABORT_RENDERING == false) {
 			render_update_timecode = read_Update_Timecode();
 			if (currentBuf != nullptr) {
@@ -220,6 +307,9 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 					sizeBuf.channels
 				);
 			}
+			Engine_Config.suggest_Render_Preset(
+				(Rendering_Configuration::Rendering_Preset)primaryRender.render_preset
+			);
 			//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
 			render_Engine(ABORT_RENDERING);
 			//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);
@@ -261,6 +351,19 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	clear_Cycle_Buffers();
 	reset_Image_Render();
 	write_Engine_Ready(true);
+
+	Engine_Config.reset_Render_Configurator(
+		/* GPU Float16 */ false,
+		/* GPU Float32 */ true,
+		/* GPU Float64 */ false
+	);
+	Engine_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
+	Super_Engine_Config.reset_Render_Configurator(
+		/* GPU Float16 */ false,
+		/* GPU Float32 */ true,
+		/* GPU Float64 */ false
+	);
+	Super_Engine_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
 	while (read_Render_Ready() == false) {
 		if (QUIT_FLAG == true) {
 			printWarning("Engine thread exiting initialization: QUIT_FLAG == true");

@@ -25,17 +25,33 @@
 	// #define ENABLE_AVX512_FP16_RENDERING
 	// #define ENABLE_AVX512_BF16_RENDERING
 
-const uint64_t factorialLUT[] = {
-	/*        0! */ 1,
-	/*  1! -  4! */ 1, 2, 6, 24,
-	/*  5! -  8! */ 120, 720,5040,40320,
-	/*  9! - 12! */ 362880, 3628800,39916800,479001600,
-	/* 13! - 16! */ 6227020800, 87178291200,1307674368000, 20922789888000,
-	/* 17! - 20! */ 355687428096000, 6402373705728000, 121645100408832000, 2432902008176640000
-};
+/* Spacing */
 
-#define nPr(n,r) (factorialLUT[(n)] / (factorialLUT[(n) - (r)]))
-#define nCr(n,r) (factorialLUT[(n)] / (factorialLUT[(r)] * factorialLUT[(n) - (r)]))
+	constexpr size_t Spacing_Generic = 1;
+
+	constexpr size_t Spacing_SSE2_Float32 = 4;
+	constexpr size_t Spacing_SSE2_Float64 = 2;
+
+	constexpr size_t Spacing_AVX_Float32 = 8;
+	constexpr size_t Spacing_AVX_Float64 = 4;
+
+	constexpr size_t Spacing_AVX512_F_Float32 = 16;
+	constexpr size_t Spacing_AVX512_F_Float64 = 8;
+	constexpr size_t Spacing_AVX512_FP16_Float16 = 32;
+	
+/* Factorials */
+
+	const uint64_t factorialLUT[] = {
+		/*        0! */ 1,
+		/*  1! -  4! */ 1, 2, 6, 24,
+		/*  5! -  8! */ 120, 720,5040,40320,
+		/*  9! - 12! */ 362880, 3628800,39916800,479001600,
+		/* 13! - 16! */ 6227020800, 87178291200,1307674368000, 20922789888000,
+		/* 17! - 20! */ 355687428096000, 6402373705728000, 121645100408832000, 2432902008176640000
+	};
+
+	#define nPr(n,r) (factorialLUT[(n)] / (factorialLUT[(n) - (r)]))
+	#define nCr(n,r) (factorialLUT[(n)] / (factorialLUT[(r)] * factorialLUT[(n) - (r)]))
 
 #define FractalParameters(fpX, fpColor) uint8_t* data, const PreCalc_Param<fpX, fpColor> param, size_t p0, const size_t p1, std::atomic<bool>& ABORT_RENDERING
 

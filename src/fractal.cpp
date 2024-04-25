@@ -180,6 +180,26 @@ void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type) {
 	}
 }
 
+Mandelbrot_Type get_Mandelbrot_Type(const ABS_Mandelbrot& param) {
+	if (param.polarMandelbrot == true) {
+		return Mandelbrot_Polar;
+	}
+	switch(param.power) {
+		case 2:
+			return Mandelbrot_Quadratic;
+		case 3:
+			return Mandelbrot_Cubic;
+		case 4:
+			return Mandelbrot_Quartic;
+		case 5:
+			return Mandelbrot_Quintic;
+		case 6:
+			return Mandelbrot_Sextic;
+		default:
+			return Mandelbrot_Unknown;
+	}
+}
+
 void setMaxItr(ABS_Mandelbrot* frac, fp64 val) {
 	if (frac == nullptr) { return; }
 	valueClamp(val,log2(16.0),log2(16777216.0));

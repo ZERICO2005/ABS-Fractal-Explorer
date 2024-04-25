@@ -131,6 +131,8 @@ struct ABS_Mandelbrot {
 
 void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type);
 
+Mandelbrot_Type get_Mandelbrot_Type(const ABS_Mandelbrot& param);
+
 /* Cordinates */
 
 template <typename fpX>

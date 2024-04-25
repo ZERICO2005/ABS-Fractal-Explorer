@@ -17,9 +17,11 @@ struct BufferBox;
 struct Render_Data;
 struct ABS_Mandelbrot;
 
+class Render_Configurator;
+
 void renderCPU_ABS_Mandelbrot(
 	BufferBox* buf, Render_Data ren, ABS_Mandelbrot param,
-	int_enum render_preset,
+	const Render_Configurator& CPU_Render_Config,
 	std::atomic<bool>& ABORT_RENDERING, uint32_t threadCount = 1
 );
 

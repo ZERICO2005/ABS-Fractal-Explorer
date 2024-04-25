@@ -560,6 +560,13 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 	) {
 		Update_Level(update_level, Change_Level::Method_of_Rendering);
 	}
+	if (
+		(ren->render_precision != ren0.render_precision) ||
+		(ren->render_method != ren0.render_method) ||
+		(ren->render_preset != ren0.render_preset)
+	) {
+		Update_Level(update_level, Change_Level::Method_of_Rendering);
+	}
 	if (ren->sample != ren0.sample) {
 		Update_Level(update_level, Change_Level::Super_Sample);
 	}
@@ -920,34 +927,64 @@ int_enum updateFractalParameters() {
 	/* Rendering Method */
 	{
 		using namespace Legacy_Rendering_Method;
-		if (funcTimeDelay(fp32CpuRendering,0.2)) {
+		using namespace Rendering_Configuration;
+		if (funcTimeDelay(fp32CpuRendering, 0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 32;
+			if (Render_Config.suggest_Render_Precision(Render_Precision_Float32)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
 		}
-		if (funcTimeDelay(fp64CpuRendering,0.2)) {
+		if (funcTimeDelay(fp64CpuRendering, 0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 64;
+			if (Render_Config.suggest_Render_Precision(Render_Precision_Float64)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
 		}
-		if (funcTimeDelay(fp80CpuRendering,0.2)) {
+		if (funcTimeDelay(fp80CpuRendering, 0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 80;
+			if (Render_Config.suggest_Render_Precision(Render_Precision_Float80)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
 		}
-		if (funcTimeDelay(fp128CpuRendering,0.2)) {
+		if (funcTimeDelay(fp128CpuRendering, 0.2)) {
 			primaryRenderData.rendering_method = CPU_Rendering;
 			primaryRenderData.CPU_Precision = 128;
+			if (Render_Config.suggest_Render_Precision(Render_Precision_Float128)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
 		}
-		if (funcTimeDelay(fp16GpuRendering,0.2)) {
+		if (funcTimeDelay(fp16GpuRendering, 0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 16;
+			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float16)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
 		}
-		if (funcTimeDelay(fp32GpuRendering,0.2)) {
+		if (funcTimeDelay(fp32GpuRendering, 0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 32;
+			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float32)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
 		}
-		if (funcTimeDelay(fp64GpuRendering,0.2)) {
+		if (funcTimeDelay(fp64GpuRendering, 0.2)) {
 			primaryRenderData.rendering_method = GPU_Rendering;
 			primaryRenderData.GPU_Precision = 64;
+			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float64)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
 		}
+		
+		primaryRenderData.render_precision = Render_Config.get_Render_Precision();
+		primaryRenderData.render_method = Render_Config.get_Render_Method();
+		primaryRenderData.render_preset = Render_Config.get_Render_Preset();
+
+		secondaryRenderData.render_precision = Render_Config.get_Render_Precision();
+		secondaryRenderData.render_method = Render_Config.get_Render_Method();
+		secondaryRenderData.render_preset = Render_Config.get_Render_Preset();
 	}
 	/* Other */
 	FRAC.breakoutValue = pow(2.0,temp_breakoutValue);
@@ -1287,6 +1324,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		/* Float32 */ true,
 		/* Float64 */ false
 	);
+	Render_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
 
 	//SDL_Init(SDL_INIT_VIDEO);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -1869,7 +1907,7 @@ void newFrame() {
 		#endif
 		if (exportFractalBuffer == true) {
 			nano64_t curTime = getNanoTime();
-			const char* fractal_name = (current_Fractal.polarMandelbrot == true) ? FractalTypeFileText[Fractal_ABS_Mandelbrot] : FractalTypeFileText[Fractal_Polar_Mandelbrot];
+			const char* fractal_name = (current_Fractal.polarMandelbrot == true) ? FractalTypeFileText[Fractal_Polar_Mandelbrot] : FractalTypeFileText[Fractal_ABS_Mandelbrot];
 			size_t size = (size_t)snprintf(nullptr, 0, "%s_%" PRIu64, fractal_name, curTime);
 			char* name = (char*)calloc(size + 1,sizeof(char));
 			snprintf(name, size, "%s_%" PRIu64, fractal_name, curTime);
