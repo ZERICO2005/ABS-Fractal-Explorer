@@ -9,10 +9,10 @@
 #include "frac_Multi_Internal.h"
 #include "frac_Multi_AVX512F.h"
 
-#ifdef ENABLE_AVX512F_RENDERING
+#ifdef ENABLE_AVX512_F_RENDERING
 
 #include <immintrin.h>
 
 
 
-#endif /* ENABLE_AVX512F_RENDERING */
+#endif /* ENABLE_AVX512_F_RENDERING */

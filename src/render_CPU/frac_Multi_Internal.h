@@ -20,8 +20,10 @@
 	
 	#define ENABLE_AVX_RENDERING
 
-	// Development for AVX512F will be held off for a bit as I don't have any CPU's to test it on. Although I have heard Intel has a CPU emulator that I could use to test AVX512F
-	// #define ENABLE_AVX512F_RENDERING
+	// Development for AVX512 will be held off for a bit as I don't have any CPU's to test it on. Although I have heard Intel has a CPU emulator that I could use to test AVX512
+	// #define ENABLE_AVX512_F_RENDERING
+	// #define ENABLE_AVX512_FP16_RENDERING
+	// #define ENABLE_AVX512_BF16_RENDERING
 
 const uint64_t factorialLUT[] = {
 	/*        0! */ 1,

@@ -63,6 +63,15 @@ inline fp64 zoomDefault(uint32_t power) {
 	return -log10(getABSFractalMaxRadius((fp64)power) - 0.01);
 }
 
+enum Mandelbrot_Type {
+	Mandelbrot_Unknown   = 0,
+	Mandelbrot_Polar     = 1,
+	Mandelbrot_Quadratic = 2,
+	Mandelbrot_Cubic     = 3,
+	Mandelbrot_Quartic   = 4,
+	Mandelbrot_Quintic   = 5,
+	Mandelbrot_Sextic    = 6
+};
 
 struct ABS_Mandelbrot {
 	/* Parameters */

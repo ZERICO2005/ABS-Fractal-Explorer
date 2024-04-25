@@ -93,6 +93,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			case Legacy_Rendering_Method::CPU_Rendering:
 					renderCPU_ABS_Mandelbrot(
 						&image_box, image_render_data, image_fractal_data,
+						Rendering_Configuration::Render_Preset_Automatic,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
 				break;
@@ -162,6 +163,7 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			case Legacy_Rendering_Method::CPU_Rendering:
 					renderCPU_ABS_Mandelbrot(
 						&renderBox, primaryRender, fracData,
+						Rendering_Configuration::Render_Preset_Automatic,
 						ABORT_RENDERING, primaryRender.CPU_Threads
 					);
 				break;

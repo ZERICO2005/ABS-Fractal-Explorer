@@ -17,6 +17,10 @@ struct BufferBox;
 struct Render_Data;
 struct ABS_Mandelbrot;
 
-void renderCPU_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING, uint32_t threadCount = 1);
+void renderCPU_ABS_Mandelbrot(
+	BufferBox* buf, Render_Data ren, ABS_Mandelbrot param,
+	int_enum render_preset,
+	std::atomic<bool>& ABORT_RENDERING, uint32_t threadCount = 1
+);
 
 #endif /* FRAC_MULTI_H */
