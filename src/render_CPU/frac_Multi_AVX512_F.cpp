@@ -7,7 +7,7 @@
 */
 
 #include "frac_Multi_Internal.h"
-#include "frac_Multi_AVX512F.h"
+#include "frac_Multi_AVX512_F.h"
 
 #ifdef ENABLE_AVX512_F_RENDERING
 

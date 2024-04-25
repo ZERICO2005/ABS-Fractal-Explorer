@@ -14,7 +14,7 @@
 #include "frac_Multi_Generic.hpp"
 #include "frac_Multi_SSE2.h"
 #include "frac_Multi_AVX.h"
-#include "frac_Multi_AVX512F.h"
+#include "frac_Multi_AVX512_F.h"
 
 using Render_Func = void(*)();
 
@@ -298,9 +298,6 @@ void renderCPU_ABS_Mandelbrot(
 		}
 	}
 
-	for (uint32_t t = 0; t < threadCount; t++) {
-		renderThread.at(t).join();
-	}
 	if (ABORT_RENDERING == true) {
 		printFlush("\nAborted %" PRIu32 " threads", threadCount);
 	}
