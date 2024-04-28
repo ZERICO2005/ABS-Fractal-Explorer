@@ -45,63 +45,63 @@ void calculate_Render_Config(
 	**	TEMPORARY CODE DISABLING!
 	**	TEMPORARY CODE DISABLING!
 	*/
-	using namespace Rendering_Configuration;
-	Rendering_Precision render_precision = Render_Precision_Automatic;
-	Rendering_Method render_method = Render_Method_Automatic;
-	if (ren.rendering_method == Legacy_Rendering_Method::GPU_Rendering) {
-		switch(ren.GPU_Precision) {
-			case 16:
-				render_precision = Render_Precision_Float16;
-				break;
-			case 32:
-			default:
-				render_precision = Render_Precision_Float32;
-				break;
-			case 64:
-				render_precision = Render_Precision_Float64;
-				break;
-		}
-		render_method = Render_Method_GPU;
-	} else {
+	// using namespace Rendering_Configuration;
+	// Rendering_Precision render_precision = Render_Precision_Automatic;
+	// Rendering_Method render_method = Render_Method_Automatic;
+	// if (ren.rendering_method == Legacy_Rendering_Method::GPU_Rendering) {
+	// 	switch(ren.GPU_Precision) {
+	// 		case 16:
+	// 			render_precision = Render_Precision_Float16;
+	// 			break;
+	// 		case 32:
+	// 		default:
+	// 			render_precision = Render_Precision_Float32;
+	// 			break;
+	// 		case 64:
+	// 			render_precision = Render_Precision_Float64;
+	// 			break;
+	// 	}
+	// 	render_method = Render_Method_GPU;
+	// } else {
 
-		switch(ren.CPU_Precision) {
-			case 16:
-				render_precision = Render_Precision_Float16;
-				break;
-			case 32:
-				render_precision = Render_Precision_Float32;
-				break;
-			case 64:
-			default:
-				render_precision = Render_Precision_Float64;
-				break;
-			case 80:
-				render_precision = Render_Precision_Float80;
-				break;
-			case 128:
-				render_precision = Render_Precision_Float128;
-				break;
-		}
-		if (render_precision == Render_Precision_Float32 || render_precision == Render_Precision_Float64) {
-			if (Config.validate_Rendering_Method(Render_Method_CPU_AVX512)) {
-				render_method = Render_Method_CPU_AVX512;
-			} else if (Config.validate_Rendering_Method(Render_Method_CPU_AVX)) {
-				render_method = Render_Method_CPU_AVX;
-			} else if (Config.validate_Rendering_Method(Render_Method_CPU_SSE2)) {
-				render_method = Render_Method_CPU_SSE2;
-			} else {
-				render_method = Render_Method_CPU_Generic;
-			}
-		} else {
-			render_method = Render_Method_CPU_Generic;
-		}
-	}
-	Config.calculate_Rendering_Precision_and_Method(
-		render_precision, render_method, render_precision, render_method
-	);
-	Config.suggest_Render_Precision_and_Method(
-		render_precision, render_method
-	);
+	// 	switch(ren.CPU_Precision) {
+	// 		case 16:
+	// 			render_precision = Render_Precision_Float16;
+	// 			break;
+	// 		case 32:
+	// 			render_precision = Render_Precision_Float32;
+	// 			break;
+	// 		case 64:
+	// 		default:
+	// 			render_precision = Render_Precision_Float64;
+	// 			break;
+	// 		case 80:
+	// 			render_precision = Render_Precision_Float80;
+	// 			break;
+	// 		case 128:
+	// 			render_precision = Render_Precision_Float128;
+	// 			break;
+	// 	}
+	// 	if (render_precision == Render_Precision_Float32 || render_precision == Render_Precision_Float64) {
+	// 		if (Config.validate_Rendering_Method(Render_Method_CPU_AVX512)) {
+	// 			render_method = Render_Method_CPU_AVX512;
+	// 		} else if (Config.validate_Rendering_Method(Render_Method_CPU_AVX)) {
+	// 			render_method = Render_Method_CPU_AVX;
+	// 		} else if (Config.validate_Rendering_Method(Render_Method_CPU_SSE2)) {
+	// 			render_method = Render_Method_CPU_SSE2;
+	// 		} else {
+	// 			render_method = Render_Method_CPU_Generic;
+	// 		}
+	// 	} else {
+	// 		render_method = Render_Method_CPU_Generic;
+	// 	}
+	// }
+	// Config.calculate_Rendering_Precision_and_Method(
+	// 	render_precision, render_method, render_precision, render_method
+	// );
+	// Config.suggest_Render_Precision_and_Method(
+	// 	render_precision, render_method
+	// );
 }
 
 void get_GPU_Hardware_Hash(uint64_t& hash) { 
@@ -154,50 +154,38 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		memset(image_box.vram, 0, image_box_size);
 
 		printf("\n\nRendering Super Screenshot:");
-		printf("\n\t%ux%u %u samples",image_box.resX,image_box.resY,image_render_data.sample * image_render_data.sample);
-		printf(", %u iterations",image_fractal_data.maxItr);
-		switch(image_render_data.rendering_method) {
-			case Legacy_Rendering_Method::CPU_Rendering:
-				printf("\n\tFP%u CPU rendering, %u threads",image_render_data.CPU_Precision,image_render_data.CPU_Threads);
-			break;
-			case Legacy_Rendering_Method::GPU_Rendering:
-				printf("\n\tFP%u GPU rendering",image_render_data.GPU_Precision);
-			break;
-		};
+		printf("\n\t%" PRIu32 "x%" PRIu32 " %" PRIu32 " samples", image_box.resX, image_box.resY, image_render_data.sample * image_render_data.sample);
+		printf(", %" PRIu32 " iterations", image_fractal_data.maxItr);
+		if (Super_Engine_Config.current_Render_Method_CPU() == true) {
+			printf("\n\tFP%zu CPU rendering, %" PRIu32 " threads", Super_Engine_Config.get_Current_Float_Size(), image_render_data.CPU_Threads);
+		} else if (Super_Engine_Config.current_Render_Method_GPU() == true) {
+			printf("\n\tFP%zu GPU rendering", Super_Engine_Config.get_Current_Float_Size());
+		}
 		printf("\n\tClick \"Abort Rendering\" (or use task manager) to cancel.");
 		fflush(stdout);
 		nano64_t image_stopwatch = getNanoTime();
-		calculate_Render_Config(
-			Super_Engine_Config,
-			image_render_data
-		);
-		
-		switch(image_render_data.rendering_method) {
-			case Legacy_Rendering_Method::CPU_Rendering:
-					renderCPU_ABS_Mandelbrot(
-						&image_box, image_render_data, image_fractal_data,
-						Super_Engine_Config,
-						ABORT_RENDERING, primaryRender.CPU_Threads
-					);
-				break;
-			case Legacy_Rendering_Method::GPU_Rendering:
-				#ifdef Enable_OpenCL
-					renderOpenCL_ABS_Mandelbrot(
-						&image_box, image_render_data, image_fractal_data,
-						ABORT_RENDERING
-					);
-				#endif
-				break;
-			default:
-				printfInterval(0.5,"Error: Super Screenshot, unknown rendering method %u",image_render_data.rendering_method);
-				return -1;
-		};
+
+		if (Super_Engine_Config.current_Render_Method_CPU() == true) {
+			renderCPU_ABS_Mandelbrot(
+				&image_box, image_render_data, image_fractal_data,
+				Super_Engine_Config,
+				ABORT_RENDERING, primaryRender.CPU_Threads
+			);
+		} else if (Super_Engine_Config.current_Render_Method_GPU() == true) {
+			renderOpenCL_ABS_Mandelbrot(
+				&image_box, image_render_data, image_fractal_data,
+				ABORT_RENDERING
+			);
+		} else {
+			printfInterval(0.5,"Error: Super Screenshot, unknown rendering method %" PRId32, Super_Engine_Config.get_Render_Method());
+		}
+
 		nano64_t image_render_time = getNanoTime() - image_stopwatch;
 		int32_t time_mili = (int32_t)((nano64_t)image_render_time / (((nano64_t)1000000)) % (nano64_t)1000);
 		int32_t time_seconds = (int32_t)((nano64_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000)) % (nano64_t)60);
 		int32_t time_minutes = (int32_t)((nano64_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000 * (nano64_t)60)) % (nano64_t)60);
 		int32_t time_hours = (int32_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000 * (nano64_t)60 * (nano64_t)60));
-		printFlush("\n\tRendered in: %02d:%02d:%02d.%03d",time_hours,time_minutes,time_seconds,time_mili);		
+		printFlush("\n\tRendered in: %02" PRId32 ":%02" PRId32 ":%02" PRId32 ".%03" PRId32,time_hours,time_minutes,time_seconds,time_mili);		
 		printFlush("\n\tSaving Super Screenshot");
 		{
 			nano64_t curTime = getNanoTime();
@@ -241,28 +229,20 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 	if (ABORT_RENDERING == false) {
 		//ABS_Mandelbrot& FRAC = fracData.type.abs_mandelbrot;
 		//printfInterval(0.4,"\nr: %.6lf i: %.6lf zoom: 10^%.4lf maxItr: %u formula: %" PRIu64,FRAC.r,FRAC.i,FRAC.zoom,FRAC.maxItr,FRAC.formula);
-		calculate_Render_Config(
-			Engine_Config,
-			primaryRender
-		);
-		switch(primaryRender.rendering_method) {
-			case Legacy_Rendering_Method::CPU_Rendering:
-					renderCPU_ABS_Mandelbrot(
-						&renderBox, primaryRender, fracData,
-						Engine_Config,
-						ABORT_RENDERING, primaryRender.CPU_Threads
-					);
-				break;
-			case Legacy_Rendering_Method::GPU_Rendering:
-				#ifdef Enable_OpenCL
-					renderOpenCL_ABS_Mandelbrot(
-						&renderBox, primaryRender, fracData,
-						ABORT_RENDERING
-					);
-				#endif
-				break;
-			default:
-			printfInterval(0.5,"Unknown rendering method %u",primaryRender.rendering_method);
+
+		if (Engine_Config.current_Render_Method_CPU() == true) {
+			renderCPU_ABS_Mandelbrot(
+				&renderBox, primaryRender, fracData,
+				Engine_Config,
+				ABORT_RENDERING, primaryRender.CPU_Threads
+			);
+		} else if (Engine_Config.current_Render_Method_GPU() == true) {
+			renderOpenCL_ABS_Mandelbrot(
+				&renderBox, primaryRender, fracData,
+				ABORT_RENDERING
+			);
+		} else {
+			printfInterval(0.5, "Unknown rendering method %" PRId32, Engine_Config.get_Render_Method());
 		}
 		{
 			ABS_Mandelbrot& FRAC = fracData;
@@ -310,6 +290,11 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			Engine_Config.suggest_Render_Preset(
 				(Rendering_Configuration::Rendering_Preset)primaryRender.render_preset
 			);
+			// printfInterval(0.3,"\nEngine: %s | %s %s",
+			// 	Rendering_Configuration::Rendering_Preset_Name[Engine_Config.get_Render_Preset()],
+			// 	Rendering_Configuration::Rendering_Preset_Name[primaryRender.render_preset],
+			// 	Rendering_Configuration::Rendering_Preset_Name[secondaryRender.render_preset]
+			// );
 			//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
 			render_Engine(ABORT_RENDERING);
 			//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);

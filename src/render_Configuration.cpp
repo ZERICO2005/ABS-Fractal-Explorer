@@ -373,6 +373,59 @@ using namespace Rendering_Configuration;
 		bool Render_Configurator::current_Render_Method_CPU() const {
 			return (Render_Method != Render_Method_GPU) ? true : false;
 		}
+
+		size_t Render_Configurator::get_Float_Size(Rendering_Precision render_precision) const {
+			switch (render_precision) {
+				case Render_Precision_Float16:
+					return 16;
+				case Render_Precision_Float32:
+					return 32;
+				case Render_Precision_Float64:
+					return 64;
+				case Render_Precision_Float80:
+					return 80;
+				case Render_Precision_Float128:
+					return 128;
+				default:
+					return 0;
+			}
+		};
+		size_t Render_Configurator::get_Float_Mantissa_Size(Rendering_Precision render_precision) const {
+			switch (render_precision) {
+				case Render_Precision_Float16:
+					return 10;
+				case Render_Precision_Float32:
+					return 23;
+				case Render_Precision_Float64:
+					return 52;
+				case Render_Precision_Float80:
+					return 63;
+				case Render_Precision_Float128:
+					return 112;
+				default:
+					return 0;
+			}
+		};
+		size_t Render_Configurator::get_Float_Exponent_Size(Rendering_Precision render_precision) const {
+			switch (render_precision) {
+				case Render_Precision_Float16:
+					return 5;
+				case Render_Precision_Float32:
+					return 8;
+				case Render_Precision_Float64:
+					return 11;
+				case Render_Precision_Float80:
+					return 15;
+				case Render_Precision_Float128:
+					return 15;
+				default:
+					return 0;
+			}
+		};
+
+		size_t Render_Configurator::get_Current_Float_Size() const { return get_Float_Size(Render_Precision); };
+		size_t Render_Configurator::get_Current_Float_Mantissa_Size() const { return get_Float_Mantissa_Size(Render_Precision); };
+		size_t Render_Configurator::get_Current_Float_Exponent_Size() const { return get_Float_Exponent_Size(Render_Precision); };
 		
 		void Render_Configurator::print_Rendering_Configuration() const {
 			printf(

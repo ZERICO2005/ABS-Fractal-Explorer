@@ -42,10 +42,8 @@ struct Render_Data {
 	uint32_t resDiv;
 	/* Rendering Method */
 	bool export_Image;
-	uint32_t rendering_method;
-	uint32_t CPU_Precision;
+	//uint32_t rendering_method;
 	uint32_t CPU_Threads;
-	uint32_t GPU_Precision;
 	uint32_t GPU_Partitions;
 
 	int_enum render_precision;

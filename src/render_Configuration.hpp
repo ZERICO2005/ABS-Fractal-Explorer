@@ -327,6 +327,14 @@ class Render_Configurator {
 		bool current_Render_Method_GPU() const;
 		bool current_Render_Method_CPU() const;
 
+		size_t get_Float_Size(Rendering_Configuration::Rendering_Precision render_precision) const;
+		size_t get_Float_Mantissa_Size(Rendering_Configuration::Rendering_Precision render_precision) const;
+		size_t get_Float_Exponent_Size(Rendering_Configuration::Rendering_Precision render_precision) const;
+
+		size_t get_Current_Float_Size() const;
+		size_t get_Current_Float_Mantissa_Size() const;
+		size_t get_Current_Float_Exponent_Size() const;
+
 		void print_Rendering_Configuration() const;
 		void print_Available_Rendering_Presets() const;
 

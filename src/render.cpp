@@ -64,14 +64,11 @@ void initRenderData(Render_Data* rDat) {
 	rDat->previewRender = false;
 	rDat->areaMult = 1.0;
 	rDat->resDiv = 1;
-	rDat->rendering_method = Legacy_Rendering_Method::GPU_Rendering;
-	rDat->CPU_Precision = 64;
 	if ((uint32_t)std::thread::hardware_concurrency() <= 1) {
 		rDat->CPU_Threads = 1;
 	} else {
 		rDat->CPU_Threads = (uint32_t)std::thread::hardware_concurrency() - 1;
 	}
-	rDat->GPU_Precision = 32;
 	rDat->GPU_Partitions = 1;
 	rDat->export_Image = false;
 	rDat->export_Image = false;
@@ -547,19 +544,6 @@ int get_ABS_Mandelbrot_Update_Level(ABS_Mandelbrot* frac_data, Render_Data* ren,
 	if (ren->resX != ren0.resX || ren->resY != ren0.resY) {
 		Update_Level(update_level, Change_Level::Resolution);
 	}
-	if (ren->rendering_method != ren0.rendering_method) {
-		Update_Level(update_level, Change_Level::Method_of_Rendering);
-	} else if (
-		(
-			(ren->rendering_method == Legacy_Rendering_Method::CPU_Rendering) &&
-			((ren->CPU_Precision != ren0.CPU_Precision) || (ren->CPU_Threads != ren0.CPU_Threads))
-		) && (
-			(ren->rendering_method == Legacy_Rendering_Method::GPU_Rendering) &&
-			(ren->GPU_Precision != ren0.GPU_Precision)
-		)
-	) {
-		Update_Level(update_level, Change_Level::Method_of_Rendering);
-	}
 	if (
 		(ren->render_precision != ren0.render_precision) ||
 		(ren->render_method != ren0.render_method) ||
@@ -665,15 +649,15 @@ int_enum updateFractalParameters() {
 		#define Polar_Mandelbrot_Default_Power 3.0
 	/* Boolean toggles */
 
-		#define paramToggleUpdate(func,toggle,freq,level) if (funcTimeDelay(func,freq)) { toggle = !toggle; Update_Level(update_level, level); }
+		#define paramToggleUpdate(func, toggle, freq, level) if (funcTimeDelay(func, freq)) { toggle = !toggle; Update_Level(update_level, level); }
 		
-		paramToggle(toggleAdjustZoomToPower,FRAC.adjustZoomToPower,0.4);
-		paramToggleUpdate(toggleJulia,FRAC.juliaSet,0.4,Major_Reset);
-		paramToggleUpdate(toggleABSandPolarMandelbrot,FRAC.polarMandelbrot,0.4,Major_Reset);
-		paramToggle(toggleRelativeZValue,FRAC.relativeZValue,0.4);
-		paramToggle(toggleCursorZValue,FRAC.cursorZValue,0.4);
-		paramToggleUpdate(toggleStartingZ,FRAC.startingZ,0.4,Minor_Reset);
-		paramToggleUpdate(toggleIntegerPower,FRAC.integerPolarPower,0.4,Minor_Reset);
+		paramToggle(toggleAdjustZoomToPower, FRAC.adjustZoomToPower, 0.4);
+		paramToggleUpdate(toggleJulia, FRAC.juliaSet, 0.4, Major_Reset);
+		paramToggleUpdate(toggleABSandPolarMandelbrot, FRAC.polarMandelbrot, 0.4, Major_Reset);
+		paramToggle(toggleRelativeZValue, FRAC.relativeZValue, 0.4);
+		paramToggle(toggleCursorZValue, FRAC.cursorZValue, 0.4);
+		paramToggleUpdate(toggleStartingZ, FRAC.startingZ, 0.4, Minor_Reset);
+		paramToggleUpdate(toggleIntegerPower, FRAC.integerPolarPower, 0.4, Minor_Reset);
 		
 	/* Real and Imaginary Coordinates */
 		if (func_stat[incRealPos].triggered == true) {
@@ -700,11 +684,11 @@ int_enum updateFractalParameters() {
 				0.72 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * config_sensitivity.coordinate
 			);
 		}
-		if (funcTimeDelay(resetRealPos,0.2)) {
+		if (funcTimeDelay(resetRealPos, 0.2)) {
 			FRAC.r = 0.0;
 			Update_Level(update_level, Jump);
 		}
-		if (funcTimeDelay(resetImagPos,0.2)) {
+		if (funcTimeDelay(resetImagPos, 0.2)) {
 			FRAC.i = 0.0;
 			Update_Level(update_level, Jump);
 		}
@@ -733,11 +717,11 @@ int_enum updateFractalParameters() {
 				0.24 * pow(10.0,-FRAC.zoom) * moveDelta * FRAC.sY * config_sensitivity.julia
 			);
 		}
-		if (funcTimeDelay(resetZReal,0.2)) {
+		if (funcTimeDelay(resetZReal, 0.2)) {
 			FRAC.zr = 0.0;
 			Update_Level(update_level, Jump);
 		}
-		if (funcTimeDelay(resetZImag,0.2)) {
+		if (funcTimeDelay(resetZImag, 0.2)) {
 			FRAC.zi = 0.0;
 			Update_Level(update_level, Jump);
 		}
@@ -748,8 +732,8 @@ int_enum updateFractalParameters() {
 				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - (fp64)RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
 			} else {
 				pixel_to_coordinate(
-					(int32_t)(ImGui::GetMousePos().x),(int32_t)ImGui::GetMousePos().y - (int32_t)RESY_UI,
-					&FRAC.zr,&FRAC.zi,&FRAC,&primaryRenderData
+					(int32_t)(ImGui::GetMousePos().x), (int32_t)ImGui::GetMousePos().y - (int32_t)RESY_UI,
+					&FRAC.zr, &FRAC.zi, &FRAC, &primaryRenderData
 				);
 			}
 		}
@@ -760,11 +744,11 @@ int_enum updateFractalParameters() {
 		if (func_stat[decZoom].triggered == true) {
 			FRAC.zoom -= 0.25 * moveDelta * config_sensitivity.zoom * (config_sensitivity.invert_zoom ? -1.0 : 1.0);
 		}
-		if (funcTimeDelay(resetZoom,0.2)) {
+		if (funcTimeDelay(resetZoom, 0.2)) {
 			FRAC.zoom = zoomDefault(FRAC.power);
 			Update_Level(update_level, Jump);
 		}
-		if (funcTimeDelay(resetCoordinates,0.2)) {
+		if (funcTimeDelay(resetCoordinates, 0.2)) {
 			FRAC.r = 0.0; FRAC.i = 0.0;
 			FRAC.stretch = 0.0; FRAC.rot = 0.0;
 			if (FRAC.polarMandelbrot == true) {
@@ -772,46 +756,46 @@ int_enum updateFractalParameters() {
 			} else {
 				FRAC.zoom = zoomDefault((fp64)FRAC.power);
 			}
-			valueClamp(FRAC.zoom,-0.4,0.4);
+			valueClamp(FRAC.zoom, -0.4, 0.4);
 			Update_Level(update_level, Jump);
 		}
 	/* maxItr */
 		if (func_stat[incMaxItr].triggered) {
-			FRAC.maxItr_Log2 += 2.0 * moveDelta * config_sensitivity.maxIter;
-			setMaxItr(&FRAC,FRAC.maxItr_Log2);
+			FRAC.maxItr_Log2 += 1.8 * moveDelta * config_sensitivity.maxIter;
+			setMaxItr(&FRAC, FRAC.maxItr_Log2);
 		}
 		if (func_stat[decMaxItr].triggered) {
-			FRAC.maxItr_Log2 -= 2.0 * moveDelta * config_sensitivity.maxIter;
-			setMaxItr(&FRAC,FRAC.maxItr_Log2);
+			FRAC.maxItr_Log2 -= 1.8 * moveDelta * config_sensitivity.maxIter;
+			setMaxItr(&FRAC, FRAC.maxItr_Log2);
 		}
-		if (funcTimeDelay(resetMaxItr,0.2)) {
+		if (funcTimeDelay(resetMaxItr, 0.2)) {
 			FRAC.maxItr_Log2 = log2(192.0);
 			FRAC.maxItr = 192;
-			setMaxItr(&FRAC,FRAC.maxItr_Log2);
+			setMaxItr(&FRAC, FRAC.maxItr_Log2);
 		}
 	/* Formula*/
-		if (funcTimeDelay(incFormula,1.0/10.0)) {
+		if (funcTimeDelay(incFormula ,1.0/10.0)) {
 			FRAC.formula++;
 		}
-		if (funcTimeDelay(decFormula,1.0/10.0)) {
+		if (funcTimeDelay(decFormula, 1.0/10.0)) {
 			FRAC.formula--;
 		}
-		if (funcTimeDelay(incFamily,1.0/10.0)) {
+		if (funcTimeDelay(incFamily, 1.0/10.0)) {
 			FRAC.formula += getABSValue(FRAC.power);
 		}
-		if (funcTimeDelay(decFamily,1.0/10.0)) {
+		if (funcTimeDelay(decFamily, 1.0/10.0)) {
 			FRAC.formula -= getABSValue(FRAC.power);
 		}
-		if (funcTimeDelay(resetFormula,0.2)) {
+		if (funcTimeDelay(resetFormula, 0.2)) {
 			FRAC.formula = 0;
 		}
 	/* Power */
 		if (FRAC.polarMandelbrot == true) {
 			if (FRAC.integerPolarPower == true) {
-				if (funcTimeDelay(incPower,1.0/6.0)) {
+				if (funcTimeDelay(incPower, 1.0/6.0)) {
 					FRAC.polarPower++;
 				}
-				if (funcTimeDelay(decPower,1.0/6.0)) {
+				if (funcTimeDelay(decPower, 1.0/6.0)) {
 					FRAC.polarPower--;
 				}
 			} else {
@@ -823,59 +807,59 @@ int_enum updateFractalParameters() {
 				}
 			}
 			
-			if (funcTimeDelay(resetPower,0.2)) {
+			if (funcTimeDelay(resetPower, 0.2)) {
 				FRAC.polarPower = Polar_Mandelbrot_Default_Power;
 			}
-			if (funcTimeDelay(roundPower,0.2)) {
+			if (funcTimeDelay(roundPower, 0.2)) {
 				FRAC.polarPower = round(FRAC.polarPower);
 			}
-			if (funcTimeDelay(floorPower,0.2)) {
+			if (funcTimeDelay(floorPower, 0.2)) {
 				FRAC.polarPower = floor(FRAC.polarPower);
 			}
-			if (funcTimeDelay(ceilingPower,0.2)) {
+			if (funcTimeDelay(ceilingPower, 0.2)) {
 				FRAC.polarPower = ceil(FRAC.polarPower);
 			}
 		} else {
-			if (funcTimeDelay(incPower,1.0/6.0)) {
+			if (funcTimeDelay(incPower, 1.0/6.0)) {
 				FRAC.power++;
 			}
-			if (funcTimeDelay(decPower,1.0/6.0)) {
+			if (funcTimeDelay(decPower, 1.0/6.0)) {
 				FRAC.power--;
 			}
-			if (funcTimeDelay(resetPower,0.2)) {
+			if (funcTimeDelay(resetPower, 0.2)) {
 				FRAC.power = ABS_Mandelbrot_Default_Power;
 			}
 			FRAC.formula = limitFormulaID(FRAC.power,FRAC.formula);
 		}
 	/* Rotations */
 		if (func_stat[counterclockwiseRot].triggered) {
-			FRAC.rot -= (TAU/3.0) * moveDelta * getStretchValue(FRAC.stretch) * config_sensitivity.rotation;
+			FRAC.rot -= (TAU / 3.0) * moveDelta * getStretchValue(FRAC.stretch) * config_sensitivity.rotation;
 		}
 		if (func_stat[clockwiseRot].triggered) {
-			FRAC.rot += (TAU/3.0) * moveDelta * getStretchValue(FRAC.stretch) * config_sensitivity.rotation;
+			FRAC.rot += (TAU / 3.0) * moveDelta * getStretchValue(FRAC.stretch) * config_sensitivity.rotation;
 		}
-		if (funcTimeDelay(clockwiseRot90,0.3)) {
+		if (funcTimeDelay(clockwiseRot90, 0.3)) {
 			FRAC.rot += (TAU * (90.0/360.0));
 		}
-		if (funcTimeDelay(counterclockwiseRot90,0.3)) {
+		if (funcTimeDelay(counterclockwiseRot90, 0.3)) {
 			FRAC.rot -= (TAU * (90.0/360.0));
 		}
 		if (funcTimeDelay(rotate180,0.3)) {
 			FRAC.rot += (TAU * (180.0/360.0));
 		}
-		if (funcTimeDelay(clockwiseRotStep,1.0/10.0)) {
+		if (funcTimeDelay(clockwiseRotStep, 1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
 		}
-		if (funcTimeDelay(counterclockwiseRotStep,1.0/10.0)) {
+		if (funcTimeDelay(counterclockwiseRotStep, 1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
 		}
-		if (funcTimeDelay(clockwiseRotPower,1.0/6.0)) {
-			FRAC.rot += (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
+		if (funcTimeDelay(clockwiseRotPower, 1.0/6.0)) {
+			FRAC.rot += (TAU * (1.0 / (fp64)((FRAC.power - 1) * 2)));
 		}
-		if (funcTimeDelay(counterclockwiseRotPower,1.0/6.0)) {
-			FRAC.rot -= (TAU * (1.0/(fp64)((FRAC.power - 1) * 2)));
+		if (funcTimeDelay(counterclockwiseRotPower, 1.0/6.0)) {
+			FRAC.rot -= (TAU * (1.0 / (fp64)((FRAC.power - 1) * 2)));
 		}
-		if (funcTimeDelay(resetRotation,0.2)) {
+		if (funcTimeDelay(resetRotation, 0.2)) {
 			FRAC.rot = 0.0;
 		}
 		FRAC.rot = (FRAC.rot >= 0.0) ? fmod(FRAC.rot,TAU) : fmod(FRAC.rot + TAU,TAU);
@@ -886,10 +870,10 @@ int_enum updateFractalParameters() {
 		if (func_stat[decStretch].triggered) {
 			FRAC.stretch -= 1.0 * moveDelta * config_sensitivity.stretch;
 		}
-		if (funcTimeDelay(resetStretch,0.2)) {
+		if (funcTimeDelay(resetStretch, 0.2)) {
 			FRAC.stretch = 0.0;
 		}
-		if (funcTimeDelay(resetTransformations,0.2)) {
+		if (funcTimeDelay(resetTransformations, 0.2)) {
 			FRAC.rot = 0.0;
 			FRAC.stretch = 0.0;
 		}
@@ -900,79 +884,65 @@ int_enum updateFractalParameters() {
 		if (func_stat[decBreakout].triggered) {
 			temp_breakoutValue -= 2.0 * moveDelta * config_sensitivity.breakout_value;
 		}
-		if (funcTimeDelay(resetBreakout,0.2)) {
+		if (funcTimeDelay(resetBreakout, 0.2)) {
 			temp_breakoutValue = log2(16777216.0);
 		}
 	/* Rendering */
-		if (funcTimeDelay(incSubSample,1.0/6.0)) {
+		if (funcTimeDelay(incSubSample, 1.0/6.0)) {
 			primaryRenderData.subSample++;
 		}
-		if (funcTimeDelay(decSubSample,1.0/6.0)) {
+		if (funcTimeDelay(decSubSample, 1.0/6.0)) {
 			primaryRenderData.subSample--;
 		}
-		if (funcTimeDelay(resetSubSample,0.2)) {
+		if (funcTimeDelay(resetSubSample, 0.2)) {
 			primaryRenderData.subSample = 1;
 		}
-		valueClamp(primaryRenderData.subSample,1,24);
-		if (funcTimeDelay(incSuperSample,1.0/6.0)) {
+		valueClamp(primaryRenderData.subSample, 1, 24);
+		if (funcTimeDelay(incSuperSample, 1.0/6.0)) {
 			primaryRenderData.sample++;
 		}
-		if (funcTimeDelay(decSuperSample,1.0/6.0)) {
+		if (funcTimeDelay(decSuperSample, 1.0/6.0)) {
 			primaryRenderData.sample--;
 		}
-		if (funcTimeDelay(resetSuperSample,0.2)) {
+		if (funcTimeDelay(resetSuperSample, 0.2)) {
 			primaryRenderData.sample = 1;
 		}
-		valueClamp(primaryRenderData.sample,1,24);
+		valueClamp(primaryRenderData.sample, 1, 24);
 	/* Rendering Method */
 	{
 		using namespace Legacy_Rendering_Method;
 		using namespace Rendering_Configuration;
 		if (funcTimeDelay(fp32CpuRendering, 0.2)) {
-			primaryRenderData.rendering_method = CPU_Rendering;
-			primaryRenderData.CPU_Precision = 32;
 			if (Render_Config.suggest_Render_Precision(Render_Precision_Float32)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp64CpuRendering, 0.2)) {
-			primaryRenderData.rendering_method = CPU_Rendering;
-			primaryRenderData.CPU_Precision = 64;
 			if (Render_Config.suggest_Render_Precision(Render_Precision_Float64)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp80CpuRendering, 0.2)) {
-			primaryRenderData.rendering_method = CPU_Rendering;
-			primaryRenderData.CPU_Precision = 80;
 			if (Render_Config.suggest_Render_Precision(Render_Precision_Float80)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp128CpuRendering, 0.2)) {
-			primaryRenderData.rendering_method = CPU_Rendering;
-			primaryRenderData.CPU_Precision = 128;
 			if (Render_Config.suggest_Render_Precision(Render_Precision_Float128)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp16GpuRendering, 0.2)) {
-			primaryRenderData.rendering_method = GPU_Rendering;
-			primaryRenderData.GPU_Precision = 16;
 			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float16)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp32GpuRendering, 0.2)) {
-			primaryRenderData.rendering_method = GPU_Rendering;
-			primaryRenderData.GPU_Precision = 32;
 			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float32)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp64GpuRendering, 0.2)) {
-			primaryRenderData.rendering_method = GPU_Rendering;
-			primaryRenderData.GPU_Precision = 64;
 			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float64)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
@@ -985,6 +955,11 @@ int_enum updateFractalParameters() {
 		secondaryRenderData.render_precision = Render_Config.get_Render_Precision();
 		secondaryRenderData.render_method = Render_Config.get_Render_Method();
 		secondaryRenderData.render_preset = Render_Config.get_Render_Preset();
+		// printfInterval(0.3,"\nRender: %s | %s %s",
+		// 	Rendering_Preset_Name[Render_Config.get_Render_Preset()],
+		// 	Rendering_Preset_Name[primaryRenderData.render_preset],
+		// 	Rendering_Preset_Name[secondaryRenderData.render_preset]
+		// );
 	}
 	/* Other */
 	FRAC.breakoutValue = pow(2.0,temp_breakoutValue);

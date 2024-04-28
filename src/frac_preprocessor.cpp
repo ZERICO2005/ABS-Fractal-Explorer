@@ -94,10 +94,10 @@ int preCalc_Frac_Render(
 	render_PC.super_sampleY = render_data.sample;
 
 	render_PC.export_Image = render_data.export_Image;
-	render_PC.rendering_method = render_data.rendering_method;
-	render_PC.CPU_Precision = render_data.CPU_Precision;
+	//render_PC.rendering_method = render_data.rendering_method;
+	//render_PC.CPU_Precision = render_data.CPU_Precision;
 	render_PC.CPU_Threads = render_data.CPU_Threads;
-	render_PC.GPU_Precision = render_data.GPU_Precision;
+	//render_PC.GPU_Precision = render_data.GPU_Precision;
 	render_PC.GPU_Partitions = render_data.GPU_Partitions;
 	return 0;
 }

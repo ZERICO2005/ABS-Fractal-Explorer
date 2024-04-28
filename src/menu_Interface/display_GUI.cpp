@@ -286,8 +286,8 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::InputInt(id,ptr,16,256);
 
 	ABS_Mandelbrot& FRAC = current_Fractal;
-	uint32_t renderFP = (primaryRenderData.rendering_method == Legacy_Rendering_Method::CPU_Rendering) ? primaryRenderData.CPU_Precision : primaryRenderData.GPU_Precision;
-	const char* const renderMethod = (primaryRenderData.rendering_method == Legacy_Rendering_Method::CPU_Rendering) ? "CPU" : "GPU";
+	size_t renderFP = Render_Config.get_Current_Float_Size();
+	const char* const renderMethod = Render_Config.current_Render_Method_GPU() ? "GPU" : "CPU";
 	
 	static char powerText[64];
 	if (FRAC.polarMandelbrot) {
@@ -295,7 +295,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 
 	ImGui::Text(
-		"Formula: %" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s fp%" PRIu32,
+		"Formula: %" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s Float%zu",
 		FRAC.formula,(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
 	);
 	constexpr size_t temp_quad_len = 64;
@@ -904,46 +904,6 @@ void Menu_Rendering() {
 			}
 		}
 
-		ImGui::NewLine();
-	}
-	
-	ImGui::SeparatorText("Legacy Rendering Settings");
-	if (ImGui::CollapsingHeader("LEGACY RENDERING SETTINGS")) {
-		ImGui::Text("CPU Rendering Mode:");
-		if (ImGui::Combo("##CPU_RenderingMode", &Combo_CPU_RenderingMode, BufAndLen(CPU_RenderingModes))) {
-			switch (Combo_CPU_RenderingMode) {
-				case 0:
-					primaryRenderData.CPU_Precision = 32;
-				break;
-				case 1:
-					primaryRenderData.CPU_Precision = 64;
-				break;
-				case 2:
-					primaryRenderData.CPU_Precision = 80;
-				break;
-				case 3:
-					primaryRenderData.CPU_Precision = 128;
-				break;
-			};
-		}
-		ImGui::Text("GPU Rendering Mode:");
-		if (ImGui::Combo("##GPU_RenderingMode", &Combo_GPU_RenderingMode, BufAndLen(GPU_RenderingModes))) {
-			switch (Combo_GPU_RenderingMode) {
-				#ifndef BUILD_RELEASE
-					case 0:
-						primaryRenderData.GPU_Precision = 16;
-					break;
-				#endif
-				case 1:
-					primaryRenderData.GPU_Precision = 32;
-				break;
-				#ifndef BUILD_RELEASE
-					case 2:
-						primaryRenderData.GPU_Precision = 64;
-					break;
-				#endif
-			};
-		}
 		ImGui::NewLine();
 	}
 
