@@ -203,7 +203,7 @@ void parallel_ABS_Mandelbrot(
 void parallel_Thread_Generator_FP64(
 	BufferBox* buf, Frac_Render_PC ren, const ABS_Mandelbrot& param,
 	std::atomic<bool>& ABORT_RENDERING, uint32_t threadCount,
-	fp128 numX, fp128 numY, fp128 recip_numZ, fp128 neg_recip_numW
+	fpCord numX, fpCord numY, fpCord recip_numZ, fpCord neg_recip_numW
 ) {
 	Frac_Param_PC<fp64,fp64> param_PC;
 	//preCalc_Frac_Param<fp64,fp64>(param_PC,param);
@@ -221,15 +221,15 @@ void parallel_Thread_Generator_FP64(
 
 void get_XYZW_values(
 	Frac_Render_PC ren, const ABS_Mandelbrot& param,
-	fp128& numX, fp128& numY,
-	fp128& recip_numZ, fp128& neg_recip_numW
+	fpCord& numX, fpCord& numY,
+	fpCord& recip_numZ, fpCord& neg_recip_numW
 ) {
-	numX = ((fp128)(ren.total_ResX * ren.super_sampleX - 1) / (fp128)2.0);
-	numY = ((fp128)(ren.total_ResY * ren.super_sampleY - 1) / (fp128)2.0);
-	fp128 T_zoomP = pow((fp128)10.0, (fp128)param.zoom);
-	fp128 T_num0 = (ren.total_ResX >= ren.total_ResY) ? (numY * T_zoomP) : (numX * T_zoomP); // 0 looks like Theta lol
-	recip_numZ = ((fp128)param.sX / T_num0);
-	neg_recip_numW = -((fp128)param.sY / T_num0);
+	numX = ((fpCord)(ren.total_ResX * ren.super_sampleX - 1) / (fpCord)2.0);
+	numY = ((fpCord)(ren.total_ResY * ren.super_sampleY - 1) / (fpCord)2.0);
+	fpCord T_zoomP = pow((fpCord)10.0, (fpCord)param.zoom);
+	fpCord T_num0 = (ren.total_ResX >= ren.total_ResY) ? (numY * T_zoomP) : (numX * T_zoomP); // 0 looks like Theta lol
+	recip_numZ = ((fpCord)param.sX / T_num0);
+	neg_recip_numW = -((fpCord)param.sY / T_num0);
 }
 
 void parallel_CPU_rendering(
@@ -238,7 +238,7 @@ void parallel_CPU_rendering(
 ) {
 	Frac_Render_PC render_PC;
 	preCalc_Frac_Render(render_PC,ren);
-	fp128 numX, numY, recip_numZ, neg_recip_numW;
+	fpCord numX, numY, recip_numZ, neg_recip_numW;
 	get_XYZW_values(
 		render_PC, param,
 		numX, numY, recip_numZ, neg_recip_numW

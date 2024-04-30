@@ -246,10 +246,10 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 		}
 		{
 			ABS_Mandelbrot& FRAC = fracData;
-			fp128 cx00; fp128 cy00;
-			fp128 cx11; fp128 cy11;
-			fp128 cx01; fp128 cy01;
-			fp128 cx10; fp128 cy10;
+			fpCord cx00; fpCord cy00;
+			fpCord cx11; fpCord cy11;
+			fpCord cx01; fpCord cy01;
+			fpCord cx10; fpCord cy10;
 			int32_t offX = (int32_t)(currentBuf->resX * primaryRender.subSample);
 			int32_t offY = (int32_t)(currentBuf->resY * primaryRender.subSample);
 			fp64 extraPadding = 0.0;

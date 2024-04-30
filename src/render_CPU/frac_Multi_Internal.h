@@ -25,19 +25,28 @@
 	// #define ENABLE_AVX512_FP16_RENDERING
 	// #define ENABLE_AVX512_BF16_RENDERING
 
+/* Constants */
+	constexpr size_t bitCount_Float16 = 16;
+	constexpr size_t bitCount_Float32 = 32;
+	constexpr size_t bitCount_Float64 = 64;
+
+	constexpr size_t bitCount_SSE_Family = 128;
+	constexpr size_t bitCount_AVX_Family = 256;
+	constexpr size_t bitCount_AVX512_Family = 512;
+
 /* Spacing */
 
 	constexpr size_t Spacing_Generic = 1;
 
-	constexpr size_t Spacing_SSE2_Float32 = 4;
-	constexpr size_t Spacing_SSE2_Float64 = 2;
+	constexpr size_t Spacing_SSE2_Float32 = (bitCount_SSE_Family / bitCount_Float32);
+	constexpr size_t Spacing_SSE2_Float64 = (bitCount_SSE_Family / bitCount_Float64);
 
-	constexpr size_t Spacing_AVX_Float32 = 8;
-	constexpr size_t Spacing_AVX_Float64 = 4;
+	constexpr size_t Spacing_AVX_Float32 = (bitCount_AVX_Family / bitCount_Float32);
+	constexpr size_t Spacing_AVX_Float64 = (bitCount_AVX_Family / bitCount_Float64);
 
-	constexpr size_t Spacing_AVX512_F_Float32 = 16;
-	constexpr size_t Spacing_AVX512_F_Float64 = 8;
-	constexpr size_t Spacing_AVX512_FP16_Float16 = 32;
+	constexpr size_t Spacing_AVX512_F_Float32 = (bitCount_AVX512_Family / bitCount_Float32);
+	constexpr size_t Spacing_AVX512_F_Float64 = (bitCount_AVX512_Family / bitCount_Float64);
+	constexpr size_t Spacing_AVX512_FP16_Float16 = (bitCount_AVX512_Family / bitCount_Float16);
 	
 /* Factorials */
 

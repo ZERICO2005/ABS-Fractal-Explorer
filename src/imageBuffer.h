@@ -45,18 +45,26 @@ class ImageBuffer {
 		void clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 		size_t getBufferSize() const;
 		size_t getAllocatedSize() const;
+		
 		// Transformation
-		fp128 x00; fp128 y00;
-		fp128 x11; fp128 y11;
-		fp128 x01; fp128 y01;
-		fp128 x10; fp128 y10;
+		fpCord x00; fpCord y00;
+		fpCord x11; fpCord y11;
+		fpCord x01; fpCord y01;
+		fpCord x10; fpCord y10;
 		fp64 xCenter; fp64 yCenter;
 		fp64 xSize; fp64 ySize;
 		fp64 rot;
-		void setTransformationData(fp64 x0,fp64 y0,fp64 x1,fp64 y1); // cord{x0,y0} cord{x1,y1}
-		void setTransformationData(fp64 x00,fp64 y00,fp64 x11,fp64 y11,fp64 x01,fp64 y01,fp64 x10,fp64 y10); // cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
-		void setTransformationData(fp128 x0,fp128 y0,fp128 x1,fp128 y1); // cord{x0,y0} cord{x1,y1}
-		void setTransformationData(fp128 x00,fp128 y00,fp128 x11,fp128 y11,fp128 x01,fp128 y01,fp128 x10,fp128 y10); // cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
+
+		// cord{x0,y0} cord{x1,y1}
+		void setTransformationData(
+			fpCord x0, fpCord y0, fpCord x1,fpCord y1
+		);
+		// cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
+		void setTransformationData(
+			fpCord x00, fpCord y00, fpCord x11, fpCord y11,
+			fpCord x01, fpCord y01, fpCord x10, fpCord y10
+		);
+		
 		void setTransformationData(const ImageBuffer* buf);
 		void printTransformationData(fp64 freq = 0.6);
 		

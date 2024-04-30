@@ -232,28 +232,19 @@
 	}
 
 	// cord{x0,y0} cord{x1,y1}
-	void ImageBuffer::setTransformationData(fp64 x0,fp64 y0,fp64 x1,fp64 y1) { 
-		x00 = (fp128)x0; y00 = (fp128)y0;
-		x11 = (fp128)x1; y11 = (fp128)y1;
-		x01 = (fp128)x0; y01 = (fp128)y1;
-		x10 = (fp128)x1; y10 = (fp128)y0;
-	}
-	// cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
-	void ImageBuffer::setTransformationData(fp64 ix00,fp64 iy00,fp64 ix11,fp64 iy11,fp64 ix01,fp64 iy01,fp64 ix10,fp64 iy10) {
-		x00 = (fp128)ix00; y00 = (fp128)iy00;
-		x11 = (fp128)ix11; y11 = (fp128)iy11;
-		x01 = (fp128)ix01; y01 = (fp128)iy01;
-		x10 = (fp128)ix10; y10 = (fp128)iy10;
-	}
-	// cord{x0,y0} cord{x1,y1}
-	void ImageBuffer::setTransformationData(fp128 x0,fp128 y0,fp128 x1,fp128 y1) { 
+	void ImageBuffer::setTransformationData(
+		fpCord x0, fpCord y0, fpCord x1,fpCord y1
+	) { 
 		x00 = x0; y00 = y0;
 		x11 = x1; y11 = y1;
 		x01 = x0; y01 = y1;
 		x10 = x1; y10 = y0;
 	}
 	// cord{x00,y00} cord{x11,y11} cord{x01,y01} cord{x10,y10}
-	void ImageBuffer::setTransformationData(fp128 ix00,fp128 iy00,fp128 ix11,fp128 iy11,fp128 ix01,fp128 iy01,fp128 ix10,fp128 iy10) {
+	void ImageBuffer::setTransformationData(
+		fpCord ix00, fpCord iy00, fpCord ix11, fpCord iy11,
+		fpCord ix01, fpCord iy01, fpCord ix10, fpCord iy10
+	) {
 		x00 = ix00; y00 = iy00;
 		x11 = ix11; y11 = iy11;
 		x01 = ix01; y01 = iy01;

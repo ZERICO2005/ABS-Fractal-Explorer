@@ -88,10 +88,10 @@ struct ABS_Mandelbrot {
 	bool lockToCardioid;
 	bool flipCardioidSide;
 	/* Coordinates */
-	fp128 r;
-	fp128 i;
-	fp128 zr;
-	fp128 zi;
+	fpCord r;
+	fpCord i;
+	fpCord zr;
+	fpCord zi;
 	fp64 zoom;
 	/* Transformation */
 	fp64 rot;

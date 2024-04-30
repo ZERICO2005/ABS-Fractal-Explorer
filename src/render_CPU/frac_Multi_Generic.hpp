@@ -474,10 +474,10 @@ void polarRender_Generic(FractalParameters(fpX, fpColor)) {
 			if (p0 >= p1 || ABORT_RENDERING == true) {
 				return;
 			}
-			fp64 outR = 0.0;
-			fp64 outG = 0.0;
-			fp64 outB = 0.0;
-			fp64 outA = 0.0;
+			fpColor outR = 0.0;
+			fpColor outG = 0.0;
+			fpColor outB = 0.0;
+			fpColor outA = 0.0;
 			for (int32_t v = 0; v < param.sample; v++) {
 				fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);
 				for (int32_t u = 0; u < param.sample; u++) {

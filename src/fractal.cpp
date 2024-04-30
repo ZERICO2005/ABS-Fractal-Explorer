@@ -237,14 +237,14 @@ void correctFracParameters(ABS_Mandelbrot* frac) {
 	}
 	frac->formula = limitFormulaID(frac->power,frac->formula);
 	if (frac->lockToCardioid == true) {
-		frac->r = (fp128)getABSFractalMinRadius(frac->polarPower);
-		frac->r *= (frac->flipCardioidSide == true) ? (fp128)-1.0 : (fp128)1.0;
+		frac->r = (fpCord)getABSFractalMinRadius(frac->polarPower);
+		frac->r *= (frac->flipCardioidSide == true) ? (fpCord)-1.0 : (fpCord)1.0;
 	}
-	valueClamp(frac->r,(fp128)-10.0,(fp128)10.0);
-	valueClamp(frac->i,(fp128)-10.0,(fp128)10.0);
+	valueClamp(frac->r,(fpCord)-10.0,(fpCord)10.0);
+	valueClamp(frac->i,(fpCord)-10.0,(fpCord)10.0);
 	valueClamp(frac->zoom,-5.0,40.0);
-	valueClamp(frac->zr,(fp128)-4.0,(fp128)4.0);
-	valueClamp(frac->zi,(fp128)-4.0,(fp128)4.0);
+	valueClamp(frac->zr,(fpCord)-4.0,(fpCord)4.0);
+	valueClamp(frac->zi,(fpCord)-4.0,(fpCord)4.0);
 	valueClamp(frac->maxItr,16,16777216);
 	valueClamp(frac->maxItr_Log2,log2(16.0),log2(16777216.0));
 	frac->rot = (frac->rot >= 0.0) ? fmod(frac->rot,TAU) : fmod(frac->rot + TAU,TAU);

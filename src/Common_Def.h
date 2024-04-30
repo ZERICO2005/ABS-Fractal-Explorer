@@ -54,6 +54,9 @@ const Supported_CPU_Instruction& get_Available_CPU_Instruction();
 typedef float fp32;
 typedef double fp64;
 
+#define PRIfp32 "f"
+#define PRIfp64 "lf"
+
 typedef int int_enum;
 typedef int64_t nano64_t;
 typedef int32_t dim32_t;

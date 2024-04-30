@@ -55,11 +55,14 @@ using namespace Rendering_Configuration;
 
 			CPU_Float16_Enabled = false;
 
-			#ifdef enableFP80andFP128
+			#ifdef Enable_Float80
 				CPU_Float80_Enabled = true;
-				CPU_Float128_Enabled = true;
 			#else
 				CPU_Float80_Enabled = false;
+			#endif
+			#ifdef Enable_Float128
+				CPU_Float128_Enabled = true;
+			#else
 				CPU_Float128_Enabled = false;
 			#endif
 		}

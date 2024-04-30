@@ -41,7 +41,7 @@ const Function_Lookup Function_Lookup_Table[] = {
 	{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<fp64, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64},
 	{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<fp64, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64},
 	{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp64, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64},
-	#ifdef enableFP80andFP128
+	#ifdef Enable_Float80
 		/* CPU-Generic Float80 */
 		{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
 		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
@@ -49,6 +49,8 @@ const Function_Lookup Function_Lookup_Table[] = {
 		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
 		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
+	#endif
+	#ifdef Enable_Float128
 		/* CPU-Generic Float128 */
 		{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<fp128, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float128},
 		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<fp128, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float128},
@@ -245,12 +247,16 @@ void renderCPU_ABS_Mandelbrot(
 		case Render_Precision_Float64: {
 			load_Fractal_Render<fp64, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
 		} break;
-		case Render_Precision_Float80: {
-			load_Fractal_Render<fp80, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
-		} break;
-		case Render_Precision_Float128: {
-			load_Fractal_Render<fp128, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
-		} break;
+		#ifdef Enable_Float80
+			case Render_Precision_Float80: {
+				load_Fractal_Render<fp80, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
+			} break;
+		#endif
+		#ifdef Enable_Float128
+			case Render_Precision_Float128: {
+				load_Fractal_Render<fp128, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
+			} break;
+		#endif
 		default:
 			printfInterval(0.5, "\nError: Invalid rendering precision enum: %d", Render_Precision);
 			break;

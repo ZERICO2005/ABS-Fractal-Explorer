@@ -27,10 +27,10 @@ int preCalc_Frac_Param(
 		param_PC.i = frac.i;
 		param_PC.zr = frac.zr;
 		param_PC.zi = frac.zi;
-		param_PC.zoom_PC = (fpX)pow((fp128)10.0,(fp128)frac.zoom);
+		param_PC.zoom_PC = (fpX)pow((fpCord)10.0,(fpCord)frac.zoom);
 	/* Transformation */
-		param_PC.rotSin_PC = (fpX)sin((fp128)frac.rot);
-		param_PC.rotCos_PC = (fpX)cos((fp128)frac.rot);
+		param_PC.rotSin_PC = (fpX)sin((fpCord)frac.rot);
+		param_PC.rotCos_PC = (fpX)cos((fpCord)frac.rot);
 		param_PC.sX = frac.sX;
 		param_PC.sY = frac.sY;
 	/* Parameters */
@@ -39,7 +39,7 @@ int preCalc_Frac_Param(
 		param_PC.breakoutValue = frac.breakoutValue;
 			param_PC.power = frac.power;
 			param_PC.polarPower = frac.polarPower;
-			param_PC.recip_log2_Power = (fpX)((fp128)1.0 / log2((fp128)frac.polarPower));
+			param_PC.recip_log2_Power = (fpX)((fpCord)1.0 / log2((fpCord)frac.polarPower));
 			param_PC.mult_count = 0;
 			param_PC.bool_count = 0;
 	/* Coloring */

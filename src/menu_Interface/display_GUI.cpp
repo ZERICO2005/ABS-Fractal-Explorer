@@ -298,23 +298,19 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 		"Formula: %" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s Float%zu",
 		FRAC.formula,(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
 	);
-	constexpr size_t temp_quad_len = 64;
-	static char temp_quad_r[temp_quad_len]; static char temp_quad_i[temp_quad_len];
-	static char temp_quad_zr[temp_quad_len]; static char temp_quad_zi[temp_quad_len];
-	#ifdef enableFP80andFP128
-		quadmath_snprintf(temp_quad_r,temp_quad_len,"%15.12Qf",FRAC.r);
-		quadmath_snprintf(temp_quad_i,temp_quad_len,"%15.12Qf",FRAC.i);
-		quadmath_snprintf(temp_quad_zr,temp_quad_len,"%15.12Qf",FRAC.zr);
-		quadmath_snprintf(temp_quad_zi,temp_quad_len,"%15.12Qf",FRAC.zi);
-	#else
-		snprintf(temp_quad_r,temp_quad_len,"%15.12Lf",FRAC.r);
-		snprintf(temp_quad_i,temp_quad_len,"%15.12Lf",FRAC.i);
-		snprintf(temp_quad_zr,temp_quad_len,"%15.12Lf",FRAC.zr);
-		snprintf(temp_quad_zi,temp_quad_len,"%15.12Lf",FRAC.zi);
-	#endif
+	constexpr size_t temp_FloatCoordinate_len = 64;
+	static char temp_FloatCoordinate_r[temp_FloatCoordinate_len];
+	static char temp_FloatCoordinate_i[temp_FloatCoordinate_len];
+	static char temp_FloatCoordinate_zr[temp_FloatCoordinate_len];
+	static char temp_FloatCoordinate_zi[temp_FloatCoordinate_len];
+	FloatCoordinate_snprintf(temp_FloatCoordinate_r , temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.r);
+	FloatCoordinate_snprintf(temp_FloatCoordinate_i , temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.i);
+	FloatCoordinate_snprintf(temp_FloatCoordinate_zr, temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.zr);
+	FloatCoordinate_snprintf(temp_FloatCoordinate_zi, temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.zi);
+
 	ImGui::Text(
-		"Zreal: %s Zimag: %s Rotation: %5.1lf Stetch: 2^%6.4lf",
-		temp_quad_zr,temp_quad_zi,FRAC.rot * 360.0 / TAU,FRAC.stretch
+		"Zreal: %s Zimag: %s Rotation: %5.1" PRIfp64 " Stetch: 2^%6.4" PRIfp64,
+		temp_FloatCoordinate_zr, temp_FloatCoordinate_zi, FRAC.rot * 360.0 / TAU, FRAC.stretch
 	);
 	ImGui::NewLine();
 	fp64 adjustedZoomValue = FRAC.zoom;
@@ -328,8 +324,8 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 	
 	ImGui::Text(
-		"Real:  %s Imag:  %s Zoom: 10^%6.4lf Itr: %" PRIu32,
-		temp_quad_r,temp_quad_i,adjustedZoomValue,FRAC.maxItr
+		"Real:  %s Imag:  %s Zoom: 10^%6.4" PRIfp64 " Itr: %" PRIu32,
+		temp_FloatCoordinate_r, temp_FloatCoordinate_i, adjustedZoomValue, FRAC.maxItr
 	);
     // End the ImGui window
     ImGui::End();
@@ -348,25 +344,15 @@ void Menu_Coordinates() {
 	ABS_Mandelbrot& FRAC = current_Fractal;
 	#define NumberTextLen 64
 	
-	#ifdef enableFP80andFP128
-		#define Quad_InputText(lbl, num, fmt); \
-			{ \
-				static char Temp_Text_Input_Buf[NumberTextLen]; \
-				quadmath_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-				if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-					num = strtoflt128(Temp_Text_Input_Buf, nullptr); \
-				} \
-			}
-	#else
-		#define Quad_InputText(lbl, num, fmt); \
-			{ \
-				static char Temp_Text_Input_Buf[NumberTextLen]; \
-				snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-				if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-					num = strtold(Temp_Text_Input_Buf, nullptr); \
-				} \
-			}
-	#endif
+	#define FloatCoordinate_InputText(lbl, num, fmt); \
+		{ \
+			static char Temp_Text_Input_Buf[NumberTextLen]; \
+			FloatCoordinate_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
+			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
+				num = stringTo_FloatCoordinate(Temp_Text_Input_Buf, nullptr); \
+			} \
+		}
+
 	#define Float_InputText(lbl, num, fmt, func); \
 		{ \
 			static char Temp_Text_Input_Buf[NumberTextLen]; \
@@ -384,13 +370,8 @@ void Menu_Coordinates() {
 			} \
 		}
 	ImGui::Text("Real and Imaginary Coordinate:");
-		#ifdef enableFP80andFP128
-			Quad_InputText("r",FRAC.r,"%35.32Qf");
-			Quad_InputText("i",FRAC.i,"%35.32Qf");
-		#else
-			Quad_InputText("r",FRAC.r,"%35.32Lf");
-			Quad_InputText("i",FRAC.i,"%35.32Lf");
-		#endif
+			FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord);
+			FloatCoordinate_InputText("C-Imag##input_C_Imag", FRAC.i, "%35.32" PRIfpCord);
 	ImGui::Text("Zoom:");
 		Float_InputText("##zoom_input",FRAC.zoom,"%.5lf",strtod);
 	
@@ -399,23 +380,18 @@ void Menu_Coordinates() {
 		static bool useJuliaSliders = true;
 		if (useJuliaSliders == true) {
 			float input_Zreal = (fp32)FRAC.zr; float input_Zimag = (fp32)FRAC.zi;
-			if (ImGui::SliderFloat("zr",&input_Zreal,-2.0,2.0,"%.9f")) { FRAC.zr = (fp64)input_Zreal; }
-			if (ImGui::SliderFloat("zi",&input_Zimag,-2.0,2.0,"%.9f")) { FRAC.zi = (fp64)input_Zimag; }
+			if (ImGui::SliderFloat("Z-Real",&input_Zreal,-2.0,2.0,"%.9f")) { FRAC.zr = (fp64)input_Zreal; }
+			if (ImGui::SliderFloat("Z-Imag",&input_Zimag,-2.0,2.0,"%.9f")) { FRAC.zi = (fp64)input_Zimag; }
 			fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
 			if (ImGui::SliderAngle("Julia Angle",&juliaAngle,-360.0f,360.0f,"%.1f deg")) {
-				fp128 juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
-				fp128 juliaTheta = (fp128)juliaAngle;
+				fpCord juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
+				fpCord juliaTheta = (fpCord)juliaAngle;
 				FRAC.zr = juliaMagnitude * cos(juliaTheta);
 				FRAC.zi = juliaMagnitude * sin(juliaTheta);
 			}
 		} else {
-			#ifdef enableFP80andFP128
-				Quad_InputText("r",FRAC.r,"%35.32Qf");
-				Quad_InputText("i",FRAC.i,"%35.32Qf");
-			#else
-				Quad_InputText("##input_Zreal",FRAC.zr,"%35.32Lf");
-				Quad_InputText("##input_zimag",FRAC.zi,"%35.32Lf");
-			#endif
+			FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.r, "%35.32" PRIfpCord);
+			FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.i, "%35.32" PRIfpCord);
 		}
 		ImGui::Checkbox("Use Sliders", &useJuliaSliders);
 		ImGui::NewLine();
