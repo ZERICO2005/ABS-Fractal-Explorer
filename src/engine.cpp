@@ -270,7 +270,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	fracTime.setFreq(read_FrameTime());
 	fp64 deltaTime = 0.0;
 
-	int render_update_level = Change_Level::Full_Reset;
+	// int_enum render_update_level = Change_Level::Full_Reset;
 	nano64_t render_update_timecode = 0;
 	while (QUIT_FLAG == false) {
 		/* Update things */
@@ -298,7 +298,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
 			render_Engine(ABORT_RENDERING);
 			//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);
-			next_Write_Cycle_Pos(&currentBuf,Primary_Full);
+			next_Write_Cycle_Pos(&currentBuf, Primary_Full);
 			deltaTime = fracTime.getDeltaTime();
 			setRenderDelta(deltaTime);
 			if (read_Abort_Render_Ongoing() == true) {

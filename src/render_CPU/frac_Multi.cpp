@@ -234,7 +234,7 @@ void renderCPU_ABS_Mandelbrot(
 
 	Mandelbrot_Type Fractal_Type = get_Mandelbrot_Type(param);
 	Rendering_Precision Render_Precision = CPU_Render_Config.get_Render_Precision();
-	Rendering_Method Render_Method = CPU_Render_Config.get_Render_Method();
+	// Rendering_Method Render_Method = CPU_Render_Config.get_Render_Method();
 	Rendering_Preset Render_Preset = CPU_Render_Config.get_Render_Preset();
 
 	switch(Render_Precision) {

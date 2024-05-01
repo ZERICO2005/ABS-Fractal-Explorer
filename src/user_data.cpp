@@ -74,8 +74,8 @@ constexpr User_Configuration_Data Default_Config = {
 	#define clean_config_data(value,min,max)\
 	valueRestore(config_data.value,config_default.value,(min),(max))
 
-	void clean_Automatic_Behaviour(User_Automatic_Behaviour& config_data) {
-		const User_Automatic_Behaviour& config_default = Default_Config.Automatic_Behaviour;
+	void clean_Automatic_Behaviour(__attribute__((unused))User_Automatic_Behaviour& config_data) {
+		__attribute__((unused)) const User_Automatic_Behaviour& config_default = Default_Config.Automatic_Behaviour;
 		return; // Automatic_Behaviour only has bools
 	}
 

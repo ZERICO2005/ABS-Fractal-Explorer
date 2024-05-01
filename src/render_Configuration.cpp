@@ -561,7 +561,7 @@ using namespace Rendering_Configuration;
 			constexpr fp64 zoom_float32  =  5.7 - zoom_offset;
 			constexpr fp64 zoom_float64  = 14.4 - zoom_offset;
 			constexpr fp64 zoom_float80  = 17.7 - zoom_offset;
-			constexpr fp64 zoom_float128 = 32.5 - zoom_offset;
+			__attribute__((unused)) constexpr fp64 zoom_float128 = 32.5 - zoom_offset;
 
 			if (zoom < zoom_float16) {
 				calculate_Rendering_Precision_and_Method(Render_Precision_Float16, Render_Precision, Render_Method);

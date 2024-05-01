@@ -18,10 +18,10 @@
 /* Features */
 
 	// long double
-	//#define Enable_Float80
+	#define Enable_Float80
 
 	// quadmath.h
-	//#define Enable_Float128
+	#define Enable_Float128
 
 	// GPU Rendering
 	#define Enable_OpenCL
@@ -35,7 +35,7 @@
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 11
-#define PROGRAM_V_TAG "Rev-13 Developer Alpha"
+#define PROGRAM_V_TAG "Rev-14 Developer Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */

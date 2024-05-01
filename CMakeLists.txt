@@ -48,7 +48,7 @@ set(OPT_FLAG -g -O3)
 set(MARCH_FLAGS -msse2 -mavx)
 
 set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare)
-set(WARNING_IGNORE_FLAGS -Wno-unused-parameter -Wno-unused-variable -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces -Wno-strict-aliasing)
+set(WARNING_IGNORE_FLAGS -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
 
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fdiagnostics-color=always")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")

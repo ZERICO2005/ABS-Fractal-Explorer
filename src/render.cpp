@@ -1670,8 +1670,8 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	ABS_Mandelbrot& FRAC = current_Fractal;
-	static const dim32_t minimumImageResolution = 2;
-	if (image->resX < minimumImageResolution || image->resY < minimumImageResolution) {
+	constexpr dim32_t MinimumImageResolution = 2;
+	if (image->resX < MinimumImageResolution || image->resY < MinimumImageResolution) {
 		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
 		return 1;
 	}
@@ -1681,9 +1681,9 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&fx1,&fy1,&FRAC,ren);
 	if (fx0 > fx1) { int32_t temp = fx0; fx0 = fx1; fx1 = temp; }
 	if (fy0 > fy1) { int32_t temp = fy0; fy0 = fy1; fy1 = temp; }
-	int32_t fxCenter = (fx0 + fx1) / 2;
-	int32_t fyCenter = (fy0 + fy1) / 2;
-	if ((fx1 < minimumImageResolution || fy1 < minimumImageResolution)) {
+	// int32_t fxCenter = (fx0 + fx1) / 2;
+	// int32_t fyCenter = (fy0 + fy1) / 2;
+	if ((fx1 < MinimumImageResolution || fy1 < MinimumImageResolution)) {
 		return 1;
 	}
 	if ((image->rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
@@ -1715,7 +1715,7 @@ int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
 	ABS_Mandelbrot& FRAC = current_Fractal;
-	static const dim32_t minimumImageResolution = 2;
+
 	BufferBox blit;
 	BufferBox temp_MASTER;
 	Master.getBufferBox(&temp_MASTER);
@@ -1742,10 +1742,9 @@ int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	// 	dx00,dy00,dx10,dy10,
 	// 	dx01,dy01,dx11,dy11
 	// );
-	fp32 dimX = ((fp32)ren->resX / (fp32)ren->subSample);
-	fp32 dimY = ((fp32)ren->resY / (fp32)ren->subSample);
+
 	fp32 sx00 =       0.0f; fp32 sy00 =       0.0f;
-	fp32 sx11 = (fp32)resX; fp32 sy11 = (fp32)resY;
+	// fp32 sx11 = (fp32)resX; fp32 sy11 = (fp32)resY;
 	fp32 sx01 =       0.0f; fp32 sy01 = (fp32)resY;
 	fp32 sx10 = (fp32)resX; fp32 sy10 =       0.0f;
 	// image->printTransformationData(0.6);
@@ -1756,21 +1755,30 @@ int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	backgroundColor |= (uint32_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase))) << 8;
 	backgroundColor |= (uint32_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase))) << 16;
 
-	if (
-		Image_Scaler_Parallelogram(
-			&blit, image, ren,
-			backgroundColor,
-			nullptr, nullptr,
-			Rendering_Settings.Frame_Interpolation_Method,
-			sx00, sy00,
-			sx01, sy01, sx10, sy10,
-			dx00, dy00,
-			dx01, dy01, dx10, dy10
-		) == -1
-	) {
-		printError("\nImage_Scaler_Parallelogram failed");
+	constexpr fp32 Minimum_Image_Size = 0.1f;
+	fp32 Approximate_Image_Size = fabs(dx11 - dx00) * fabs(dy11 - dy00);
+	if (Approximate_Image_Size < Minimum_Image_Size) {
+		return -2; // Displays a loading graphic if the User jumps from being very zoomed in to very zoomed out as no more than 1 pixel would be rendered. Although I may have to alter this behaviour to account for intentionally zooming out
+	}
+	int Image_Scaler_Return_Value = Image_Scaler_Parallelogram(
+		&blit, image, ren,
+		backgroundColor,
+		nullptr, nullptr,
+		Rendering_Settings.Frame_Interpolation_Method,
+		sx00, sy00,
+		sx01, sy01, sx10, sy10,
+		dx00, dy00,
+		dx01, dy01, dx10, dy10
+	);
+	if (Image_Scaler_Return_Value < 0) {
+		FREE(blit.vram);
+		printError("\nImage_Scaler_Parallelogram failed (%d)", Image_Scaler_Return_Value);
 		return -1;
 	}
+	renderJuliaCordinatePoint(blit, ren);
+	copyBuffer_VeritcalOffset(temp_MASTER, blit, (size_t)RESY_UI);
+	FREE(blit.vram);
+	
 	// if (
 	// 	Image_Scaler_Quadrilateral(
 	// 		&blit, image, ren,
@@ -1781,15 +1789,15 @@ int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	// 		dx01, dy01, dx10, dy10
 	// 	) == -1
 	// ) {
+	// 	FREE(blit.vram);
 	// 	printError("\nImage_Scaler_Quadrilateral failed");
 	// 	return -1;
 	// }
+
 	//printfInterval(0.6,"\n%p: %" PRIu32 "x%" PRIu32 " %" PRIu32 "C %" PRIu32 "P",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
 	
-	renderJuliaCordinatePoint(blit, ren);
-	
 	// nano64_t startTime0 = getNanoTime();
-	copyBuffer_VeritcalOffset(temp_MASTER, blit, (size_t)RESY_UI);
+	
 		// uint8_t* dstBuf = temp_MASTER.vram;
 		// Buffer_Data srcData; set_Buffer_Data(srcData,
 		// 	blit.resX, blit.resY,
@@ -1811,7 +1819,6 @@ int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 	// 	(fp64)(endTime1 - startTime1) / 1.0e6
 	// );
 
-	FREE(blit.vram);
 	return 0;
 }
 
@@ -1857,13 +1864,16 @@ void newFrame() {
 		exportFractalBuffer = false;
 	} else if (primaryBufferValid == false) {
 		BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
-		renderStatusGraphic(render_Area, Status_Graphic::Graphic_Loading,1.0); // Renders a loading screen if Fractal buffers are unavailable
+		renderStatusGraphic(render_Area, Status_Graphic::Graphic_Loading, 1.0); // Renders a loading screen if Fractal buffers are unavailable
 		exportFractalBuffer = false;
 	}
 	#ifdef Use_OpenCV_Scaler
 		if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
 			int scaleRet = transformFracImage(Primary_Image,&primaryRenderData);
-			printfChange(int,scaleRet,"\ntransformFracImage: %" PRId32,scaleRet);
+			if (scaleRet == -2) { // Scaled Image is too small
+				BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
+				renderStatusGraphic(render_Area, Status_Graphic::Graphic_Loading, 1.0);
+			}
 		}
 	#endif
 	SDL_UpdateTexture(texture, nullptr, Master.vram, (dim32_t)Master.resX * (dim32_t)Master.channels);

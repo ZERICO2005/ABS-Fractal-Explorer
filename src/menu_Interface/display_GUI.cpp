@@ -208,7 +208,6 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("ms");
 
-    size_t buttonCount = sizeof(buttonLabels) / sizeof(buttonLabels[0]);
 	if (ImGui::Button("Coordinates")) {
 		buttonSelection = (buttonSelection == GUI_Menu_Coordinates) ? -1 : GUI_Menu_Coordinates;
 	} ImGui::SameLine();
@@ -262,30 +261,8 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 
 	ImGui::Separator();
-	int32_t boxSpace = 8;
-	int32_t boxCount = 8;
-	fp32 boxWidth = (fp32)(Master.resX - (dim32_t)(boxSpace * (boxCount + 1))) / (fp32)boxCount;
 
-	#define Param_Input_Box(text,id,buf) \
-	ImGui::Text(text); \
-	ImGui::SetNextItemWidth(boxWidth); \
-	ImGui::SameLine(); \
-	ImGui::InputText(id,buf,sizeof(buf)); \
-	correctTextFloat(buf,sizeof(buf),0);
-	
-	#define Param_Input_Double(text,id,ptr,fm) \
-	ImGui::Text(text); \
-	ImGui::SetNextItemWidth(boxWidth); \
-	ImGui::SameLine(); \
-	ImGui::InputDouble(id,ptr,0.0,0.0,fm);
-
-	#define Param_Input_Int(text,id,ptr) \
-	ImGui::Text(text); \
-	ImGui::SetNextItemWidth(boxWidth); \
-	ImGui::SameLine(); \
-	ImGui::InputInt(id,ptr,16,256);
-
-	ABS_Mandelbrot& FRAC = current_Fractal;
+	const ABS_Mandelbrot& FRAC = current_Fractal;
 	size_t renderFP = Render_Config.get_Current_Float_Size();
 	const char* const renderMethod = Render_Config.current_Render_Method_GPU() ? "GPU" : "CPU";
 	
@@ -441,16 +418,8 @@ void Menu_Fractal() {
 		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
 		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
 	);
-	static const char* juliaBehaviour[] = {"Independant Movement","Copy Movement","Cordinates follow Z Value","Z Value follows Coordinates"};
-	static bool juliaSet = false;
-	static bool startingZ = false;
-	static bool swapJuliaSplit = false;
-	static bool cursorZValue = false;
-	static bool relativeZValue = false;
-	static bool showFloatingJulia = true;
-	static bool adjustZoomToPower = false;
-	static bool lockToCardioid = false;
-	static bool flipCardioidSide = false;
+	// static const char* juliaBehaviour[] = {"Independant Movement", "Copy Movement", "Cordinates follow Z Value", "Z Value follows Coordinates"};
+
 	ImGui::Begin("Fractal Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 	static int Combo_FractalType = 0;
@@ -646,20 +615,11 @@ void Menu_Rendering() {
 	
 	User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
 
-	static const char* CPU_RenderingModes[] = {"fp32 | 10^5.7","fp64 | 10^14.4 (Default)","fp80 | 10^17.7","fp128 | 10^32.5"};
-	#ifndef BUILD_RELEASE
-		static const char* GPU_RenderingModes[] = {"fp16 | 10^1.8","fp32 | 10^5.7 (Default)","fp64 | 10^14.4"};
-		static int Combo_GPU_RenderingMode = 1;
-	#else
-		static const char* GPU_RenderingModes[] = {"fp32 | 10^5.7 (Default)"};
-		static int Combo_GPU_RenderingMode = 0;
-	#endif
 	int32_t input_subSample = (int32_t)primaryRenderData.subSample;
 	int32_t input_superSample = (int32_t)primaryRenderData.sample;
 	int32_t CPU_ThreadCount = (int32_t)std::thread::hardware_concurrency();
 	static int32_t input_CPU_MaxThreads = ((CPU_ThreadCount <= 1) ? 1 : (CPU_ThreadCount - 1));
 	static int32_t input_CPU_ThreadMultiplier = 1;
-	static int32_t Combo_CPU_RenderingMode = 1;
 
 	static int32_t input_super_CPU_MaxThreads = super_screenshot_maxThreads;
 	static int32_t input_super_CPU_ThreadMultiplier = super_screenshot_threadMultiplier;
@@ -762,9 +722,9 @@ void Menu_Rendering() {
 			ImGui::NewLine();
 			ImGui::Text("Super Screenshot:");
 			ImGui::Text("Maximum Threads:");
-			ImGui::SliderInt("##input_CPU_MaxThreads",&input_super_CPU_MaxThreads,1,CPU_ThreadCount);
+			ImGui::SliderInt("##input_Super_CPU_MaxThreads",&input_super_CPU_MaxThreads,1,CPU_ThreadCount);
 			ImGui::Text("Thread Multiplier:");
-			ImGui::SliderInt("##input_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
+			ImGui::SliderInt("##input_Super_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
 			ImGui::NewLine();
 		}
 		primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
@@ -785,8 +745,6 @@ void Menu_Rendering() {
 		int_enum Combo_Rendering_Method = Render_Config.get_Render_Method();
 		int_enum Combo_Rendering_Preset = Render_Config.get_Render_Preset();
 
-		constexpr nano64_t Rendering_Precision_Error_Message_Duration = SECONDS_TO_NANO(2.5);
-		constexpr nano64_t Rendering_Method_Error_Message_Duration = SECONDS_TO_NANO(2.5);
 		constexpr nano64_t Rendering_Selection_Error_Message_Duration = SECONDS_TO_NANO(2.5);
 		static std::string message_Rendering_Precision = "";
 		static std::string message_Rendering_Method = "";
@@ -994,13 +952,12 @@ void Menu_Settings() {
 	// static const char* initFrameRate[] = {
 	// 	"Current Monitor","Highest Refresh-Rate","Lowest Refresh-Rate","Constant Value"
 	// };
-	User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
+	
 	// static const char* initMonitorLocations[] = {
 	// 	"Automatic","Cursor Position","First Monitor","Last Monitor","Specific Monitor",
 	// 	"Left","Right","Center","Top","Bottom","Top-Left","Top-Right","Bottom-Left","Bottom-Right",
 	// 	"Highest Resolution","Lowest Resolution","Highest Framerate","Lowest Framerate","Widest Aspect Ratio","Tallest Aspect Ratio"
 	// };
-	int32_t& specificMonitor = config_data.Display_Preferences.Specific_Bootup_Display;
 
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
@@ -1012,6 +969,7 @@ void Menu_Settings() {
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	User_GUI_Settings& config_GUI_Settings = config_data.GUI_Settings;
+
 	User_Display_Preferences& config_Display = config_data.Display_Preferences;
 
 	ImGui::Text("ABS-Fractal-Explorer v%s (%s)", PROGRAM_VERSION, PROGRAM_DATE);
@@ -1093,6 +1051,9 @@ void Menu_Settings() {
 		ImGui::NewLine();
 	}
 	if (ImGui::CollapsingHeader("DISPLAYS AND FRAME-RATE")) {
+		// Completely Arbtritrary
+		constexpr int32_t Maximum_Allowed_Displays = 144;
+
 		int32_t cursorPosX, cursorPosY; SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
 		int32_t windowPosX, windowPosY; SDL_GetWindowPosition(window, &windowPosX, &windowPosY);
 		int32_t windowResX, windowResY; SDL_GetWindowSize(window, &windowResX, &windowResY);
@@ -1112,8 +1073,8 @@ void Menu_Settings() {
 				reloadDisplays();
 				uint64_t newDisplayHash = getDisplayConfigHash();
 				changesToDisplayList =
-				(config_data.Display_Preferences.Display_Config_Hash == newDisplayHash) ? false : true;
-				config_data.Display_Preferences.Display_Config_Hash = newDisplayHash;
+				(config_Display.Display_Config_Hash == newDisplayHash) ? false : true;
+				config_Display.Display_Config_Hash = newDisplayHash;
 				displayTimer = getNanoTime();
 				displayDuration = (changesToDisplayList == true) ? SECONDS_TO_NANO(2.5) : SECONDS_TO_NANO(1.0);
 			}
@@ -1136,11 +1097,11 @@ void Menu_Settings() {
 		ImGui::SeparatorText("Bootup-Diplay"); {
 
 			ImGui::Text("Which monitor should the application open to:");
-			if (ImGui::Combo("##initMonitorLocation", &config_data.Display_Preferences.Display_Bootup_Type,
+			if (ImGui::Combo("##initMonitorLocation", &config_Display.Display_Bootup_Type,
 				Display_Bootup::Display_Bootup_Text, ARRAY_LENGTH(Display_Bootup::Display_Bootup_Text)
 			)) {
 			}
-			if (config_data.Display_Preferences.Display_Bootup_Type == Display_Bootup::Specific) { // Specific Monitor
+			if (config_Display.Display_Bootup_Type == Display_Bootup::Specific) { // Specific Monitor
 				static bool overrideDisplayCount = false;
 				// if (overrideDisplayCount == false && config_Display.Specific_Bootup_Display > getDisplayCount()) {
 				// 	config_Display.Specific_Bootup_Display = getDisplayCount();
@@ -1148,9 +1109,9 @@ void Menu_Settings() {
 				if (config_Display.Specific_Bootup_Display > getDisplayCount()) {
 					overrideDisplayCount = true;
 				}
-				int32_t limitDisplayCount = (overrideDisplayCount == false || getDisplayCount() > 144) ? getDisplayCount() : 144;
+				int32_t limitDisplayCount = (overrideDisplayCount == false || getDisplayCount() > Maximum_Allowed_Displays) ? getDisplayCount() : Maximum_Allowed_Displays;
 				if (getDisplayCount() != 1 || overrideDisplayCount == true) {
-					if(ImGui::InputInt("##specificMonitor",&config_Display.Specific_Bootup_Display,1,1)) {
+					if(ImGui::InputInt("##specificMonitor",&config_Display.Specific_Bootup_Display, 1, 1)) {
 						valueClamp(config_Display.Specific_Bootup_Display,1,limitDisplayCount);
 					} 
 				} else {
@@ -1175,11 +1136,11 @@ void Menu_Settings() {
 					);
 				}
 			} else if (true
-				// (config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::Automatic) &&
-				// (config_data.Display_Preferences.Display_Bootup_Type != Display_Bootup::CursorPosition)
+				// (config_Display.Display_Bootup_Type != Display_Bootup::Automatic) &&
+				// (config_Display.Display_Bootup_Type != Display_Bootup::CursorPosition)
 			) {
 				const DisplayInfo* initDisp = matchDisplayAttribute(
-					(Display_Bootup::Display_Bootup_Enum)config_data.Display_Preferences.Display_Bootup_Type,
+					(Display_Bootup::Display_Bootup_Enum)config_Display.Display_Bootup_Type,
 					config_Display,
 					RESX_Minimum, RESY_Minimum,
 					cursorPosX, cursorPosY
@@ -1208,34 +1169,34 @@ void Menu_Settings() {
 		}
 		ImGui::SeparatorText("Frame-Rate"); {
 			ImGui::Text("Base maximum frame-rate off of:");
-			if (ImGui::Combo("##initFrameRate", &Display_Preferences.Display_RefreshRate_Type,
+			if (ImGui::Combo("##initFrameRate", &config_Display.Display_RefreshRate_Type,
 				Display_RefreshRate::Display_RefreshRate_Text, ARRAY_LENGTH(Display_RefreshRate::Display_RefreshRate_Text)
 			)) {
 
 			}
 			const DisplayInfo* Select_Display = matchDisplayRefreshRate(
-				(Display_Bootup::Display_Bootup_Enum)Display_Preferences.Display_RefreshRate_Type,
+				(Display_Bootup::Display_Bootup_Enum)config_Display.Display_RefreshRate_Type,
 				config_Display, window, RESX_Minimum, RESY_Minimum
 			);
 			
 			printDisplayInfo(Select_Display,false);
 
-			static fp64 FPS_Constant_Value = Display_Preferences.Constant_RefreshRate_Value;
-			fp64 TEMP_FPS = (Select_Display == nullptr) ? Display_Preferences.Constant_RefreshRate_Value : Select_Display->getRefreshRate();
+			static fp64 FPS_Constant_Value = config_Display.Constant_RefreshRate_Value;
+			fp64 TEMP_FPS = (Select_Display == nullptr) ? config_Display.Constant_RefreshRate_Value : Select_Display->getRefreshRate();
 			
-			if (Display_Preferences.Display_RefreshRate_Type == Display_RefreshRate::ConstantValue) { // Constant
-				static fp32 temp_FPS_Constant_Value = (fp32)Display_Preferences.Constant_RefreshRate_Value;
+			if (config_Display.Display_RefreshRate_Type == Display_RefreshRate::ConstantValue) { // Constant
+				static fp32 temp_FPS_Constant_Value = (fp32)config_Display.Constant_RefreshRate_Value;
 				ImGui::NewLine();
 				ImGui::Text("%.3lfms",(1.0 / FPS_Constant_Value) * 1000.0);
 				ImGui::InputFloat("##temp_FPS_Constant_Value",&temp_FPS_Constant_Value,6.0f,30.0f,"%.3f"); valueClamp(temp_FPS_Constant_Value,12.0f,1200.0f);
 				FPS_Constant_Value = (fp64)temp_FPS_Constant_Value;
 				if (ImGui::Button("Apply FPS")) {
-					Display_Preferences.Constant_RefreshRate_Value = FPS_Constant_Value;
-					updateFrameRate(CALC_FRAMERATE_OFFSET(Display_Preferences.Constant_RefreshRate_Value));
+					config_Display.Constant_RefreshRate_Value = FPS_Constant_Value;
+					updateFrameRate(CALC_FRAMERATE_OFFSET(config_Display.Constant_RefreshRate_Value));
 				}
 			} else { // Relative
 				ImGui::NewLine(); // Blank Line
-				static int32_t temp_frameMultiplier = Display_Preferences.Maximum_FPS_Multiplier;
+				static int32_t temp_frameMultiplier = config_Display.Maximum_FPS_Multiplier;
 				fp64 frameMultiplier;
 				//int temp_frameMultiplier = (Default_Frame_Rate_Multiplier >= 0.0) ? (int)(Default_Frame_Rate_Multiplier - 1.0) : (int)(1.0 - 1.0);
 				//static fp64 frameMultiplier = Default_Frame_Rate_Multiplier;
@@ -1258,7 +1219,7 @@ void Menu_Settings() {
 				
 				ImGui::SliderInt("##temp_frameMultiplier",&temp_frameMultiplier,(-6) + 1,(6) - 1,"");
 				if (ImGui::Button("Apply FPS")) {
-					Display_Preferences.Maximum_FPS_Multiplier = temp_frameMultiplier;
+					config_Display.Maximum_FPS_Multiplier = temp_frameMultiplier;
 					updateFrameRate(CALC_FRAMERATE_OFFSET(calculatedFPS));
 				}
 			}
