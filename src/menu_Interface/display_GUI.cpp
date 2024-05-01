@@ -390,8 +390,8 @@ void Menu_Coordinates() {
 				FRAC.zi = juliaMagnitude * sin(juliaTheta);
 			}
 		} else {
-			FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.r, "%35.32" PRIfpCord);
-			FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.i, "%35.32" PRIfpCord);
+			FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.zr, "%35.32" PRIfpCord);
+			FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.zi, "%35.32" PRIfpCord);
 		}
 		ImGui::Checkbox("Use Sliders", &useJuliaSliders);
 		ImGui::NewLine();
