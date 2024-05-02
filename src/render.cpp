@@ -21,7 +21,7 @@
 #include "imageBuffer.h"
 #include "imageTransform.h"
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
@@ -732,7 +732,7 @@ int_enum updateFractalParameters() {
 			} else {
 				pixel_to_coordinate(
 					(int32_t)(ImGui::GetMousePos().x), (int32_t)ImGui::GetMousePos().y - (int32_t)RESY_UI,
-					&FRAC.zr, &FRAC.zi, &FRAC, &primaryRenderData
+					FRAC.zr, FRAC.zi, FRAC, primaryRenderData
 				);
 			}
 		}
@@ -1621,15 +1621,12 @@ int exportSuperScreenshot() {
 	return 0;
 }
 
-void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
+void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data& ren) {
 	const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
 	if (Rendering_Settings.JuliaPoint_Enabled == false) { return; }
 	if (current_Fractal.zr == 0.0 && current_Fractal.zi == 0.0) { return; }
-	if (ren == nullptr) {
-		printError("Unable to renderJuliaCordinatePoint(), Render_Data is nullptr");
-		return;
-	}
-	if (validateBufferBox(&box,true) == false) {
+
+	if (validateBufferBox(&box, true) == false) {
 		printError("Unable to renderJuliaCordinatePoint(), to invalid BufferBox");
 		return;
 	}
@@ -1641,7 +1638,7 @@ void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	int32_t posX, posY;
 	coordinate_to_pixel(
 		current_Fractal.zr, current_Fractal.zi,
-		&posX, &posY, &current_Fractal, ren
+		posX, posY, current_Fractal, ren
 	);
 	for (int32_t y = posY - pointRadius; y <= posY + pointRadius; y++) {
 		if (y < 0 || y >= box.resY) { continue; }
@@ -1660,21 +1657,61 @@ void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	}
 }
 
-// Work in progress ...
-/* Revisied SDL2 Frame Transformation */
+// TODO: Add Minimum_Image_Resolution once this function is mostly complete
+/* (Unfinished) Revisied SDL2 Frame Transformation */
 int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
-	if (image.vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
-	if (image.allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
+	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
+	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
+	const ABS_Mandelbrot& FRAC = current_Fractal;
+
+	int32_t fx0 = 0; int32_t fy0 = 0;
+	int32_t fx1 = 0; int32_t fy1 = 0;
+	coordinate_to_pixel(image.x00, image.y00, fx0, fy0, FRAC, ren);
+	coordinate_to_pixel(image.x11, image.y11, fx1, fy1, FRAC, ren);
+	if (fx0 > fx1) { int32_t temp = fx0; fx0 = fx1; fx1 = temp; }
+	if (fy0 > fy1) { int32_t temp = fy0; fy0 = fy1; fy1 = temp; }
+	// int32_t fxCenter = (fx0 + fx1) / 2;
+	// int32_t fyCenter = (fy0 + fy1) / 2;
+	fp64 rotationAngle = (FRAC.rot - image.rot) * (360.0 / TAU);
+	//SDL_Point fCenter = {fxCenter, fyCenter};
+
+	if ((image.rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
+		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
+			image.vram,
+			image.resX, image.resY,
+			(int32_t)(image.channels * 8),
+			(int32_t)(image.channels * (size_t)image.resX),
+			SDL_PIXELFORMAT_ABGR8888
+		);
+		fx1 -= fx0;
+		fy1 -= fy0;
+		SDL_Rect srcRect = {0, 0, image.resX, image.resY};
+		//SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
+		SDL_Rect dstRect = {0, RESY_UI, image.resX, image.resY};
+		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
+		if (SDL_RenderCopyEx(renderer, scale_tex, &srcRect, &dstRect, rotationAngle, nullptr, SDL_FLIP_NONE)) {
+			printf("\nrenderCopy: %s", SDL_GetError()); fflush(stdout);
+		}
+		SDL_DestroyTexture(scale_tex);
+		SDL_FreeSurface(scale_surface);
+	}
+	return 0;
+}
+
+/* Legacy SDL2 Frame Transformation */
+int displayFracImage(const ImageBuffer& image, const Render_Data& ren) {
+	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
+	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	const ABS_Mandelbrot& FRAC = current_Fractal;
 	constexpr dim32_t MinimumImageResolution = 2;
 	if (image.resX < MinimumImageResolution || image.resY < MinimumImageResolution) {
-		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32, image.resX, image.resY);
+		printWarning("const ImageBuffer& image is below minimum resolution: %" PRIu32 "x%" PRIu32, image.resX, image.resY);
 		return 1;
 	}
 	int32_t fx0 = 0; int32_t fy0 = 0;
 	int32_t fx1 = 0; int32_t fy1 = 0;
-	coordinate_to_pixel(image.x00, image.y00, &fx0, &fy0, &FRAC, &ren);
-	coordinate_to_pixel(image.x11, image.y11, &fx1, &fy1, &FRAC, &ren);
+	coordinate_to_pixel(image.x00, image.y00, fx0, fy0, FRAC, ren);
+	coordinate_to_pixel(image.x11, image.y11, fx1, fy1, FRAC, ren);
 	if (fx0 > fx1) { int32_t temp = fx0; fx0 = fx1; fx1 = temp; }
 	if (fy0 > fy1) { int32_t temp = fy0; fy0 = fy1; fy1 = temp; }
 	// int32_t fxCenter = (fx0 + fx1) / 2;
@@ -1696,7 +1733,7 @@ int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 		SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
 		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
 		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
-			printf("\nrenderCopy: %s",SDL_GetError()); fflush(stdout);
+			printf("\nrenderCopy: %s", SDL_GetError()); fflush(stdout);
 		}
 		SDL_DestroyTexture(scale_tex);
 		SDL_FreeSurface(scale_surface);
@@ -1704,57 +1741,105 @@ int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 	return 0;
 }
 
-/* Legacy SDL2 Frame Transformation */
-int displayFracImage(const ImageBuffer* image, const Render_Data* ren) {
-	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
-	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
-	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	const ABS_Mandelbrot& FRAC = current_Fractal;
-	constexpr dim32_t MinimumImageResolution = 2;
-	if (image->resX < MinimumImageResolution || image->resY < MinimumImageResolution) {
-		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
-		return 1;
+/* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
+int Manually_Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
+	nano64_t startTime = getNanoTime();
+	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
+	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
+	ABS_Mandelbrot& FRAC = current_Fractal;
+
+	BufferBox blit;
+	getRenderBufferBoxFromMaster(blit);
+	if (validateBufferBox(&blit) == false) {
+		printError("Invalid blit BufferBox");
+		return -1;
 	}
-	int32_t fx0 = 0; int32_t fy0 = 0;
-	int32_t fx1 = 0; int32_t fy1 = 0;
-	coordinate_to_pixel(image->x00, image->y00, &fx0, &fy0, &FRAC, ren);
-	coordinate_to_pixel(image->x11, image->y11, &fx1, &fy1, &FRAC, ren);
-	if (fx0 > fx1) { int32_t temp = fx0; fx0 = fx1; fx1 = temp; }
-	if (fy0 > fy1) { int32_t temp = fy0; fy0 = fy1; fy1 = temp; }
-	// int32_t fxCenter = (fx0 + fx1) / 2;
-	// int32_t fyCenter = (fy0 + fy1) / 2;
-	if ((fx1 < MinimumImageResolution || fy1 < MinimumImageResolution)) {
-		return 1;
-	}
-	if ((image->rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
-		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
-			image->vram,
-			image->resX, image->resY,
-			(int32_t)(image->channels * 8),
-			(int32_t)(image->channels * (size_t)image->resX),
-			SDL_PIXELFORMAT_ABGR8888
-		);
-		fx1 -= fx0;
-		fy1 -= fy0;
-		SDL_Rect srcRect = {0, 0, image->resX, image->resY};
-		SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
-		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
-		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
-			printf("\nrenderCopy: %s",SDL_GetError()); fflush(stdout);
+	size_t z = 0;
+	const size_t pitch = getBufferBoxPitch(&blit);
+
+	// const fpCord Image_DimX = (fpCord)(image.resX - 1);
+	// const fpCord Image_DimY = (fpCord)(image.resY - 1);
+
+	const fpCord Recip_Image_DimX = (fpCord)1.0 / (fpCord)(image.resX - 1);
+	const fpCord Recip_Image_DimY = (fpCord)1.0 / (fpCord)(image.resY - 1);
+	
+	const fpCord Image_Cord_X00 = image.x00 - FRAC.r;
+	const fpCord Image_Cord_Y00 = image.y00 - FRAC.i;
+	const fpCord Image_Cord_X01_Sub_X00 = image.x01 - image.x00;
+	const fpCord Image_Cord_Y01_Sub_Y00 = image.y01 - image.y00;
+	// const fpCord Image_Cord_X10 = image.x10 - FRAC.r;
+	// const fpCord Image_Cord_Y10 = image.y10 - FRAC.i;
+	const fpCord Image_Cord_X11_Sub_X10 = image.x11 - image.x10;
+	const fpCord Image_Cord_Y11_Sub_Y10 = image.y11 - image.y10;
+
+	const fpCord Image_Cord_X10_Sub_X00 = image.x10 - image.x00;
+	const fpCord Image_Cord_Y10_Sub_Y00 = image.y10 - image.y00;
+	const fpCord Image_Cord_X11subX10_Sub_X01subX00 = Image_Cord_X11_Sub_X10 - Image_Cord_X01_Sub_X00;
+	const fpCord Image_Cord_Y11subY10_Sub_Y01subY00 = Image_Cord_Y11_Sub_Y10 - Image_Cord_Y01_Sub_Y00;
+
+	const fpCord Rot_Sin = sin((fpCord)FRAC.rot);
+	const fpCord Rot_Cos = cos((fpCord)FRAC.rot);
+	const fpCord ResX_Div2 = (fpCord)(ren.resX - 1) / (fpCord)2.0;
+	const fpCord ResY_Div2 = (fpCord)(ren.resY - 1) / (fpCord)2.0;
+	const fpCord Zoom_Value_Mult_ResZ_Div2 = pow((fpCord)10.0, (fpCord)FRAC.zoom) * ( (ren.resX >= ren.resY) ? ResY_Div2 : ResX_Div2 );
+	const fpCord Recip_Stretch_X = (fpCord)1.0 / (fpCord)FRAC.sX;
+	const fpCord Recip_Stretch_Y = (fpCord)1.0 / (fpCord)FRAC.sY;
+
+	fpCord Y_Value = (fpCord)0.0;
+	for (dim32_t y = 0; y < image.resY; y++) {
+		// fpCord Y_Value = (fpCord)y / Image_DimY;
+		fpCord X0_Cord        = Image_Cord_X00         + Y_Value * Image_Cord_X01_Sub_X00            ;
+		fpCord X1_Sub_X0_Cord = Image_Cord_X10_Sub_X00 + Y_Value * Image_Cord_X11subX10_Sub_X01subX00;
+		fpCord Y0_Cord        = Image_Cord_Y00         + Y_Value * Image_Cord_Y01_Sub_Y00            ;
+		fpCord Y1_Sub_Y0_Cord = Image_Cord_Y10_Sub_Y00 + Y_Value * Image_Cord_Y11subY10_Sub_Y01subY00;
+		fpCord X_Value = (fpCord)0.0;
+		for (dim32_t x = 0; x < image.resX; x++) {
+			// fpCord X_Value = (fpCord)x / Image_DimX;
+			fpCord X_Cord = X0_Cord + X_Value * (X1_Sub_X0_Cord);
+			fpCord Y_Cord = Y0_Cord + X_Value * (Y1_Sub_Y0_Cord);
+			
+			/* Reverses Transformations */
+			fpCord xC = X_Cord * Rot_Cos + Y_Cord * Rot_Sin;
+			fpCord yC = Y_Cord * Rot_Cos - X_Cord * Rot_Sin;
+			xC *= Recip_Stretch_X;
+			yC *= Recip_Stretch_Y;
+			/* Normalizes Coordinates */
+
+			int32_t posX = (int32_t)( ( xC * Zoom_Value_Mult_ResZ_Div2) + (ResX_Div2) );
+			int32_t posY = (int32_t)( (-yC * Zoom_Value_Mult_ResZ_Div2) + (ResY_Div2) );
+
+			if (posX >= 0 && posX < blit.resX && posY >= 0 && posY < blit.resY) {
+				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 0] = image.vram[z + 0];
+				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 1] = image.vram[z + 1];
+				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 2] = image.vram[z + 2];
+				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 3] = image.vram[z + 3];
+			}
+			z += IMAGE_BUFFER_CHANNELS;
+			X_Value += Recip_Image_DimX;
 		}
-		SDL_DestroyTexture(scale_tex);
-		SDL_FreeSurface(scale_surface);
+		Y_Value += Recip_Image_DimY;
 	}
+
+	uint32_t backgroundColor = 0xFF000000;
+	backgroundColor |= (uint32_t)(FRAC.exterior_R_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_R_Phase)));
+	backgroundColor |= (uint32_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase))) << 8;
+	backgroundColor |= (uint32_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase))) << 16;
+
+	renderJuliaCordinatePoint(blit, ren);
+
+	nano64_t endTime = getNanoTime();
+	printfInterval(0.4,
+		"\ntime: %.3lfms %.3lfFPS ",
+		NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
+		NANO_TO_FRAMERATE(endTime - startTime)
+	);
 	return 0;
 }
 
 /* OpenCV Frame Transformation */
-int transformFracImage(const ImageBuffer* image, const Render_Data* ren) {
-	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
-	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
-	if (ren == NULL) { printError("ImageBuffer* image is NULL"); return -1; }
+int transformFracImage(const ImageBuffer& image, const Render_Data& ren) {
+	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
+	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	ABS_Mandelbrot& FRAC = current_Fractal;
 
 	BufferBox blit;
@@ -1769,12 +1854,12 @@ int transformFracImage(const ImageBuffer* image, const Render_Data* ren) {
 
 	fp32 dx00 = 0.0f; fp32 dy00 = 0.0f; fp32 dx11 = 0.0f; fp32 dy11 = 0.0f;
 	fp32 dx01 = 0.0f; fp32 dy01 = 0.0f; fp32 dx10 = 0.0f; fp32 dy10 = 0.0f;
-	coordinate_to_pixel(image->x00, image->y00, &dx00, &dy00, &FRAC, ren);
-	coordinate_to_pixel(image->x11, image->y11, &dx11, &dy11, &FRAC, ren);
-	coordinate_to_pixel(image->x01, image->y01, &dx01, &dy01, &FRAC, ren);
-	coordinate_to_pixel(image->x10, image->y10, &dx10, &dy10, &FRAC, ren);
-	dim32_t resX = (dim32_t)(image->resX);
-	dim32_t resY = (dim32_t)(image->resY);
+	coordinate_to_pixel(image.x00, image.y00, dx00, dy00, FRAC, ren);
+	coordinate_to_pixel(image.x11, image.y11, dx11, dy11, FRAC, ren);
+	coordinate_to_pixel(image.x01, image.y01, dx01, dy01, FRAC, ren);
+	coordinate_to_pixel(image.x10, image.y10, dx10, dy10, FRAC, ren);
+	dim32_t resX = (dim32_t)(image.resX);
+	dim32_t resY = (dim32_t)(image.resY);
 	// printfInterval(0.5,
 	// 	"\nres{%" PRIu32 "x%" PRIu32 "}"
 	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}"
@@ -1802,7 +1887,7 @@ int transformFracImage(const ImageBuffer* image, const Render_Data* ren) {
 		return -2; // Displays a loading graphic if the User jumps from being very zoomed in to very zoomed out as no more than 1 pixel would be rendered. Although I may have to alter this behaviour to account for intentionally zooming out
 	}
 	int Image_Scaler_Return_Value = Image_Scaler_Parallelogram(
-		&blit, image, ren,
+		&blit, &image, &ren,
 		backgroundColor,
 		nullptr, nullptr,
 		Rendering_Settings.Frame_Interpolation_Method,
@@ -1822,7 +1907,7 @@ int transformFracImage(const ImageBuffer* image, const Render_Data* ren) {
 	
 	// if (
 	// 	Image_Scaler_Quadrilateral(
-	// 		&blit, image, ren,
+	// 		&blit, &image, &ren,
 	// 		Rendering_Settings.Frame_Interpolation_Method,
 	// 		sx00, sy00, sx11, sy11,
 	// 		sx01, sy01, sx10, sy10,
@@ -1882,7 +1967,7 @@ void newFrame() {
 		exportSuperFractalBuffer = false;
 	}
 
-	int primaryBufferChange = next_Read_Cycle_Pos(&Primary_Image,Primary_Full);
+	int primaryBufferChange = next_Read_Cycle_Pos(&Primary_Image, Primary_Full);
 	bool primaryBufferValid = (primaryBufferChange < 0 || Primary_Image == nullptr || Primary_Image->bufferSafe() == false) ? false : true;
 	
 	/* Temporary code that will force the rendering Engine to Update at bootup */
@@ -1910,7 +1995,8 @@ void newFrame() {
 	}
 	#ifdef Enable_OpenCV_Scaler
 		if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
-			int scaleRet = transformFracImage(Primary_Image,&primaryRenderData);
+			//int scaleRet = transformFracImage(*Primary_Image, primaryRenderData);
+			int scaleRet = Manually_Transform_Frame(*Primary_Image, primaryRenderData);
 			if (scaleRet == -2) { // Scaled Image is too small
 				BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
 				renderStatusGraphic(render_Area, Status_Graphic::Graphic_Loading, 1.0);
@@ -1928,8 +2014,9 @@ void newFrame() {
 		Primary_Image->getBufferBox(&temp_primaryBox);
 
 		#ifndef Enable_OpenCV_Scaler
-			int dispRet = displayFracImage(Primary_Image,&primaryRenderData);
-			printfChange(int,dispRet,"\ndisplayFracImage: %" PRId32,dispRet);
+			//int dispRet = displayFracImage(*Primary_Image, primaryRenderData);
+			int dispRet = Transform_Frame(*Primary_Image, primaryRenderData);
+			printfChange(int, dispRet, "\ndisplayFracImage: %" PRId32, dispRet);
 		#endif
 		if (exportFractalBuffer == true) {
 			nano64_t curTime = getNanoTime();
