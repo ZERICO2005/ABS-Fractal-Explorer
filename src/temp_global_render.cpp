@@ -24,7 +24,6 @@
 #include "imageTransform.h"
 
 #include <SDL.h>
-#include <opencv2/opencv.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
@@ -77,8 +76,6 @@ Frame_Pacer GUI_Frame_Pacer;
 	SDL_Texture* kTexture = nullptr; // Keyboard graphic
 
 /* Rendering */
-
-	//#define Use_OpenCV_Scaler
 
 	Render_Configurator Render_Config;
 	

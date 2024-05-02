@@ -5,6 +5,7 @@
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
 */
+
 /* Type Definitions */
 	typedef uchar	uint8_t;
 	typedef ushort	uint16_t;
@@ -14,15 +15,6 @@
 	typedef short	int16_t;
 	typedef int		int32_t;
 	typedef long	int64_t;
-
-	typedef uchar	u8;
-	typedef ushort	u16;
-	typedef uint	u32;
-	typedef ulong	u64;
-	typedef char	i8;
-	typedef short	i16;
-	typedef int		i32;
-	typedef long	i64;
 
 	typedef half	fp16;
 	typedef float	fp32;
@@ -34,24 +26,36 @@
 	#define TAU		6.283185307179586f
 	#define EULER	2.718281828459045f
 	#define BREAKOUT 4096.0f
+	#define IMAGE_BUFFER_CHANNELS 4
 /* Constants */
 
  __kernel void renderFracCLPoint(
 			fp32 r, fp32 i,
-			u32 maxItr,
-			u32 resX, u32 resY,
+			uint32_t maxItr,
+			uint32_t resX, uint32_t resY,
 			fp32 zr0, fp32 zi0,
 			uint32_t formula, fp32 power, uint32_t sample,
-			fp32 rot,
-			fp32 numZ,fp32 numW,
-			__global uint8_t* resultBuf
+			fp32 rSin,
+			fp32 rCos,
+			fp32 breakoutValue,
+			fp32 recip_numZ, fp32 neg_recip_numW,
+			__global uint8_t* resultBuf,
+			fp32 Exterior_R_Freq_mult_TAU, fp32 Exterior_R_Phase_mult_TAU, fp32 Exterior_R_Amp_mult_Exterior_Alpha,
+			fp32 Exterior_G_Freq_mult_TAU, fp32 Exterior_G_Phase_mult_TAU, fp32 Exterior_G_Amp_mult_Exterior_Alpha,
+			fp32 Exterior_B_Freq_mult_TAU, fp32 Exterior_B_Phase_mult_TAU, fp32 Exterior_B_Amp_mult_Exterior_Alpha,
+			fp32 Exterior_Alpha,
+			fp32 Interior_R_Freq, fp32 Interior_R_Phase, fp32 Interior_R_Amp_mult_Interior_Alpha,
+			fp32 Interior_G_Freq, fp32 Interior_G_Phase, fp32 Interior_G_Amp_mult_Interior_Alpha,
+			fp32 Interior_B_Freq, fp32 Interior_B_Phase, fp32 Interior_B_Amp_mult_Interior_Alpha,
+			fp32 Interior_Alpha
 ) { // Some values like zoom are embeded into precalculated constants
-    u32 id = get_global_id(0);
-	uint32_t outR = 0;
-	uint32_t outG = 0;
-	uint32_t outB = 0;
-	fp32 smooth = 0.0;
-	u8 type = (formula & 0x40000000) ? 1 : (uint8_t)power;
+	uint32_t id = get_global_id(0);
+	fp32 outR = 0.0f;
+	fp32 outG = 0.0f;
+	fp32 outB = 0.0f;
+	fp32 outA = 0.0f;
+	fp32 smooth = 0.0f;
+	uint8_t type = (formula & 0x40000000) ? 1 : (uint8_t)power;
 	fp32 y = (fp32)(id / resX);
 	fp32 x = (fp32)(id % resX);
 	
@@ -61,22 +65,23 @@
 	resY = (resY * sample) - 1;
 	x *= sample;
 	y *= sample;
-	fp32 numY = ((fp32)resY / 2.0f);
-	fp32 numX = ((fp32)resX / 2.0f);
-	const fp32 rSin = sin(rot);
-	const fp32 rCos = cos(rot);
+	const fp32 numY = ((fp32)resY / 2.0f);
+	const fp32 numX = ((fp32)resX / 2.0f);
 	x -= numX;
 	y -= numY;
 
-	for (u32 v = 0; v < sample; v++) {
-		for (u32 u = 0; u < sample; u++) {
+	for (uint32_t v = 0; v < sample; v++) {
+		fp32 yC = y * neg_recip_numW;
+		for (uint32_t u = 0; u < sample; u++) {
+			if (id >= resX * resY) {
+				return;
+			}
 			fp32 cr,ci,zr,zi;
 			fp32 low = 4.0f; // Squared
 			fp32 temp = 0.0f;
 			fp32 zs = 0.0f;
 
-			fp32 xC = (x / numZ);
-    		fp32 yC = -(y / numW);
+			fp32 xC = x * recip_numZ;
 			if (formula & 0x20000000) { // Julia Set // Optimized Coordinate Formula
 				zr = (xC * rCos - yC * rSin) + r;
 				zi = (yC * rCos + xC * rSin) + i;
@@ -100,8 +105,8 @@
 					zs = zr * zr + zi * zi;
 					if (zs < low) {
 						low = zs;
-					} else if (zs > BREAKOUT) {
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(power)));
+					} else if (zs > breakoutValue) {
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(power)));
 						break;
 					}
 				}
@@ -114,25 +119,24 @@
 				s1 = (f[0]) ? -1.0f : 1.0f;
 				s2 = (f[1]) ? -1.0f : 1.0f;
 				s3 = (f[2]) ? -2.0f : 2.0f;
-				for (u32 itr = 0; itr < maxItr; itr++) {
+				for (uint32_t itr = 0; itr < maxItr; itr++) {
 					zr1 = (f[3]) ? fabs(zr) : zr;
 					zi1 = (f[4]) ? fabs(zi) : zi;
 					zr2 = (f[5]) ? fabs(zr) : zr;
 					zi2 = (f[6]) ? fabs(zi) : zi;
+					
 					if (f[7] == 0) {
-						temp = s1 * ((zr1 * zr) - s2 * (zi1 * zi)) + cr;
+						zr = s1 * ((zr1 * zr) - s2 * (zi1 * zi)) + cr;
 						zi = (zr2 * zi2 * s3) + ci;
-						zr = temp;
 					} else {
-						temp = s1 * fabs((zr1 * zr) - s2 * (zi1 * zi)) + cr;
+						zr = s1 * fabs((zr1 * zr) - s2 * (zi1 * zi)) + cr;
 						zi = (zr2 * zi2 * s3) + ci;
-						zr = temp;
 					}
 					zs = zr * zr + zi * zi;
 					if (zs < low) {
 						low = zs;
-					} else if (zs > BREAKOUT) {
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(2.0f)));
+					} else if (zs > breakoutValue) {
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(2.0f)));
 						break;
 					}
 				}
@@ -148,7 +152,7 @@
 				s4 = (f[3]) ? -1.0f: 1.0f;
 				s5 = (f[4]) ? -1.0f: 1.0f;
 				s6 = (f[5]) ? -1.0f: 1.0f;
-				for (u32 itr = 0; itr < maxItr; itr++) {
+				for (uint32_t itr = 0; itr < maxItr; itr++) {
 					zr1 = (f[6]) ? fabs(zr) : zr;
 					zi1 = (f[7]) ? fabs(zi) : zi;
 					zr2 = (f[8]) ? fabs(zr) : zr;
@@ -157,30 +161,30 @@
 					zi3 = (f[11]) ? fabs(zi) : zi;
 					if (f[12] == 0) {
 						if (f[13] == 0) {
-						temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
-						zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
-						zr = temp;
+							temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
+							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
+							zr = temp;
 						} else {
-						temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
-						zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
-						zr = temp;
-						}
+							temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
+							zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
+							zr = temp;
+							}
 					} else {
 						if (f[13] == 0) {
-						temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
-						zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
-						zr = temp;
+							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
+							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
+							zr = temp;
 						} else {
-						temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
-						zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
-						zr = temp;
+							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;
+							zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;
+							zr = temp;
 						}
 					}
 					zs = zr * zr + zi * zi;
 					if (zs < low) {
 						low = zs;
-					} else if (zs > BREAKOUT) {
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(3.0f)));
+					} else if (zs > breakoutValue) {
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(3.0f)));
 						break;
 					}
 				}
@@ -197,7 +201,7 @@
 				s5 = (f[4]) ? -4.0f: 4.0f;
 				s6 = (f[5]) ? -1.0f: 1.0f;
 				s7 = (f[6]) ? -1.0f: 1.0f;
-				for (u32 itr = 0; itr < maxItr; itr++) {
+				for (uint32_t itr = 0; itr < maxItr; itr++) {
 					zr1 = (f[7]) ? fabs(zr) : zr;
 					zi1 = (f[8]) ? fabs(zi) : zi;
 					zr2 = (f[9]) ? fabs(zr) : zr;
@@ -231,8 +235,8 @@
 					zs = zr * zr + zi * zi;
 					if (zs < low) {
 						low = zs;
-					} else if (zs > BREAKOUT) {
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(4.0f)));
+					} else if (zs > breakoutValue) {
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(4.0f)));
 						break;
 					}
 				}
@@ -261,7 +265,7 @@
 				s6 = (fS[5]) ? -1.0f: 1.0f;
 				s7 = (fO[0]) ? -1.0f: 1.0f;
 				s8 = (fO[1]) ? -1.0f: 1.0f;
-				for (u32 itr = 0; itr < maxItr; itr++) {
+				for (uint32_t itr = 0; itr < maxItr; itr++) {
 					zr1 = (fA[0]) ? fabs(zr) : zr;
 					zi1 = (fA[1]) ? fabs(zi) : zi;
 					zr2 = (fA[2]) ? fabs(zr) : zr;
@@ -297,8 +301,8 @@
 					zs = zr * zr + zi * zi;
 					if (zs < low) {
 						low = zs;
-					} else if (zs > BREAKOUT) {
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(5.0f)));
+					} else if (zs > breakoutValue) {
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(5.0f)));
 						break;
 					}
 				}
@@ -328,7 +332,7 @@
 				s7 = (fS[6]) ? -6.0f : 6.0f;
 				s8 = (fO[0]) ? -1.0f : 1.0f;
 				s9 = (fO[1]) ? -1.0f : 1.0f;
-				for (u32 itr = 0; itr < maxItr; itr++) {
+				for (uint32_t itr = 0; itr < maxItr; itr++) {
 					zr1 = (fA[0]) ? fabs(zr) : zr;
 					zi1 = (fA[1]) ? fabs(zi) : zi;
 					zr2 = (fA[2]) ? fabs(zr) : zr;
@@ -366,80 +370,44 @@
 					zs = zr * zr + zi * zi;
 					if (zs < low) {
 						low = zs;
-					} else if (zs > BREAKOUT) {
-						smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(6.0f)));
+					} else if (zs > breakoutValue) {
+						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(6.0f)));
 						break;
 					}
 				}
 			}
 			
-			if (zs > BREAKOUT) {
-				outR += (uint32_t)(0.9f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.5f))));
-				outG += (uint32_t)(1.0f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.9f))));
-				outB += (uint32_t)(1.0f * (511.5f - 511.5f * cos(6.283185307f * (0.45f * smooth + 0.1f))));
+			if (zs > breakoutValue) {
+				outR += Exterior_R_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_R_Freq_mult_TAU * smooth + Exterior_R_Phase_mult_TAU));
+				outG += Exterior_G_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_G_Freq_mult_TAU * smooth + Exterior_G_Phase_mult_TAU));
+				outB += Exterior_B_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_B_Freq_mult_TAU * smooth + Exterior_B_Phase_mult_TAU));
+				outA += Exterior_Alpha;
 			} else {
-				//outR += 0;
-				//outG += 0;
-				outB += (uint16_t)(511.5f - 511.5f * cos(log(low) / 2.0f));
+				outR += Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_R_Freq + Interior_R_Phase));
+				outG += Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_G_Freq + Interior_G_Phase));
+				outB += Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_B_Freq + Interior_B_Phase));
+				outA += Interior_Alpha;
 			}
 			x++;
 		}
 		x -= sample;
 		y++;
 	}
-	uint32_t div = sample * sample * 4;
-	outR /= div;
-	outG /= div;
-	outB /= div;
-	//uint32_t outA = (outR + outG + outB) / 3; outR = outA; outG = outA; outB = outA; /* Grey-scale */
-	//uint32_t outA = (outR + outG + outB) / 3; outR = (outA + outR) / 2; outG = (outA + outG) / 2; outB = (outA + outB) / 2; /* Low-saturation */
-	id *= 3;
+	if (outA != 0.0f) {
+		outR = outR / outA;
+		outG = outG / outA;
+		outB = outB / outA;
+		outA = outA / (fp32)(sample * sample);
+	}
+	outR *= 255.0f;
+	outG *= 255.0f;
+	outB *= 255.0f;
+	outA *= 255.0f;
+	//uint32_t outAvr = (outR + outG + outB) / 3; outR = outAvr; outG = outAvr; outB = outAvr; /* Grey-scale */
+	//uint32_t outAvr = (outR + outG + outB) / 3; outR = (outAvr + outR) / 2; outG = (outAvr + outG) / 2; outB = (outAvr + outB) / 2; /* Low-saturation */
+	id *= IMAGE_BUFFER_CHANNELS;
 	resultBuf[id] = (uint8_t)outR; id++;
 	resultBuf[id] = (uint8_t)outG; id++;
-	resultBuf[id] = (uint8_t)outB;
+	resultBuf[id] = (uint8_t)outB; id++;
+	resultBuf[id] = (uint8_t)outA;
 }
-
-/*
-** DEPRECATED CODE BELOW
-*/
-
-/*
- __kernel void renderFracCLPoint(fp32 r, fp32 i, fp32 zoom, u32 maxItr, u32 resX, u32 resY, fp32 zr0, fp32 zi0, uint32_t formula, __global uint8_t* resultBuf) {
-    u32 id = get_global_id(0);
-	fp32 y = (fp32)(id / resX);
-	fp32 x = (fp32)(id % resX);
-	id *= 3;
-	
-	fp32 ci = -(((y - (((fp32)resY - 1.0f) / 2.0f)) / (((fp32)resY - 1.0f) / 2.0f)) / pow(10.0f, zoom)) + i;
-	fp32 cr = (((x - (((fp32)resX - 1.0f) / 2.0f)) / (((fp32)resY - 1.0f) / 2.0f)) / pow(10.0f, zoom)) + r;
-	fp32 zr = zr0; // Default 0.0f
-	fp32 zi = zi0; // Default 0.0f
-	fp32 low = 4.0f; // Squared
-	fp32 temp;
-	fp32 zs;
-	
-	for (u32 itr = 0; itr < maxItr; itr++) {
-
-		temp = fabs(-1.0f * (zr * zr * zr * zr) - 6.0f * (zr * zr * fabs(zi) * zi) + (fabs(zi) * zi * zi * zi)) + cr;
-		zi = -1.0f * fabs(4.0f * (zr * zr * zr * fabs(zi)) - 4.0f * (fabs(zr) * zi * zi * fabs(zi))) + ci;
-		zr = temp;
-		zs = (fp64)zr * zr + zi * zi;
-		
-		if (zs < low) {
-			low = zs;
-		} else if (zs > BREAKOUT) {
-			fp32 smooth = log(1.0f + fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(4.0f))); //log2(sqrt(zs)) / log2(base)
-			resultBuf[id] = (uint8_t)floor(0.9f * (127.5f - 127.5f * cos(6.283185307f * (0.45f * smooth + 0.5f)))); id++;
-			resultBuf[id] = (uint8_t)floor(1.0f * (127.5f - 127.5f * cos(6.283185307f * (0.45f * smooth + 0.9f)))); id++;
-			resultBuf[id] = (uint8_t)floor(1.0f * (127.5f - 127.5f * cos(6.283185307f * (0.45f * smooth + 0.1f))));
-			break;
-		}
-
-	}
-	if (zs <= BREAKOUT) {
-		resultBuf[id] = 0; id++;
-		resultBuf[id] = 0; id++;
-		resultBuf[id] = (uint8_t)floor(127.5f - 127.5f * cos(log(low) / 2.0f));
-	}
-}
-*/

@@ -6,7 +6,7 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 #ifndef FRAC_CL_INTERNAL_H
-#define FRAC_C_INTERNALL_H
+#define FRAC_CL_INTERNAL_H
 
 #include "../Common_Def.h"
 #include "../Program_Def.h"

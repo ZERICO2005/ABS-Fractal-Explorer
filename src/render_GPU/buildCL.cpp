@@ -10,7 +10,6 @@
 
 #include "buildCL.h"
 
-// Code below is version 1.0.2
 const char* const FractalOpenCL_SRC = "\
 \n\
 /* Type Definitions */\n\

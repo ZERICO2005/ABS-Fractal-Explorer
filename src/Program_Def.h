@@ -15,7 +15,7 @@
 **	Program_Def.h contains commonly used functions, includes, defines, macros and constants used specifically for this program
 */
 
-/* Features */
+/* Toggable Features */
 
 	// long double
 	#define Enable_Float80
@@ -26,22 +26,26 @@
 	// GPU Rendering
 	#define Enable_OpenCL
 
+	// Uses the OpenCV scaler over the SDL2 one
+	// #define Enable_OpenCV_Scaler
+
+	// Remove Color
+	// #define MONOCHROME_MODE
+
 /* Version */
 
-// #define MONOCHROME_MODE
-
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/04/30" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/05/01" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 11
-#define PROGRAM_V_TAG "Rev-14 Developer Alpha"
+#define PROGRAM_V_TAG "Rev-15 Developer Debug Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */
 
 	#ifdef Enable_Float80
-		typedef __float80 fp80;
+		typedef long double fp80;
 		#define PRIfp80 "Lf"
 	#endif
 

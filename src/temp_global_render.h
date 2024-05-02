@@ -24,7 +24,6 @@
 #include "imageTransform.h"
 
 #include <SDL.h>
-#include <opencv2/opencv.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
@@ -82,8 +81,6 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 	// Rounds the initial screen resolution for debug purposes
 	//#define ROUND_INIT_WINDOW_RESX
-
-	#define Use_OpenCV_Scaler
 	
 	extern Render_Configurator Render_Config;
 

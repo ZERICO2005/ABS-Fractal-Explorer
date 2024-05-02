@@ -22,7 +22,6 @@
 #include "imageTransform.h"
 
 #include <SDL.h>
-#include <opencv2/opencv.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
@@ -1867,7 +1866,7 @@ void newFrame() {
 		renderStatusGraphic(render_Area, Status_Graphic::Graphic_Loading, 1.0); // Renders a loading screen if Fractal buffers are unavailable
 		exportFractalBuffer = false;
 	}
-	#ifdef Use_OpenCV_Scaler
+	#ifdef Enable_OpenCV_Scaler
 		if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
 			int scaleRet = transformFracImage(Primary_Image,&primaryRenderData);
 			if (scaleRet == -2) { // Scaled Image is too small
@@ -1886,7 +1885,7 @@ void newFrame() {
 		BufferBox temp_primaryBox;
 		Primary_Image->getBufferBox(&temp_primaryBox);
 
-		#ifndef Use_OpenCV_Scaler
+		#ifndef Enable_OpenCV_Scaler
 			int dispRet = displayFracImage(Primary_Image,&primaryRenderData);
 			printfChange(int,dispRet,"\ndisplayFracImage: %" PRId32,dispRet);
 		#endif

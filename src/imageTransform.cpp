@@ -11,6 +11,9 @@
 #include "copyBuffer.h"
 #include "imageBuffer.h"
 #include "render.h"
+
+#ifdef Enable_OpenCV_Scaler
+
 #include <opencv2/opencv.hpp>
 
 int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, const BufferBox* backgroundImage, const BufferBox* foregroundImage) {
@@ -136,3 +139,35 @@ int Image_Scaler_Quadrilateral(
 	}
 	return 0;
 }
+
+#else
+
+int Image_Scaler_Parallelogram(
+	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
+	uint32_t backgroundColor,
+	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
+	int interpolation_mode,
+	fp32 sx00, fp32 sy00,
+	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
+	fp32 dx00, fp32 dy00,
+	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
+) {
+	printCriticalError("Image_Scaler_Parallelogram() cannot run because OpenCV_Scalar is Disabled");
+	return -1;
+}
+
+int Image_Scaler_Quadrilateral(
+	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
+	uint32_t backgroundColor,
+	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
+	int interpolation_mode,
+	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
+	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
+	fp32 dx00, fp32 dy00, fp32 dx11, fp32 dy11,
+	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
+) {
+	printCriticalError("Image_Scaler_Quadrilateral() cannot run because OpenCV_Scalar is Disabled");
+	return -1;
+}
+
+#endif
