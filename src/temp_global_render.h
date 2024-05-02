@@ -104,8 +104,8 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern fp64 DeltaTime;
 	extern nano64_t END_SLEEP_HEADROOM;
 
-	extern fp64 Frame_Time_Display;
-	extern fp64 Render_Time_Display;
+	extern nano64_t Frame_Time_Display;
+	extern nano64_t Render_Time_Display;
 
 	extern dim32_t RESY_UI;
 

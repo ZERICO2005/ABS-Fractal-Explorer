@@ -13,24 +13,24 @@
 const char* const FractalOpenCL_SRC = "\
 \n\
 /* Type Definitions */\n\
-	typedef uchar	uint8_t;\n\
-	typedef ushort	uint16_t;\n\
-	typedef uint	uint32_t;\n\
-	typedef ulong	uint64_t;\n\
-	typedef char	int8_t;\n\
-	typedef short	int16_t;\n\
-	typedef int		int32_t;\n\
-	typedef long	int64_t;\n\
+	typedef uchar  uint8_t;\n\
+	typedef ushort uint16_t;\n\
+	typedef uint   uint32_t;\n\
+	typedef ulong  uint64_t;\n\
+	typedef char   int8_t;\n\
+	typedef short  int16_t;\n\
+	typedef int    int32_t;\n\
+	typedef long   int64_t;\n\
 \n\
-	typedef half	fp16;\n\
-	typedef float	fp32;\n\
-	typedef double	fp64;\n\
+	typedef half   fp16;\n\
+	typedef float  fp32;\n\
+	/* typedef double fp64; */\n\
 /* Type Definitions */\n\
 \n\
 /* Constants */\n\
-	#define PI		3.141592653589793f\n\
-	#define TAU		6.283185307179586f\n\
-	#define EULER	2.718281828459045f\n\
+	#define PI    3.141592653589793f\n\
+	#define TAU   6.283185307179586f\n\
+	#define EULER 2.718281828459045f\n\
 	#define BREAKOUT 4096.0f\n\
 	#define IMAGE_BUFFER_CHANNELS 4\n\
 /* Constants */\n\

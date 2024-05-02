@@ -328,14 +328,14 @@ int write_Image_Buffers(const ImageBuffer* primary) {
 /* Render Delta Time */
 
 std::mutex pDat_Request_Mutex;
-fp64 renderDelta;
+nano64_t renderDelta = 0;
 
-void setRenderDelta(fp64 t) {
+void setRenderDelta(nano64_t t) {
 	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
 	renderDelta = t;
 }
 
-fp64 getRenderDelta() {
+nano64_t getRenderDelta() {
 	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
 	return renderDelta;
 }
@@ -385,4 +385,28 @@ fp64 getRenderDelta() {
 		*image_quality = pDat_Image_Quality;
 		pDat_Image_Render_Ready = false;
 		return true;
+	}
+
+/* Render Configuration */
+	std::mutex pDat_Engine_Render_Configuration_Mutex;
+	Render_Configurator pDat_Engine_Render_Configuration;
+	bool pDat_Engine_Render_Configuration_Initialized = false;
+	
+	void reset_Engine_Render_Configuration() {
+		std::lock_guard<std::mutex> lock(pDat_Engine_Render_Configuration_Mutex);
+		pDat_Engine_Render_Configuration_Initialized = false;
+		pDat_Engine_Render_Configuration = Render_Configurator();
+	}
+	bool read_Engine_Render_Configuration(Render_Configurator& config) {
+		std::lock_guard<std::mutex> lock(pDat_Engine_Render_Configuration_Mutex);
+		if (pDat_Engine_Render_Configuration_Initialized == false) {
+			return false;
+		}
+		config = Render_Configurator(pDat_Engine_Render_Configuration);
+		return true;
+	}
+	void write_Engine_Render_Configuration(const Render_Configurator& config) {
+		std::lock_guard<std::mutex> lock(pDat_Engine_Render_Configuration_Mutex);
+		pDat_Engine_Render_Configuration = Render_Configurator(config);
+		pDat_Engine_Render_Configuration_Initialized = true;
 	}

@@ -1039,6 +1039,11 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 
 	TimerBox maxFrameReset = TimerBox(1.0 / 5.0); /* Keeps track of longest frame times */
 	write_Update_Level(Change_Level::Full_Reset);
+
+	if (read_Engine_Render_Configuration(Render_Config) == false) {
+		printError("pDat_Engine_Render_Configuration is not initialized");
+	}
+
 	while (QUIT_FLAG == false) {
 		{ // Accesses ABORT_RENDERING only when Abort_Rendering_Flag changes to reduce unnecessary accesses
 			static bool Abort_Rendering_Change = Abort_Rendering_Flag;
@@ -1060,19 +1065,20 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 		}
 		updateKeys();
 		if (GUI_FrameTimer.timerReset()) {
-			DeltaTime = GUI_FrameTimer.getDeltaTime();
-			fp64 RenderTime = getRenderDelta();
+			nano64_t DeltaTimeNano = GUI_FrameTimer.getDeltaTimeNano();
+			DeltaTime = NANO_TO_SECONDS(DeltaTimeNano);
+			nano64_t RenderTime = getRenderDelta();
 			{
-				static fp64 maxFrameTime = 0.0;
-				static fp64 maxRenderTime = 0.0;
+				static nano64_t maxFrameTime = 0.0;
+				static nano64_t maxRenderTime = 0.0;
 				if (maxFrameReset.timerReset()) {
 					Frame_Time_Display = maxFrameTime;
 					Render_Time_Display = maxRenderTime;
-					maxFrameTime = 0.0;
-					maxRenderTime = 0.0;			
+					maxFrameTime = 0;
+					maxRenderTime = 0;
 				}
-				if (DeltaTime > maxFrameTime) {
-					maxFrameTime = DeltaTime;
+				if (DeltaTimeNano > maxFrameTime) {
+					maxFrameTime = DeltaTimeNano;
 				}
 				if (RenderTime > maxRenderTime) {
 					maxRenderTime = RenderTime;
@@ -1147,16 +1153,17 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 		}
 // 		*/
 // 		if (frameTimer.timerReset()) {
-// 			DeltaTime = frameTimer.getDeltaTime();
-// 			fp64 RenderTime = getRenderDelta();
+// 			nano64_t DeltaTimeNano = GUI_FrameTimer.getDeltaTimeNano();
+// 			DeltaTime = NANO_TO_SECONDS(DeltaTimeNano);
+// 			nano64_t RenderTime = getRenderDelta();
 // 			{
-// 				static fp64 maxFrameTime = 0.0;
-// 				static fp64 maxRenderTime = 0.0;
+// 				static nano64_t maxFrameTime = 0;
+// 				static nano64_t maxRenderTime = 0;
 // 				if (maxFrameReset.timerReset()) {
 // 					Frame_Time_Display = maxFrameTime;
 // 					Render_Time_Display = maxRenderTime;
-// 					maxFrameTime = 0.0;
-// 					maxRenderTime = 0.0;
+// 					maxFrameTime = 0;
+// 					maxRenderTime = 0;
 // 					/*
 // 					if (yeildPrint == true || yeildSwitch == true) {
 // 						yeildSwitch = false;
@@ -1169,8 +1176,8 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 					}
 // 					*/				
 // 				}
-// 				if (DeltaTime > maxFrameTime) {
-// 					maxFrameTime = DeltaTime;
+// 				if (DeltaTimeNano > maxFrameTime) {
+// 					maxFrameTime = DeltaTimeNano;
 // 				}
 // 				if (RenderTime > maxRenderTime) {
 // 					maxRenderTime = RenderTime;
@@ -1292,13 +1299,6 @@ void calculate_init_window_size(
 int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 	init_config_data();
 	const User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
-
-	Render_Config.reset_Render_Configurator(
-		/* Float16 */ false,
-		/* Float32 */ true,
-		/* Float64 */ false
-	);
-	Render_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
 
 	//SDL_Init(SDL_INIT_VIDEO);
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -1428,7 +1428,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		}
 		std::this_thread::yield();
 	}
-	start_Render(QUIT_FLAG,ABORT_RENDERING);
+	start_Render(QUIT_FLAG, ABORT_RENDERING);
 	return 0;
 }
 
@@ -1584,8 +1584,6 @@ void renderStatusGraphic(BufferBox& buf, Status_Graphic::Status_Graphic_Enum sta
 	}
 }
 
-
-
 int exportScreenshot() {
 	static nano64_t resetTime = 0;
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportFractalBuffer == false) {
@@ -1662,13 +1660,57 @@ void renderJuliaCordinatePoint(const BufferBox& box, const Render_Data* ren) {
 	}
 }
 
-/* Legacy Frame Transformation */
-int displayFracImage(ImageBuffer* image, Render_Data* ren) {
+// Work in progress ...
+/* Revisied SDL2 Frame Transformation */
+int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
+	if (image.vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
+	if (image.allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
+	const ABS_Mandelbrot& FRAC = current_Fractal;
+	constexpr dim32_t MinimumImageResolution = 2;
+	if (image.resX < MinimumImageResolution || image.resY < MinimumImageResolution) {
+		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32, image.resX, image.resY);
+		return 1;
+	}
+	int32_t fx0 = 0; int32_t fy0 = 0;
+	int32_t fx1 = 0; int32_t fy1 = 0;
+	coordinate_to_pixel(image.x00, image.y00, &fx0, &fy0, &FRAC, &ren);
+	coordinate_to_pixel(image.x11, image.y11, &fx1, &fy1, &FRAC, &ren);
+	if (fx0 > fx1) { int32_t temp = fx0; fx0 = fx1; fx1 = temp; }
+	if (fy0 > fy1) { int32_t temp = fy0; fy0 = fy1; fy1 = temp; }
+	// int32_t fxCenter = (fx0 + fx1) / 2;
+	// int32_t fyCenter = (fy0 + fy1) / 2;
+	if ((fx1 < MinimumImageResolution || fy1 < MinimumImageResolution)) {
+		return 1;
+	}
+	if ((image.rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
+		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
+			image.vram,
+			image.resX, image.resY,
+			(int32_t)(image.channels * 8),
+			(int32_t)(image.channels * (size_t)image.resX),
+			SDL_PIXELFORMAT_ABGR8888
+		);
+		fx1 -= fx0;
+		fy1 -= fy0;
+		SDL_Rect srcRect = {0, 0, image.resX, image.resY};
+		SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
+		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
+		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
+			printf("\nrenderCopy: %s",SDL_GetError()); fflush(stdout);
+		}
+		SDL_DestroyTexture(scale_tex);
+		SDL_FreeSurface(scale_surface);
+	}
+	return 0;
+}
+
+/* Legacy SDL2 Frame Transformation */
+int displayFracImage(const ImageBuffer* image, const Render_Data* ren) {
 	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
 	if (ren == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
-	ABS_Mandelbrot& FRAC = current_Fractal;
+	const ABS_Mandelbrot& FRAC = current_Fractal;
 	constexpr dim32_t MinimumImageResolution = 2;
 	if (image->resX < MinimumImageResolution || image->resY < MinimumImageResolution) {
 		printWarning("ImageBuffer* image is below minimum resolution: %" PRIu32 "x%" PRIu32,image->resX,image->resY);
@@ -1676,8 +1718,8 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 	}
 	int32_t fx0 = 0; int32_t fy0 = 0;
 	int32_t fx1 = 0; int32_t fy1 = 0;
-	coordinate_to_pixel(image->x00 - FRAC.r,image->y00 - FRAC.i,&fx0,&fy0,&FRAC,ren);
-	coordinate_to_pixel(image->x11 - FRAC.r,image->y11 - FRAC.i,&fx1,&fy1,&FRAC,ren);
+	coordinate_to_pixel(image->x00, image->y00, &fx0, &fy0, &FRAC, ren);
+	coordinate_to_pixel(image->x11, image->y11, &fx1, &fy1, &FRAC, ren);
 	if (fx0 > fx1) { int32_t temp = fx0; fx0 = fx1; fx1 = temp; }
 	if (fy0 > fy1) { int32_t temp = fy0; fy0 = fy1; fy1 = temp; }
 	// int32_t fxCenter = (fx0 + fx1) / 2;
@@ -1708,7 +1750,7 @@ int displayFracImage(ImageBuffer* image, Render_Data* ren) {
 }
 
 /* OpenCV Frame Transformation */
-int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
+int transformFracImage(const ImageBuffer* image, const Render_Data* ren) {
 	if (image == nullptr) { printError("ImageBuffer* image is NULL"); return -1; }
 	if (image->vram == nullptr) { printError("ImageBuffer* image->vram is NULL"); return -1; }
 	if (image->allocated() == false) { printError("ImageBuffer* image is not allocated"); return -1; }
@@ -1727,10 +1769,10 @@ int transformFracImage(ImageBuffer* image, const Render_Data* ren) {
 
 	fp32 dx00 = 0.0f; fp32 dy00 = 0.0f; fp32 dx11 = 0.0f; fp32 dy11 = 0.0f;
 	fp32 dx01 = 0.0f; fp32 dy01 = 0.0f; fp32 dx10 = 0.0f; fp32 dy10 = 0.0f;
-	coordinate_to_image_cordinate(image->x00 - FRAC.r,image->y00 - FRAC.i,&dx00,&dy00,&FRAC,ren);
-	coordinate_to_image_cordinate(image->x11 - FRAC.r,image->y11 - FRAC.i,&dx11,&dy11,&FRAC,ren);
-	coordinate_to_image_cordinate(image->x01 - FRAC.r,image->y01 - FRAC.i,&dx01,&dy01,&FRAC,ren);
-	coordinate_to_image_cordinate(image->x10 - FRAC.r,image->y10 - FRAC.i,&dx10,&dy10,&FRAC,ren);
+	coordinate_to_pixel(image->x00, image->y00, &dx00, &dy00, &FRAC, ren);
+	coordinate_to_pixel(image->x11, image->y11, &dx11, &dy11, &FRAC, ren);
+	coordinate_to_pixel(image->x01, image->y01, &dx01, &dy01, &FRAC, ren);
+	coordinate_to_pixel(image->x10, image->y10, &dx10, &dy10, &FRAC, ren);
 	dim32_t resX = (dim32_t)(image->resX);
 	dim32_t resY = (dim32_t)(image->resY);
 	// printfInterval(0.5,

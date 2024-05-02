@@ -21,6 +21,8 @@
 #include "copyBuffer.h"
 #include "imageBuffer.h"
 
+#include "render_Configuration.hpp"
+
 /*
 ** Handling shared data between threads
 */
@@ -111,8 +113,8 @@ int clear_Image_Buffers();
 int read_Image_Buffers(ImageBuffer* primary);
 int write_Image_Buffers(const ImageBuffer* primary);
 
-void setRenderDelta(fp64 t);
-fp64 getRenderDelta();
+void setRenderDelta(nano64_t t);
+nano64_t getRenderDelta();
 
 /* Frame Time */
 	nano64_t read_FrameTime();
@@ -130,5 +132,10 @@ fp64 getRenderDelta();
 		ABS_Mandelbrot* frac, Render_Data* super,
 		uint32_t* image_file_format, uint8_t* image_quality
 	);
+
+/* Render Configuration */
+	void reset_Engine_Render_Configuration();
+	bool read_Engine_Render_Configuration(Render_Configurator& config);
+	void write_Engine_Render_Configuration(const Render_Configurator& config);
 
 #endif /* PROGRAMDATA_H */

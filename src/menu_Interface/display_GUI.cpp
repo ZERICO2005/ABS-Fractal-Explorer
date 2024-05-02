@@ -172,8 +172,8 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 
 	static ImVec4 GUI_FrameRateColor;
 	static ImVec4 Render_FrameRateColor;
-	fp64 Frame_FPS_Display = 1.0 / Frame_Time_Display;
-	fp64 Render_FPS_Display = 1.0 / Render_Time_Display;
+	fp64 Frame_FPS_Display = NANO_TO_FRAMERATE(Frame_Time_Display);
+	fp64 Render_FPS_Display = NANO_TO_FRAMERATE(Render_Time_Display);
 	
 	GUI_FrameRateColor = {
 		(fp32)linearInterpolationClamp(Frame_FPS_Display,59.0,119.0,1.0,0.0),
@@ -197,15 +197,15 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 	
 	ImGui::Text("GUI:"); ImGui::SameLine();
-	ImGui::TextColored(GUI_FrameRateColor,"%.2lf",Frame_FPS_Display); ImGui::SameLine(0.0,1.0);
+	ImGui::TextColored(GUI_FrameRateColor,"%.2lf", Frame_FPS_Display); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("FPS"); ImGui::SameLine();
-	ImGui::TextColored(GUI_FrameRateColor,"%.2lf",Frame_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
+	ImGui::TextColored(GUI_FrameRateColor,"%.2lf", NANO_TO_SECONDS(Frame_Time_Display) * 1000.0); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("ms");
 	ImGui::SameLine();
 	ImGui::Text("Render:"); ImGui::SameLine();
-	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_FPS_Display); ImGui::SameLine(0.0,1.0);
+	ImGui::TextColored(Render_FrameRateColor,"%.2lf", Render_FPS_Display); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("FPS"); ImGui::SameLine();
-	ImGui::TextColored(Render_FrameRateColor,"%.2lf",Render_Time_Display * 1000.0); ImGui::SameLine(0.0,1.0);
+	ImGui::TextColored(Render_FrameRateColor,"%.2lf", NANO_TO_SECONDS(Render_Time_Display) * 1000.0); ImGui::SameLine(0.0,1.0);
 	ImGui::Text("ms");
 
 	if (ImGui::Button("Coordinates")) {

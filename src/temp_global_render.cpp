@@ -99,8 +99,8 @@ Frame_Pacer GUI_Frame_Pacer;
 	fp64 DeltaTime = 0.0;
 	nano64_t END_SLEEP_HEADROOM = SECONDS_TO_NANO(0.02);
 
-	fp64 Frame_Time_Display = 0.0;
-	fp64 Render_Time_Display = 0.0;
+	nano64_t Frame_Time_Display = 0.0;
+	nano64_t Render_Time_Display = 0.0;
 
 	dim32_t RESY_UI = 128;
 

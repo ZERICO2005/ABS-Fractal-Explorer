@@ -268,7 +268,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	using namespace Key_Function;
 	
 	fracTime.setFreq(read_FrameTime());
-	fp64 deltaTime = 0.0;
+	nano64_t deltaTime = 0.0;
 
 	// int_enum render_update_level = Change_Level::Full_Reset;
 	nano64_t render_update_timecode = 0;
@@ -299,7 +299,7 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			render_Engine(ABORT_RENDERING);
 			//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);
 			next_Write_Cycle_Pos(&currentBuf, Primary_Full);
-			deltaTime = fracTime.getDeltaTime();
+			deltaTime = fracTime.getDeltaTimeNano();
 			setRenderDelta(deltaTime);
 			if (read_Abort_Render_Ongoing() == true) {
 				write_Abort_Render_Ongoing(false);
@@ -323,32 +323,62 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 	return 0;
 }
 
-int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
+bool init_GPU_Renderer(bool& GPU_Float16, bool& GPU_Float32, bool& GPU_Float64) {
 	#ifdef Enable_OpenCL
 		int32_t init_OpenCL_ret = init_OpenCL();
 		if (init_OpenCL_ret != 0) {
-			printError("OpenCL failed to initialize, error code: %d",init_OpenCL_ret);
+			printError("OpenCL failed to initialize, error code: %d", init_OpenCL_ret);
+			{ /* GPU Float Support */
+				GPU_Float16 = false;
+				GPU_Float32 = false;
+				GPU_Float64 = false;
+			}
+			return false;
 		}
 		queryOpenCL_GPU();
+		{ /* GPU Float Support */
+			GPU_Float16 = false;
+			GPU_Float32 = true;
+			GPU_Float64 = false;
+		}
+		return true;
 	#else 
 		printFlush("\nNote: OpenCL GPU rendering is disabled");
+
+		{ /* GPU Float Support */
+			GPU_Float16 = false;
+			GPU_Float32 = false;
+			GPU_Float64 = false;
+		}
+		return false;
 	#endif
+}
+
+int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
+	bool GPU_Float16 = false;
+	bool GPU_Float32 = false;
+	bool GPU_Float64 = false;
+	bool OpenCL_Initialized = init_GPU_Renderer(
+		GPU_Float16,
+		GPU_Float32,
+		GPU_Float64
+	);
+
+	Engine_Config.reset_Render_Configurator(GPU_Float16, GPU_Float32, GPU_Float64);
+	Super_Engine_Config.reset_Render_Configurator(GPU_Float16, GPU_Float32, GPU_Float64);
+	if (OpenCL_Initialized == true) {
+		Engine_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
+		Super_Engine_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
+	} else {
+		Engine_Config.suggest_Render_Precision(Rendering_Configuration::Render_Precision_Float64);
+		Super_Engine_Config.suggest_Render_Precision(Rendering_Configuration::Render_Precision_Float64);
+	}
+
 	clear_Cycle_Buffers();
 	reset_Image_Render();
+	write_Engine_Render_Configuration(Engine_Config);
 	write_Engine_Ready(true);
-
-	Engine_Config.reset_Render_Configurator(
-		/* GPU Float16 */ false,
-		/* GPU Float32 */ true,
-		/* GPU Float64 */ false
-	);
-	Engine_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
-	Super_Engine_Config.reset_Render_Configurator(
-		/* GPU Float16 */ false,
-		/* GPU Float32 */ true,
-		/* GPU Float64 */ false
-	);
-	Super_Engine_Config.suggest_Render_Preset(Rendering_Configuration::Render_Preset_GPU_Float32);
+	
 	while (read_Render_Ready() == false) {
 		if (QUIT_FLAG == true) {
 			printWarning("Engine thread exiting initialization: QUIT_FLAG == true");
