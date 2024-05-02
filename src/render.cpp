@@ -1757,56 +1757,45 @@ int Manually_Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 	size_t z = 0;
 	const size_t pitch = getBufferBoxPitch(&blit);
 
-	// const fpCord Image_DimX = (fpCord)(image.resX - 1);
-	// const fpCord Image_DimY = (fpCord)(image.resY - 1);
-
 	const fpCord Recip_Image_DimX = (fpCord)1.0 / (fpCord)(image.resX - 1);
 	const fpCord Recip_Image_DimY = (fpCord)1.0 / (fpCord)(image.resY - 1);
 	
 	const fpCord Image_Cord_X00 = image.x00 - FRAC.r;
 	const fpCord Image_Cord_Y00 = image.y00 - FRAC.i;
-	const fpCord Image_Cord_X01_Sub_X00 = image.x01 - image.x00;
-	const fpCord Image_Cord_Y01_Sub_Y00 = image.y01 - image.y00;
+	const fpCord Image_Cord_X01_sub_X00 = image.x01 - image.x00;
+	const fpCord Image_Cord_Y01_sub_Y00 = image.y01 - image.y00;
 	// const fpCord Image_Cord_X10 = image.x10 - FRAC.r;
 	// const fpCord Image_Cord_Y10 = image.y10 - FRAC.i;
-	const fpCord Image_Cord_X11_Sub_X10 = image.x11 - image.x10;
-	const fpCord Image_Cord_Y11_Sub_Y10 = image.y11 - image.y10;
+	const fpCord Image_Cord_X11_sub_X10 = image.x11 - image.x10;
+	const fpCord Image_Cord_Y11_sub_Y10 = image.y11 - image.y10;
 
-	const fpCord Image_Cord_X10_Sub_X00 = image.x10 - image.x00;
-	const fpCord Image_Cord_Y10_Sub_Y00 = image.y10 - image.y00;
-	const fpCord Image_Cord_X11subX10_Sub_X01subX00 = Image_Cord_X11_Sub_X10 - Image_Cord_X01_Sub_X00;
-	const fpCord Image_Cord_Y11subY10_Sub_Y01subY00 = Image_Cord_Y11_Sub_Y10 - Image_Cord_Y01_Sub_Y00;
+	const fpCord Image_Cord_X10_sub_X00 = image.x10 - image.x00;
+	const fpCord Image_Cord_Y10_sub_Y00 = image.y10 - image.y00;
+	const fpCord Image_Cord_X11subX10_sub_X01subX00 = Image_Cord_X11_sub_X10 - Image_Cord_X01_sub_X00;
+	const fpCord Image_Cord_Y11subY10_sub_Y01subY00 = Image_Cord_Y11_sub_Y10 - Image_Cord_Y01_sub_Y00;
 
-	const fpCord Rot_Sin = sin((fpCord)FRAC.rot);
-	const fpCord Rot_Cos = cos((fpCord)FRAC.rot);
-	const fpCord ResX_Div2 = (fpCord)(ren.resX - 1) / (fpCord)2.0;
-	const fpCord ResY_Div2 = (fpCord)(ren.resY - 1) / (fpCord)2.0;
-	const fpCord Zoom_Value_Mult_ResZ_Div2 = pow((fpCord)10.0, (fpCord)FRAC.zoom) * ( (ren.resX >= ren.resY) ? ResY_Div2 : ResX_Div2 );
-	const fpCord Recip_Stretch_X = (fpCord)1.0 / (fpCord)FRAC.sX;
-	const fpCord Recip_Stretch_Y = (fpCord)1.0 / (fpCord)FRAC.sY;
+
+	const fpCord ResX_div_2 = (fpCord)(ren.resX - 1) / (fpCord)2.0;
+	const fpCord ResY_div_2 = (fpCord)(ren.resY - 1) / (fpCord)2.0;
+	const fpCord Zoom_Value_mult_ResZ_div_2 = pow((fpCord)10.0, (fpCord)FRAC.zoom) * ( (ren.resX >= ren.resY) ? ResY_div_2 : ResX_div_2 );
+	const fpCord     Rot_Sin_mult_ZVmRZd2_div_Stretch_X = ( sin((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sX;
+	const fpCord neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (-sin((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
+	const fpCord     Rot_Cos_mult_ZVmRZd2_div_Stretch_X = ( cos((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
+	const fpCord neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (-cos((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
 
 	fpCord Y_Value = (fpCord)0.0;
 	for (dim32_t y = 0; y < image.resY; y++) {
-		// fpCord Y_Value = (fpCord)y / Image_DimY;
-		fpCord X0_Cord        = Image_Cord_X00         + Y_Value * Image_Cord_X01_Sub_X00            ;
-		fpCord X1_Sub_X0_Cord = Image_Cord_X10_Sub_X00 + Y_Value * Image_Cord_X11subX10_Sub_X01subX00;
-		fpCord Y0_Cord        = Image_Cord_Y00         + Y_Value * Image_Cord_Y01_Sub_Y00            ;
-		fpCord Y1_Sub_Y0_Cord = Image_Cord_Y10_Sub_Y00 + Y_Value * Image_Cord_Y11subY10_Sub_Y01subY00;
+		const fpCord X0_Cord        = Image_Cord_X00         + Y_Value * Image_Cord_X01_sub_X00            ;
+		const fpCord X1_sub_X0_Cord = Image_Cord_X10_sub_X00 + Y_Value * Image_Cord_X11subX10_sub_X01subX00;
+		const fpCord Y0_Cord        = Image_Cord_Y00         + Y_Value * Image_Cord_Y01_sub_Y00            ;
+		const fpCord Y1_sub_Y0_Cord = Image_Cord_Y10_sub_Y00 + Y_Value * Image_Cord_Y11subY10_sub_Y01subY00;
 		fpCord X_Value = (fpCord)0.0;
 		for (dim32_t x = 0; x < image.resX; x++) {
-			// fpCord X_Value = (fpCord)x / Image_DimX;
-			fpCord X_Cord = X0_Cord + X_Value * (X1_Sub_X0_Cord);
-			fpCord Y_Cord = Y0_Cord + X_Value * (Y1_Sub_Y0_Cord);
+			fpCord X_Cord = X0_Cord + X_Value * X1_sub_X0_Cord;
+			fpCord Y_Cord = Y0_Cord + X_Value * Y1_sub_Y0_Cord;
 			
-			/* Reverses Transformations */
-			fpCord xC = X_Cord * Rot_Cos + Y_Cord * Rot_Sin;
-			fpCord yC = Y_Cord * Rot_Cos - X_Cord * Rot_Sin;
-			xC *= Recip_Stretch_X;
-			yC *= Recip_Stretch_Y;
-			/* Normalizes Coordinates */
-
-			int32_t posX = (int32_t)( ( xC * Zoom_Value_Mult_ResZ_Div2) + (ResX_Div2) );
-			int32_t posY = (int32_t)( (-yC * Zoom_Value_Mult_ResZ_Div2) + (ResY_Div2) );
+			int32_t posX = (int32_t)(X_Cord *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Y_Cord *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X + ResX_div_2);
+			int32_t posY = (int32_t)(Y_Cord * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - X_Cord * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y + ResY_div_2);
 
 			if (posX >= 0 && posX < blit.resX && posY >= 0 && posY < blit.resY) {
 				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 0] = image.vram[z + 0];
