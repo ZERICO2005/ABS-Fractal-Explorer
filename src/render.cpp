@@ -1756,43 +1756,43 @@ int Manually_Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 	}
 	size_t z = 0;
 	const size_t pitch = getBufferBoxPitch(&blit);
-
-	const fpCord Recip_Image_DimX = (fpCord)1.0 / (fpCord)(image.resX - 1);
-	const fpCord Recip_Image_DimY = (fpCord)1.0 / (fpCord)(image.resY - 1);
+	typedef fp32 fpTran;
+	const fpTran Recip_Image_DimX = (fpTran)1.0 / (fpTran)(image.resX - 1);
+	const fpTran Recip_Image_DimY = (fpTran)1.0 / (fpTran)(image.resY - 1);
 	
-	const fpCord Image_Cord_X00 = image.x00 - FRAC.r;
-	const fpCord Image_Cord_Y00 = image.y00 - FRAC.i;
-	const fpCord Image_Cord_X01_sub_X00 = image.x01 - image.x00;
-	const fpCord Image_Cord_Y01_sub_Y00 = image.y01 - image.y00;
-	// const fpCord Image_Cord_X10 = image.x10 - FRAC.r;
-	// const fpCord Image_Cord_Y10 = image.y10 - FRAC.i;
-	const fpCord Image_Cord_X11_sub_X10 = image.x11 - image.x10;
-	const fpCord Image_Cord_Y11_sub_Y10 = image.y11 - image.y10;
+	const fpTran Image_Cord_X00 = (fpTran)(image.x00 - FRAC.r);
+	const fpTran Image_Cord_Y00 = (fpTran)(image.y00 - FRAC.i);
+	const fpTran Image_Cord_X01_sub_X00 = (fpTran)(image.x01 - image.x00);
+	const fpTran Image_Cord_Y01_sub_Y00 = (fpTran)(image.y01 - image.y00);
+	// const fpTran Image_Cord_X10 = (fpTran)(image.x10 - FRAC.r);
+	// const fpTran Image_Cord_Y10 = (fpTran)(image.y10 - FRAC.i);
+	const fpTran Image_Cord_X11_sub_X10 = (fpTran)(image.x11 - image.x10);
+	const fpTran Image_Cord_Y11_sub_Y10 = (fpTran)(image.y11 - image.y10);
 
-	const fpCord Image_Cord_X10_sub_X00 = image.x10 - image.x00;
-	const fpCord Image_Cord_Y10_sub_Y00 = image.y10 - image.y00;
-	const fpCord Image_Cord_X11subX10_sub_X01subX00 = Image_Cord_X11_sub_X10 - Image_Cord_X01_sub_X00;
-	const fpCord Image_Cord_Y11subY10_sub_Y01subY00 = Image_Cord_Y11_sub_Y10 - Image_Cord_Y01_sub_Y00;
+	const fpTran Image_Cord_X10_sub_X00 = (fpTran)(image.x10 - image.x00);
+	const fpTran Image_Cord_Y10_sub_Y00 = (fpTran)(image.y10 - image.y00);
+	const fpTran Image_Cord_X11subX10_sub_X01subX00 = (fpTran)(Image_Cord_X11_sub_X10 - Image_Cord_X01_sub_X00);
+	const fpTran Image_Cord_Y11subY10_sub_Y01subY00 = (fpTran)(Image_Cord_Y11_sub_Y10 - Image_Cord_Y01_sub_Y00);
 
 
-	const fpCord ResX_div_2 = (fpCord)(ren.resX - 1) / (fpCord)2.0;
-	const fpCord ResY_div_2 = (fpCord)(ren.resY - 1) / (fpCord)2.0;
-	const fpCord Zoom_Value_mult_ResZ_div_2 = pow((fpCord)10.0, (fpCord)FRAC.zoom) * ( (ren.resX >= ren.resY) ? ResY_div_2 : ResX_div_2 );
-	const fpCord     Rot_Sin_mult_ZVmRZd2_div_Stretch_X = ( sin((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sX;
-	const fpCord neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (-sin((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
-	const fpCord     Rot_Cos_mult_ZVmRZd2_div_Stretch_X = ( cos((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
-	const fpCord neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (-cos((fpCord)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
+	const fpTran ResX_div_2 = (fpTran)(ren.resX - 1) / (fpTran)2.0;
+	const fpTran ResY_div_2 = (fpTran)(ren.resY - 1) / (fpTran)2.0;
+	const fpTran Zoom_Value_mult_ResZ_div_2 = pow((fpTran)10.0, (fpTran)FRAC.zoom) * ( (ren.resX >= ren.resY) ? ResY_div_2 : ResX_div_2 );
+	const fpTran     Rot_Sin_mult_ZVmRZd2_div_Stretch_X = ( sin((fpTran)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sX;
+	const fpTran neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (-sin((fpTran)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
+	const fpTran     Rot_Cos_mult_ZVmRZd2_div_Stretch_X = ( cos((fpTran)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sX;
+	const fpTran neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (-cos((fpTran)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
 
-	fpCord Y_Value = (fpCord)0.0;
+	fpTran Y_Value = (fpTran)0.0;
 	for (dim32_t y = 0; y < image.resY; y++) {
-		const fpCord X0_Cord        = Image_Cord_X00         + Y_Value * Image_Cord_X01_sub_X00            ;
-		const fpCord X1_sub_X0_Cord = Image_Cord_X10_sub_X00 + Y_Value * Image_Cord_X11subX10_sub_X01subX00;
-		const fpCord Y0_Cord        = Image_Cord_Y00         + Y_Value * Image_Cord_Y01_sub_Y00            ;
-		const fpCord Y1_sub_Y0_Cord = Image_Cord_Y10_sub_Y00 + Y_Value * Image_Cord_Y11subY10_sub_Y01subY00;
-		fpCord X_Value = (fpCord)0.0;
+		const fpTran X0_Cord        = Image_Cord_X00         + Y_Value * Image_Cord_X01_sub_X00            ;
+		const fpTran X1_sub_X0_Cord = Image_Cord_X10_sub_X00 + Y_Value * Image_Cord_X11subX10_sub_X01subX00;
+		const fpTran Y0_Cord        = Image_Cord_Y00         + Y_Value * Image_Cord_Y01_sub_Y00            ;
+		const fpTran Y1_sub_Y0_Cord = Image_Cord_Y10_sub_Y00 + Y_Value * Image_Cord_Y11subY10_sub_Y01subY00;
+		fpTran X_Value = (fpTran)0.0;
 		for (dim32_t x = 0; x < image.resX; x++) {
-			fpCord X_Cord = X0_Cord + X_Value * X1_sub_X0_Cord;
-			fpCord Y_Cord = Y0_Cord + X_Value * Y1_sub_Y0_Cord;
+			fpTran X_Cord = X0_Cord + X_Value * X1_sub_X0_Cord;
+			fpTran Y_Cord = Y0_Cord + X_Value * Y1_sub_Y0_Cord;
 			
 			int32_t posX = (int32_t)(X_Cord *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Y_Cord *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X + ResX_div_2);
 			int32_t posY = (int32_t)(Y_Cord * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - X_Cord * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y + ResY_div_2);
@@ -1984,7 +1984,7 @@ void newFrame() {
 	}
 	#ifdef Enable_OpenCV_Scaler
 		if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
-			//int scaleRet = transformFracImage(*Primary_Image, primaryRenderData);
+			// int scaleRet = transformFracImage(*Primary_Image, primaryRenderData);
 			int scaleRet = Manually_Transform_Frame(*Primary_Image, primaryRenderData);
 			if (scaleRet == -2) { // Scaled Image is too small
 				BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
