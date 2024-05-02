@@ -245,7 +245,7 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			printfInterval(0.5, "Unknown rendering method %" PRId32, Engine_Config.get_Render_Method());
 		}
 		{
-			ABS_Mandelbrot& FRAC = fracData;
+			const ABS_Mandelbrot& FRAC = fracData;
 			fpCord cx00; fpCord cy00;
 			fpCord cx11; fpCord cy11;
 			fpCord cx01; fpCord cy01;
@@ -253,12 +253,12 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			int32_t offX = (int32_t)(currentBuf->resX * primaryRender.subSample);
 			int32_t offY = (int32_t)(currentBuf->resY * primaryRender.subSample);
 			fp64 extraPadding = 0.0;
-			pixel_to_coordinate((int32_t)((fp64)offX * -extraPadding       ), (int32_t)((fp64)offY * -extraPadding       ), cx00, cy00, FRAC, primaryRender);
-			pixel_to_coordinate((int32_t)((fp64)offX * (extraPadding + 1.0)), (int32_t)((fp64)offY * (extraPadding + 1.0)), cx11, cy11, FRAC, primaryRender);
-			pixel_to_coordinate((int32_t)((fp64)offX * -extraPadding       ), (int32_t)((fp64)offY * (extraPadding + 1.0)), cx01, cy01, FRAC, primaryRender);
-			pixel_to_coordinate((int32_t)((fp64)offX * (extraPadding + 1.0)), (int32_t)((fp64)offY * -extraPadding       ), cx10, cy10, FRAC, primaryRender);
+			pixel_to_coordinate((int32_t)((fp64)offX * -extraPadding       ), (int32_t)((fp64)offY * -extraPadding       ), cx00, cy00, FRAC, primaryRender.resX, primaryRender.resY);
+			pixel_to_coordinate((int32_t)((fp64)offX * (extraPadding + 1.0)), (int32_t)((fp64)offY * (extraPadding + 1.0)), cx11, cy11, FRAC, primaryRender.resX, primaryRender.resY);
+			pixel_to_coordinate((int32_t)((fp64)offX * -extraPadding       ), (int32_t)((fp64)offY * (extraPadding + 1.0)), cx01, cy01, FRAC, primaryRender.resX, primaryRender.resY);
+			pixel_to_coordinate((int32_t)((fp64)offX * (extraPadding + 1.0)), (int32_t)((fp64)offY * -extraPadding       ), cx10, cy10, FRAC, primaryRender.resX, primaryRender.resY);
 			currentBuf->setTransformationData(cx00,cy00,cx11,cy11,cx01,cy01,cx10,cy10);
-			currentBuf->rot = FRAC.rot;
+			currentBuf->setFractalState(FRAC.r, FRAC.i, FRAC.zoom, FRAC.rot, FRAC.sX, FRAC.sY);
 		}
 	}
 	return 0;

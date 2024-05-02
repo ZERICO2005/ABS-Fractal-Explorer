@@ -228,7 +228,7 @@ typedef int32_t dim32_t;
 	#define printWarning(...) printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
 
 	// Print change in value, also calls fflush(stdout);
-	#define printfChange(type,value,...) \
+	#define printfChange(type, value, ...) \
 	{ \
 		static type Detect_Change = (value); \
 		if (Detect_Change != (value)) { \
@@ -239,10 +239,10 @@ typedef int32_t dim32_t;
 	}
 
 	// Print up to every (freq) seconds, also calls fflush(stdout);
-	#define printfInterval(freq,...); \
+	#define printfInterval(freq, ...); \
 	{ \
 		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
-		if (getNanoTime() - ResetTime_PrintfInterval > (nano64_t)((freq) * 1.0e9)) { \
+		if (getNanoTime() - ResetTime_PrintfInterval > SECONDS_TO_NANO(freq)) { \
 			ResetTime_PrintfInterval = getNanoTime(); \
 			printf(__VA_ARGS__); \
 			fflush(stdout); \
@@ -250,11 +250,11 @@ typedef int32_t dim32_t;
 	}
 
 	// Print change in value up to every (freq) seconds, also calls fflush(stdout);
-	#define printfChangeInterval(type,value,freq,...) \
+	#define printfChangeInterval(type, value, freq, ...) \
 	{ \
 		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
 		static type Detect_Change = (value); \
-		if (getNanoTime() - ResetTime_PrintfInterval > (nano64_t)((freq) * 1.0e9)) { \
+		if (getNanoTime() - ResetTime_PrintfInterval > SECONDS_TO_NANO(freq)) { \
 			if (Detect_Change != (value)) { \
 				ResetTime_PrintfInterval = getNanoTime(); \
 				printf(__VA_ARGS__); \

@@ -51,9 +51,11 @@ class ImageBuffer {
 		fpCord x11; fpCord y11;
 		fpCord x01; fpCord y01;
 		fpCord x10; fpCord y10;
-		fp64 xCenter; fp64 yCenter;
-		fp64 xSize; fp64 ySize;
+		fpCord realCord;
+		fpCord imagCord;
+		fp64 zoom;
 		fp64 rot;
+		fp64 stretchX; fp64 stretchY;
 
 		// cord{x0,y0} cord{x1,y1}
 		void setTransformationData(
@@ -64,6 +66,7 @@ class ImageBuffer {
 			fpCord x00, fpCord y00, fpCord x11, fpCord y11,
 			fpCord x01, fpCord y01, fpCord x10, fpCord y10
 		);
+		void setFractalState(fpCord RealCord, fpCord ImagCord, fp64 Zoom, fp64 Rot, fp64 StretchX, fp64 StretchY);
 		
 		void setTransformationData(const ImageBuffer* buf);
 		void printTransformationData(fp64 freq = 0.6);

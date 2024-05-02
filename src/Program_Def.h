@@ -27,7 +27,7 @@
 	#define Enable_OpenCL
 
 	// Uses the OpenCV scaler over the SDL2 one
-	#define Enable_OpenCV_Scaler
+	// #define Enable_OpenCV_Scaler
 
 	// Remove Color
 	// #define MONOCHROME_MODE
@@ -35,7 +35,7 @@
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/05/01" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/05/02" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 11

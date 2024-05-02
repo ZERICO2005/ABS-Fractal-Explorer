@@ -257,9 +257,20 @@
 		x11 = buf->x11; y11 = buf->y11;
 		x01 = buf->x01; y01 = buf->y01;
 		x10 = buf->x10; y10 = buf->y10;
-		xCenter = buf->xCenter; yCenter = buf->yCenter;
-		xSize = buf->xSize; ySize = buf->ySize;
+		realCord = buf->realCord;
+		imagCord = buf->imagCord;
+		zoom = buf->zoom;
 		rot = buf->rot;
+		stretchX = buf->stretchX;
+		stretchY = buf->stretchY;
+	}
+	void ImageBuffer::setFractalState(fpCord RealCord, fpCord ImagCord, fp64 Zoom, fp64 Rot, fp64 StretchX, fp64 StretchY) {
+		realCord = RealCord;
+		imagCord = ImagCord;
+		zoom = Zoom;
+		rot = Rot;
+		stretchX = StretchX;
+		stretchY = StretchY;
 	}
 	void ImageBuffer::printTransformationData(fp64 freq) {
 		printfInterval(freq,

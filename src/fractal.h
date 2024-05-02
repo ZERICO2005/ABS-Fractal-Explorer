@@ -53,7 +53,7 @@ uint64_t limitFormulaID(uint32_t power, uint64_t formula);
 uint64_t getABSValue(uint32_t power);
 
 inline fp64 getStretchValue(fp64 stretch) {
-	return pow(2.0,-abs(stretch));
+	return pow(2.0, -abs(stretch));
 }
 
 inline fp64 zoomDefault(fp64 power) {
@@ -136,7 +136,7 @@ Mandelbrot_Type get_Mandelbrot_Type(const ABS_Mandelbrot& param);
 /* Cordinates */
 
 template <typename fpX, typename outputType>
-void coordinate_to_pixel(fpX xI, fpX yI, outputType& xO, outputType& yO, const ABS_Mandelbrot& param, const Render_Data& ren) {
+void coordinate_to_pixel(fpX xI, fpX yI, outputType& xO, outputType& yO, const ABS_Mandelbrot& param, dim32_t resX, dim32_t resY) {
 	/* Reverses Transformations */
 	xI -= (fpX)param.r;
 	yI -= (fpX)param.i;
@@ -145,37 +145,37 @@ void coordinate_to_pixel(fpX xI, fpX yI, outputType& xO, outputType& yO, const A
 	xC /= (fpX)param.sX;
 	yC /= (fpX)param.sY;
 	/* Normalizes Coordinates */
-	dim32_t resX = ren.resX - 1;
-	dim32_t resY = ren.resY - 1;
-	dim32_t resZ = (resX >= resY) ? resY : resX;
-	xO = (outputType)( ( xC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resX) / (fpX)2.0) );
-	yO = (outputType)( (-yC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resY) / (fpX)2.0) );
+	dim32_t dimX = resX - 1;
+	dim32_t dimY = resY - 1;
+	dim32_t dimZ = (dimX >= dimY) ? dimY : dimX;
+	xO = (outputType)( ( xC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)dimZ))) + (((fpX)dimX) / (fpX)2.0) );
+	yO = (outputType)( (-yC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)dimZ))) + (((fpX)dimY) / (fpX)2.0) );
 }
 
 // Ignores real and imag cords, might be useful for determining rendering area.
 template <typename fpX, typename outputType>
-void coordinate_to_screen_pixel(fpX xI, fpX yI, outputType& xO, outputType& yO, const ABS_Mandelbrot& param, const Render_Data& ren) {
+void coordinate_to_screen_pixel(fpX xI, fpX yI, outputType& xO, outputType& yO, const ABS_Mandelbrot& param, dim32_t resX, dim32_t resY) {
 	/* Reverses Transformations */
 	fpX xC = xI * cos((fpX)param.rot) + yI * sin((fpX)param.rot);
 	fpX yC = yI * cos((fpX)param.rot) - xI * sin((fpX)param.rot);
 	xC /= (fpX)param.sX;
 	yC /= (fpX)param.sY;
 	/* Normalizes Coordinates */
-	dim32_t resX = ren.resX - 1;
-	dim32_t resY = ren.resY - 1;
-	dim32_t resZ = (resX >= resY) ? resY : resX;
-	xO = (outputType)( ( xC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resX) / (fpX)2.0) );
-	yO = (outputType)( (-yC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)resZ))) + (((fpX)resY) / (fpX)2.0) );
+	dim32_t dimX = resX - 1;
+	dim32_t dimY = resY - 1;
+	dim32_t dimZ = (dimX >= dimY) ? dimY : dimX;
+	xO = (outputType)( ( xC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)dimZ))) + (((fpX)dimX) / (fpX)2.0) );
+	yO = (outputType)( (-yC * pow((fpX)10.0, (fpX)param.zoom) / (fpX)2.0 * (((fpX)dimZ))) + (((fpX)dimY) / (fpX)2.0) );
 }
 
 template <typename fpX>
-void pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, const ABS_Mandelbrot& param, const Render_Data& ren) {
+void pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, const ABS_Mandelbrot& param, dim32_t resX, dim32_t resY) {
 	/* Normalizes Coordinates */
-	dim32_t resX = ren.resX - 1;
-	dim32_t resY = ren.resY - 1;
-	fpX numX = ((fpX)resX / (fpX)2.0);
-	fpX numY = ((fpX)resY / (fpX)2.0);
-	fpX numZ = (resX >= resY) ? numY * pow((fpX)10.0, (fpX)param.zoom) : numX * pow((fpX)10.0, (fpX)param.zoom);
+	dim32_t dimX = resX - 1;
+	dim32_t dimY = resY - 1;
+	fpX numX = ((fpX)dimX / (fpX)2.0);
+	fpX numY = ((fpX)dimY / (fpX)2.0);
+	fpX numZ = (dimX >= dimY) ? numY * pow((fpX)10.0, (fpX)param.zoom) : numX * pow((fpX)10.0, (fpX)param.zoom);
 	/* Applies Transformations */
 	fpX xC = (((fpX)xI - numX) / numZ) * (fpX)param.sX;
 	fpX yC = -(((fpX)yI - numY) / numZ) * (fpX)param.sY;
@@ -184,13 +184,13 @@ void pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, const ABS_Man
 }
 
 template <typename fpX>
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, fpX zoomVal, fpX rotSin, fpX rotCos, const ABS_Mandelbrot& param, dim32_t ResX, dim32_t ResY, int32_t subSample) { \
+void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, fpX zoomVal, fpX rotSin, fpX rotCos, const ABS_Mandelbrot& param, dim32_t resX, dim32_t resY, int32_t subSample) { \
 	/* Normalizes Coordinates */
-	dim32_t resX = ResX - 1;
-	dim32_t resY = ResY - 1;
-	fpX numX = ((fpX)resX / (fpX)2.0);
-	fpX numY = ((fpX)resY / (fpX)2.0);
-	fpX numZ = (resX >= resY) ? numY * zoomVal : numX * zoomVal;
+	dim32_t dimX = resX - 1;
+	dim32_t dimY = resY - 1;
+	fpX numX = ((fpX)dimX / (fpX)2.0);
+	fpX numY = ((fpX)dimY / (fpX)2.0);
+	fpX numZ = (dimX >= dimY) ? numY * zoomVal : numX * zoomVal;
 	/* Applies Transformations */
 	fpX xC = (((fpX)xI - numX) / numZ) * (fpX)param.sX;
 	fpX yC = -(((fpX)yI - numY) / numZ) * (fpX)param.sY;
