@@ -1876,7 +1876,7 @@ size_t calculate_Dst_Buf_overlap_with_Src_Buf(
 
 /* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
 int Manually_Transform_Frame(const ImageBuffer& image) {
-	// nano64_t startTime = getNanoTime();
+	nano64_t startTime = getNanoTime();
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	ABS_Mandelbrot& FRAC = current_Fractal;
@@ -1890,12 +1890,14 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 	
 	//size_t plotted_pixels = 0;
 
+
+
 	typedef fp32 fpTran;
 
 	/* Pre calculated constants */
 		const fpTran Recip_Image_DimX = (fpTran)1.0 / (fpTran)(image.resX - 1);
 		const fpTran Recip_Image_DimY = (fpTran)1.0 / (fpTran)(image.resY - 1);
-		
+
 		const fpTran Image_Cord_X00 = (fpTran)(image.x00 - FRAC.r);
 		const fpTran Image_Cord_Y00 = (fpTran)(image.y00 - FRAC.i);
 		const fpTran Image_Cord_X01_sub_X00 = (fpTran)(image.x01 - image.x00);
@@ -1931,12 +1933,16 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 
 		
 		size_t image_offset = 0;
-		const int32_t JumpX = (int32_t)ceil(Horiz_JumpX * Rot_Cos - Verti_JumpX * Rot_Sin);
-		const int32_t JumpY = (int32_t)ceil(Horiz_JumpY * Rot_Sin + Verti_JumpY * Rot_Cos);
+
+		const fpTran JumpX_Sign = (signbit(Horiz_JumpX * -Verti_JumpX) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
+		const fpTran JumpY_Sign = (signbit(Horiz_JumpY *  Verti_JumpY) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
+		const int32_t JumpX = (int32_t)ceil(hypot(Horiz_JumpX, Verti_JumpX) * JumpX_Sign);
+		const int32_t JumpY = (int32_t)ceil(hypot(Horiz_JumpY, Verti_JumpY) * JumpY_Sign);
+
 		const int32_t Repeat_X = (JumpX == 0) ? 1 : JumpX;
 		const int32_t Repeat_Y = (JumpY == 0) ? 1 : JumpY;
-		const int32_t Repeat_U = abs(Repeat_X);
-		const int32_t Repeat_V = abs(Repeat_Y);
+		const size_t Repeat_U = (size_t)abs(Repeat_X);
+		const size_t Repeat_V = (size_t)abs(Repeat_Y);
 
 		const int32_t Minimum_PosX = (Repeat_X >= 0) ? 0 : -(Repeat_X - 1);
 		const int32_t Minimum_PosY = (Repeat_Y >= 0) ? 0 : -(Repeat_Y - 1);
@@ -1949,63 +1955,111 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		const size_t blit_Pitch_Jump = (Repeat_Y >= 0) ? (blit_Pitch - ((size_t)abs(Repeat_X) * IMAGE_BUFFER_CHANNELS)) : -(blit_Pitch - ((size_t)abs(Repeat_X) * IMAGE_BUFFER_CHANNELS));
 
 
-		printfInterval(0.4, "\nPixel Jump: X{%.5f,%.5f} Y{%.5f,%.5f} Repeat{%d,%d} Min{%d,%d} Max{%d,%d}",
-			Horiz_JumpX, Horiz_JumpY, Verti_JumpX, Verti_JumpY,
-			Repeat_X, Repeat_Y, Minimum_PosX, Minimum_PosY, Maximum_PosX, Maximum_PosY
-		);
+		// printfInterval(0.4, "\nPixel Jump: X{%.5f,%.5f} Y{%.5f,%.5f} Repeat{%d,%d} Min{%d,%d} Max{%d,%d}",
+		// 	Horiz_JumpX, Horiz_JumpY, Verti_JumpX, Verti_JumpY,
+		// 	Repeat_X, Repeat_Y, Minimum_PosX, Minimum_PosY, Maximum_PosX, Maximum_PosY
+		// );
 
 	fpTran Y_Value = (fpTran)0.0;
-	for (dim32_t y = 0; y < image.resY; y++) {
-		// Calculates which two points to interpolate between in the next loop
-		const fpTran X0_Cord = Image_Cord_X00 + Y_Value * Image_Cord_X01_sub_X00;
-		const fpTran Y0_Cord = Image_Cord_Y00 + Y_Value * Image_Cord_Y01_sub_Y00;
-		fpTran X_Value = (fpTran)0.0;
 
-		for (dim32_t x = 0; x < image.resX; x++) {
-			// Calculates the X and Y cordinates of what pixel the Src buffer maps to on the Dst buffer
-			fpTran X_Cord = X0_Cord + X_Value * Image_Cord_X10_sub_X00;
-			fpTran Y_Cord = Y0_Cord + X_Value * Image_Cord_Y10_sub_Y00;
+	#define Manual_Transform_Start() \
+		for (dim32_t y = 0; y < image.resY; y++) {\
+			/* Calculates which two points to interpolate between in the next loop */\
+			const fpTran X0_Cord = Image_Cord_X00 + Y_Value * Image_Cord_X01_sub_X00;\
+			const fpTran Y0_Cord = Image_Cord_Y00 + Y_Value * Image_Cord_Y01_sub_Y00;\
+			fpTran X_Value = (fpTran)0.0;\
+			\
+			for (dim32_t x = 0; x < image.resX; x++) {\
+				/* Calculates the X and Y cordinates of what pixel the Src buffer maps to on the Dst buffer */\
+				fpTran X_Cord = X0_Cord + X_Value * Image_Cord_X10_sub_X00;\
+				fpTran Y_Cord = Y0_Cord + X_Value * Image_Cord_Y10_sub_Y00;\
+				\
+				int32_t posX = (int32_t)(X_Cord *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Y_Cord *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X + ResX_div_2);\
+				int32_t posY = (int32_t)(Y_Cord * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - X_Cord * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y + ResY_div_2);\
+				\
+				/* Does the same thing, but is much slower */\
+					/* int32_t posX; int32_t posY; */\
+					/* coordinate_to_pixel(X_Cord, Y_Cord, posX, posY, FRAC, blit.resX, blit.resY); */\
+				\
+				/* Copies the pixel data from src to dst if the pixel is in bounds */\
+				if (posX >= Minimum_PosX && posX < Maximum_PosX && posY >= Minimum_PosY && posY < Maximum_PosY) {
 
-			int32_t posX = (int32_t)(X_Cord *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Y_Cord *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X + ResX_div_2);
-			int32_t posY = (int32_t)(Y_Cord * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - X_Cord * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y + ResY_div_2);
 
-			/* Does the same thing, but is much slower */
-				// int32_t posX; int32_t posY;
-				// coordinate_to_pixel(X_Cord, Y_Cord, posX, posY, FRAC, blit.resX, blit.resY);
-			
- 			// Copies the pixel data from src to dst if the pixel is in bounds
-			if (posX >= Minimum_PosX && posX < Maximum_PosX && posY >= Minimum_PosY && posY < Maximum_PosY) {
-				size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
-				for (
-					int32_t v = 0; v < Repeat_V; v++
-				) {
-					for (int32_t u = 0; u < Repeat_U; u++) {
-						if (blit_offset < blit_Size) {
-							blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
-							blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
-							blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
-							blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
-						}
-						blit_offset += blit_Pixel_Jump;
-					}
-					blit_offset += blit_Pitch_Jump;
-				}
-			}
-			image_offset += IMAGE_BUFFER_CHANNELS;
-			
-			X_Value += Recip_Image_DimX;
+	#define Manual_Transform_End() \
+				}\
+				image_offset += IMAGE_BUFFER_CHANNELS;\
+				X_Value += Recip_Image_DimX;\
+			}\
+			Y_Value += Recip_Image_DimY;\
 		}
-		Y_Value += Recip_Image_DimY;
+	
+	enum Manual_Transform_Enum {
+		MT_Xn_Yn, MT_X1_Yn,
+		MT_Xn_Y1, MT_X1_Y1
+	};
+	int_enum MT_Value = (int_enum)(
+		((Repeat_U > 1) ? 0 : (Repeat_U)) +
+		((Repeat_V > 1) ? 0 : (2 * Repeat_V))
+	);
+	switch (MT_Value) {
+		case MT_Xn_Yn: default: { Manual_Transform_Start();
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
+
+			for (size_t v = 0; v < Repeat_V; v++) {
+				for (size_t u = 0; u < Repeat_U; u++) {
+					if (blit_offset < blit_Size) {
+						blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
+						blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
+						blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
+						blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+					}
+					blit_offset += blit_Pixel_Jump;
+				}
+				blit_offset += blit_Pitch_Jump;
+			}
+			Manual_Transform_End(); } break;
+		case MT_X1_Yn: { Manual_Transform_Start();
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
+			for (size_t v = 0; v < Repeat_V; v++) {
+				if (blit_offset < blit_Size) {
+					blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
+					blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
+					blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
+					blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+				}
+				blit_offset += blit_Pitch;
+			}
+			Manual_Transform_End(); } break;
+		case MT_Xn_Y1: { Manual_Transform_Start();
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
+				for (size_t u = 0; u < Repeat_U; u++) {
+					if (blit_offset < blit_Size) {
+						blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
+						blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
+						blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
+						blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+					}
+					blit_offset += blit_Pixel_Jump;
+				}
+			Manual_Transform_End(); } break;
+		case MT_X1_Y1: { Manual_Transform_Start();
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
+			blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
+			blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
+			blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
+			blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+			Manual_Transform_End(); } break;
 	}
+				
 
 	renderJuliaCordinatePoint(blit);
 
-	// nano64_t endTime = getNanoTime();
-	// printfInterval(0.4,
-	// 	"\ntime: %.3lfms %.3lfFPS ",
-	// 	NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
-	// 	NANO_TO_FRAMERATE(endTime - startTime)
-	// );
+	nano64_t endTime = getNanoTime();
+	printfInterval(0.4,
+		"\ntime(%d): %.3lfms %.3lfFPS ", MT_Value,
+		NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
+		NANO_TO_FRAMERATE(endTime - startTime)
+	);
 	return 0;
 }
 

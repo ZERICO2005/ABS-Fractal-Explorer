@@ -89,6 +89,7 @@
 			inline fp128 fmod(fp128 x, fp128 y) { return fmodq(x, y); }
 			inline fp128 fabs(fp128 x) { return fabsq(x); }
 			inline fp128 copysign(fp128 x, fp128 y) { return copysignq(x, y); }
+			inline bool signbit(fp128 x) { return (signbitq(x) != 0) ? true : false; }
 			inline fp128 sqrt(fp128 x) { return sqrtq(x); }
 			inline fp128 cbrt(fp128 x) { return cbrtq(x); }
 	#endif
