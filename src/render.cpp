@@ -1888,6 +1888,8 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		return -1;
 	}
 	
+	size_t plotted_pixels = 0;
+
 	size_t z = 0;
 	const size_t pitch = getBufferBoxPitch(&blit);
 	typedef fp32 fpTran;
@@ -1902,13 +1904,15 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		const fpTran Image_Cord_Y01_sub_Y00 = (fpTran)(image.y01 - image.y00);
 		// const fpTran Image_Cord_X10 = (fpTran)(image.x10 - FRAC.r);
 		// const fpTran Image_Cord_Y10 = (fpTran)(image.y10 - FRAC.i);
-		const fpTran Image_Cord_X11_sub_X10 = (fpTran)(image.x11 - image.x10);
-		const fpTran Image_Cord_Y11_sub_Y10 = (fpTran)(image.y11 - image.y10);
+		// const fpTran Image_Cord_X11_sub_X10 = (fpTran)(image.x11 - image.x10);
+		// const fpTran Image_Cord_Y11_sub_Y10 = (fpTran)(image.y11 - image.y10);
 
 		const fpTran Image_Cord_X10_sub_X00 = (fpTran)(image.x10 - image.x00);
 		const fpTran Image_Cord_Y10_sub_Y00 = (fpTran)(image.y10 - image.y00);
-		const fpTran Image_Cord_X11subX10_sub_X01subX00 = (fpTran)(Image_Cord_X11_sub_X10 - Image_Cord_X01_sub_X00);
-		const fpTran Image_Cord_Y11subY10_sub_Y01subY00 = (fpTran)(Image_Cord_Y11_sub_Y10 - Image_Cord_Y01_sub_Y00);
+
+		/* Cancel Out to Zero, probably applicable to quadralaterals */
+		// const fpTran Image_Cord_X11subX10_sub_X01subX00 = (fpTran)(Image_Cord_X11_sub_X10 - Image_Cord_X01_sub_X00);
+		// const fpTran Image_Cord_Y11subY10_sub_Y01subY00 = (fpTran)(Image_Cord_Y11_sub_Y10 - Image_Cord_Y01_sub_Y00);
 
 		const fpTran ResX_div_2 = (fpTran)(blit.resX - 1) / (fpTran)2.0;
 		const fpTran ResY_div_2 = (fpTran)(blit.resY - 1) / (fpTran)2.0;
@@ -1917,20 +1921,28 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		const fpTran neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (-sin((fpTran)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
 		const fpTran     Rot_Cos_mult_ZVmRZd2_div_Stretch_X = ( cos((fpTran)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sX;
 		const fpTran neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (-cos((fpTran)FRAC.rot) * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
-
+		printfInterval(0.4, "\nPixel Jump: X{%.6f,%.6f} Y{%.6f,%.6f}",
+			Recip_Image_DimX * (Image_Cord_X10_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y10_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X),
+			Recip_Image_DimX * (Image_Cord_Y10_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X10_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y),
+			Recip_Image_DimY * (Image_Cord_X01_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y01_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X),
+			Recip_Image_DimY * (Image_Cord_Y01_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X01_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y)
+		);
+		int32_t Horizontal = (int32_t)(Recip_Image_DimX * (Image_Cord_X10_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y10_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X));
+		(Recip_Image_DimX * (Image_Cord_Y10_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X10_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y));
+		(Recip_Image_DimY * (Image_Cord_X01_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y01_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X));
+		(Recip_Image_DimY * (Image_Cord_Y01_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X01_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y));
 	fpTran Y_Value = (fpTran)0.0;
 	for (dim32_t y = 0; y < image.resY; y++) {
 		// Calculates which two points to interpolate between in the next loop
-		const fpTran X0_Cord        = Image_Cord_X00         + Y_Value * Image_Cord_X01_sub_X00            ;
-		const fpTran X1_sub_X0_Cord = Image_Cord_X10_sub_X00 + Y_Value * Image_Cord_X11subX10_sub_X01subX00;
-		const fpTran Y0_Cord        = Image_Cord_Y00         + Y_Value * Image_Cord_Y01_sub_Y00            ;
-		const fpTran Y1_sub_Y0_Cord = Image_Cord_Y10_sub_Y00 + Y_Value * Image_Cord_Y11subY10_sub_Y01subY00;
+		const fpTran X0_Cord = Image_Cord_X00 + Y_Value * Image_Cord_X01_sub_X00;
+		const fpTran Y0_Cord = Image_Cord_Y00 + Y_Value * Image_Cord_Y01_sub_Y00;
 		fpTran X_Value = (fpTran)0.0;
+
 		for (dim32_t x = 0; x < image.resX; x++) {
 			// Calculates the X and Y cordinates of what pixel the Src buffer maps to on the Dst buffer
-			fpTran X_Cord = X0_Cord + X_Value * X1_sub_X0_Cord;
-			fpTran Y_Cord = Y0_Cord + X_Value * Y1_sub_Y0_Cord;
-			
+			fpTran X_Cord = X0_Cord + X_Value * Image_Cord_X10_sub_X00;
+			fpTran Y_Cord = Y0_Cord + X_Value * Image_Cord_Y10_sub_Y00;
+
 			int32_t posX = (int32_t)(X_Cord *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Y_Cord *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X + ResX_div_2);
 			int32_t posY = (int32_t)(Y_Cord * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - X_Cord * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y + ResY_div_2);
 
@@ -1944,6 +1956,7 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 1] = image.vram[z + 1];
 				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 2] = image.vram[z + 2];
 				blit.vram[((size_t)posY * pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS) + 3] = image.vram[z + 3];
+				plotted_pixels;
 			}
 			z += IMAGE_BUFFER_CHANNELS;
 			X_Value += Recip_Image_DimX;
@@ -2141,7 +2154,8 @@ void newFrame() {
 	}
 
 	if (primaryBufferValid == true) {
-		fill_Background_Color(*Primary_Image);
+		Master.clearBuffer();
+		//fill_Background_Color(*Primary_Image);
 	} else {
 		Master.clearBuffer();
 	}

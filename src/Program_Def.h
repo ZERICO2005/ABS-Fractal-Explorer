@@ -35,11 +35,11 @@
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/05/02" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/05/03" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
 #define PROGRAM_V_PATCH 11
-#define PROGRAM_V_TAG "Rev-17 Developer Debug Alpha"
+#define PROGRAM_V_TAG "Rev-18 Developer Debug Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */
