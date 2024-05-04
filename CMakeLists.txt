@@ -4,6 +4,7 @@ set(SRC_DIR "./src")
 set(INCLUDE_DIR "./include")
 set(IMGUI_DIR "${INCLUDE_DIR}/imgui")
 
+
 set(PROJECT_NAME "ABS-Fractal-Explorer")
 project(${PROJECT_NAME})
 
@@ -20,7 +21,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Packages
 find_package(SDL2 REQUIRED)
 find_package(OpenCL REQUIRED)
-find_package(OpenCV REQUIRED)
+# find_package(OpenCV REQUIRED)
 
 # ImGui
 file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
@@ -30,14 +31,11 @@ target_compile_options(IMGUI_LIB PRIVATE -g -O3 -Wall -Wshadow)
 # Source Files
 file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp")
 
-
-
 # Icon
 set(ICON_FILE "./icons/ABS-Icon.o")
-
 # Create an executable
 if(WIN32)
-	add_executable(${PROJECT_NAME} ${SRC_FILES} ${ICON_FILE})
+	add_executable(${PROJECT_NAME} ${SRC_FILES} ${ICON_FILE} ${SRC_MAVX})
 elseif(UNIX AND NOT APPLE)
 	add_executable(${PROJECT_NAME} ${SRC_FILES})
 endif()
@@ -55,5 +53,6 @@ set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fdiagnostics-color=always")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 
 target_compile_options(${PROJECT_NAME} PUBLIC ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
-# target_link_libraries(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL quadmath IMGUI_LIB)
-target_link_libraries(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL quadmath ${OpenCV_LIBS} IMGUI_LIB)
+
+# If using the OpenCV Scaler, add ${OpenCV_LIBS}
+target_link_libraries(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL quadmath IMGUI_LIB)

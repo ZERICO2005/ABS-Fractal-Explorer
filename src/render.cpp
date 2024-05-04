@@ -1876,7 +1876,7 @@ size_t calculate_Dst_Buf_overlap_with_Src_Buf(
 
 /* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
 int Manually_Transform_Frame(const ImageBuffer& image) {
-	nano64_t startTime = getNanoTime();
+	// nano64_t startTime = getNanoTime();
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	ABS_Mandelbrot& FRAC = current_Fractal;
@@ -2044,12 +2044,12 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 
 	renderJuliaCordinatePoint(blit);
 
-	nano64_t endTime = getNanoTime();
-	printfInterval(0.4,
-		"\ntime(%d): %.3lfms %.3lfFPS ", MT_Value,
-		NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
-		NANO_TO_FRAMERATE(endTime - startTime)
-	);
+	// nano64_t endTime = getNanoTime();
+	// printfInterval(0.4,
+	// 	"\ntime(%d): %.3lfms %.3lfFPS ", MT_Value,
+	// 	NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
+	// 	NANO_TO_FRAMERATE(endTime - startTime)
+	// );
 	return 0;
 }
 
@@ -2171,12 +2171,13 @@ void fill_Background_Color(const ImageBuffer& image) {
 	uint8_t frac_G = (uint8_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase)));
 	uint8_t frac_B = (uint8_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase)));
 	uint32_t frac_Color = (uint32_t)frac_R + ((uint32_t)frac_G << 8) + ((uint32_t)frac_B << 16);
+	
 	if (image.vram == nullptr || image.resX < 2 || image.resY < 2) {
 		Master.clearBuffer(frac_R, frac_G, frac_B);
 		return;
 	}
 	uint32_t aver_R = 0, aver_G = 0, aver_B = 0;
-
+	
 	const size_t pitch = (size_t)image.resX * image.channels;
 	const size_t point_List[] = {
 		/* NW */ 0,
@@ -2232,8 +2233,7 @@ void newFrame() {
 	}
 
 	if (primaryBufferValid == true) {
-		Master.clearBuffer();
-		//fill_Background_Color(*Primary_Image);
+		fill_Background_Color(*Primary_Image);
 	} else {
 		Master.clearBuffer();
 	}
