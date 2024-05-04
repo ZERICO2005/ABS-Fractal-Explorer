@@ -27,23 +27,23 @@
 		if (buf == nullptr || PatternData == nullptr || PatternSize == 0) { return nullptr; }
 		if (bufSize == 0) { return buf; } // 0 Bytes to copy
 		if (PatternSize == 1) {
-			memset(buf,((uint8_t*)PatternData)[0],bufSize);
+			memset(buf, ((uint8_t*)PatternData)[0], bufSize);
 			return buf;
 		}
 		if (bufSize <= PatternSize) {
-			memcpy(buf,PatternData,bufSize);
+			memcpy(buf, PatternData, bufSize);
 			return buf;
 		}
-		memcpy(buf,PatternData,PatternSize); // Initial Copy
+		memcpy(buf, PatternData, PatternSize); // Initial Copy
 		size_t len = PatternSize;
 		size_t pos = PatternSize;
 		
 		while (pos + len <= bufSize) {
-			memcpy((uint8_t*)buf + pos,buf,len); 
+			memcpy((uint8_t*)buf + pos, buf, len); 
 			pos += len;
 			len *= 2; // Doubles copy size each iteration
 		}
-		memcpy((uint8_t*)buf + pos,buf,bufSize - len); // Copies the remaining portion
+		memcpy((uint8_t*)buf + pos, buf, bufSize - len); // Copies the remaining portion
 		return buf;
 	}
 
@@ -52,17 +52,17 @@
 		if (buf == nullptr || PatternSize == 0) { return nullptr; }
 		if (bufSize <= PatternSize) { return buf; }
 		if (PatternSize == 1) {
-			memset(buf,((uint8_t*)buf)[0],bufSize);
+			memset(buf, ((uint8_t*)buf)[0], bufSize);
 			return buf;
 		}
 		size_t len = PatternSize;
 		size_t pos = PatternSize;
 		while (pos + len <= bufSize) {
-			memcpy((uint8_t*)buf + pos,buf,len); 
+			memcpy((uint8_t*)buf + pos, buf, len); 
 			pos += len;
 			len *= 2; // Doubles copy size each iteration
 		}
-		memcpy((uint8_t*)buf + pos,buf,bufSize - len); // Copies the remaining portion
+		memcpy((uint8_t*)buf + pos, buf, bufSize - len); // Copies the remaining portion
 		return 0;
 	}
 

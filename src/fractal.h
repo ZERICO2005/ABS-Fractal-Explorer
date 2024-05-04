@@ -200,7 +200,17 @@ void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, fpX zoomV
 
 constexpr fp64 POLAR_POWER_MINIMUM = 1.0100;
 constexpr fp64 POLAR_POWER_MAXIMUM = 20.0;
+constexpr int32_t MANDELBROT_POWER_MINIMUM = 2;
 constexpr int32_t MANDELBROT_POWER_MAXIMUM = 6;
+
+constexpr fp64 ZOOM_VALUE_MINIMUM = -5.0;
+constexpr fp64 ZOOM_VALUE_MAXIMUM = 40.0;
+
+constexpr fp64 STRETCH_VALUE_MINIMUM = -100.0;
+constexpr fp64 STRETCH_VALUE_MAXIMUM =  100.0;
+
+constexpr uint32_t ITERATION_COUNT_MINIMUM = 16;
+constexpr uint32_t ITERATION_COUNT_MAXIMUM = 16777216;
 
 void setMaxItr(ABS_Mandelbrot* frac, fp64 val);
 void setMaxItr(ABS_Mandelbrot* frac, uint32_t val);

@@ -105,7 +105,7 @@ const char* const Quadratic_Fractals_Text[] = {
 
 uint64_t Quadratic_Fractals_Formula[] = {
 	  0,
-	
+	/* Standard Fractals */
 	  0,
 	100,
 	128,
@@ -118,7 +118,7 @@ uint64_t Quadratic_Fractals_Formula[] = {
 	 64,
 	164,
 	196,
-
+	/* Quadratic Asymmetric Fractals Part-1 */
 	 80,
 	 27,
 	 30,
@@ -138,7 +138,7 @@ uint64_t Quadratic_Fractals_Formula[] = {
 	198,
 	238,
 	236,
-
+	/* Quadratic Symmetrical Fractals */
 	 15,
 	 11,
 	 88,
@@ -164,7 +164,7 @@ uint64_t Quadratic_Fractals_Formula[] = {
 	168,
 	 57,
 	 47,
-
+	/* Quadratic Asymmetric Fractals Part-2 */
 	116,
 	230,
 	146,
@@ -184,7 +184,7 @@ uint64_t Quadratic_Fractals_Formula[] = {
 	212,
 	180,
 	 52,
-
+	/* Quadratic Geometric Shapes */
 	130,
 	134,
 	162

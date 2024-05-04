@@ -159,6 +159,9 @@ typedef int32_t dim32_t;
 		);
 	}
 
+	constexpr inline fp64 RADIANS_TO_DEGREES(fp64 radians) { return radians * (360.0 / TAU); }
+	constexpr inline fp64 DEGREES_TO_RADIANS(fp64 degrees) { return degrees * (TAU / 360.0); }
+
 /* Time */
 	// Returns the time in nanoseconds
 	nano64_t getNanoTime();

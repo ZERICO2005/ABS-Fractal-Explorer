@@ -317,7 +317,6 @@ void Menu_Coordinates() {
 	ImGui::Begin("Coordinates Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
-	ImGui::SeparatorText("Cordinates");
 	ABS_Mandelbrot& FRAC = current_Fractal;
 	#define NumberTextLen 64
 	
@@ -346,69 +345,112 @@ void Menu_Coordinates() {
 				num = func(Temp_Text_Input_Buf, nullptr, base); \
 			} \
 		}
-	ImGui::Text("Real and Imaginary Coordinate:");
-			FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord);
-			FloatCoordinate_InputText("C-Imag##input_C_Imag", FRAC.i, "%35.32" PRIfpCord);
-	ImGui::Text("Zoom:");
-		Float_InputText("##zoom_input",FRAC.zoom,"%.5lf",strtod);
-	
-	ImGui::NewLine();
-	ImGui::Text("Julia Coordinate:");
-		static bool useJuliaSliders = true;
-		if (useJuliaSliders == true) {
-			float input_Zreal = (fp32)FRAC.zr; float input_Zimag = (fp32)FRAC.zi;
-			if (ImGui::SliderFloat("Z-Real",&input_Zreal,-2.0,2.0,"%.9f")) { FRAC.zr = (fp64)input_Zreal; }
-			if (ImGui::SliderFloat("Z-Imag",&input_Zimag,-2.0,2.0,"%.9f")) { FRAC.zi = (fp64)input_Zimag; }
-			fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
-			if (ImGui::SliderAngle("Julia Angle",&juliaAngle,-360.0f,360.0f,"%.1f deg")) {
-				fpCord juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
-				fpCord juliaTheta = (fpCord)juliaAngle;
-				FRAC.zr = juliaMagnitude * cos(juliaTheta);
-				FRAC.zi = juliaMagnitude * sin(juliaTheta);
+	ImGui::SeparatorText("Cordinates"); {
+		ImGui::Text("Real and Imaginary Coordinate:");
+				FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord);
+				FloatCoordinate_InputText("C-Imag##input_C_Imag", FRAC.i, "%35.32" PRIfpCord);
+		ImGui::Text("Zoom:");
+			Float_InputText("##zoom_input", FRAC.zoom, "%.5lf", strtod);
+			
+		ImGui::NewLine();
+	}
+	ImGui::SeparatorText("Parameters"); {
+		ImGui::Text("Maximum Iterations:");
+			uint32_t temp_Iterations = FRAC.maxItr;
+			constexpr uint32_t Iterations_Step = 16;
+			constexpr uint32_t Iterations_Step_Fast = 256;
+			if (ImGui::InputScalar("##input_maxIter", ImGuiDataType_U32, &temp_Iterations, &Iterations_Step, &Iterations_Step_Fast, "%" PRIu32)) {
+				setMaxItr(&FRAC, temp_Iterations);
+			}
+		if (current_Fractal.polarMandelbrot == true) {
+			constexpr fp64 Polar_Power_Step = 1.0;
+			constexpr fp64 Polar_Power_Step_Fast = 0.1;
+			ImGui::Text("Power: %s", getPowerText(round(FRAC.polarPower)));
+			if (ImGui::InputScalar("##input_polar_power", ImGuiDataType_Double, &FRAC.polarPower, &Polar_Power_Step, &Polar_Power_Step_Fast, "%.5" PRIfp64)) {
+				valueClamp(FRAC.polarPower, POLAR_POWER_MINIMUM, POLAR_POWER_MAXIMUM);
 			}
 		} else {
-			FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.zr, "%35.32" PRIfpCord);
-			FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.zi, "%35.32" PRIfpCord);
+			constexpr uint32_t Mandelbrot_Power_Step = 1;
+			constexpr uint32_t Mandelbrot_Power_Step_Fast = 1;
+			ImGui::Text("Power: %s", getPowerText((uint32_t)FRAC.power));
+			if (ImGui::InputScalar("##input_power", ImGuiDataType_U32, &FRAC.power, &Mandelbrot_Power_Step, &Mandelbrot_Power_Step_Fast, "%" PRIu32)) {
+				valueClamp(FRAC.power, MANDELBROT_POWER_MINIMUM, MANDELBROT_POWER_MAXIMUM);
+			}
 		}
-		ImGui::Checkbox("Use Sliders", &useJuliaSliders);
 		ImGui::NewLine();
-	ImGui::SeparatorText("Parameters");
-		ImGui::Text("Maximum Iterations:");
-		Int_InputText("##input_maxIter",FRAC.maxItr,"%" PRIu32,stringTo_Uint32,10);
+	}
+	ImGui::SeparatorText("Fractal Formula"); {
 		ImGui::Text("Fractal Formula:");
 			static bool inputHexadecimal = false;
 			if (inputHexadecimal == true) {
-				Int_InputText("##input_formula",FRAC.formula,"%" PRIX64,stringTo_Uint64,16);
+				Int_InputText("##input_formula", FRAC.formula, "%" PRIX64, stringTo_Uint64, 16);
 			} else {
-				Int_InputText("##input_formula",FRAC.formula,"%" PRIu64,stringTo_Uint64,10);
+				Int_InputText("##input_formula", FRAC.formula, "%" PRIu64, stringTo_Uint64, 10);
 			}
 			ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
-		/* Power */
-			if (current_Fractal.polarMandelbrot == true) {
-				ImGui::Text("Power: %s",getPowerText(round(FRAC.polarPower)));
-				Float_InputText("##input_polar_power",FRAC.polarPower,"%.5lf",stringTo_Float64);
-			} else {
-				ImGui::Text("Power: %s",getPowerText((uint32_t)FRAC.power));
-				Int_InputText("##input_power",FRAC.power,"%" PRIu32,stringTo_Uint32,10);
-			}
-
-		if (FRAC.power == 2) {
-			ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
-			int Combo_Quadractic_Fractals = 0;
-			if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
-				if (Combo_Quadractic_Fractals != 0) {
-					FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+			
+			if (FRAC.polarMandelbrot == false) {
+				switch (FRAC.power) {
+					case Mandelbrot_Quadratic: {
+						ImGui::NewLine();
+						ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
+						int Combo_Quadractic_Fractals = 0;
+						if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
+							if (Combo_Quadractic_Fractals != 0) {
+								FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+							}
+						}
+					} break;
+					case Mandelbrot_Cubic: {
+						ImGui::NewLine();
+						ImGui::Text("Select a fractal from the \"330 Cubic Fractals\" video:");
+						int Combo_Quadractic_Fractals = 0;
+						if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
+							if (Combo_Quadractic_Fractals != 0) {
+								FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+							}
+						}
+					}
 				}
 			}
+		ImGui::NewLine();
+	}
+	ImGui::SeparatorText("Julia Set:"); {
+		ImGui::Text("Julia Coordinate:");
+		FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.zr, "%35.32" PRIfpCord);
+		FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.zi, "%35.32" PRIfpCord);
+		fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
+		if (ImGui::SliderAngle("Julia Angle",&juliaAngle, -360.0f, 360.0f, "%.1f deg")) {
+			fpCord juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
+			fpCord juliaTheta = (fpCord)juliaAngle;
+			FRAC.zr = juliaMagnitude * cos(juliaTheta);
+			FRAC.zi = juliaMagnitude * sin(juliaTheta);
 		}
 		ImGui::NewLine();
-	ImGui::SeparatorText("Transformations");
+		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
+		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
+		ImGui::NewLine();
+	}
+
+	ImGui::SeparatorText("Transformations"); {
 		fp32 image_rotation = (fp32)FRAC.rot;
 		ImGui::Text("Rotate Image:");
 		if (ImGui::SliderAngle("##RotateImage", &image_rotation, -360.0f, 360.0f, "%.1f deg")) {
 			FRAC.rot = (fp64)image_rotation;
 		}
+		if (ImGui::Button("Rotate 90 deg counter-clockwise")) { FRAC.rot -= DEGREES_TO_RADIANS(90.0); }
+		ImGui::SameLine();
+		if (ImGui::Button("Rotate 90 deg clockwise")) { FRAC.rot += DEGREES_TO_RADIANS(90.0); }
 		ImGui::NewLine();
+
+		ImGui::Text("Stretch Image: 2.0^%.4" PRIfp64, FRAC.stretch);
+		constexpr fp64 Stretch_Step = 1.0 / 4.0;
+		constexpr fp64 Stretch_Step_Fast = 1.0;
+		if (ImGui::InputScalar("##input_stretch", ImGuiDataType_Double, &FRAC.stretch, &Stretch_Step, &Stretch_Step_Fast, "%.4" PRIfp64)) {
+			valueRestore(FRAC.stretch, 0.0, STRETCH_VALUE_MINIMUM, STRETCH_VALUE_MAXIMUM);
+		}
+		ImGui::NewLine();
+	}
 	ImGui::End();
 }
 

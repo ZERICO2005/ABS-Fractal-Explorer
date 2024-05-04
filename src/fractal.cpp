@@ -202,13 +202,13 @@ Mandelbrot_Type get_Mandelbrot_Type(const ABS_Mandelbrot& param) {
 
 void setMaxItr(ABS_Mandelbrot* frac, fp64 val) {
 	if (frac == nullptr) { return; }
-	valueClamp(val,log2(16.0),log2(16777216.0));
-	frac->maxItr = (uint32_t)pow(2.0,val);
+	valueClamp(frac->maxItr_Log2, log2((fp64)ITERATION_COUNT_MINIMUM), log2((fp64)ITERATION_COUNT_MAXIMUM));
+	frac->maxItr = (uint32_t)pow(2.0, val);
 	frac->maxItr_Log2 = val;
 }
 void setMaxItr(ABS_Mandelbrot* frac, uint32_t val) {
 	if (frac == nullptr) { return; }
-	valueClamp(val,16,16777216);
+	valueClamp(val, ITERATION_COUNT_MINIMUM, ITERATION_COUNT_MAXIMUM);
 	frac->maxItr = val;
 	frac->maxItr_Log2 = log2((fp64)val);
 }
@@ -225,14 +225,14 @@ void setStretchValue(ABS_Mandelbrot* frac) {
 
 void correctFracParameters(ABS_Mandelbrot* frac) {
 	if (frac == nullptr) { return; }
-	valueClamp(frac->power,2,MANDELBROT_POWER_MAXIMUM);
-	valueClamp(frac->polarPower,POLAR_POWER_MINIMUM,POLAR_POWER_MAXIMUM);
+	valueClamp(frac->power, 2, MANDELBROT_POWER_MAXIMUM);
+	valueClamp(frac->polarPower, POLAR_POWER_MINIMUM, POLAR_POWER_MAXIMUM);
 	if (frac->polarMandelbrot == true) {
 		if (frac->integerPolarPower == true) {
 			frac->polarPower = round(frac->polarPower);
-			valueClamp(frac->polarPower,ceil(POLAR_POWER_MINIMUM),floor(POLAR_POWER_MAXIMUM));
+			valueClamp(frac->polarPower, ceil(POLAR_POWER_MINIMUM), floor(POLAR_POWER_MAXIMUM));
 		} else {
-			valueClamp(frac->polarPower,POLAR_POWER_MINIMUM,POLAR_POWER_MAXIMUM);
+			valueClamp(frac->polarPower, POLAR_POWER_MINIMUM, POLAR_POWER_MAXIMUM);
 		}
 	}
 	frac->formula = limitFormulaID(frac->power,frac->formula);
@@ -240,17 +240,17 @@ void correctFracParameters(ABS_Mandelbrot* frac) {
 		frac->r = (fpCord)getABSFractalMinRadius(frac->polarPower);
 		frac->r *= (frac->flipCardioidSide == true) ? (fpCord)-1.0 : (fpCord)1.0;
 	}
-	valueClamp(frac->r,(fpCord)-10.0,(fpCord)10.0);
-	valueClamp(frac->i,(fpCord)-10.0,(fpCord)10.0);
-	valueClamp(frac->zoom,-5.0,40.0);
-	valueClamp(frac->zr,(fpCord)-4.0,(fpCord)4.0);
-	valueClamp(frac->zi,(fpCord)-4.0,(fpCord)4.0);
-	valueClamp(frac->maxItr,16,16777216);
-	valueClamp(frac->maxItr_Log2,log2(16.0),log2(16777216.0));
-	frac->rot = (frac->rot >= 0.0) ? fmod(frac->rot,TAU) : fmod(frac->rot + TAU,TAU);
-	valueClamp(frac->stretch,-100.0,100.0);
+	valueClamp(frac->r, (fpCord)-10.0,( fpCord)10.0);
+	valueClamp(frac->i, (fpCord)-10.0, (fpCord)10.0);
+	valueClamp(frac->zoom, ZOOM_VALUE_MINIMUM, ZOOM_VALUE_MAXIMUM);
+	valueClamp(frac->zr, (fpCord)-4.0, (fpCord)4.0);
+	valueClamp(frac->zi, (fpCord)-4.0, (fpCord)4.0);
+	valueClamp(frac->maxItr, ITERATION_COUNT_MINIMUM, ITERATION_COUNT_MAXIMUM);
+	valueClamp(frac->maxItr_Log2, log2((fp64)ITERATION_COUNT_MINIMUM), log2((fp64)ITERATION_COUNT_MAXIMUM));
+	frac->rot = (frac->rot >= 0.0) ? fmod(frac->rot, TAU) : fmod(frac->rot + TAU, TAU);
+	valueClamp(frac->stretch, STRETCH_VALUE_MINIMUM, STRETCH_VALUE_MAXIMUM);
 	setStretchValue(frac);
-	valueClamp(frac->breakoutValue,0.25,4294967296.0);
+	valueClamp(frac->breakoutValue, 0.25, 4294967296.0);
 	
 	valueClamp(frac->exterior_Alpha, 0.0, 1.0);
 		valueClamp(frac->exterior_R_Amp, -1.0, 1.0);
