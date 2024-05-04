@@ -1891,7 +1891,9 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 	//size_t plotted_pixels = 0;
 
 
-
+	const uint32_t* image_buf = (uint32_t*)image.vram;
+	uint32_t* blit_buf = (uint32_t*)blit.vram;
+	
 	typedef fp32 fpTran;
 
 	/* Pre calculated constants */
@@ -1931,9 +1933,8 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		const fpTran Verti_JumpX = Recip_Image_DimY * (Image_Cord_X01_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y01_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
 		const fpTran Verti_JumpY = Recip_Image_DimY * (Image_Cord_Y01_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X01_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
 
+		constexpr size_t Pixel_Size = 1;
 		
-		size_t image_offset = 0;
-
 		const fpTran JumpX_Sign = (signbit(Horiz_JumpX * -Verti_JumpX) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
 		const fpTran JumpY_Sign = (signbit(Horiz_JumpY *  Verti_JumpY) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
 		const int32_t JumpX = (int32_t)ceil(hypot(Horiz_JumpX, Verti_JumpX) * JumpX_Sign);
@@ -1949,10 +1950,10 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		const int32_t Maximum_PosX = blit.resX - ((Repeat_X <= 0) ? 0 : (Repeat_X - 1));
 		const int32_t Maximum_PosY = blit.resY - ((Repeat_Y <= 0) ? 0 : (Repeat_Y - 1));
 		
-		const size_t blit_Size = getBufferBoxSize(&blit);
-		const size_t blit_Pitch = getBufferBoxPitch(&blit);
-		const size_t blit_Pixel_Jump = (Repeat_X >= 0) ? IMAGE_BUFFER_CHANNELS : -IMAGE_BUFFER_CHANNELS;
-		const size_t blit_Pitch_Jump = (Repeat_Y >= 0) ? (blit_Pitch - ((size_t)abs(Repeat_X) * IMAGE_BUFFER_CHANNELS)) : -(blit_Pitch - ((size_t)abs(Repeat_X) * IMAGE_BUFFER_CHANNELS));
+		const size_t blit_Size = getBufferBoxSize(&blit) / IMAGE_BUFFER_CHANNELS;
+		const size_t blit_Pitch = getBufferBoxPitch(&blit) / IMAGE_BUFFER_CHANNELS;
+		const size_t blit_Pixel_Jump = (Repeat_X >= 0) ? Pixel_Size : -Pixel_Size;
+		const size_t blit_Pitch_Jump = (Repeat_Y >= 0) ? (blit_Pitch - ((size_t)abs(Repeat_X) * Pixel_Size)) : -(blit_Pitch - ((size_t)abs(Repeat_X) * Pixel_Size));
 
 
 		// printfInterval(0.4, "\nPixel Jump: X{%.5f,%.5f} Y{%.5f,%.5f} Repeat{%d,%d} Min{%d,%d} Max{%d,%d}",
@@ -1960,6 +1961,7 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		// 	Repeat_X, Repeat_Y, Minimum_PosX, Minimum_PosY, Maximum_PosX, Maximum_PosY
 		// );
 
+	size_t image_offset = 0;
 	fpTran Y_Value = (fpTran)0.0;
 
 	#define Manual_Transform_Start() \
@@ -1987,7 +1989,7 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 
 	#define Manual_Transform_End() \
 				}\
-				image_offset += IMAGE_BUFFER_CHANNELS;\
+				image_offset += Pixel_Size;\
 				X_Value += Recip_Image_DimX;\
 			}\
 			Y_Value += Recip_Image_DimY;\
@@ -2003,15 +2005,12 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 	);
 	switch (MT_Value) {
 		case MT_Xn_Yn: default: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
 
 			for (size_t v = 0; v < Repeat_V; v++) {
 				for (size_t u = 0; u < Repeat_U; u++) {
 					if (blit_offset < blit_Size) {
-						blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
-						blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
-						blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
-						blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+						blit_buf[blit_offset] = image_buf[image_offset];
 					}
 					blit_offset += blit_Pixel_Jump;
 				}
@@ -2019,35 +2018,26 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 			}
 			Manual_Transform_End(); } break;
 		case MT_X1_Yn: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
 			for (size_t v = 0; v < Repeat_V; v++) {
 				if (blit_offset < blit_Size) {
-					blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
-					blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
-					blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
-					blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+					blit_buf[blit_offset] = image_buf[image_offset];
 				}
 				blit_offset += blit_Pitch;
 			}
 			Manual_Transform_End(); } break;
 		case MT_Xn_Y1: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
 				for (size_t u = 0; u < Repeat_U; u++) {
 					if (blit_offset < blit_Size) {
-						blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
-						blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
-						blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
-						blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+						blit_buf[blit_offset] = image_buf[image_offset];
 					}
 					blit_offset += blit_Pixel_Jump;
 				}
 			Manual_Transform_End(); } break;
 		case MT_X1_Y1: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * IMAGE_BUFFER_CHANNELS);
-			blit.vram[blit_offset + 0] = image.vram[image_offset + 0];
-			blit.vram[blit_offset + 1] = image.vram[image_offset + 1];
-			blit.vram[blit_offset + 2] = image.vram[image_offset + 2];
-			blit.vram[blit_offset + 3] = image.vram[image_offset + 3];
+			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
+			blit_buf[blit_offset] = image_buf[image_offset];
 			Manual_Transform_End(); } break;
 	}
 				
@@ -2221,7 +2211,7 @@ void fill_Background_Color(const ImageBuffer& image) {
 void newFrame() {
 	// nano64_t startTime = getNanoTime();
 
-	// constexpr fp64 Maximum_Rotation_Difference = 0.0 * (TAU / 360.0);
+	constexpr fp64 Maximum_Rotation_Difference = 0.0 * (TAU / 360.0);
 	if (Master.bufferSafe() == false) {
 		printError("Master ImageBuffer is invalid");
 		return;
@@ -2275,31 +2265,32 @@ void newFrame() {
 		}
 	#endif
 	#ifndef Enable_OpenCV_Scaler
-		//bool Enable_SDL2_Scaler = true;
-		bool Enable_SDL2_Scaler = false;
+		bool Enable_SDL2_Scaler = true;
 		if (Abort_Rendering_Flag == false && primaryBufferValid == true) {
-			// bool Scale_Translate_Transformation;
-			// bool Stretched_Image;
-			// fp64 Rotation_Difference = 0.0;
-			// calculate_Tranformation_Change(
-			// 	*Primary_Image, current_Fractal,
-			// 	Scale_Translate_Transformation, Stretched_Image, Rotation_Difference
-			// );
-			// if (
-			// 	(
-			// 		(Scale_Translate_Transformation == true) &&
-			// 		(Rotation_Difference > Maximum_Rotation_Difference)
-			// 	) || (
-			// 		(Stretched_Image == true) &&
-			// 		(Rotation_Difference != 0.0)
-			// 	)
-			// ) {
-			// 	Enable_SDL2_Scaler = false;
-			// 	// BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
-			// 	// renderStatusGraphic  (render_Area, Status_Graphic::Graphic_Loading, 1.0);
-			// 	Manually_Transform_Frame(*Primary_Image);
-			// }
-			Manually_Transform_Frame(*Primary_Image);
+			bool Scale_Translate_Transformation;
+			bool Stretched_Image;
+			fp64 Rotation_Difference = 0.0;
+			calculate_Tranformation_Change(
+				*Primary_Image, current_Fractal,
+				Scale_Translate_Transformation, Stretched_Image, Rotation_Difference
+			);
+			if (
+				(
+					(Scale_Translate_Transformation == true) &&
+					(Rotation_Difference > Maximum_Rotation_Difference)
+				) || (
+					(Stretched_Image == true) &&
+					(Rotation_Difference != 0.0)
+				) || (
+					(current_Fractal.zr != (fpCord)0.0) ||
+					(current_Fractal.zi != (fpCord)0.0)
+				)
+			) {
+				Enable_SDL2_Scaler = false;
+				// BufferBox render_Area; getRenderBufferBoxFromMaster(render_Area);
+				// renderStatusGraphic  (render_Area, Status_Graphic::Graphic_Loading, 1.0);
+				Manually_Transform_Frame(*Primary_Image);
+			}
 		}
 	#endif
 	SDL_UpdateTexture(texture, nullptr, Master.vram, (dim32_t)Master.resX * (dim32_t)Master.channels);
