@@ -43,7 +43,7 @@ inline fp64 getABSFractalMinRadius(uint32_t power) {
 }
 
 inline fp64 getABSFractalMaxRadius(fp64 power) {
-	return pow(2.0,1.0 / (power - 1.0));
+	return pow(2.0, 1.0 / (power - 1.0));
 }
 inline fp64 getABSFractalMaxRadius(uint32_t power) {
 	return getABSFractalMaxRadius((fp64)power);

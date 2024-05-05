@@ -21,7 +21,7 @@
 #include "../displayInfo.h"
 
 #include "../render.h"
-#include "../fractal_video.h"
+#include "../fractal_Information/Mandelbrot_Information.h"
 
 #include "../render_Configuration.hpp"
 
@@ -362,6 +362,9 @@ void Menu_Coordinates() {
 			if (ImGui::InputScalar("##input_maxIter", ImGuiDataType_U32, &temp_Iterations, &Iterations_Step, &Iterations_Step_Fast, "%" PRIu32)) {
 				setMaxItr(&FRAC, temp_Iterations);
 			}
+		ImGui::NewLine();
+	}
+	ImGui::SeparatorText("Fractal Formula and Power"); {
 		if (current_Fractal.polarMandelbrot == true) {
 			constexpr fp64 Polar_Power_Step = 1.0;
 			constexpr fp64 Polar_Power_Step_Fast = 0.1;
@@ -378,8 +381,6 @@ void Menu_Coordinates() {
 			}
 		}
 		ImGui::NewLine();
-	}
-	ImGui::SeparatorText("Fractal Formula"); {
 		ImGui::Text("Fractal Formula:");
 			static bool inputHexadecimal = false;
 			if (inputHexadecimal == true) {
@@ -395,7 +396,7 @@ void Menu_Coordinates() {
 						ImGui::NewLine();
 						ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
 						int Combo_Quadractic_Fractals = 0;
-						if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
+						if (ImGui::Combo("##Combo_Quadratic_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
 							if (Combo_Quadractic_Fractals != 0) {
 								FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
 							}
@@ -404,13 +405,23 @@ void Menu_Coordinates() {
 					case Mandelbrot_Cubic: {
 						ImGui::NewLine();
 						ImGui::Text("Select a fractal from the \"330 Cubic Fractals\" video:");
-						int Combo_Quadractic_Fractals = 0;
-						if (ImGui::Combo("##Combo_Standard_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
-							if (Combo_Quadractic_Fractals != 0) {
-								FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+						int Combo_Cubic_Fractals = 0;
+						if (ImGui::Combo("##Combo_Cubic_Fractals", &Combo_Cubic_Fractals, Cubic_Fractals_Text, ARRAY_LENGTH(Cubic_Fractals_Text))) {
+							if (Combo_Cubic_Fractals != 0) {
+								FRAC.formula = Cubic_Fractals_Formula[Combo_Cubic_Fractals];
 							}
 						}
-					}
+					} break;
+					case Mandelbrot_Quartic: {
+						ImGui::NewLine();
+						ImGui::Text("Select one of the \"5265 Quartic Fractals\":");
+						int Combo_Quartic_Fractals = 0;
+						if (ImGui::Combo("##Combo_Cubic_Fractals", &Combo_Quartic_Fractals, Quartic_Fractals_Text, ARRAY_LENGTH(Quartic_Fractals_Text))) {
+							if (Combo_Quartic_Fractals != 0) {
+								FRAC.formula = Quartic_Fractals_Formula[Combo_Quartic_Fractals];
+							}
+						}
+					} break;
 				}
 			}
 		ImGui::NewLine();

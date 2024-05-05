@@ -6,13 +6,13 @@
 **	this project. If not, see https://opensource.org/license/MIT
 */
 
-#ifndef FRACTAL_VIDEO_H
-#define FRACTAL_VIDEO_H
+#ifndef MANDELBROT_QUADRACTIC_INFORMATION_H
+#define MANDELBROT_QUADRACTIC_INFORMATION_H
 
 #include <cstddef>
 #include <cstdint>
 
-struct Fractal_Video_ID {
+struct Quadratic_Fractal_Video_ID {
 	uint64_t formula;
 	const char* name;
 };
@@ -190,7 +190,7 @@ uint64_t Quadratic_Fractals_Formula[] = {
 	162
 };
 
-Fractal_Video_ID Quadratic_Standard_Fractals[] = {
+Quadratic_Fractal_Video_ID Quadratic_Standard_Fractals[] = {
 	{  0, " 1. Mandelbrot Set"},
 	{100, " 2. Burning Ship"},
 	{128, " 3. Celtic"},
@@ -204,7 +204,7 @@ Fractal_Video_ID Quadratic_Standard_Fractals[] = {
 	{164, "11. Perpendicular Celtic"},
 	{196, "12. Perpendicular Buffalo"}
 };
-Fractal_Video_ID Quadratic_Asymmetric_Fractals_Part_1[] = {
+Quadratic_Fractal_Video_ID Quadratic_Asymmetric_Fractals_Part_1[] = {
 	{ 80, "13. Airship"},
 	{ 27, "14. Tail"},
 	{ 30, "15. Quill"},
@@ -225,7 +225,7 @@ Fractal_Video_ID Quadratic_Asymmetric_Fractals_Part_1[] = {
 	{238, "30. Pointed Buffalo"},
 	{236, "31. Smart Buffalo"}
 };
-Fractal_Video_ID Quadratic_Symmetrical_Fractals[] = {
+Quadratic_Fractal_Video_ID Quadratic_Symmetrical_Fractals[] = {
 	{ 15, "32. Mallet"},
 	{ 11, "33. Alien"},
 	{ 88, "34. Chainsaw"},
@@ -252,7 +252,7 @@ Fractal_Video_ID Quadratic_Symmetrical_Fractals[] = {
 	{ 57, "55. Sleeping Snake"},
 	{ 47, "56. Wide Alien"}
 };
-Fractal_Video_ID Quadratic_Asymmetric_Fractals_Part_2[] = {
+Quadratic_Fractal_Video_ID Quadratic_Asymmetric_Fractals_Part_2[] = {
 	{116, "57. Titanic"},
 	{230, "58. Mountain"},
 	{146, "59. Backwards Ship"},
@@ -273,11 +273,11 @@ Fractal_Video_ID Quadratic_Asymmetric_Fractals_Part_2[] = {
 	{180, "74. Tornado"},
 	{ 52, "75. Pitcher"}
 };
-Fractal_Video_ID Quadratic_Geometric_Shapes[] = {
+Quadratic_Fractal_Video_ID Quadratic_Geometric_Shapes[] = {
 	{130, "76. Rhombus"},
 	{134, "77. Teardrop"},
 	{162, "78. Pointed Teardrop"}
 };
 
 
-#endif /* FRACTAL_VIDEO_H */
+#endif /* MANDELBROT_QUADRACTIC_INFORMATION_H */
