@@ -113,13 +113,13 @@ struct PreCalc_Param {
 		fpColor Interior_Alpha;
 			fpColor Interior_R_Amp_mult_Interior_Alpha;
 			fpColor Interior_R_Freq;
-			fpColor Interior_R_Phase;
+			fpColor Interior_R_Phase_mult_TAU;
 			fpColor Interior_G_Amp_mult_Interior_Alpha;
 			fpColor Interior_G_Freq;
-			fpColor Interior_G_Phase;
+			fpColor Interior_G_Phase_mult_TAU;
 			fpColor Interior_B_Amp_mult_Interior_Alpha;
 			fpColor Interior_B_Freq;
-			fpColor Interior_B_Phase;
+			fpColor Interior_B_Phase_mult_TAU;
 };
 
 template <typename fpX, typename fpColor>
@@ -187,13 +187,13 @@ void Generate_PreCalc_Param(
 		preCalc_Param.Interior_Alpha = (fpColor)param.interior_Alpha;
 			preCalc_Param.Interior_R_Amp_mult_Interior_Alpha = (fpColor)(param.interior_R_Amp * param.interior_Alpha);
 			preCalc_Param.Interior_R_Freq                    = (fpColor) param.interior_R_Freq                       ;
-			preCalc_Param.Interior_R_Phase                   = (fpColor) param.interior_R_Phase                      ;
+			preCalc_Param.Interior_R_Phase_mult_TAU          = (fpColor)(param.interior_R_Phase * TAU)               ;
 			preCalc_Param.Interior_G_Amp_mult_Interior_Alpha = (fpColor)(param.interior_G_Amp * param.interior_Alpha);
 			preCalc_Param.Interior_G_Freq                    = (fpColor) param.interior_G_Freq                       ;
-			preCalc_Param.Interior_G_Phase                   = (fpColor) param.interior_G_Phase                      ;
+			preCalc_Param.Interior_G_Phase_mult_TAU          = (fpColor)(param.interior_G_Phase * TAU)               ;
 			preCalc_Param.Interior_B_Amp_mult_Interior_Alpha = (fpColor)(param.interior_B_Amp * param.interior_Alpha);
 			preCalc_Param.Interior_B_Freq                    = (fpColor) param.interior_B_Freq                       ;
-			preCalc_Param.Interior_B_Phase                   = (fpColor) param.interior_B_Phase                      ;
+			preCalc_Param.Interior_B_Phase_mult_TAU          = (fpColor)(param.interior_B_Phase * TAU)               ;
 		
 		#ifdef MONOCHROME_MODE
 			preCalc_Param.Exterior_G_Amp_mult_Exterior_Alpha = preCalc_Param.Exterior_R_Amp_mult_Exterior_Alpha;
@@ -205,10 +205,10 @@ void Generate_PreCalc_Param(
 
 			preCalc_Param.Interior_R_Amp_mult_Interior_Alpha = preCalc_Param.Interior_B_Amp_mult_Interior_Alpha;
 			preCalc_Param.Interior_R_Freq                    = preCalc_Param.Interior_B_Freq                   ;
-			preCalc_Param.Interior_R_Phase                   = preCalc_Param.Interior_B_Phase                  ;
+			preCalc_Param.Interior_R_Phase_mult_TAU          = preCalc_Param.Exterior_B_Phase_mult_TAU         ;
 			preCalc_Param.Interior_G_Amp_mult_Interior_Alpha = preCalc_Param.Interior_B_Amp_mult_Interior_Alpha;
 			preCalc_Param.Interior_G_Freq                    = preCalc_Param.Interior_B_Freq                   ;
-			preCalc_Param.Interior_G_Phase                   = preCalc_Param.Interior_B_Phase                  ;
+			preCalc_Param.Interior_G_Phase_mult_TAU          = preCalc_Param.Exterior_B_Phase_mult_TAU         ;
 		#endif
 	// nano64_t finishTimer = getNanoTime();
 	// printfInterval(0.3,"\nPreCalc: %.3lfus %.3lf",

@@ -11,6 +11,10 @@
 
 #ifdef ENABLE_AVX_RENDERING
 
+#ifndef __AVX__
+	#error "__AVX__ is required to enable AVX rendering"
+#endif
+
 #include <immintrin.h>
 
 /* 
@@ -76,9 +80,9 @@
 		const PreCalc_Param<fp64, fp64>& param,
 		fp64 low
 	) {
-		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_R_Freq + param.Interior_R_Phase));
-		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_G_Freq + param.Interior_G_Phase));
-		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_B_Freq + param.Interior_B_Phase));
+		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));
+		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));
+		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));
 		outA += param.Interior_Alpha;
 	}
 				
@@ -281,9 +285,9 @@
 		const PreCalc_Param<fp32,fp32>& param,
 		fp32 low
 	) {
-		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_R_Freq + param.Interior_R_Phase));
-		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_G_Freq + param.Interior_G_Phase));
-		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_B_Freq + param.Interior_B_Phase));
+		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));
+		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));
+		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));
 		outA += param.Interior_Alpha;
 	}
 				

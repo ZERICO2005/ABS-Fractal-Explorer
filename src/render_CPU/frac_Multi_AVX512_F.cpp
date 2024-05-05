@@ -11,6 +11,10 @@
 
 #ifdef ENABLE_AVX512_F_RENDERING
 
+#ifndef __AVX512F__
+	#error "__AVX512F__ is required to enable AVX512F rendering"
+#endif
+
 #include <immintrin.h>
 
 

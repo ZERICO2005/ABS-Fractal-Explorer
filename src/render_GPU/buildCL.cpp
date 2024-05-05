@@ -50,9 +50,9 @@ const char* const FractalOpenCL_SRC = "\
 			fp32 Exterior_G_Freq_mult_TAU, fp32 Exterior_G_Phase_mult_TAU, fp32 Exterior_G_Amp_mult_Exterior_Alpha,\n\
 			fp32 Exterior_B_Freq_mult_TAU, fp32 Exterior_B_Phase_mult_TAU, fp32 Exterior_B_Amp_mult_Exterior_Alpha,\n\
 			fp32 Exterior_Alpha,\n\
-			fp32 Interior_R_Freq, fp32 Interior_R_Phase, fp32 Interior_R_Amp_mult_Interior_Alpha,\n\
-			fp32 Interior_G_Freq, fp32 Interior_G_Phase, fp32 Interior_G_Amp_mult_Interior_Alpha,\n\
-			fp32 Interior_B_Freq, fp32 Interior_B_Phase, fp32 Interior_B_Amp_mult_Interior_Alpha,\n\
+			fp32 Interior_R_Freq, fp32 Interior_R_Phase_mult_TAU, fp32 Interior_R_Amp_mult_Interior_Alpha,\n\
+			fp32 Interior_G_Freq, fp32 Interior_G_Phase_mult_TAU, fp32 Interior_G_Amp_mult_Interior_Alpha,\n\
+			fp32 Interior_B_Freq, fp32 Interior_B_Phase_mult_TAU, fp32 Interior_B_Amp_mult_Interior_Alpha,\n\
 			fp32 Interior_Alpha\n\
 ) { // Some values like zoom are embeded into precalculated constants\n\
 	uint32_t id = get_global_id(0);\n\
@@ -389,9 +389,9 @@ const char* const FractalOpenCL_SRC = "\
 				outB += Exterior_B_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_B_Freq_mult_TAU * smooth + Exterior_B_Phase_mult_TAU));\n\
 				outA += Exterior_Alpha;\n\
 			} else {\n\
-				outR += Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_R_Freq + Interior_R_Phase));\n\
-				outG += Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_G_Freq + Interior_G_Phase));\n\
-				outB += Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_B_Freq + Interior_B_Phase));\n\
+				outR += Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_R_Freq + Interior_R_Phase_mult_TAU));\n\
+				outG += Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_G_Freq + Interior_G_Phase_mult_TAU));\n\
+				outB += Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_B_Freq + Interior_B_Phase_mult_TAU));\n\
 				outA += Interior_Alpha;\n\
 			}\n\
 			x++;\n\

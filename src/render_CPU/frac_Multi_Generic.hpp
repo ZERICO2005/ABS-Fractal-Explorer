@@ -14,9 +14,9 @@
 /* BOILERPLATE */
 
 	#define CPU_Interior_Coloring(fpX, fpColor); \
-		outR += param.Interior_R_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_R_Freq + param.Interior_R_Phase));\
-		outG += param.Interior_G_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_G_Freq + param.Interior_G_Phase));\
-		outB += param.Interior_B_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_B_Freq + param.Interior_B_Phase));\
+		outR += param.Interior_R_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));\
+		outG += param.Interior_G_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));\
+		outB += param.Interior_B_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));\
 		outA += param.Interior_Alpha;
 
 	#define CPU_Exterior_Coloring(fpX, fpColor, inverse_log2_power); \

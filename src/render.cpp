@@ -912,22 +912,22 @@ int_enum updateFractalParameters() {
 		using namespace Legacy_Rendering_Method;
 		using namespace Rendering_Configuration;
 		if (funcTimeDelay(fp32CpuRendering, 0.2)) {
-			if (Render_Config.suggest_Render_Precision(Render_Precision_Float32)) {
+			if (Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(Render_Precision_Float32)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp64CpuRendering, 0.2)) {
-			if (Render_Config.suggest_Render_Precision(Render_Precision_Float64)) {
+			if (Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(Render_Precision_Float64)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp80CpuRendering, 0.2)) {
-			if (Render_Config.suggest_Render_Precision(Render_Precision_Float80)) {
+			if (Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(Render_Precision_Float80)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
 		if (funcTimeDelay(fp128CpuRendering, 0.2)) {
-			if (Render_Config.suggest_Render_Precision(Render_Precision_Float128)) {
+			if (Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(Render_Precision_Float128)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
@@ -1759,7 +1759,8 @@ int Transform_Frame_Scale_Translate(
 	// int32_t fxCenter = (fx0 + fx1) / 2;
 	// int32_t fyCenter = (fy0 + fy1) / 2;
 	if ((fx1 < 1 || fy1 < 1)) { // Nothing to Render
-		return 1;
+		// return 1;
+		return 0;
 	}
 	//if ((image.rot != FRAC.rot) || ((fx0 < Master.resX) && (fy0 < (Master.resY - RESY_UI)))) {
 		scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
@@ -2282,8 +2283,8 @@ void newFrame() {
 					(Stretched_Image == true) &&
 					(Rotation_Difference != 0.0)
 				) || (
-					(current_Fractal.zr != (fpCord)0.0) ||
-					(current_Fractal.zi != (fpCord)0.0)
+					(config_data.Rendering_Settings.JuliaPoint_Enabled == true) &&
+					(current_Fractal.zr != (fpCord)0.0 || current_Fractal.zi != (fpCord)0.0)
 				)
 			) {
 				Enable_SDL2_Scaler = false;

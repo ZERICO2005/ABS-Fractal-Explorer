@@ -345,7 +345,7 @@ void Menu_Coordinates() {
 				num = func(Temp_Text_Input_Buf, nullptr, base); \
 			} \
 		}
-	ImGui::SeparatorText("Cordinates"); {
+	ImGui::SeparatorText("Cordinates"); { ImGui::Indent();
 		ImGui::Text("Real and Imaginary Coordinate:");
 				FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord);
 				FloatCoordinate_InputText("C-Imag##input_C_Imag", FRAC.i, "%35.32" PRIfpCord);
@@ -353,8 +353,8 @@ void Menu_Coordinates() {
 			Float_InputText("##zoom_input", FRAC.zoom, "%.5lf", strtod);
 			
 		ImGui::NewLine();
-	}
-	ImGui::SeparatorText("Parameters"); {
+	ImGui::Unindent(); }
+	ImGui::SeparatorText("Parameters"); { ImGui::Indent();
 		ImGui::Text("Maximum Iterations:");
 			uint32_t temp_Iterations = FRAC.maxItr;
 			constexpr uint32_t Iterations_Step = 16;
@@ -363,8 +363,8 @@ void Menu_Coordinates() {
 				setMaxItr(&FRAC, temp_Iterations);
 			}
 		ImGui::NewLine();
-	}
-	ImGui::SeparatorText("Fractal Formula and Power"); {
+	ImGui::Unindent(); }
+	ImGui::SeparatorText("Fractal Formula and Power"); { ImGui::Indent();
 		if (current_Fractal.polarMandelbrot == true) {
 			constexpr fp64 Polar_Power_Step = 1.0;
 			constexpr fp64 Polar_Power_Step_Fast = 0.1;
@@ -425,8 +425,8 @@ void Menu_Coordinates() {
 				}
 			}
 		ImGui::NewLine();
-	}
-	ImGui::SeparatorText("Julia Set:"); {
+	ImGui::Unindent(); }
+	ImGui::SeparatorText("Julia Set:"); { ImGui::Indent();
 		ImGui::Text("Julia Coordinate:");
 		FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.zr, "%35.32" PRIfpCord);
 		FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.zi, "%35.32" PRIfpCord);
@@ -441,9 +441,9 @@ void Menu_Coordinates() {
 		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
 		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
 		ImGui::NewLine();
-	}
+	ImGui::Unindent(); }
 
-	ImGui::SeparatorText("Transformations"); {
+	ImGui::SeparatorText("Transformations"); { ImGui::Indent();
 		fp32 image_rotation = (fp32)FRAC.rot;
 		ImGui::Text("Rotate Image:");
 		if (ImGui::SliderAngle("##RotateImage", &image_rotation, -360.0f, 360.0f, "%.1f deg")) {
@@ -461,7 +461,7 @@ void Menu_Coordinates() {
 			valueRestore(FRAC.stretch, 0.0, STRETCH_VALUE_MINIMUM, STRETCH_VALUE_MAXIMUM);
 		}
 		ImGui::NewLine();
-	}
+	ImGui::Unindent(); }
 	ImGui::End();
 }
 
@@ -475,6 +475,9 @@ void Menu_Fractal() {
 
 	ImGui::Begin("Fractal Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
+
+	ABS_Mandelbrot& FRAC = current_Fractal;
+
 	static int Combo_FractalType = 0;
 	ImGui::Text("Fractal Type:");
     if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
@@ -489,56 +492,61 @@ void Menu_Fractal() {
 			printError("Unknown Fractal Type: %" PRId32, Combo_FractalType);
 		}
     }
-	ImGui::Separator();
-	ABS_Mandelbrot& FRAC = current_Fractal;
-	fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
-	fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
-	ImGui::Text("Fractal Radius: %.6lg",maxRadius);
-	ImGui::Text("Cardioid Location: %.6lg",minRadius);
-	if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
-		ImGui::Text("Fractal Power: %s",getPowerText((uint32_t)FRAC.power));
-		int temp_input_power = (int)FRAC.power;
-		ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
-		valueClamp(FRAC.power, 2, 6); // Support up to Sextic
-	} else {
-		fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
-		ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
-		ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
-		ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
-		if (FRAC.lockToCardioid) {
-			ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
-		}
-		ImGui::Checkbox("Integer Powers",&FRAC.integerPolarPower);
-	}
-	ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
-	// fp32 temp_input_maxItr = (fp32)log2(FRAC.maxItr);
-	// ImGui::Text("Maximum Iterations: %" PRIu32,FRAC.maxItr);
-	// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
-	// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
-	// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
-	
 	ImGui::NewLine();
+	ImGui::Separator(); { ImGui::Indent();
+		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
+		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
+		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
+		ImGui::Text("Cardioid Location: %.6lg",minRadius);
+		if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
+			ImGui::Text("Fractal Power: %s",getPowerText((uint32_t)FRAC.power));
+			int temp_input_power = (int)FRAC.power;
+			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
+			valueClamp(FRAC.power, 2, 6); // Support up to Sextic
+		} else {
+			fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
+			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
+			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
+			if (FRAC.lockToCardioid) {
+				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
+			}
+			ImGui::Checkbox("Integer Powers",&FRAC.integerPolarPower);
+		}
+		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
+		// fp32 temp_input_maxItr = (fp32)log2(FRAC.maxItr);
+		// ImGui::Text("Maximum Iterations: %" PRIu32,FRAC.maxItr);
+		// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
+		// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
+		// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
+		
+		ImGui::NewLine();
+		
+		fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
+		if (FRAC.breakoutValue < 100.0) {
+			ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
+		} else {
+			ImGui::Text("Breakout Value: %.1lf",FRAC.breakoutValue);
+		}
+		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,"");
+		FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
+		ImGui::NewLine();
+	ImGui::Unindent(); }
+
+	ImGui::Separator(); { ImGui::Indent();
+		ImGui::Text("Julia Set Options:");
+		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
+		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
+		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
+		if (FRAC.cursorZValue) {
+			ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue);
+			Item_Tooltip("Ignores the zoom value when calculating cursor Z values");
+		}
+		ImGui::NewLine();
+	ImGui::Unindent(); }
 	
-	fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
-	if (FRAC.breakoutValue < 100.0) {
-		ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
-	} else {
-		ImGui::Text("Breakout Value: %.1lf",FRAC.breakoutValue);
-	}
-	ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,"");
-	FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
-	ImGui::Separator();
-	ImGui::Text("Julia Set Options:");
-	ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
-	ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
-	ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
-	if (FRAC.cursorZValue) {
-		ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue);
-		Item_Tooltip("Ignores the zoom value when calculating cursor Z values");
-	}
-	
-	ImGui::Separator();
 	#ifndef BUILD_RELEASE
+		ImGui::Separator();
 		static int Combo_JuliaSplit = 1;
 		ImGui::Text("Split Screen:");
 		if (ImGui::Combo("##juliaScreen", &Combo_JuliaSplit, BufAndLen(WindowDivider))) {
@@ -555,9 +563,9 @@ void Menu_Fractal() {
 		if (ImGui::Combo("##juliaBehaviour", &Combo_JuliaBehaviour, BufAndLen(juliaBehaviour))) {
 
 		}
-		ImGui::Separator();
+		ImGui::NewLine();
 	#endif
-	ImGui::SeparatorText("Coloring"); {
+	ImGui::SeparatorText("Coloring"); { ImGui::Indent(); 
 		struct Temp_Color {
 			fp32 exterior_Alpha;
 				fp32 exterior_R_Amp; fp32 exterior_R_Freq; fp32 exterior_R_Phase;
@@ -632,7 +640,7 @@ void Menu_Fractal() {
 			FRAC.interior_R_Amp = (fp64)temp_Color.interior_R_Amp; FRAC.interior_R_Freq = (fp64)temp_Color.interior_R_Freq; FRAC.interior_R_Phase = (fp64)temp_Color.interior_R_Phase;
 			FRAC.interior_G_Amp = (fp64)temp_Color.interior_G_Amp; FRAC.interior_G_Freq = (fp64)temp_Color.interior_G_Freq; FRAC.interior_G_Phase = (fp64)temp_Color.interior_G_Phase;
 			FRAC.interior_B_Amp = (fp64)temp_Color.interior_B_Amp; FRAC.interior_B_Freq = (fp64)temp_Color.interior_B_Freq; FRAC.interior_B_Phase = (fp64)temp_Color.interior_B_Phase;
-	}
+	ImGui::Unindent(); }
 
 	ImGui::End();
 }
@@ -659,6 +667,130 @@ void SubMenu_SuperScreenshot() {
 constexpr inline const char* Enable_Text(const bool& b) { return b ? "Enabled" : "Disabled"; }
 constexpr inline const char* Available_Text(const bool& b) { return b ? "Available" : "Unavailable"; }
 
+/* Rendering Selection */
+
+	constexpr nano64_t Rendering_Selection_Error_Message_Duration = SECONDS_TO_NANO(2.5);
+
+	void SubMenu_Rendering_Precision(const char* label, const char* tooltip_message = nullptr) {
+		using namespace Rendering_Configuration;
+		int_enum Combo_Rendering_Precision = Render_Config.get_Render_Precision();
+		static std::string message_Rendering_Precision = "";
+		static nano64_t timer_Rendering_Precision = 0;
+
+		ImGui::Text("Rendering Precision:"); ImGui::SameLine(); ImGui::TextColored(
+			get_Theme_Highlight_Color(), "%s",
+			Rendering_Precision_Text[Render_Config.get_Render_Precision()]
+		);
+		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Precision) {
+			ImGui::Button(message_Rendering_Precision.c_str());
+		} else {
+			if (ImGui::Combo(label, &Combo_Rendering_Precision,
+				Rendering_Precision_Text,
+				ARRAY_LENGTH(Rendering_Precision_Text)
+			)) {
+				if (
+					(Render_Config.validate_Rendering_Precision(
+						(Rendering_Precision)Combo_Rendering_Precision
+					) == false) && (Combo_Rendering_Precision != Render_Precision_Automatic)
+				) {
+					timer_Rendering_Precision = getNanoTime();
+					message_Rendering_Precision = "[";
+					message_Rendering_Precision += Rendering_Precision_Name[Combo_Rendering_Precision];
+					message_Rendering_Precision += "] is not available on your hardware";
+				}
+				if (Combo_Rendering_Precision != Render_Precision_Automatic) {
+					Render_Config.suggest_Render_Precision(
+						(Rendering_Precision)Combo_Rendering_Precision
+					);
+					if (Render_Config.current_Render_Method_CPU() == true) {
+						Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(
+							(Rendering_Precision)Combo_Rendering_Precision
+						);
+					}
+				}
+			}
+			if (tooltip_message != nullptr) {
+				Item_Tooltip(tooltip_message);
+			}
+		}
+	}
+	void SubMenu_Rendering_Method(const char* label, const char* tooltip_message = nullptr) {
+		using namespace Rendering_Configuration;
+		int_enum Combo_Rendering_Method = Render_Config.get_Render_Method();
+		static std::string message_Rendering_Method = "";
+		static nano64_t timer_Rendering_Method = 0;
+
+		ImGui::Text("Rendering Method:"); ImGui::SameLine(); ImGui::TextColored(
+			get_Theme_Highlight_Color(), "%s",
+			Rendering_Method_Text[Render_Config.get_Render_Method()]
+		);
+		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Method) {
+			ImGui::Button(message_Rendering_Method.c_str());
+		} else {
+			if (ImGui::Combo(label, &Combo_Rendering_Method,
+				Rendering_Method_Text,
+				ARRAY_LENGTH(Rendering_Method_Text)
+			)) {
+				if (
+					(Render_Config.validate_Rendering_Method(
+						(Rendering_Method)Combo_Rendering_Method
+					) == false) && (Combo_Rendering_Method != Render_Method_Automatic)
+				) {
+					timer_Rendering_Method = getNanoTime();
+					message_Rendering_Method = "[";
+					message_Rendering_Method += Rendering_Method_Name[Combo_Rendering_Method];
+					message_Rendering_Method += "] is not available on your hardware";
+				}
+				if (Combo_Rendering_Method != Render_Method_Automatic) {
+					Render_Config.suggest_Render_Method(
+						(Rendering_Method)Combo_Rendering_Method
+					);
+				}
+			}
+			if (tooltip_message != nullptr) {
+				Item_Tooltip(tooltip_message);
+			}
+		}
+	}
+	void SubMenu_Rendering_Preset(const char* label, const char* tooltip_message = nullptr) {
+		using namespace Rendering_Configuration;
+		int_enum Combo_Rendering_Preset = Render_Config.get_Render_Preset();
+		static std::string message_Rendering_Preset = "";
+		static nano64_t timer_Rendering_Preset = 0;
+
+		ImGui::Text("Rendering Preset:"); ImGui::SameLine(); ImGui::TextColored(
+			get_Theme_Highlight_Color(), "%s",
+			Rendering_Preset_Text[Render_Config.get_Render_Preset()]
+		);
+		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Preset) {
+			ImGui::Button(message_Rendering_Preset.c_str());
+		} else {
+			if (ImGui::Combo(label, &Combo_Rendering_Preset,
+				Rendering_Preset_Text,
+				ARRAY_LENGTH(Rendering_Preset_Text)
+			)) {
+				if (
+					(Render_Config.validate_Rendering_Preset(
+						(Rendering_Preset)Combo_Rendering_Preset
+					) == false) && (Combo_Rendering_Preset != Render_Preset_Automatic)
+				) {
+					timer_Rendering_Preset = getNanoTime();
+					message_Rendering_Preset = "[";
+					message_Rendering_Preset += Rendering_Preset_Name[Combo_Rendering_Preset];
+					message_Rendering_Preset += "] is not available on your hardware";
+				}
+				if (Combo_Rendering_Preset != Render_Preset_Automatic) {
+					Render_Config.suggest_Render_Preset(
+						(Rendering_Preset)Combo_Rendering_Preset
+					);
+				}
+			}
+			if (tooltip_message != nullptr) {
+				Item_Tooltip(tooltip_message);
+			}
+		}
+	}
+
 void Menu_Rendering() {
 	ImGui_DefaultWindowSize(
 		config_data.GUI_Settings,
@@ -681,92 +813,242 @@ void Menu_Rendering() {
 	ImGui::Begin("Rendering Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
-	ImGui::SeparatorText("CPU Information"); {
-		const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
-		
-		ImGui::Text("CPU Threads: %u", std::thread::hardware_concurrency());
-
-		ImGui::Text("SSE2 Rendering: %s",
-			Enable_Text(Available_CPU_Instruction.SSE_Family.SSE2)
-		); Item_Tooltip("SSE2 allows the CPU to process 4 32bit floats or 2 64bit floats at a time."\
-			"\nSSE2 Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.SSE_Family.SSE2)
-		);
-		ImGui::Text("AVX Rendering: %s",
-			Enable_Text(Available_CPU_Instruction.AVX_Family.AVX)
-		); Item_Tooltip("AVX allows the CPU to process 8 32bit floats or 4 64bit floats at a time."\
-			"\nAVX Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX_Family.AVX)
-		);
-		ImGui::Text("AVX512F Rendering: %s",
-			Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
-		); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
-			"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+	/* Basic Configuration */ {
+		ImGui::Text("Sub Sample: %" PRId32, input_subSample * input_subSample);
+		if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
+			primaryRenderData.subSample = input_subSample;
+		}
+		ImGui::Text("Samples per pixel: %" PRId32, input_superSample * input_superSample);
+		if (ImGui::SliderInt("##input_superSample", &input_superSample, 1, 24, "")) {
+			primaryRenderData.sample = input_superSample;
+		}
+		dim32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
+		dim32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
+		ImGui::Text("Total Pixels Rendered: %" PRId32 "x%" PRId32 " %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+		ImGui::NewLine();
+		SubMenu_Rendering_Precision("##input_precision_simple",
+			"Select a higher precision to zoom further (at the cost of rendering speed)"
 		);
 		ImGui::NewLine();
+	}
 
-		if (ImGui::CollapsingHeader("CPU Instruction Sets")) {
-			ImGui::BeginChild(
-				"CPU_InstructionList", ImVec2(0.0f, 108.0f), true
+	ImGui::SeparatorText("CATEGORIES:"); {
+		if (ImGui::CollapsingHeader("JULIA CORDINATE POINT")) { ImGui::Indent();
+			constexpr fp32 defaultOutterRadius = 8.0f;
+			constexpr fp32 defaultInnerRadius = 2.4f;
+			constexpr fp32 maxOutterRadius = 24.0f;
+			constexpr fp32 maxInnerRadius = maxOutterRadius - 1.0f;
+			ImGui::Checkbox("Display Julia Point", &Rendering_Settings.JuliaPoint_Enabled);
+			ImGui::Text("Outer-Radius:");
+			if (ImGui::SliderFloat("##OuterRadius",&Rendering_Settings.JuliaPoint_OuterRadius, 1.0f, maxOutterRadius, "%.2f")) {
+				valueClamp(Rendering_Settings.JuliaPoint_InnerRadius, 0.0f, Rendering_Settings.JuliaPoint_OuterRadius - 1.0f);
+			}
+			ImGui::Text("Inner-Radius:");
+			if (ImGui::SliderFloat("##InnerRadius",&Rendering_Settings.JuliaPoint_InnerRadius, 0.0f, maxInnerRadius, "%.2f")) {
+				valueClamp(Rendering_Settings.JuliaPoint_OuterRadius, Rendering_Settings.JuliaPoint_InnerRadius + 1.0f, maxOutterRadius);
+			}
+			if (ImGui::Button("Reset inner and outer radius")) {
+				Rendering_Settings.JuliaPoint_OuterRadius = defaultOutterRadius;
+				Rendering_Settings.JuliaPoint_InnerRadius = defaultInnerRadius;
+			}
+			ImGui::NewLine();
+		ImGui::Unindent(); }
+		if (ImGui::CollapsingHeader("SUPER SCREENSHOT SETTINGS")) { ImGui::Indent();
+
+			ImGui::Text("Bounding Box: (Unimplemented)");
+			static int_enum Combo_BoundingBox = Namespace_Image_Render_Bounding_Box::Fill_Area;
+			ImGui::Combo("##SuperScreenshotBoundingBox", &Combo_BoundingBox,
+				Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
+				ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
+			); Item_Tooltip("Which area should be used for taking the sceenshot");
+			//SubMenu_SuperScreenshot();
+			ImGui::NewLine();
+			
+			static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
+			ImGui::Text("Maximum Iterations: %" PRId32,super_screenshot_maxItr);
+			ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
+			super_screenshot_maxItr = (uint32_t)(pow(2.0f,temp_super_screenshot_maxItr));
+			valueClamp(super_screenshot_maxItr,16,16777216); valueClamp(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
+
+			const uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
+
+			ImGui::Text("Samples per pixel: %" PRId32,super_screenshot_super_sample * super_screenshot_super_sample);
+			ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
+			size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
+			size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
+
+			ImGui::NewLine();
+			static int Combo_Common_ResolutionPreset = 3;
+			const uint32_t Combo_Common_ResolutionPreset_RESX[] = {640,1280,1366,1920,2560,3840,5120,7680};
+			const uint32_t Combo_Common_ResolutionPreset_RESY[] = {480, 720, 768,1080,1440,2160,2880,4320};
+			static const char* Common_ResolutionPreset[] = {
+				"640x480 SD","1280x720 HD","1366x768 WXGA","1920x1080 FHD","2560x1440 QHD","3840x2160 4K","5120x2880 5K","7680x4320 8K"
+			};
+			ImGui::Text("Resolution Presets:");
+			if (ImGui::Combo("##Common_Resolutions",&Combo_Common_ResolutionPreset,BufAndLen(Common_ResolutionPreset))) {
+				super_screenshot_resX = (int32_t)Combo_Common_ResolutionPreset_RESX[Combo_Common_ResolutionPreset];
+				super_screenshot_resY = (int32_t)Combo_Common_ResolutionPreset_RESY[Combo_Common_ResolutionPreset];
+			}
+
+			ImGui::Text("Resolution X:");
+			ImGui::InputInt("##super_screenshot_resX",&super_screenshot_resX,16,64);
+			super_screenshot_resX &= 0x7FFFFFFC; // Multiple of 4
+			valueClamp(super_screenshot_resX,64,65536); valueMaximumClamp(super_screenshot_resX,(int32_t)MaximumImageSize / super_screenshot_resY / 3);
+			ImGui::Text("Resolution Y:");
+			ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
+			valueClamp(super_screenshot_resY,64,65536); valueMaximumClamp(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
+			
+			ImGui::NewLine();
+			ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
+			if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS >= 1000000000) {
+				ImGui::Text("Current Image Size: %.1lf megabytes",
+					(fp64)((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS) / 1000000.0
+				);
+				ImGui::Text("Maximum Image Size: %.1lf megabytes",
+					(fp64)(MaximumImageSize) / 1000000.0
+				);
+			}
+			ImGui::NewLine();
+			if (ImGui::Button("Take Super Screenshot")) {
+				exportSuperScreenshot();
+				//exportScreenshot();
+			}
+			ImGui::NewLine();
+		ImGui::Unindent(); }
+		#ifdef Enable_OpenCV_Scaler
+		ImGui::CollapsingHeader("FRAME INTERPOLATION"); { ImGui::Indent();
+			static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
+			int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;
+			ImGui::Text("Frame Interpolation Method:");
+			if (ImGui::Combo("##Frame_Interpolation_Method", &OpenCV_interpolation_mode, BufAndLen(OpenCV_interpolation_mode_list))) {
+				// Should probably be replaced with a Map instead.
+				// switch (OpenCV_interpolation_mode) {
+				// 	case OPENCV_Interpolation::OPENCV_INTER_NEAREST:
+				// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
+				// 	break;
+				// 	case OPENCV_Interpolation::OPENCV_INTER_LINEAR:
+				// 		Frame_Interpolation_Method = cv::INTER_LINEAR;
+				// 	break;
+				// 	case OPENCV_Interpolation::OPENCV_INTER_CUBIC:
+				// 		Frame_Interpolation_Method = cv::INTER_CUBIC;
+				// 	break;
+				// 	case OPENCV_Interpolation::OPENCV_INTER_AREA:
+				// 		Frame_Interpolation_Method = cv::INTER_AREA;
+				// 	break;
+				// 	case OPENCV_Interpolation::OPENCV_INTER_LANCZOS4:
+				// 		Frame_Interpolation_Method = cv::INTER_LANCZOS4;
+				// 	break;
+				// 	default:
+				// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
+				// };
+			}
+			ImGui::Text("Nearest Neighbor is the fastest method. Other methods might not be able to hit 60.0fps at higher resolutions.");
+		ImGui::Unindent(); }
+		#endif
+		if (ImGui::CollapsingHeader("CPU INFORMATION")) { ImGui::Indent();
+			const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
+			
+			ImGui::Text("CPU Threads: %u", std::thread::hardware_concurrency());
+
+			ImGui::Text("SSE2 Rendering: %s",
+				Enable_Text(Available_CPU_Instruction.SSE_Family.SSE2)
+			); Item_Tooltip("SSE2 allows the CPU to process 4 32bit floats or 2 64bit floats at a time."\
+				"\nSSE2 Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.SSE_Family.SSE2)
 			);
-				
-			ImGui::Text("CPU Signature: <%s>", Available_CPU_Instruction.CPU_Signature);
+			ImGui::Text("AVX Rendering: %s",
+				Enable_Text(Available_CPU_Instruction.AVX_Family.AVX)
+			); Item_Tooltip("AVX allows the CPU to process 8 32bit floats or 4 64bit floats at a time."\
+				"\nAVX Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX_Family.AVX)
+			);
+			ImGui::Text("AVX512F Rendering: %s",
+				Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+			); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
+				"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+			);
 			ImGui::NewLine();
-			ImGui::Text("SSE Family:"); {
-				const Supported_SSE_Family_Instruction& SSE_Family = Available_CPU_Instruction.SSE_Family;
-				size_t count = 0;
-				if (Available_CPU_Instruction.MMX) {
-					ImGui::SameLine(); ImGui::Text("MMX"); count++;
-				}
-				if (SSE_Family.SSE   ) { ImGui::SameLine(); ImGui::Text("SSE"   ); count++; }
-				if (SSE_Family.SSE2  ) { ImGui::SameLine(); ImGui::Text("SSE2"  ); count++; }
-				if (SSE_Family.SSE3  ) { ImGui::SameLine(); ImGui::Text("SSE3"  ); count++; }
-				if (SSE_Family.SSSE3 ) { ImGui::SameLine(); ImGui::Text("SSSE3" ); count++; }
-				if (SSE_Family.SSE4_1) { ImGui::SameLine(); ImGui::Text("SSE4_1"); count++; }
-				if (SSE_Family.SSE4_2) { ImGui::SameLine(); ImGui::Text("SSE4_2"); count++; }
-				if (SSE_Family.SSE4a ) { ImGui::SameLine(); ImGui::Text("SSE4a" ); count++; }
-				if (count == 0) {
-					ImGui::SameLine(); ImGui::Text("<None>");
-				}
-			}
-			ImGui::Text("AVX Family:"); {
-				const Supported_AVX_Family_Instruction& AVX_Family = Available_CPU_Instruction.AVX_Family;
-				size_t count = 0;
-				if (AVX_Family.AVX           ) { ImGui::SameLine(); ImGui::Text("AVX"           ); count++; }
-				if (AVX_Family.F16C          ) { ImGui::SameLine(); ImGui::Text("F16C"          ); count++; }
-				if (AVX_Family.FMA           ) { ImGui::SameLine(); ImGui::Text("FMA"           ); count++; }
-				if (AVX_Family.AVX2          ) { ImGui::SameLine(); ImGui::Text("AVX2"          ); count++; }
-				if (AVX_Family.AVX_VNNI      ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI"      ); count++; }
-				if (AVX_Family.AVX_VNNI_INT8 ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI_INT8" ); count++; }
-				if (AVX_Family.AVX_NE_CONVERT) { ImGui::SameLine(); ImGui::Text("AVX_NE_CONVERT"); count++; }
-				if (AVX_Family.AVX_IFMA      ) { ImGui::SameLine(); ImGui::Text("AVX_IFMA"      ); count++; }
-				if (count == 0) {
-					ImGui::SameLine(); ImGui::Text("<None>");
-				}
-			}
-			ImGui::Text("AVX512 Family:"); {
-				const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
-				size_t count = 0;
-				if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
-				if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
-				if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
-				if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
-				if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
-				if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
-				if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
-				if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
-				if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
-				if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
-				if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
-				if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
-				if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
-				if (count == 0) {
-					ImGui::SameLine(); ImGui::Text("<None>");
-				}
-			}
-			ImGui::EndChild();
-			ImGui::NewLine();
-		}
 
-		if (ImGui::CollapsingHeader("CPU MULTI-THREADING SETTINGS")) {
+			ImGui::SeparatorText("CPU Instruction Sets"); {
+				
+				ImGui::BeginChild(
+					"CPU_InstructionList", ImVec2(0.0f, 108.0f), true
+				);
+					
+				ImGui::Text("CPU Signature: <%s>", Available_CPU_Instruction.CPU_Signature);
+				ImGui::NewLine();
+				ImGui::Text("SSE Family:"); {
+					const Supported_SSE_Family_Instruction& SSE_Family = Available_CPU_Instruction.SSE_Family;
+					size_t count = 0;
+					if (Available_CPU_Instruction.MMX) {
+						ImGui::SameLine(); ImGui::Text("MMX"); count++;
+					}
+					if (SSE_Family.SSE   ) { ImGui::SameLine(); ImGui::Text("SSE"   ); count++; }
+					if (SSE_Family.SSE2  ) { ImGui::SameLine(); ImGui::Text("SSE2"  ); count++; }
+					if (SSE_Family.SSE3  ) { ImGui::SameLine(); ImGui::Text("SSE3"  ); count++; }
+					if (SSE_Family.SSSE3 ) { ImGui::SameLine(); ImGui::Text("SSSE3" ); count++; }
+					if (SSE_Family.SSE4_1) { ImGui::SameLine(); ImGui::Text("SSE4_1"); count++; }
+					if (SSE_Family.SSE4_2) { ImGui::SameLine(); ImGui::Text("SSE4_2"); count++; }
+					if (SSE_Family.SSE4a ) { ImGui::SameLine(); ImGui::Text("SSE4a" ); count++; }
+					if (count == 0) {
+						ImGui::SameLine(); ImGui::Text("<None>");
+					}
+				}
+				ImGui::Text("AVX Family:"); {
+					const Supported_AVX_Family_Instruction& AVX_Family = Available_CPU_Instruction.AVX_Family;
+					size_t count = 0;
+					if (AVX_Family.AVX           ) { ImGui::SameLine(); ImGui::Text("AVX"           ); count++; }
+					if (AVX_Family.F16C          ) { ImGui::SameLine(); ImGui::Text("F16C"          ); count++; }
+					if (AVX_Family.FMA           ) { ImGui::SameLine(); ImGui::Text("FMA"           ); count++; }
+					if (AVX_Family.AVX2          ) { ImGui::SameLine(); ImGui::Text("AVX2"          ); count++; }
+					if (AVX_Family.AVX_VNNI      ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI"      ); count++; }
+					if (AVX_Family.AVX_VNNI_INT8 ) { ImGui::SameLine(); ImGui::Text("AVX_VNNI_INT8" ); count++; }
+					if (AVX_Family.AVX_NE_CONVERT) { ImGui::SameLine(); ImGui::Text("AVX_NE_CONVERT"); count++; }
+					if (AVX_Family.AVX_IFMA      ) { ImGui::SameLine(); ImGui::Text("AVX_IFMA"      ); count++; }
+					if (count == 0) {
+						ImGui::SameLine(); ImGui::Text("<None>");
+					}
+				}
+				ImGui::Text("AVX512 Family:"); {
+					const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
+					size_t count = 0;
+					if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
+					if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
+					if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
+					if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
+					if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
+					if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
+					if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
+					if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
+					if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
+					if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
+					if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
+					if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
+					if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
+					if (count == 0) {
+						ImGui::SameLine(); ImGui::Text("<None>");
+					}
+				}
+				ImGui::EndChild();
+				ImGui::NewLine();
+			}
+		ImGui::Unindent(); }
+		// if (ImGui::CollapsingHeader("GPU INFORMATION")) { ImGui::Indent();
+		// 	ImGui::Text("Not Implemented");
+		// 	ImGui::NewLine(); 
+		// } ImGui::Unindent();
+	}
+	ImGui::SeparatorText("ADVANCED RENDERING SETTINGS:"); {
+		if (ImGui::CollapsingHeader("RENDERING CONFIGURATION")) { ImGui::Indent();
+			
+			ImGui::TextWrapped(
+				"Note: The closest available rendering configuration will be used if the entered rendering configuration is unsupported/unavailable."
+			);
+			ImGui::NewLine();
+			SubMenu_Rendering_Precision("##input_precision_advanced");
+			SubMenu_Rendering_Method("##input_method_advanced");
+			SubMenu_Rendering_Preset("##input_preset_advanced");
+			ImGui::NewLine();
+		ImGui::Unindent(); }
+		if (ImGui::CollapsingHeader("CPU MULTI-THREADING SETTINGS")) { ImGui::Indent();
 			ImGui::Text("Note: Only modify these settings if you know what you are doing.");
 			ImGui::Text("Maximum Threads:");
 			ImGui::SliderInt("##input_CPU_MaxThreads",&input_CPU_MaxThreads,1,CPU_ThreadCount);
@@ -779,151 +1061,28 @@ void Menu_Rendering() {
 			ImGui::Text("Thread Multiplier:");
 			ImGui::SliderInt("##input_Super_CPU_ThreadMultiplier",&input_super_CPU_ThreadMultiplier,1,16);
 			ImGui::NewLine();
-		}
-		primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
-		super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
-		super_screenshot_maxThreads = input_CPU_MaxThreads;
-		ImGui::NewLine();
-	}
-	
-	ImGui::SeparatorText("GPU Information"); {
-		ImGui::Text("Not Implemented");
-		ImGui::NewLine();
-	}
-
-	ImGui::SeparatorText("Rendering Configuration"); {
-		using namespace Rendering_Configuration;
-
-		int_enum Combo_Rendering_Precision = Render_Config.get_Render_Precision();
-		int_enum Combo_Rendering_Method = Render_Config.get_Render_Method();
-		int_enum Combo_Rendering_Preset = Render_Config.get_Render_Preset();
-
-		constexpr nano64_t Rendering_Selection_Error_Message_Duration = SECONDS_TO_NANO(2.5);
-		static std::string message_Rendering_Precision = "";
-		static std::string message_Rendering_Method = "";
-		static std::string message_Rendering_Preset = "";
-		static nano64_t timer_Rendering_Precision = 0;
-		static nano64_t timer_Rendering_Method = 0;
-		static nano64_t timer_Rendering_Preset = 0;
-
-		ImGui::TextWrapped(
-			"Note: The closest available rendering configuration will be used if the entered rendering configuration is unsupported/unavailable."
-		);
-		ImGui::NewLine();
-		ImGui::Text("Rendering Precision:"); ImGui::SameLine(); ImGui::TextColored(
-			get_Theme_Highlight_Color(), "%s",
-			Rendering_Precision_Text[Render_Config.get_Render_Precision()]
-		);
-		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Precision) {
-			ImGui::Button(message_Rendering_Precision.c_str());
-		} else {
-			if (ImGui::Combo("##renderingPrecision", &Combo_Rendering_Precision,
-				Rendering_Precision_Text,
-				ARRAY_LENGTH(Rendering_Precision_Text)
-			)) {
-				if (
-					(Render_Config.validate_Rendering_Precision(
-						(Rendering_Precision)Combo_Rendering_Precision
-					) == false) && (Combo_Rendering_Precision != Render_Precision_Automatic)
-				) {
-					timer_Rendering_Precision = getNanoTime();
-					message_Rendering_Precision = "[";
-					message_Rendering_Precision += Rendering_Precision_Name[Combo_Rendering_Precision];
-					message_Rendering_Precision += "] is not available on your hardware";
-				}
-				Render_Config.suggest_Render_Precision(
-					(Rendering_Precision)Combo_Rendering_Precision
-				);
-			}
-		}
-		
-		ImGui::Text("Rendering Method:"); ImGui::SameLine(); ImGui::TextColored(
-			get_Theme_Highlight_Color(), "%s",
-			Rendering_Method_Text[Render_Config.get_Render_Method()]
-		);
-		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Method) {
-			ImGui::Button(message_Rendering_Method.c_str());
-		} else {
-			if (ImGui::Combo("##renderingMethod", &Combo_Rendering_Method,
-				Rendering_Method_Text,
-				ARRAY_LENGTH(Rendering_Method_Text)
-			)) {
-				if (
-					(Render_Config.validate_Rendering_Method(
-						(Rendering_Method)Combo_Rendering_Method
-					) == false) && (Combo_Rendering_Method != Render_Method_Automatic)
-				) {
-					timer_Rendering_Method = getNanoTime();
-					message_Rendering_Method = "[";
-					message_Rendering_Method += Rendering_Method_Name[Combo_Rendering_Method];
-					message_Rendering_Method += "] is not available on your hardware";
-				}
-				Render_Config.suggest_Render_Method(
-					(Rendering_Method)Combo_Rendering_Method
-				);
-			}
-		}
-		
-		ImGui::Text("Rendering Preset:"); ImGui::SameLine(); ImGui::TextColored(
-			get_Theme_Highlight_Color(), "%s",
-			Rendering_Preset_Text[Render_Config.get_Render_Preset()]
-		);
-		if (getNanoTime() - Rendering_Selection_Error_Message_Duration < timer_Rendering_Preset) {
-			ImGui::Button(message_Rendering_Preset.c_str());
-		} else {
-			if (ImGui::Combo("##renderingPreset", &Combo_Rendering_Preset,
-				Rendering_Preset_Text,
-				ARRAY_LENGTH(Rendering_Preset_Text)
-			)) {
-				if (
-					(Render_Config.validate_Rendering_Preset(
-						(Rendering_Preset)Combo_Rendering_Preset
-					) == false) && (Combo_Rendering_Preset != Render_Preset_Automatic)
-				) {
-					timer_Rendering_Preset = getNanoTime();
-					message_Rendering_Preset = "[";
-					message_Rendering_Preset += Rendering_Preset_Name[Combo_Rendering_Preset];
-					message_Rendering_Preset += "] is not available on your hardware";
-				}
-				Render_Config.suggest_Render_Preset(
-					(Rendering_Preset)Combo_Rendering_Preset
-				);
-			}
-		}
-
-		ImGui::NewLine();
-	}
-
-	#ifndef BUILD_RELEASE
-		if (ImGui::CollapsingHeader("GPU ADVANCED SETTINGS")) {
-			ImGui::Text("Note: Only modify these settings if you know what you are doing.");
-			ImGui::Text("GPU Render Partitions: (Default = 1)");
-			ImGui::InputInt("##input_CPU_MaxThreads",(int32_t*)(&primaryRenderData.GPU_Partitions),1,16);
-			valueClamp(primaryRenderData.GPU_Partitions,1,1024);
-			ImGui::TextWrapped(
-				"Increasing the amount of partitions can reduce the time it takes for the GPU to quit rendering when the Abort Rendering button is pressed. "\
-				"However, increasing the rendering paritions can cause some performance loss due to the overhead of rendering smaller chunks of the fractal at a time. "\
-				"For the best performance, set render paritions to 1."
-			);
+			primaryRenderData.CPU_Threads = (uint32_t)(input_CPU_MaxThreads * input_CPU_ThreadMultiplier);
+			super_screenshot_threadMultiplier = input_CPU_ThreadMultiplier;
+			super_screenshot_maxThreads = input_CPU_MaxThreads;
 			ImGui::NewLine();
-		}
-	#endif
+		ImGui::Unindent(); }
+		#ifndef BUILD_RELEASE
+			if (ImGui::CollapsingHeader("GPU ADVANCED SETTINGS")) { ImGui::Indent();
+				ImGui::Indent();
+				ImGui::Text("Note: Only modify these settings if you know what you are doing.");
+				ImGui::Text("GPU Render Partitions: (Default = 1)");
+				ImGui::InputInt("##input_GPU_Partitions",(int32_t*)(&primaryRenderData.GPU_Partitions),1,16);
+				valueClamp(primaryRenderData.GPU_Partitions,1,1024);
+				ImGui::TextWrapped(
+					"Increasing the amount of partitions can reduce the time it takes for the GPU to quit rendering when the Abort Rendering button is pressed. "\
+					"However, increasing the rendering paritions can cause some performance loss due to the overhead of rendering smaller chunks of the fractal at a time. "\
+					"For the best performance, set render paritions to 1."
+				);
+				ImGui::NewLine();
+			ImGui::Unindent(); }
+		#endif
+	}
 
-	ImGui::NewLine();
-	ImGui::SeparatorText("Super Screenshot Settings");
-	
-	ImGui::Text("Sub Sample: %" PRId32, input_subSample * input_subSample);
-	if (ImGui::SliderInt("##input_subSample",&input_subSample,1,24,"")) {
-		primaryRenderData.subSample = input_subSample;
-	}
-	ImGui::Text("Samples per pixel: %" PRId32, input_superSample * input_superSample);
-	if (ImGui::SliderInt("##input_superSample", &input_superSample, 1, 24, "")) {
-		primaryRenderData.sample = input_superSample;
-	}
-	dim32_t totalResX = primaryRenderData.resX * primaryRenderData.sample / primaryRenderData.subSample;
-	dim32_t totalResY = primaryRenderData.resY * primaryRenderData.sample / primaryRenderData.subSample;
-	ImGui::Text("Total Pixels Rendered: %" PRId32 "x%" PRId32 " %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
-	
 
 
 	// { // Doesn't work
@@ -937,48 +1096,6 @@ void Menu_Rendering() {
 	// 		);
 	// 	}
 	// }
-	constexpr fp32 maxOutterRadius = 24.0f;
-	constexpr fp32 maxInnerRadius = maxOutterRadius - 1.0f;
-	ImGui::SeparatorText("Julia Cordinate Point");
-	ImGui::Checkbox("Display Julia Point", &Rendering_Settings.JuliaPoint_Enabled);
-	ImGui::Text("Outer-Radius:");
-	if (ImGui::SliderFloat("##OuterRadius",&Rendering_Settings.JuliaPoint_OuterRadius, 1.0f, maxOutterRadius, "%.2f")) {
-		valueClamp(Rendering_Settings.JuliaPoint_InnerRadius, 0.0f, Rendering_Settings.JuliaPoint_OuterRadius - 1.0f);
-	}
-	ImGui::Text("Inner-Radius");
-	if (ImGui::SliderFloat("##InnerRadius",&Rendering_Settings.JuliaPoint_InnerRadius, 0.0f, maxInnerRadius, "%.2f")) {
-		valueClamp(Rendering_Settings.JuliaPoint_OuterRadius, Rendering_Settings.JuliaPoint_InnerRadius + 1.0f, maxOutterRadius);
-	}
-
-	#ifdef Enable_OpenCV_Scaler
-		ImGui::SeparatorText("Frame Interpolation");
-		static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
-		int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;
-		ImGui::Text("Frame Interpolation Method:");
-		if (ImGui::Combo("##Frame_Interpolation_Method", &OpenCV_interpolation_mode, BufAndLen(OpenCV_interpolation_mode_list))) {
-			// Should probably be replaced with a Map instead.
-			// switch (OpenCV_interpolation_mode) {
-			// 	case OPENCV_Interpolation::OPENCV_INTER_NEAREST:
-			// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
-			// 	break;
-			// 	case OPENCV_Interpolation::OPENCV_INTER_LINEAR:
-			// 		Frame_Interpolation_Method = cv::INTER_LINEAR;
-			// 	break;
-			// 	case OPENCV_Interpolation::OPENCV_INTER_CUBIC:
-			// 		Frame_Interpolation_Method = cv::INTER_CUBIC;
-			// 	break;
-			// 	case OPENCV_Interpolation::OPENCV_INTER_AREA:
-			// 		Frame_Interpolation_Method = cv::INTER_AREA;
-			// 	break;
-			// 	case OPENCV_Interpolation::OPENCV_INTER_LANCZOS4:
-			// 		Frame_Interpolation_Method = cv::INTER_LANCZOS4;
-			// 	break;
-			// 	default:
-			// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
-			// };
-		}
-		ImGui::Text("Nearest Neighbor is the fastest method. Other methods might not be able to hit 60.0fps at higher resolutions.");
-	#endif
 
 	ImGui::End();
 }
@@ -1084,7 +1201,7 @@ void Menu_Settings() {
 	ImGui::Checkbox("Automatically save fracExpConfig File",&config_data.Automatic_Behaviour.AutoSave_Config_File);
 	ImGui::NewLine();
 	ImGui::SeparatorText("CATEGORIES:");
-	if (ImGui::CollapsingHeader("MENU WINDOW SETTINGS")) {
+	if (ImGui::CollapsingHeader("MENU WINDOW SETTINGS")) { ImGui::Indent();
 		{
 			static const char* GUI_Theme_Options[] = {
 				"Classic","Dark-mode (Default)","Light-mode"
@@ -1104,8 +1221,8 @@ void Menu_Settings() {
 		ImGui::SliderFloat("##WindowOpacity",&config_data.GUI_Settings.WindowOpacity,0.3f,1.0f,"%.3f");
 		
 		ImGui::NewLine();
-	}
-	if (ImGui::CollapsingHeader("DISPLAYS AND FRAME-RATE")) {
+	ImGui::Unindent(); }
+	if (ImGui::CollapsingHeader("DISPLAYS AND FRAME-RATE")) { ImGui::Indent();
 		// Completely Arbtritrary
 		constexpr int32_t Maximum_Allowed_Displays = 144;
 
@@ -1280,8 +1397,8 @@ void Menu_Settings() {
 			}
 			ImGui::NewLine(); 
 		}
-	}
-	if (ImGui::CollapsingHeader("FRACEXP FILES")) {
+	ImGui::Unindent(); }
+	if (ImGui::CollapsingHeader("FRACEXP FILES")) { ImGui::Indent();
 		ImGui::Checkbox("Save username in files",&SaveUsernameInFiles);
 		ImGui::Checkbox("Save hardware information in files",&SaveHardwareInfoInFiles);
 		if (SaveUsernameInFiles == true) {
@@ -1295,8 +1412,8 @@ void Menu_Settings() {
 			ImGui::InputText("##FileUserName_Input",FileUsername,FileUsernameLength);
 		}
 		ImGui::NewLine();
-	}
-	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) {
+	ImGui::Unindent(); }
+	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) { ImGui::Indent();
 		User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
 		static int_enum Combo_ScreenshotFileType = screenshot_settings.screenshotFileType;
 		static const char* Text_ScreenshotFileType[] = {"PNG","JPG/JPEG","TGA","BMP"};
@@ -1332,93 +1449,31 @@ void Menu_Settings() {
 			ImGui::Text("Save screenshots to directory:");
 			ImGui::Text("<Unimplemented>");
 		#endif
-
-		ImGui::NewLine(); ImGui::Separator(); ImGui::NewLine();
-		ImGui::Text("Super Screenshot Settings:");
-		ImGui::NewLine();
-
-		ImGui::Text("Bounding Box: (Unimplemented)");
-		static int_enum Combo_BoundingBox = Namespace_Image_Render_Bounding_Box::Fill_Area;
-		ImGui::Combo("##SuperScreenshotBoundingBox", &Combo_BoundingBox,
-			Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
-			ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
-		); Item_Tooltip("Which area should be used for taking the sceenshot");
-		//SubMenu_SuperScreenshot();
 		ImGui::NewLine();
 		
-		static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
-		ImGui::Text("Maximum Iterations: %" PRId32,super_screenshot_maxItr);
-		ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f),"");
-		super_screenshot_maxItr = (uint32_t)(pow(2.0f,temp_super_screenshot_maxItr));
-		valueClamp(super_screenshot_maxItr,16,16777216); valueClamp(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
-
-		const uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
-
-		ImGui::Text("Samples per pixel: %" PRId32,super_screenshot_super_sample * super_screenshot_super_sample);
-		ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
-		size_t totalResX = (size_t)super_screenshot_resX * (size_t)super_screenshot_super_sample;
-		size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
-
-		ImGui::NewLine();
-		static int Combo_Common_ResolutionPreset = 3;
-		const uint32_t Combo_Common_ResolutionPreset_RESX[] = {640,1280,1366,1920,2560,3840,5120,7680};
-		const uint32_t Combo_Common_ResolutionPreset_RESY[] = {480, 720, 768,1080,1440,2160,2880,4320};
-		static const char* Common_ResolutionPreset[] = {
-			"640x480 SD","1280x720 HD","1366x768 WXGA","1920x1080 FHD","2560x1440 QHD","3840x2160 4K","5120x2880 5K","7680x4320 8K"
-		};
-		ImGui::Text("Resolution Presets:");
-		if (ImGui::Combo("##Common_Resolutions",&Combo_Common_ResolutionPreset,BufAndLen(Common_ResolutionPreset))) {
-			super_screenshot_resX = (int32_t)Combo_Common_ResolutionPreset_RESX[Combo_Common_ResolutionPreset];
-			super_screenshot_resY = (int32_t)Combo_Common_ResolutionPreset_RESY[Combo_Common_ResolutionPreset];
-		}
-
-		ImGui::Text("Resolution X:");
-		ImGui::InputInt("##super_screenshot_resX",&super_screenshot_resX,16,64);
-		super_screenshot_resX &= 0x7FFFFFFC; // Multiple of 4
-		valueClamp(super_screenshot_resX,64,65536); valueMaximumClamp(super_screenshot_resX,(int32_t)MaximumImageSize / super_screenshot_resY / 3);
-		ImGui::Text("Resolution Y:");
-		ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
-		valueClamp(super_screenshot_resY,64,65536); valueMaximumClamp(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
-		
-		ImGui::NewLine();
-		ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
-		if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS >= 1000000000) {
-			ImGui::Text("Current Image Size: %.1lf megabytes",
-				(fp64)((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS) / 1000000.0
-			);
-			ImGui::Text("Maximum Image Size: %.1lf megabytes",
-				(fp64)(MaximumImageSize) / 1000000.0
-			);
-		}
-		ImGui::NewLine();
-		if (ImGui::Button("Take Super Screenshot")) {
-			exportSuperScreenshot();
-			//exportScreenshot();
-		}
-		ImGui::NewLine();
-	}
+	ImGui::Unindent(); }
 	
 
-		if (ImGui::CollapsingHeader("RESET DATA")) {
-			ImGui::SeparatorText("Reset Configurations");
-			if(ImGui::Button("Default Configuration Data")) {
-				default_User_Configuration_Data(config_data, false);
+	if (ImGui::CollapsingHeader("RESET DATA")) { ImGui::Indent();
+		ImGui::Text("Reset Configurations:");
+		if(ImGui::Button("Default Configuration Data")) {
+			default_User_Configuration_Data(config_data, false);
+			set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
+		}
+		if(ImGui::Button("Reset Parameter Sensitivity")) { default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, false); }
+		#ifndef BUILD_RELEASE
+			if(ImGui::Button("Reset Display Preferences")) { default_Display_Preferences(config_data.Display_Preferences); }
+			if(ImGui::Button("Reset GUI Settings")) { default_GUI_Settings(config_data.GUI_Settings, false, false); }
+			if(ImGui::Button("Reset Screenshot")) { default_Screenshot_Settings(config_data.Screenshot_Settings); }
+			
+			ImGui::NewLine();
+			if(ImGui::Button("Full Reset")) { 
+				default_User_Configuration_Data(config_data, true);
 				set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
 			}
-			if(ImGui::Button("Reset Parameter Sensitivity")) { default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, false); }
-			#ifndef BUILD_RELEASE
-				if(ImGui::Button("Reset Display Preferences")) { default_Display_Preferences(config_data.Display_Preferences); }
-				if(ImGui::Button("Reset GUI Settings")) { default_GUI_Settings(config_data.GUI_Settings, false, false); }
-				if(ImGui::Button("Reset Screenshot")) { default_Screenshot_Settings(config_data.Screenshot_Settings); }
-				
-				ImGui::NewLine();
-				if(ImGui::Button("Full Reset")) { 
-					default_User_Configuration_Data(config_data, true);
-					set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
-				}
-			#endif
-			ImGui::NewLine();
-		}
+		#endif
+		ImGui::NewLine();
+	ImGui::Unindent(); }
 	
 	ImGui::End();
 }

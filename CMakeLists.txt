@@ -31,6 +31,9 @@ target_compile_options(IMGUI_LIB PRIVATE -g -O3 -Wall -Wshadow)
 # Source Files
 file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp")
 
+file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_AVX.cpp")
+set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS -mavx)
+
 # Icon
 set(ICON_FILE "./icons/ABS-Icon.o")
 # Create an executable
@@ -44,7 +47,7 @@ include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bit
 # Compiler Flags Debug(-g -O0) Release(-O3)
 set(OPT_FLAG -g -O3)
 
-set(MARCH_FLAGS -msse2 -mavx)
+set(MARCH_FLAGS -msse2)
 
 set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare)
 set(WARNING_IGNORE_FLAGS -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
@@ -52,7 +55,7 @@ set(WARNING_IGNORE_FLAGS -Wno-unused-parameter -Wno-missing-field-initializers -
 set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fdiagnostics-color=always")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 
-target_compile_options(${PROJECT_NAME} PUBLIC ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
 
 # If using the OpenCV Scaler, add ${OpenCV_LIBS}
-target_link_libraries(${PROJECT_NAME} PUBLIC -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL quadmath IMGUI_LIB)
+target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL -l:libquadmath.a IMGUI_LIB)

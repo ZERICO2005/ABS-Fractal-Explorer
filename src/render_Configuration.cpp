@@ -508,6 +508,35 @@ using namespace Rendering_Configuration;
 			);
 		}
 
+		bool Render_Configurator::suggest_Render_Precision_and_Fastest_CPU_Method(
+			const Rendering_Precision render_precision
+		) {
+			if (validate_Rendering_Precision(render_precision) == false) {
+				return false; // Precision not supported
+			}
+			constexpr Rendering_Method Render_Method_Attempt_Order[] = {
+				Render_Method_CPU_AVX512,
+				Render_Method_CPU_AVX,
+				Render_Method_CPU_SSE2,
+				Render_Method_CPU_Generic,
+				Render_Method_GPU
+			};
+			for (size_t i = 0; i < sizeof(Render_Method_Attempt_Order) / sizeof(Rendering_Method); i++) {
+				if (validate_Rendering_Precision_and_Method(render_precision, Render_Method_Attempt_Order[i])) {
+					if (
+						(Render_Precision != render_precision) ||
+						(Render_Method != Render_Method_Attempt_Order[i])
+					) {
+						Render_Precision = render_precision;
+						Render_Method = Render_Method_Attempt_Order[i];
+						return true;
+					}
+					return false;
+				}
+			}
+			return false;
+		}
+
 		bool Render_Configurator::suggest_Render_Method(
 			const Rendering_Method render_method
 		) {

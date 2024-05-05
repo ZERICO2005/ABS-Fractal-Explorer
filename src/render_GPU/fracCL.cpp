@@ -259,9 +259,9 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 			fp32 Exterior_G_Amp_mult_Exterior_Alpha; fp32 Exterior_G_Freq_mult_TAU; fp32 Exterior_G_Phase_mult_TAU;
 			fp32 Exterior_B_Amp_mult_Exterior_Alpha; fp32 Exterior_B_Freq_mult_TAU; fp32 Exterior_B_Phase_mult_TAU;
 		fp32 Interior_Alpha;
-			fp32 Interior_R_Amp_mult_Interior_Alpha; fp32 Interior_R_Freq; fp32 Interior_R_Phase;
-			fp32 Interior_G_Amp_mult_Interior_Alpha; fp32 Interior_G_Freq; fp32 Interior_G_Phase;
-			fp32 Interior_B_Amp_mult_Interior_Alpha; fp32 Interior_B_Freq; fp32 Interior_B_Phase;
+			fp32 Interior_R_Amp_mult_Interior_Alpha; fp32 Interior_R_Freq; fp32 Interior_R_Phase_mult_TAU;
+			fp32 Interior_G_Amp_mult_Interior_Alpha; fp32 Interior_G_Freq; fp32 Interior_G_Phase_mult_TAU;
+			fp32 Interior_B_Amp_mult_Interior_Alpha; fp32 Interior_B_Freq; fp32 Interior_B_Phase_mult_TAU;
 	};
 	const Temp_Color temp_Color = {
 		(fp32)param.exterior_Alpha,
@@ -269,9 +269,9 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 			(fp32)(param.exterior_G_Amp * param.exterior_Alpha), (fp32)(param.exterior_G_Freq * TAU), (fp32)(param.exterior_G_Phase * TAU),
 			(fp32)(param.exterior_B_Amp * param.exterior_Alpha), (fp32)(param.exterior_B_Freq * TAU), (fp32)(param.exterior_B_Phase * TAU),
 		(fp32)param.interior_Alpha,
-			(fp32)(param.interior_R_Amp * param.interior_Alpha), (fp32)param.interior_R_Freq, (fp32)param.interior_R_Phase,
-			(fp32)(param.interior_G_Amp * param.interior_Alpha), (fp32)param.interior_G_Freq, (fp32)param.interior_G_Phase,
-			(fp32)(param.interior_B_Amp * param.interior_Alpha), (fp32)param.interior_B_Freq, (fp32)param.interior_B_Phase
+			(fp32)(param.interior_R_Amp * param.interior_Alpha), (fp32)param.interior_R_Freq, (fp32)(param.interior_R_Phase * TAU),
+			(fp32)(param.interior_G_Amp * param.interior_Alpha), (fp32)param.interior_G_Freq, (fp32)(param.interior_G_Phase * TAU),
+			(fp32)(param.interior_B_Amp * param.interior_Alpha), (fp32)param.interior_B_Freq, (fp32)(param.interior_B_Phase * TAU)
 	};
 	
 	err = clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &r);
@@ -304,13 +304,13 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_Alpha);
 	/* Interior Color */
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Freq                   );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Phase                  );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Phase_mult_TAU         );
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Amp_mult_Interior_Alpha);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Freq                   );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Phase                  );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Phase_mult_TAU         );
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Amp_mult_Interior_Alpha);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Freq                   );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Phase                  );
+	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Phase_mult_TAU         );
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Amp_mult_Interior_Alpha);
 	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_Alpha);
 

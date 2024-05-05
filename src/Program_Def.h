@@ -35,11 +35,11 @@
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/05/04" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/05/05" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 1
-#define PROGRAM_V_PATCH 11
-#define PROGRAM_V_TAG "Rev-19 Developer Debug Alpha"
+#define PROGRAM_V_PATCH 12
+#define PROGRAM_V_TAG "Developer Alpha"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */
@@ -50,7 +50,7 @@
 	#endif
 
 	#ifdef Enable_Float128
-		#include "quadmath.h"
+		#include <quadmath.h>
 		typedef __float128 fp128;
 		#define PRIfp128 "Qf"
 		/* Math overloads */
