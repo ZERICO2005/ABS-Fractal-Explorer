@@ -1,0 +1,77 @@
+ABS-Fractal-Explorer Trouble Shooting Guide
+
+Updated: 2024/05/06
+
+If you are having problems with ABS-Fractal-Explorer, you can consult this guide to figure out the problems/issue you are experincing. You may also fill out a bug report to help the developers fix the problem.
+
+Sections:
+* Application won't start
+	Problems with the program when opening it up.
+* Crashes
+	The program crashes after setup.
+* Errors
+	Errors that may appear while running the program.
+* Frozen
+	If the application is running very slowly or is unresponsive.
+* Glitches
+	The application is still working, but there is some weird graphical glitches or oddities.
+
+# Application won't start
+
+## Missing .dll files
+You will need `SDL2.dll`, `libwinpthread-1.dll`, and `OpenCL.dll` to run ABS-Fractal-Explorer.
+
+`SDL2.dll` and `libwinpthread-1.dll` should be included with the software. `OpenCL.dll` can be downloaded by updating your graphics card drivers.
+
+## Application immediately closes
+If you can see the console logs, check for any errors. Otherwise fill out a bug report with your hardware configuration.
+
+## Stuck on a blue loading screen at startup
+If you are stuck on a blue loading screen, this may be because your computer is taking awhile to initialize the GPU rendering mode. Since every GPU is different, your computer will have to generate the GPU code on the fly, which may take some time.
+
+# Crashes
+
+## Illegal instruction
+Newer CPU's have special *SIMD* instructions (SSE2/AVX/AVX512F) that make rendering faster. However, older CPU's might not support the newest *SIMD* instructions, and may emit an `Illegal instruction` error if it tries to run them.
+
+If you encounter this error, please fill out a bug report with your CPU's name (Such as `Intel i5-3317U`) and the rendering method you were attempting to use.
+
+If you drag ABS-Fractal-Explorer.exe into command prompt, and add `-cpu-info`, it will print the *SIMD* instructions that your cpu supports. The command might look something like`C:\Users\username\downloads\ABS-Fractal-Explorer_v1.X.X\ABS-Fractal-Explorer.exe -cpu-info`
+
+# Errors
+
+## OpenCL errors
+If an OpenCL error is encountered, it could mean that GPU rendering has failed. The program should switch to CPU rendering if OpenCL/GPU rendering fails.
+
+# Frozen
+
+## Rendering is taking a long time
+You can try to reduce the maximum iteration count, reduce the samples per pixel, increase pixel sub sampling (Lowers the amount of pixels rendered), or use a lower rendering precision.
+
+## Abort rendering is taking forever
+This may be because you are trying to abort GPU rendering. There is no direct way to tell the GPU to stop what it is doing, so you will have to wait for it to finish rendering. Your other option is to use task manager to end ABS-Fractal-Explorer.
+
+Alternatively, if you are using CPU rendering and it is taking a long time for abort rendering to finish, then it may be because you are rendering with a high amount of samples per pixel.
+
+## Application is slow/freezes when using Float128
+Float128 is really slow on computers. Computer have specialized hardware to compute Float32, Float64, and Float80 really fast. Since there is no specialized hardware for Float128, the computer has to perform a lot of manual calculations which take a long time.
+
+## Polar Mandelbrot rendering is really slow
+This is because the Sine, Cosine, ArcTangent, and Power functions are much more difficult to compute than the Additions, Subtractions, and Multiplications used for the regular ABS-Fractals.
+
+# Glitches
+
+## Frame is pixelated when I zoom in
+This could mean that you have to increase the rendering precision to zoom further. Alternatively, it could mean that the next frame is not finsihed rendering.
+
+## Random dots when zooming in
+If the next frame is not finished rendering yet and you zoom, you may see some random dots or some aliasing patterns. This is because the algorithm I wrote to perform Affine transformations on the frame isn't to great, and has a few pixel gaps. 
+
+## Missing pixels at the bottom of the screen
+This is a bug where I miscalculated how many pixels need to be rendered on the GPU.
+
+## Missing pixels on the right side of the screen
+The CPU has special *SIMD* instructions to make rendering faster by rendering 2/4/8/16 pixels at a time. Things get a little bit tricky when the resolution is an odd number, because the *SIMD* instructions render 2/4/8/16 pixels at a time. This may lead to some pixels going missing when the number of pixels to render is miscalculated.
+
+## Frame looks corrupted after using Abort rendering
+This is a bug where frames are not cleared/discarded properly. The previous frame gets overwritten when rendering, so you will sometimes see some mixture of a previous frame partially overwritten by the frame where Abort rendering was called.

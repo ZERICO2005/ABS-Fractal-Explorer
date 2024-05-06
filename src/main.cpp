@@ -57,14 +57,17 @@ int main(int argc, char* argv[]) {
 	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
 	// print_pointer_sizes();
 
-	/* Process .fracExp files */
-	if (argc >= 2) {
-		printFlush("\nArgument Count: %d\n",argc - 1);
-	}
-
 	const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
 	if (count_Supported_CPU_Instruction(Available_CPU_Instruction) == 0) {
 		printWarning("Unable to obtain available CPU instruction set extensions");
+	}
+
+	/* Process .fracExp files */
+	if (argc >= 2) {
+		printFlush("\nArgument Count: %d\n",argc - 1);
+		if (strcmp(argv[1], "-cpu-info") == 0) {
+			print_Supported_CPU_Instruction(Available_CPU_Instruction);
+		}
 	}
 	
 	//write_ini_file("./ABS-Fractal-Explorer.ini");

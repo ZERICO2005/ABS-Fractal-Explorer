@@ -294,7 +294,7 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 
 	void print_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		printf(
-			"\nSupported CPU Instruction Sets:"
+			"\nSupported CPU Instruction Sets: <%12s>", instruction_list.CPU_Signature
 		);
 		print_Supported_SSE_Family_Instruction   (instruction_list);
 		print_Supported_AVX_Family_Instruction   (instruction_list);
