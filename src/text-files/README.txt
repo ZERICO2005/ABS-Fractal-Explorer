@@ -1,0 +1,1 @@
+This folder mostly contains random text files and data, along with some examples of some of the file types the program may read/write.
