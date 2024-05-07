@@ -133,6 +133,10 @@ nano64_t getRenderDelta();
 		uint32_t* image_file_format, uint8_t* image_quality
 	);
 
+/* File Paths */
+	void write_Screenshot_Path(const char* i);
+	const std::string read_Screenshot_Path();
+
 /* Render Configuration */
 	void reset_Engine_Render_Configuration();
 	bool read_Engine_Render_Configuration(Render_Configurator& config);

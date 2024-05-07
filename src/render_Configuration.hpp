@@ -359,6 +359,14 @@ class Render_Configurator {
 			const Rendering_Configuration::Rendering_Precision render_precision
 		);
 
+		/**
+		 * @brief Selects the fastest render method at a given preicison.
+		 * 
+		 * @return `true` if the render configuration was changed.
+		 */
+		bool suggest_Render_Precision_and_Fastest_Method(
+			const Rendering_Configuration::Rendering_Precision render_precision
+		);
 
 		/**
 		 * @brief Selects the fastest CPU render method at a given preicison.

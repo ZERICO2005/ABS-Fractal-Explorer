@@ -16,6 +16,13 @@
 		bool AutoSave_Config_File;
 	}; typedef struct User_Automatic_Behaviour User_Automatic_Behaviour;
 
+/* File Paths */
+
+	struct User_File_Paths {
+		std::string Path_Screenshot;
+		std::string Path_FracExpKeybind;
+	}; typedef struct User_File_Paths User_File_Paths;
+
 /* Parameter Sensitivity */
 	const char* const Sensitivity_Labels[] {
 		"Global Sensitivity","Coordinate","Zoom","Iteration","Julia Coordinate","Rotation","Stretch","Polar Power","Breakout Value"
@@ -77,13 +84,15 @@
 
 /* User Data Configuration */
 	enum User_Configuration_Enum {
-		Automatic_Behaviour,Parameter_Sensitivity,Display_Preferences,GUI_Settings,Screenshot_Settings,Rendering_Settings,User_Configuration_Enum_Count
+		Automatic_Behaviour,File_Paths,Parameter_Sensitivity,Display_Preferences,GUI_Settings,Screenshot_Settings,Rendering_Settings,
+		User_Configuration_Enum_Count
 	};
 	const char* const User_Configuration_Labels[] = {
-		"Automatic_Behaviour","Parameter_Sensitivity","Display_Preferences","GUI_Settings","Screenshot_Settings","Rendering_Settings"
+		"Automatic_Behaviour","File_Paths","Parameter_Sensitivity","Display_Preferences","GUI_Settings","Screenshot_Settings","Rendering_Settings"
 	};
 	struct User_Configuration_Data {
 		User_Automatic_Behaviour Automatic_Behaviour;
+		User_File_Paths File_Paths;
 		User_Parameter_Sensitivity Parameter_Sensitivity;
 		User_Display_Preferences Display_Preferences;
 		User_GUI_Settings GUI_Settings;
@@ -102,6 +111,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path);
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data);
 
 	void clean_Automatic_Behaviour(User_Automatic_Behaviour& config_data);
+	void clean_File_Paths(User_File_Paths& config_data);
 	void clean_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data);
 	void clean_Display_Preferences(User_Display_Preferences& config_data);
 	void clean_GUI_Settings(User_GUI_Settings& config_data);
@@ -113,6 +123,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path);
 	void default_User_Configuration_Data(User_Configuration_Data& config_data, bool reset_Extra = false);
 
 	void default_Automatic_Behaviour(User_Automatic_Behaviour& config_data);
+	void default_File_Paths(User_File_Paths& config_data);
 	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data, bool reset_Invert = false);
 	void default_Display_Preferences(User_Display_Preferences& config_data);
 	void default_GUI_Settings(User_GUI_Settings& config_data, bool reset_GUI_Theme = false, bool reset_LockKeyInputsInMenus = false);

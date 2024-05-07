@@ -34,7 +34,7 @@ Bit_Graphics Text_Graphic;
 #define rktX 62 // 9 coloumns
 #define rktY 17 // 2 rows
 
-void renderKeyText(
+static void renderKeyText(
 	const char* text, uint8_t cR, uint8_t cG, uint8_t cB, 
 	int32_t x0, int32_t y0, int32_t x1, int32_t y1
 ) {
@@ -139,7 +139,7 @@ void terminateKeyboardGraphics() {
 	Text_Graphic.terminate_Bit_Graphics();
 }
 
-void calcBoardBounds(
+static void calcBoardBounds(
 	enum Keyboard_Enum board,
 	size_t& keyCount,
 	int32_t& minDimX, int32_t& minDimY,

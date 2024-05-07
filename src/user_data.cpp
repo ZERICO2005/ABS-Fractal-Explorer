@@ -15,10 +15,14 @@
 	#include "render.h"
 	#include "displayInfo.h"
 
-constexpr User_Configuration_Data Default_Config = {
+const User_Configuration_Data Default_Config = {
 	.Automatic_Behaviour = {
 		.AutoLoad_Config_File = true,
 		.AutoSave_Config_File = true
+	},
+	.File_Paths = {
+		.Path_Screenshot = "./",
+		.Path_FracExpKeybind = "./"
 	},
 	.Parameter_Sensitivity = {
 		.global = 1.0,
@@ -74,8 +78,13 @@ constexpr User_Configuration_Data Default_Config = {
 	#define clean_config_data(value,min,max)\
 	valueRestore(config_data.value,config_default.value,(min),(max))
 
-	void clean_Automatic_Behaviour(__attribute__((unused))User_Automatic_Behaviour& config_data) {
+	void clean_Automatic_Behaviour(__attribute__((unused)) User_Automatic_Behaviour& config_data) {
 		__attribute__((unused)) const User_Automatic_Behaviour& config_default = Default_Config.Automatic_Behaviour;
+		return; // Automatic_Behaviour only has bools
+	}
+
+	void clean_File_Paths(__attribute__((unused)) User_File_Paths& config_data) {
+		
 		return; // Automatic_Behaviour only has bools
 	}
 
@@ -139,6 +148,11 @@ constexpr User_Configuration_Data Default_Config = {
 /* default_config_data */
 
 	void default_Automatic_Behaviour(User_Automatic_Behaviour& config_data) { config_data = Default_Config.Automatic_Behaviour; }
+	void default_File_Paths(User_File_Paths& config_data) {
+		config_data.Path_Screenshot     = "./";
+		config_data.Path_FracExpKeybind = "./";
+		return;
+	}
 	void default_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data, bool reset_Invert) {
 		bool invertZoom = config_data.invert_zoom;
 		config_data = Default_Config.Parameter_Sensitivity;
@@ -170,7 +184,7 @@ constexpr User_Configuration_Data Default_Config = {
 		default_Rendering_Settings(config_data.Rendering_Settings);
 	}
 
-const char* get_config_value(const char* Config_Text, const char* Header, const char* Value) {
+static const char* get_config_value(const char* Config_Text, const char* Header, const char* Value) {
 	if (Config_Text == nullptr || Header == nullptr || Value == nullptr) { return nullptr; }
 	size_t i = 0;
 	// Find Header
@@ -234,24 +248,46 @@ const char* get_config_value(const char* Config_Text, const char* Header, const 
 }
 
 // Checks if the Text matches "true", "True", or "TRUE"; Returns false otherwise.
-bool textToBool_FalseDefault(const char* Text) {
-	return
-	(Text == nullptr) ? false :
-	(strncmp(Text,"true",strlen("true")) == 0) ? true :
-	(strncmp(Text,"True",strlen("True")) == 0) ? true :
-	(strncmp(Text,"TRUE",strlen("TRUE")) == 0) ? true : false;
+static bool textToBool_FalseDefault(const char* Text) {
+	return (Text == nullptr) ? false :
+	(strncmp(Text, "true", strlen("true")) == 0) ? true :
+	(strncmp(Text, "True", strlen("True")) == 0) ? true :
+	(strncmp(Text, "TRUE", strlen("TRUE")) == 0) ? true : false;
 }
 
 // Checks if the Text matches "false", "False", or "FALSE"; Returns true otherwise.
-bool textToBool_TrueDefault(const char* Text) {
-	return
-	(Text == nullptr) ? true :
-	(strncmp(Text,"false",strlen("false")) == 0) ? false :
-	(strncmp(Text,"False",strlen("False")) == 0) ? false :
-	(strncmp(Text,"FALSE",strlen("FALSE")) == 0) ? false : true;
+static bool textToBool_TrueDefault(const char* Text) {
+	return (Text == nullptr) ? true :
+	(strncmp(Text, "false", strlen("false")) == 0) ? false :
+	(strncmp(Text, "False", strlen("False")) == 0) ? false :
+	(strncmp(Text, "FALSE", strlen("FALSE")) == 0) ? false : true;
 }
 
-void compare_Versions(int32_t version_major, int32_t version_minor, int32_t version_patch, bool warnPatch) {
+static inline int_enum textToEnum(const char* str) { return stringTo_Int32(str); }
+
+static void set_String_to_Text(std::string& str, const char* text, const char* defaultText = nullptr) {
+	if (text == nullptr) {
+		str.assign((defaultText == nullptr) ? "" : defaultText);
+		return;
+	}
+	size_t i = 0;
+	while (text[i] == ' ') { i++; }
+	size_t startIndex = i;
+	while (
+		text[i] != '\0' && text[i] != '\n' &&
+		text[i] != '\r' && text[i] != '\t' && text[i] != '\v'
+	) {
+		i++;
+	}
+	size_t len = i - startIndex;
+	if (len == 0) {
+		str.assign((defaultText == nullptr) ? "" : defaultText);
+		return;
+	}
+	str.assign(&text[startIndex], len);
+}
+
+static void compare_Versions(int32_t version_major, int32_t version_minor, int32_t version_patch, bool warnPatch) {
 	// Out of date Software
 	if (
 		(PROGRAM_V_MAJOR < version_major) ||
@@ -292,9 +328,6 @@ void compare_Versions(int32_t version_major, int32_t version_minor, int32_t vers
 void load_config_values(User_Configuration_Data& config_data, const char* Config_Text) {
 	if (Config_Text == nullptr) { return; }
 
-	// textToEnum will need to support text values too
-	#define textToEnum(str) stringTo_Int32(str)
-
 	const char* config_label = nullptr;
 
 	config_label = "Version";
@@ -312,6 +345,18 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"AutoLoad_Config_File"));
 		config_data.Automatic_Behaviour.AutoSave_Config_File =
 		textToBool_TrueDefault(get_config_value(Config_Text,config_label,"AutoSave_Config_File"));
+
+	config_label = User_Configuration_Labels[File_Paths];
+		set_String_to_Text(
+			config_data.File_Paths.Path_Screenshot,
+			get_config_value(Config_Text,config_label,"Path_Screenshot"),
+			"./"
+		);
+		set_String_to_Text(
+			config_data.File_Paths.Path_FracExpKeybind,
+			get_config_value(Config_Text,config_label,"Path_FracExpKeybind"),
+			"./"
+		);
 
 	config_label = User_Configuration_Labels[Parameter_Sensitivity];
 		config_data.Parameter_Sensitivity.global =
@@ -337,7 +382,7 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 
 	config_label = User_Configuration_Labels[Display_Preferences];
 		config_data.Display_Preferences.Display_Config_Hash =
-		stringTo_Uint64(get_config_value(Config_Text,config_label,"Display_Config_Hash"));
+		stringTo_Uint64(get_config_value(Config_Text,config_label,"Display_Config_Hash"), 16);
 		config_data.Display_Preferences.Display_Bootup_Type =
 		textToEnum(get_config_value(Config_Text,config_label,"Display_Bootup_Type"));
 		config_data.Display_Preferences.Specific_Bootup_Display =
@@ -383,7 +428,7 @@ void load_config_values(User_Configuration_Data& config_data, const char* Config
 
 	config_label = User_Configuration_Labels[Rendering_Settings];
 		config_data.Rendering_Settings.Hardware_Hash =
-		stringTo_Uint64(get_config_value(Config_Text,config_label,"Hardware_Hash"));
+		stringTo_Uint64(get_config_value(Config_Text,config_label,"Hardware_Hash"), 16);
 		config_data.Rendering_Settings.Frame_Interpolation_Method =
 		textToEnum(get_config_value(Config_Text,config_label,"Frame_Interpolation_Method"));
 		config_data.Rendering_Settings.Image_Render_Bounding_Box =
@@ -506,6 +551,14 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		fprintf(file,"\n\tAutoSave_Config_File: %s",
 			bool_Text(config_data.Automatic_Behaviour.AutoSave_Config_File)
 		);
+	
+	fprintf(file,"\n\n%s:",User_Configuration_Labels[File_Paths]);
+		fprintf(file,"\n\tPath_Screenshot: %s",
+			config_data.File_Paths.Path_Screenshot.c_str()
+		);
+		fprintf(file,"\n\tPath_FracExpKeybind: %s",
+			config_data.File_Paths.Path_FracExpKeybind.c_str()
+		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Parameter_Sensitivity]);
 		fprintf(file,"\n\tglobal: %.6lf",
@@ -540,7 +593,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Display_Preferences]);
-		fprintf(file,"\n\tDisplay_Config_Hash: %" PRId64,
+		fprintf(file,"\n\tDisplay_Config_Hash: %16" PRIx64,
 			config_data.Display_Preferences.Display_Config_Hash
 		);
 		fprintf(file,"\n\tDisplay_Bootup_Type: %" PRId32,
@@ -606,7 +659,7 @@ int export_config_data(User_Configuration_Data& config_data, const char* path) {
 		);
 
 	fprintf(file,"\n\n%s:",User_Configuration_Labels[Rendering_Settings]);
-		fprintf(file,"\n\tHardware_Hash: %" PRId64,
+		fprintf(file,"\n\tHardware_Hash: %16" PRIx64,
 			config_data.Rendering_Settings.Hardware_Hash
 		);
 		fprintf(file,"\n\tFrame_Interpolation_Method: %" PRId32,

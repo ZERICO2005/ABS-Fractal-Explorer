@@ -54,28 +54,27 @@
 
 /* Function Definition SSE2 FP64 */
 
-	void CPU_Interior_Coloring_SSE2_FP64(
-		fp64& outR, fp64& outG, fp64& outB, fp64& outA,
+	static void CPU_Interior_Coloring_SSE2_FP64(
+		fp64* outputColor, size_t index,
 		const PreCalc_Param<fp64, fp64>& param,
 		fp64 low
 	) {
-		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));
-		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));
-		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));
-		outA += param.Interior_Alpha;
+		outputColor[index + 0] += param.Interior_R_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));
+		outputColor[index + 1] += param.Interior_G_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));
+		outputColor[index + 2] += param.Interior_B_Amp_mult_Interior_Alpha * (0.5 - 0.5 * cos(log(low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));
+		outputColor[index + 3] += param.Interior_Alpha;
 	}
-				
-	void CPU_Exterior_Coloring_SSE2_FP64(
-		fp64& outR, fp64& outG, fp64& outB, fp64& outA,
+	static void CPU_Exterior_Coloring_SSE2_FP64(
+		fp64* outputColor, size_t index,
 		const PreCalc_Param<fp64, fp64>& param,
 		uint32_t itr, fp64 zs, fp64 inverse_log2_power
 	) {
 		// TAU = 2 * PI
 		fp64 smooth = log1p(fmax(0.0, (fp64)itr - log2(log2(zs) / 2.0) * inverse_log2_power));
-		outR += param.Exterior_R_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));
-		outG += param.Exterior_G_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));
-		outB += param.Exterior_B_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));
-		outA += param.Exterior_Alpha;
+		outputColor[index + 0] += param.Exterior_R_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));
+		outputColor[index + 1] += param.Exterior_G_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));
+		outputColor[index + 2] += param.Exterior_B_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5 - 0.5 * cos(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));
+		outputColor[index + 3] += param.Exterior_Alpha;
 	}
 	
 	#define Block_Init_SSE2_FP64();
@@ -96,8 +95,8 @@
 		const __m128d numX           = _mm_set_pd1(param.numX          );\
 		const __m128d recip_numZ     = _mm_set_pd1(param.recip_numZ    );\
 		const __m128d neg_recip_numW = _mm_set_pd1(param.neg_recip_numW);\
-		/* Constant used to divide Alpha (sample * sample) */\
-		const __m128d alphaDiv       = _mm_set_pd1(param.alphaDiv      );\
+		\
+		const fp64 Alpha_Mult = 255.0 / param.alphaDiv;\
 		/* Color Values */\
 		/* const __m128d Exterior_Alpha = _mm_set_pd1(param.Exterior_Alpha); */\
 			/* const __m128d Exterior_R_Amp_mult_Exterior_Alpha = _mm_set_pd1(param.Exterior_R_Amp_mult_Exterior_Alpha); */\
@@ -136,11 +135,7 @@
 				if (((param.Cord_ResX - x) / param.sample) < (int32_t)SIMD_Spacing && ((param.Cord_ResX - x) / param.sample) > 0) {\
 					valuesToWrite = (size_t)((param.Cord_ResX - x) / param.sample);\
 				}\
-				/* Store the output color values */\
-					__m128d outR = _mm_setzero_pd();\
-					__m128d outG = _mm_setzero_pd();\
-					__m128d outB = _mm_setzero_pd();\
-					__m128d outA = _mm_setzero_pd();\
+				fp64 outputColor[IMAGE_BUFFER_CHANNELS * SIMD_Spacing] = {0.0};\
 				/* Calculates 4 pixels (with super sampling) at a time */\
 				for (int32_t v = 0; v < param.sample; v++) {\
 					/* Calculates y cordinate-value */\
@@ -169,7 +164,7 @@
 						__m128d __attribute__((unused)) temp_zr = _mm_setzero_pd();\
 						__m128d current_value_mask = _mm_cmpeq_pd(_mm_setzero_pd(), _mm_setzero_pd());\
 						for (int i = (int)SIMD_Spacing - 1; i > (int)valuesToWrite - 1; i--) {\
-							((fp32*)((void*)(&current_value_mask)))[i] = 0.0f;\
+							((fp64*)((void*)(&current_value_mask)))[i] = 0.0;\
 						}\
 						for (uint32_t itr = 0; itr < param.maxItr; itr++) {
 
@@ -187,7 +182,7 @@
 								for (int i = 0; i < (int)SIMD_Spacing; i++) {\
 									if (break_mask & (1 << i)) {\
 										CPU_Exterior_Coloring_SSE2_FP64(\
-											((fp64*)((void*)(&outR)))[i], ((fp64*)((void*)(&outG)))[i], ((fp64*)((void*)(&outB)))[i], ((fp64*)((void*)(&outA)))[i],\
+											outputColor, (size_t)i * IMAGE_BUFFER_CHANNELS,\
 											param,\
 											itr, ((fp64*)((void*)(&zs)))[i], param.inverse_log2_power\
 										);\
@@ -206,7 +201,7 @@
 							for (int i = 0; i < (int)SIMD_Spacing; i++) {\
 								if (inside_value_mask & (1 << i)) {\
 									CPU_Interior_Coloring_SSE2_FP64(\
-										((fp64*)((void*)(&outR)))[i], ((fp64*)((void*)(&outG)))[i], ((fp64*)((void*)(&outB)))[i], ((fp64*)((void*)(&outA)))[i],\
+										outputColor, (size_t)i * IMAGE_BUFFER_CHANNELS,\
 										param,\
 										((fp64*)((void*)(&low)))[i]\
 									);\
@@ -222,32 +217,20 @@
 				\
 				/* Code to write the colors to the image buffer */\
 				\
-				/* Divide R, G, and B by Alpha */\
-					outR = _mm_div_pd(outR, outA);\
-					outG = _mm_div_pd(outG, outA);\
-					outB = _mm_div_pd(outB, outA);\
-				/* If division by zero occured, set values to 0 */\
-					const __m128d div_zero_mask = _mm_cmpeq_pd(outA, _mm_setzero_pd());\
-					outR = _mm_andnot_pd(div_zero_mask, outR);\
-					outG = _mm_andnot_pd(div_zero_mask, outG);\
-					outB = _mm_andnot_pd(div_zero_mask, outB);\
-				\
-				/* Normilizes alpha to 0.0 - 1.0 */\
-					outA = _mm_div_pd(outA, alphaDiv);\
-				/* Normilizes alpha to 0.0 - 1.0 */\
-					const __m128d color_mult = _mm_set_pd1(255.0);\
-					outR = _mm_mul_pd(outR, color_mult);\
-					outG = _mm_mul_pd(outG, color_mult);\
-					outB = _mm_mul_pd(outB, color_mult);\
-					outA = _mm_mul_pd(outA, color_mult);\
-				\
-				/* Writes colors in the order 3, 2, 1, 0. I am not sure why it had to be reversed */\
-				for (size_t i = 0; i < valuesToWrite; i++) {\
+				/* Divide by alpha and normalize colors */\
+				for (size_t i = 0; i < SIMD_Spacing * IMAGE_BUFFER_CHANNELS; i += IMAGE_BUFFER_CHANNELS) {\
+					const fp64 color_mult = (outputColor[i + 3] == 0.0) ? 0.0 : (255.0 / outputColor[i + 3]);\
+					outputColor[i + 0] *= color_mult;\
+					outputColor[i + 1] *= color_mult;\
+					outputColor[i + 2] *= color_mult;\
+					outputColor[i + 3] *= Alpha_Mult;\
+				}\
+				for (size_t i = 0; i < valuesToWrite * IMAGE_BUFFER_CHANNELS; i += IMAGE_BUFFER_CHANNELS) {\
 					/* Writes in the equivilant of SDL_PIXELFORMAT_ABGR8888 */\
-					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outR)))[i]; dataPtr++;\
-					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outG)))[i]; dataPtr++;\
-					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outB)))[i]; dataPtr++;\
-					data[dataPtr] = (uint8_t)((fp64*)((void*)(&outA)))[i]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 0]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 1]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 2]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 3]; dataPtr++;\
 				}\
 				/* Increases the image offset/index */\
 				p0 += valuesToWrite;\
@@ -256,29 +239,28 @@
 		}
 
 /* Function Definition SSE2 FP32 */
-
-	void CPU_Interior_Coloring_SSE2_FP32(
-		fp32& outR, fp32& outG, fp32& outB, fp32& outA,
+	
+	static void CPU_Interior_Coloring_SSE2_FP32(
+		fp32* outputColor, size_t index,
 		const PreCalc_Param<fp32,fp32>& param,
 		fp32 low
 	) {
-		outR += param.Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));
-		outG += param.Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));
-		outB += param.Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));
-		outA += param.Interior_Alpha;
+		outputColor[index + 0] += param.Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));
+		outputColor[index + 1] += param.Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));
+		outputColor[index + 2] += param.Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cosf(logf(low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));
+		outputColor[index + 3] += param.Interior_Alpha;
 	}
-				
-	void CPU_Exterior_Coloring_SSE2_FP32(
-		fp32& outR, fp32& outG, fp32& outB, fp32& outA,
+	static void CPU_Exterior_Coloring_SSE2_FP32(
+		fp32* outputColor, size_t index,
 		const PreCalc_Param<fp32,fp32>& param,
 		uint32_t itr, fp32 zs, fp32 inverse_log2_power
 	) {
 		// TAU = 2 * PI
 		fp32 smooth = log1pf(fmaxf(0.0f, (fp32)itr - log2f(log2f(zs) / 2.0f) * inverse_log2_power));
-		outR += param.Exterior_R_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));
-		outG += param.Exterior_G_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));
-		outB += param.Exterior_B_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));
-		outA += param.Exterior_Alpha;
+		outputColor[index + 0] += param.Exterior_R_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));
+		outputColor[index + 1] += param.Exterior_G_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));
+		outputColor[index + 2] += param.Exterior_B_Amp_mult_Exterior_Alpha * param.Exterior_Alpha * (0.5f - 0.5f * cosf(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));
+		outputColor[index + 3] += param.Exterior_Alpha;
 	}
 
 	#define Block_Init_SSE2_FP32();
@@ -299,8 +281,8 @@
 		const __m128 numX           = _mm_set_ps1(param.numX          );\
 		const __m128 recip_numZ     = _mm_set_ps1(param.recip_numZ    );\
 		const __m128 neg_recip_numW = _mm_set_ps1(param.neg_recip_numW);\
-		/* Constant used to divide Alpha (sample * sample) */\
-		const __m128 alphaDiv       = _mm_set_ps1(param.alphaDiv      );\
+		\
+		const fp32 Alpha_Mult = 255.0f / param.alphaDiv;\
 		/* Color Values */\
 		/* const __m128 Exterior_Alpha = _mm_set_ps1(param.Exterior_Alpha); */\
 			/* const __m128 Exterior_R_Amp_mult_Exterior_Alpha = _mm_set_ps1(param.Exterior_R_Amp_mult_Exterior_Alpha); */\
@@ -339,11 +321,7 @@
 				if (((param.Cord_ResX - x) / param.sample) < (int32_t)SIMD_Spacing && ((param.Cord_ResX - x) / param.sample) > 0) {\
 					valuesToWrite = (size_t)((param.Cord_ResX - x) / param.sample);\
 				}\
-				/* Store the output color values */\
-					__m128 outR = _mm_setzero_ps();\
-					__m128 outG = _mm_setzero_ps();\
-					__m128 outB = _mm_setzero_ps();\
-					__m128 outA = _mm_setzero_ps();\
+				fp32 outputColor[IMAGE_BUFFER_CHANNELS * SIMD_Spacing] = {0.0f};\
 				/* Calculates 4 pixels (with super sampling) at a time */\
 				for (int32_t v = 0; v < param.sample; v++) {\
 					/* Calculates y cordinate-value */\
@@ -369,7 +347,7 @@
 						__m128 zr = (param.juliaSet) ? _mm_add_ps(_mm_sub_ps(_mm_mul_ps(xCord, rotCos_PC), _mm_mul_ps(yCord, rotSin_PC)), realCord) : realJulia;\
 						__m128 zi = (param.juliaSet) ? _mm_add_ps(_mm_add_ps(_mm_mul_ps(yCord, rotCos_PC), _mm_mul_ps(xCord, rotSin_PC)), imagCord) : imagJulia;\
 						\
-						__m128 low = _mm_set_ps1(4.0);\
+						__m128 low = _mm_set_ps1(4.0f);\
 						__m128 zs = _mm_setzero_ps();\
 						__m128 __attribute__((unused)) temp_zr = _mm_setzero_ps();\
 						__m128 current_value_mask = _mm_cmpeq_ps(_mm_setzero_ps(), _mm_setzero_ps());\
@@ -392,11 +370,11 @@
 								for (int i = 0; i < (int)SIMD_Spacing; i++) {\
 									if (break_mask & (1 << i)) {\
 										CPU_Exterior_Coloring_SSE2_FP32(\
-											((fp32*)((void*)(&outR)))[i], ((fp32*)((void*)(&outG)))[i], ((fp32*)((void*)(&outB)))[i], ((fp32*)((void*)(&outA)))[i],\
+											outputColor, (size_t)i * IMAGE_BUFFER_CHANNELS,\
 											param,\
 											itr, ((fp32*)((void*)(&zs)))[i], param.inverse_log2_power\
 										);\
-										((fp32*)((void*)(&current_value_mask)))[i] = 0.0; /* Removes the Z^2 value from the list of Z^2 values that have Not exceeded the breakout value */\
+										((fp32*)((void*)(&current_value_mask)))[i] = 0.0f; /* Removes the Z^2 value from the list of Z^2 values that have Not exceeded the breakout value */\
 									}\
 								}\
 								if (_mm_movemask_ps(_mm_cmpeq_ps(current_value_mask, _mm_setzero_ps())) == 0) {\
@@ -411,7 +389,7 @@
 							for (int i = 0; i < (int)SIMD_Spacing; i++) {\
 								if (inside_value_mask & (1 << i)) {\
 									CPU_Interior_Coloring_SSE2_FP32(\
-										((fp32*)((void*)(&outR)))[i], ((fp32*)((void*)(&outG)))[i], ((fp32*)((void*)(&outB)))[i], ((fp32*)((void*)(&outA)))[i],\
+										outputColor, (size_t)i * IMAGE_BUFFER_CHANNELS,\
 										param,\
 										((fp32*)((void*)(&low)))[i]\
 									);\
@@ -427,31 +405,20 @@
 				\
 				/* Code to write the colors to the image buffer */\
 				\
-				/* Divide R, G, and B by Alpha */\
-					outR = _mm_div_ps(outR, outA);\
-					outG = _mm_div_ps(outG, outA);\
-					outB = _mm_div_ps(outB, outA);\
-				/* If division by zero occured, set values to 0 */\
-					const __m128 div_zero_mask = _mm_cmpeq_ps(outA, _mm_setzero_ps());\
-					outR = _mm_andnot_ps(div_zero_mask, outR);\
-					outG = _mm_andnot_ps(div_zero_mask, outG);\
-					outB = _mm_andnot_ps(div_zero_mask, outB);\
-				\
-				/* Normilizes alpha to 0.0 - 1.0 */\
-					outA = _mm_div_ps(outA, alphaDiv);\
-				/* Normilizes alpha to 0.0 - 1.0 */\
-					const __m128 color_mult = _mm_set_ps1(255.0);\
-					outR = _mm_mul_ps(outR, color_mult);\
-					outG = _mm_mul_ps(outG, color_mult);\
-					outB = _mm_mul_ps(outB, color_mult);\
-					outA = _mm_mul_ps(outA, color_mult);\
-				\
-				for (size_t i = 0; i < valuesToWrite; i++) {\
+				/* Divide by alpha and normalize colors */\
+				for (size_t i = 0; i < SIMD_Spacing * IMAGE_BUFFER_CHANNELS; i += IMAGE_BUFFER_CHANNELS) {\
+					const fp32 color_mult = (outputColor[i + 3] == 0.0f) ? 0.0f : (255.0f / outputColor[i + 3]);\
+					outputColor[i + 0] *= color_mult;\
+					outputColor[i + 1] *= color_mult;\
+					outputColor[i + 2] *= color_mult;\
+					outputColor[i + 3] *= Alpha_Mult;\
+				}\
+				for (size_t i = 0; i < valuesToWrite * IMAGE_BUFFER_CHANNELS; i += IMAGE_BUFFER_CHANNELS) {\
 					/* Writes in the equivilant of SDL_PIXELFORMAT_ABGR8888 */\
-					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outR)))[i]; dataPtr++;\
-					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outG)))[i]; dataPtr++;\
-					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outB)))[i]; dataPtr++;\
-					data[dataPtr] = (uint8_t)((fp32*)((void*)(&outA)))[i]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 0]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 1]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 2]; dataPtr++;\
+					data[dataPtr] = (uint8_t)outputColor[i + 3]; dataPtr++;\
 				}\
 				/* Increases the image offset/index */\
 				p0 += valuesToWrite;\

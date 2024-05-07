@@ -1204,6 +1204,10 @@ void init_config_data() {
 			return;
 		}
 		clean_User_Configuration_Data(config_data);
+		if (config_data.Rendering_Settings.Hardware_Hash != get_Hardware_Hash()) {
+			config_data.File_Paths.Path_Screenshot = get_RelativeFilePath();
+			config_data.File_Paths.Path_FracExpKeybind = get_RelativeFilePath();
+		}
 	} else {
 		default_User_Configuration_Data(config_data, true);
 	}
@@ -1434,15 +1438,17 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 uint64_t get_Hardware_Hash() {
 	uint64_t hardwareHash = 0x0;
-	int8_t value8 = 0x0; int32_t value32 = 0x0;
+	uint8_t value8 = 0x0; uint16_t value16 = 0x0; uint32_t value32 = 0x0;
 	value8 = PROGRAM_V_MAJOR;
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value8,sizeof(int32_t));
-	value32 = (int32_t)std::thread::hardware_concurrency();
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value8,sizeof(int8_t));
+	value32 = std::thread::hardware_concurrency();
 	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
-	value32 = SDL_GetCPUCacheLineSize();
+	value32 = (uint32_t)SDL_GetCPUCacheLineSize();
 	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
-	value32 = SDL_GetSystemRAM();
+	value32 = (uint32_t)SDL_GetSystemRAM();
 	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	value16 = (uint16_t)count_Supported_CPU_Instruction(get_Available_CPU_Instruction());
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value16,sizeof(int16_t));
 	// #ifdef Enable_OpenCL
 	// 	get_GPU_Hardware_Hash(hardwareHash);
 	// #endif
@@ -2316,7 +2322,7 @@ void newFrame() {
 			size_t size = (size_t)snprintf(nullptr, 0, "%s_%" PRIu64, fractal_name, curTime);
 			char* name = (char*)calloc(size + 1,sizeof(char));
 			snprintf(name, size, "%s_%" PRIu64, fractal_name, curTime);
-			char path[] = "./";
+			const char* path = config_data.File_Paths.Path_Screenshot.c_str();
 			const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
 			switch(screenshot_settings.screenshotFileType) {
 				case Image_File_Format::PNG:

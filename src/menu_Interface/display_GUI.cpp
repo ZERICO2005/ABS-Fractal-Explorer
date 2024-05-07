@@ -699,14 +699,9 @@ constexpr inline const char* Available_Text(const bool& b) { return b ? "Availab
 					message_Rendering_Precision += "] is not available on your hardware";
 				}
 				if (Combo_Rendering_Precision != Render_Precision_Automatic) {
-					Render_Config.suggest_Render_Precision(
+					Render_Config.suggest_Render_Precision_and_Fastest_Method(
 						(Rendering_Precision)Combo_Rendering_Precision
 					);
-					if (Render_Config.current_Render_Method_CPU() == true) {
-						Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(
-							(Rendering_Precision)Combo_Rendering_Precision
-						);
-					}
 				}
 			}
 			if (tooltip_message != nullptr) {
@@ -1149,7 +1144,6 @@ void Menu_Settings() {
 	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
 	ImGui::NewLine();
 	#ifdef PLATFORM_WINDOWS
-		ImGui::TextWrapped("Warning: Due to a bug, importing/exporting files through the windows file dialog changes where \"./config.fracExpConfig\" is saved to, which may overwrite files");
 		if(ImGui::Button("Import fracExpConfig")) {
 			static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
 			openFileInterface(
@@ -1160,9 +1154,6 @@ void Menu_Settings() {
 			);
 			import_config_data(config_data,filePath);
 			refresh_IMGUI(config_data);
-			/* TEMPORARY BUG PREVENTION */
-				config_data.Automatic_Behaviour.AutoSave_Config_File = false;
-			/* TEMPORARY BUG PREVENTION */
 		}
 		if(ImGui::Button("Export fracExpConfig")) {
 			static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
@@ -1173,9 +1164,6 @@ void Menu_Settings() {
 				"All Files (*.*)\0*.*\0"
 			);
 			export_config_data(config_data,filePath);
-			/* TEMPORARY BUG PREVENTION */
-				config_data.Automatic_Behaviour.AutoSave_Config_File = false;
-			/* TEMPORARY BUG PREVENTION */
 		}
 	#else
 		{
@@ -1398,21 +1386,23 @@ void Menu_Settings() {
 			ImGui::NewLine(); 
 		}
 	ImGui::Unindent(); }
-	if (ImGui::CollapsingHeader("FRACEXP FILES")) { ImGui::Indent();
-		ImGui::Checkbox("Save username in files",&SaveUsernameInFiles);
-		ImGui::Checkbox("Save hardware information in files",&SaveHardwareInfoInFiles);
-		if (SaveUsernameInFiles == true) {
-			correctUsernameText(FileUsername,FileUsernameLength);
-			#ifdef displayTerribleProgrammingJokes
-				//idk why I wrote this
-				ImGui::TextWrapped("Input Username: The Username MUST be a valid C variable name exclusively using the limited subset of 63 characters of the first 128 8-bit ANSI characters in addition to demonstrating an unwavering adherence and strict compliance to the standards outlined in ISO/IEC 9899:1999 for C99 with a NULL terminated char array that MUST NOT exceed 32 characters long including the NULL terminator and MUST be an absolute minimum of 4 characters long");
-			#else
-				ImGui::Text("Input Username: 4-31 characters long, A-Z, a-z, 0-9, and _");
-			#endif
-			ImGui::InputText("##FileUserName_Input",FileUsername,FileUsernameLength);
-		}
-		ImGui::NewLine();
-	ImGui::Unindent(); }
+	#ifndef BUILD_RELEASE
+		if (ImGui::CollapsingHeader("FRACEXP FILES")) { ImGui::Indent();
+			ImGui::Checkbox("Save username in files",&SaveUsernameInFiles);
+			ImGui::Checkbox("Save hardware information in files",&SaveHardwareInfoInFiles);
+			if (SaveUsernameInFiles == true) {
+				correctUsernameText(FileUsername,FileUsernameLength);
+				#ifdef displayTerribleProgrammingJokes
+					//idk why I wrote this
+					ImGui::TextWrapped("Input Username: The Username MUST be a valid C variable name exclusively using the limited subset of 63 characters of the first 128 8-bit ANSI characters in addition to demonstrating an unwavering adherence and strict compliance to the standards outlined in ISO/IEC 9899:1999 for C99 with a NULL terminated char array that MUST NOT exceed 32 characters long including the NULL terminator and MUST be an absolute minimum of 4 characters long");
+				#else
+					ImGui::Text("Input Username: 4-31 characters long, A-Z, a-z, 0-9, and _");
+				#endif
+				ImGui::InputText("##FileUserName_Input",FileUsername,FileUsernameLength);
+			}
+			ImGui::NewLine();
+		ImGui::Unindent(); }
+	#endif
 	if (ImGui::CollapsingHeader("SCREEN-SHOTS")) { ImGui::Indent();
 		User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
 		static int_enum Combo_ScreenshotFileType = screenshot_settings.screenshotFileType;
@@ -1444,12 +1434,53 @@ void Menu_Settings() {
 			ImGui::Text("Note: Super Screenshots only support PNG and JPG.");
 		}
 		
-		#ifndef BUILD_RELEASE
-			ImGui::NewLine();
-			ImGui::Text("Save screenshots to directory:");
-			ImGui::Text("<Unimplemented>");
-		#endif
 		ImGui::NewLine();
+		/* Screenshot path */ {
+			ImVec4 highlight_color = get_Theme_Highlight_Color();
+			ImGui::Text("Current Screenshot Directory:"); ImGui::SameLine();
+			ImGui::TextColored(highlight_color, "%s",
+				config_data.File_Paths.Path_Screenshot.c_str()
+			);
+			#ifndef PLATFORM_WINDOWS
+				if (ImGui::Button("Set Screenshot Directory")) {
+					static char path_Screenshot[324]; memset(path_Screenshot,'\0',sizeof(path_Screenshot));
+					int setDirectoryState = selectFolderInterface(
+						path_Screenshot, sizeof(path_Screenshot),
+						"Select Screenshot Folder or Directory"
+					);
+					if (setDirectoryState == 0) {
+						config_data.File_Paths.Path_Screenshot.assign(path_Screenshot);
+					}
+				}
+			#else
+				static char path_Screenshot[324];
+
+				ImGui::Text("Set Screenshot Directory: (Ending with the slash"); ImGui::SameLine();
+				ImGui::TextColored(highlight_color, "/"); ImGui::SameLine(); ImGui::Text("character)");
+
+				ImGui::InputText("##input_path_Screenshot", path_Screenshot, sizeof(path_Screenshot));
+				if (
+					(strnlen(path_Screenshot, sizeof(path_Screenshot)) > 1) && 
+					(path_Screenshot[strnlen(path_Screenshot, sizeof(path_Screenshot)) - 1] == '/')
+				) {
+					if (ImGui::Button("Apply changes##button_path_Screenshot")) {
+						config_data.File_Paths.Path_Screenshot.assign(path_Screenshot);
+						if (config_data.File_Paths.Path_Screenshot.length() == 0) {
+							config_data.File_Paths.Path_Screenshot = "./";
+						}
+					}
+				} else {
+					if (strnlen(path_Screenshot, sizeof(path_Screenshot)) == 0) {
+						ImGui::Button("Enter a folder path or directory above##empty_button_path_Screenshot");
+					} else {
+						ImGui::Button("Directories must end with the slash '/' character##error_button_path_Screenshot");
+					}
+				}
+				
+			#endif
+			
+			ImGui::NewLine();
+		}
 		
 	ImGui::Unindent(); }
 	

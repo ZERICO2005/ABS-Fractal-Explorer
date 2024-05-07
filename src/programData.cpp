@@ -387,6 +387,18 @@ nano64_t getRenderDelta() {
 		return true;
 	}
 
+/* File Paths */
+	std::mutex pDat_Screenshot_Path_Mutex;
+	std::string pDat_Screenshot_Path = "./";
+	void write_Screenshot_Path(const char* path) {
+		std::lock_guard<std::mutex> lock(pDat_Screenshot_Path_Mutex);
+		pDat_Screenshot_Path.assign(path);
+	}
+	const std::string read_Screenshot_Path() {
+		std::lock_guard<std::mutex> lock(pDat_Screenshot_Path_Mutex);
+		return pDat_Screenshot_Path;
+	}
+
 /* Render Configuration */
 	std::mutex pDat_Engine_Render_Configuration_Mutex;
 	Render_Configurator pDat_Engine_Render_Configuration;

@@ -193,25 +193,27 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			char id_number[64]; memset(id_number,'\0',sizeof(id_number));
 			snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.formula);
 			const char* fractal_name = (image_fractal_data.polarMandelbrot == true) ? FractalTypeFileText[Fractal_Polar_Mandelbrot] : FractalTypeFileText[Fractal_ABS_Mandelbrot];
-			size_t size = (size_t)snprintf(nullptr, 0, "Super_%s%s_(%" PRId64 ")", fractal_name, id_number,curTime);
+			const char* format_str = "Super_%s-%s_(%" PRId64 ")";
+			size_t size = (size_t)snprintf(nullptr, 0, format_str, fractal_name, id_number,curTime);
 			size++;
 			char* name = (char*)calloc(size,sizeof(char));
-			snprintf(name, size, "Super_%s%s_(%" PRIu64 ")", fractal_name, id_number, curTime);
-			char path[] = "./";
+			snprintf(name, size, format_str, fractal_name, id_number, curTime);
+			std::string path = read_Screenshot_Path();
 			switch(image_file_format) {
 				case Image_File_Format::PNG:
-					valueClamp(image_quality, 1, 9);
-					writePNGImage(&image_box, path, name, image_quality);
-				break;
+					valueRestore(image_quality, 1, 9, 8);
+					writePNGImage(&image_box, path.c_str(), name, image_quality);
+					break;
 				case Image_File_Format::JPG:
-					valueClamp(image_quality, 30, 100);
-					writeJPGImage(&image_box, path, name, image_quality);
-				break;
+					valueRestore(image_quality, 30, 100, 95);
+					writeJPGImage(&image_box, path.c_str(), name, image_quality);
+					break;
 				default:
 					image_file_format = Image_File_Format::PNG;
 					image_quality = 8;
-					writePNGImage(&image_box, path, name, image_quality);
+					writePNGImage(&image_box, path.c_str(), name, image_quality);
 			};
+			FREE(name);
 		}
 		FREE(image_box.vram);
 	}

@@ -9,6 +9,18 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 
+/* Relative File Path */
+	static std::mutex mutex_RelativeFilePath;
+	static std::string string_RelativeFilePath = "./";
+	std::string get_RelativeFilePath() {
+		std::lock_guard<std::mutex> lock(mutex_RelativeFilePath);
+		return string_RelativeFilePath;
+	}
+	void set_RelativeFilePath(const std::string& path) {
+		std::lock_guard<std::mutex> lock(mutex_RelativeFilePath);
+		string_RelativeFilePath = path;
+	}
+
 /* TimerBox */
 	/* Constructors */
 		TimerBox::TimerBox() {

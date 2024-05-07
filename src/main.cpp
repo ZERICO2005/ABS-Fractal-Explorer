@@ -53,8 +53,36 @@ void print_pointer_sizes() {
 	fflush(stdout);
 }
 
+static void write_Program_RelativeFilePath(const char* path) {
+	if (path == nullptr) {
+		set_RelativeFilePath("./");
+		printError("argv[0] is nullptr");
+		return;
+	}
+	size_t len = strlen(path);
+	if (len == 0) {
+		set_RelativeFilePath("./");
+	}
+	size_t match_pos = 0;
+	for (size_t i = 0; i < len; i++) {
+		if (
+			#ifdef PLATFORM_WINDOWS
+			(path[i] == '\\') ||
+			#endif
+			(path[i] == '/')
+		) {
+			match_pos = i;
+		}
+	}
+	std::string path_str = path;
+	set_RelativeFilePath(path_str.substr(0, match_pos + 1));
+}
+
 int main(int argc, char* argv[]) {
 	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
+	
+	if (argc >= 1) { write_Program_RelativeFilePath(argv[0]); }
+
 	// print_pointer_sizes();
 
 	const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
@@ -64,9 +92,13 @@ int main(int argc, char* argv[]) {
 
 	/* Process .fracExp files */
 	if (argc >= 2) {
-		printFlush("\nArgument Count: %d\n",argc - 1);
-		if (strcmp(argv[1], "-cpu-info") == 0) {
-			print_Supported_CPU_Instruction(Available_CPU_Instruction);
+		// printFlush("\nArgument Count: %d\n",argc - 1);
+		bool printed_cpu_info = false;
+		for (int i = 1; i < argc; i++) {
+			if (strcmp(argv[i], "-cpu-info") == 0 && printed_cpu_info == false) {
+				print_Supported_CPU_Instruction(Available_CPU_Instruction);
+				printed_cpu_info = true;
+			}
 		}
 	}
 	

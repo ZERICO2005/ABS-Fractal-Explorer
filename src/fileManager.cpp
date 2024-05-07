@@ -20,17 +20,19 @@
 
 #ifdef fileManager_Platform_Windows
 	#include <windows.h>
+	#include <ShlObj.h>
 	int openFileInterface(
 		char* filePath, size_t filePathMaxLen,
 		const char* title,
 		const char* filter
 	) {
+	
 		if (filePathMaxLen == 0) { return -1; }
 		if (title == nullptr) { return -1; }
 		if (filter == nullptr) { return -1; }
 		size_t len = (filePathMaxLen < MAX_PATH) ? filePathMaxLen : MAX_PATH;
 		memset(filePath,'\0',len);
-		OPENFILENAME ofn;
+		OPENFILENAME ofn = {0};
 		memset(&ofn,0,sizeof(ofn));
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = nullptr;
@@ -60,8 +62,9 @@
 		if (filter == nullptr) { return -1; }
 		size_t len = (filePathMaxLen < MAX_PATH) ? filePathMaxLen : MAX_PATH;
 		memset(filePath, '\0', len);
-		OPENFILENAME ofn;
+		OPENFILENAME ofn = {0};
 		memset(&ofn, 0, sizeof(ofn));
+
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = nullptr;
 		ofn.lpstrFilter = filter;
@@ -87,6 +90,51 @@
 		}
 		return 0;
 	}
+
+	int selectFolderInterface(
+		char* folderPath, size_t folderPathMaxLen,
+		const char* title
+	) {
+		if (folderPathMaxLen == 0) { return -1; }
+		if (title == nullptr) { return -1; }
+
+		size_t len = (folderPathMaxLen < MAX_PATH) ? folderPathMaxLen : MAX_PATH;
+		memset(folderPath, '\0', len);
+
+		BROWSEINFO bi = {0};
+		bi.lpszTitle = title;
+		bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+		LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+
+		if (pidl != 0) {
+			// Folder was selected
+			SHGetPathFromIDList(pidl, folderPath);
+
+			IMalloc *imalloc = 0;
+			if (SUCCEEDED(SHGetMalloc(&imalloc))) {
+				imalloc->Free(pidl);
+				imalloc->Release();
+			}
+
+			// Append backslash
+			if (len >= 2) {
+				// Up to the second to last character
+				for (size_t i = 0; i < len - 1; i++) {
+					// Find last character that is not the last index
+					if (folderPath[i] == '\0') {
+						folderPath[i] = '\\';
+						folderPath[i + 1] = '\0';
+						break;
+					}
+				}
+			}
+
+			return 0;
+		}
+		// User canceled
+		return 1;
+	}
+
 	int init_FileInterface(int argc, char* argv[]) {
 		return 0;
 	}
@@ -137,7 +185,7 @@
 
 /* Image Writers */
 
-int writePNGImage(const BufferBox* buf, char* path, char* name, uint32_t compression_level) {
+int writePNGImage(const BufferBox* buf, const char* path, const char* name, uint32_t compression_level) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -160,7 +208,7 @@ int writePNGImage(const BufferBox* buf, char* path, char* name, uint32_t compres
 	return ret;
 }
 
-int writeJPGImage(const BufferBox* buf, char* path, char* name, uint32_t quality) {
+int writeJPGImage(const BufferBox* buf, const char* path, const char* name, uint32_t quality) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -182,7 +230,7 @@ int writeJPGImage(const BufferBox* buf, char* path, char* name, uint32_t quality
 	return ret;
 }
 
-int writeTGAImage(const BufferBox* buf, char* path, char* name) {
+int writeTGAImage(const BufferBox* buf, const char* path, const char* name) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -204,7 +252,7 @@ int writeTGAImage(const BufferBox* buf, char* path, char* name) {
 	return ret;
 }
 
-int writeBMPImage(const BufferBox* buf, char* path, char* name) {
+int writeBMPImage(const BufferBox* buf, const char* path, const char* name) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
 	if (path == NULL) { printError("char* path is NULL"); return -1; }
 	if (name == NULL) { printError("char* name is NULL"); return -1; }
@@ -226,7 +274,7 @@ int writeBMPImage(const BufferBox* buf, char* path, char* name) {
 	return ret;
 }
 
-int writeHDRImage(const float* buf, uint32_t resX, uint32_t resY, uint8_t channels, char* path, char* name) {
+int writeHDRImage(const float* buf, uint32_t resX, uint32_t resY, uint8_t channels, const char* path, const char* name) {
 	/* Trival Errors */
 		if (buf == NULL) { printError("float* buf is NULL"); return -1; }
 		if (resX == 0 || resY == 0) { printError("Invalid dimensions %ux%u == 0",resX,resY); return -1; }
