@@ -1198,7 +1198,9 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // }
 
 void init_config_data() {
-	if (import_config_data(config_data,"./config.fracExpConfig") == 0) {
+	std::string import_path = get_RelativeFilePath();
+	import_path += "config.fracExpConfig";
+	if (import_config_data(config_data, import_path.c_str()) == 0) {
 		if (config_data.Automatic_Behaviour.AutoLoad_Config_File == false) {
 			default_User_Configuration_Data(config_data, true);
 			return;
@@ -1228,7 +1230,9 @@ void terminate_config_data() {
 	config_data.Display_Preferences.Previous_Display_Used =
 		(currentDisplay != nullptr) ? currentDisplay->getIndex() : 0;
 	
-	export_config_data(config_data,"./config.fracExpConfig");
+	std::string export_path = get_RelativeFilePath();
+	export_path += "config.fracExpConfig";
+	export_config_data(config_data, export_path.c_str());
 	// char filePath[324]; memset(filePath,'\0',sizeof(filePath));
 	// saveFileInterface(filePath,ARRAY_LENGTH(filePath));
 	// export_config_data(config_data,"./config.fracExpConfig");
@@ -1271,7 +1275,7 @@ void calculate_init_window_size(
 	// initPosY = 0;
 	initResX -= RESX_Margin;
 	initResY -= RESY_Margin;
-	if (config_data.Display_Preferences.ScaleWindowToScreenSize == true) {
+	if (config_data.Display_Preferences.ScaleWindowToScreenSize == false) {
 		if (initResX > RESX_Default) {
 			initResX = RESX_Default;
 		} else if (initResX < RESX_Minimum) {
@@ -1283,11 +1287,11 @@ void calculate_init_window_size(
 			initResY = RESY_Minimum;
 		}
 	} else {
-		initResX = calcMinMaxRatio(initResX,RESX_Minimum,RESX_Default,0.6);
+		initResX = calcMinMaxRatio(initResX, RESX_Minimum, RESX_Default, config_data.Display_Preferences.Bootup_Window_Scale);
 		if (initResX > RESX_Maximum) {
 			initResX = RESX_Maximum;
 		}
-		initResY = calcMinMaxRatio(initResY,RESY_Minimum,RESY_Default,0.6);
+		initResY = calcMinMaxRatio(initResY, RESY_Minimum, RESY_Default, config_data.Display_Preferences.Bootup_Window_Scale);
 		if (initResY > RESX_Maximum) {
 			initResY = RESX_Maximum;
 		}
@@ -2173,6 +2177,10 @@ int transformFracImage(const ImageBuffer& image, const Render_Data& ren) {
 }
 
 void fill_Background_Color(const ImageBuffer& image) {
+	if (Render_Background_Color == false) {
+		Master.clearBuffer();
+		return;
+	}
 	const ABS_Mandelbrot& FRAC = current_Fractal;
 	uint8_t frac_R = (uint8_t)(FRAC.exterior_R_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_R_Phase)));
 	uint8_t frac_G = (uint8_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase)));

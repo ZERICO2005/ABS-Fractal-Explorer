@@ -118,8 +118,8 @@ Frame_Pacer GUI_Frame_Pacer;
 	ABS_Mandelbrot current_Fractal = {0};
 	Render_Data primaryRenderData = {0};
 	Render_Data secondaryRenderData = {0};
-	
-	//#define Update_Level(level); update_level = ((level) > update_level) ? (level) : update_level;
+
+	bool Render_Background_Color = true;
 
 /* Keyboard */
 

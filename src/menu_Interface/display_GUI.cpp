@@ -95,7 +95,7 @@ void set_IMGUI_Theme(Display_GUI::IMGUI_Theme theme) {
 	};
 }
 
-void refresh_IMGUI(User_Configuration_Data& config) {
+void refresh_IMGUI(const User_Configuration_Data& config) {
 	set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config.GUI_Settings.GUI_Theme);
 }
 
@@ -113,6 +113,7 @@ int render_IMGUI() {
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos({0,0});
 	ImGui::SetNextWindowSize({(fp32)Master.resX,(fp32)RESY_UI});
+	ImGui::SetNextWindowBgAlpha(1.0f);
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_NoTitleBar;
 	window_flags |= ImGuiWindowFlags_NoResize;
@@ -176,15 +177,15 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	fp64 Render_FPS_Display = NANO_TO_FRAMERATE(Render_Time_Display);
 	
 	GUI_FrameRateColor = {
-		(fp32)linearInterpolationClamp(Frame_FPS_Display,59.0,119.0,1.0,0.0),
-		(fp32)linearInterpolationClamp(Frame_FPS_Display,0.0,29.0,0.0,1.0),
-		(fp32)linearInterpolationClamp(Frame_FPS_Display,29.0,59.0,0.0,1.0),
+		(fp32)linearInterpolationClamp(Frame_FPS_Display, 59.0, 119.0, 1.0, 0.0),
+		(fp32)linearInterpolationClamp(Frame_FPS_Display,  0.0,  29.0, 0.0, 1.0),
+		(fp32)linearInterpolationClamp(Frame_FPS_Display, 29.0,  59.0, 0.0, 1.0),
 		1.0
 	};
 	Render_FrameRateColor = {
-		(fp32)linearInterpolationClamp(Render_FPS_Display,59.0,119.0,1.0,0.0),
-		(fp32)linearInterpolationClamp(Render_FPS_Display,0.0,29.0,0.0,1.0),
-		(fp32)linearInterpolationClamp(Render_FPS_Display,29.0,59.0,0.0,1.0),
+		(fp32)linearInterpolationClamp(Render_FPS_Display, 59.0, 119.0, 1.0, 0.0),
+		(fp32)linearInterpolationClamp(Render_FPS_Display,  0.0,  29.0, 0.0, 1.0),
+		(fp32)linearInterpolationClamp(Render_FPS_Display, 29.0,  59.0, 0.0, 1.0),
 		1.0
 	};
 	if (GUI_Settings.GUI_Theme == Display_GUI::IMGUI_Theme_Light) {
@@ -240,7 +241,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 		} ImGui::SameLine();
 	#endif
 	if (Waiting_To_Abort_Rendering == true) {
-		ImGui::Text("Aborting...(%.1lfs)",NANO_TO_SECONDS(getNanoTime() - abortTimer));
+		ImGui::Text("Aborting...(%.1lfs)", NANO_TO_SECONDS(getNanoTime() - abortTimer));
 	} else {
 		if (Abort_Rendering_Flag == true) {
 			if (ImGui::Button("Resume Rendering")) {
@@ -272,7 +273,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 
 	ImGui::Text(
-		"Formula: %" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s Float%zu",
+		"Formula: %3" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s Float%zu",
 		FRAC.formula,(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
 	);
 	constexpr size_t temp_FloatCoordinate_len = 64;
@@ -457,7 +458,7 @@ void Menu_Coordinates() {
 		ImGui::Text("Stretch Image: 2.0^%.4" PRIfp64, FRAC.stretch);
 		constexpr fp64 Stretch_Step = 1.0 / 4.0;
 		constexpr fp64 Stretch_Step_Fast = 1.0;
-		if (ImGui::InputScalar("##input_stretch", ImGuiDataType_Double, &FRAC.stretch, &Stretch_Step, &Stretch_Step_Fast, "%.4" PRIfp64)) {
+		if (ImGui::InputScalar("##input_stretch", ImGuiDataType_Double, &FRAC.stretch, &Stretch_Step, &Stretch_Step_Fast, "%.5" PRIfp64)) {
 			valueRestore(FRAC.stretch, 0.0, STRETCH_VALUE_MINIMUM, STRETCH_VALUE_MAXIMUM);
 		}
 		ImGui::NewLine();
@@ -910,36 +911,39 @@ void Menu_Rendering() {
 			}
 			ImGui::NewLine();
 		ImGui::Unindent(); }
-		#ifdef Enable_OpenCV_Scaler
-		ImGui::CollapsingHeader("FRAME INTERPOLATION"); { ImGui::Indent();
-			static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
-			int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;
-			ImGui::Text("Frame Interpolation Method:");
-			if (ImGui::Combo("##Frame_Interpolation_Method", &OpenCV_interpolation_mode, BufAndLen(OpenCV_interpolation_mode_list))) {
-				// Should probably be replaced with a Map instead.
-				// switch (OpenCV_interpolation_mode) {
-				// 	case OPENCV_Interpolation::OPENCV_INTER_NEAREST:
-				// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
-				// 	break;
-				// 	case OPENCV_Interpolation::OPENCV_INTER_LINEAR:
-				// 		Frame_Interpolation_Method = cv::INTER_LINEAR;
-				// 	break;
-				// 	case OPENCV_Interpolation::OPENCV_INTER_CUBIC:
-				// 		Frame_Interpolation_Method = cv::INTER_CUBIC;
-				// 	break;
-				// 	case OPENCV_Interpolation::OPENCV_INTER_AREA:
-				// 		Frame_Interpolation_Method = cv::INTER_AREA;
-				// 	break;
-				// 	case OPENCV_Interpolation::OPENCV_INTER_LANCZOS4:
-				// 		Frame_Interpolation_Method = cv::INTER_LANCZOS4;
-				// 	break;
-				// 	default:
-				// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
-				// };
-			}
-			ImGui::Text("Nearest Neighbor is the fastest method. Other methods might not be able to hit 60.0fps at higher resolutions.");
+		if (ImGui::CollapsingHeader("FRAME INTERPOLATION")) { ImGui::Indent();
+			ImGui::Checkbox("Render Background Color", &Render_Background_Color);
+			ImGui::NewLine();
+			#ifdef Enable_OpenCV_Scaler
+				static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
+				int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;
+				ImGui::Text("Frame Interpolation Method:");
+				if (ImGui::Combo("##Frame_Interpolation_Method", &OpenCV_interpolation_mode, BufAndLen(OpenCV_interpolation_mode_list))) {
+					// Should probably be replaced with a Map instead.
+					// switch (OpenCV_interpolation_mode) {
+					// 	case OPENCV_Interpolation::OPENCV_INTER_NEAREST:
+					// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
+					// 	break;
+					// 	case OPENCV_Interpolation::OPENCV_INTER_LINEAR:
+					// 		Frame_Interpolation_Method = cv::INTER_LINEAR;
+					// 	break;
+					// 	case OPENCV_Interpolation::OPENCV_INTER_CUBIC:
+					// 		Frame_Interpolation_Method = cv::INTER_CUBIC;
+					// 	break;
+					// 	case OPENCV_Interpolation::OPENCV_INTER_AREA:
+					// 		Frame_Interpolation_Method = cv::INTER_AREA;
+					// 	break;
+					// 	case OPENCV_Interpolation::OPENCV_INTER_LANCZOS4:
+					// 		Frame_Interpolation_Method = cv::INTER_LANCZOS4;
+					// 	break;
+					// 	default:
+					// 		Frame_Interpolation_Method = cv::INTER_NEAREST;
+					// };
+				}
+				ImGui::Text("Nearest Neighbor is the fastest method. Other methods might not be able to hit 60.0fps at higher resolutions.");
+				ImGui::NewLine();
+			#endif
 		ImGui::Unindent(); }
-		#endif
 		if (ImGui::CollapsingHeader("CPU INFORMATION")) { ImGui::Indent();
 			const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
 			
@@ -1308,6 +1312,14 @@ void Menu_Settings() {
 				printDisplayInfo(initDisp);
 			}
 			ImGui::NewLine();
+			ImGui::Checkbox("Scale window based on screen-size", &config_Display.ScaleWindowToScreenSize);
+			if (config_Display.ScaleWindowToScreenSize == true) {
+				ImGui::Text("Bootup window scale: (0.6 default)");
+				fp32 temp_Bootup_Window_Scale = (fp32)config_Display.Bootup_Window_Scale;
+				ImGui::SliderFloat("##slider_bootup_window_scale: ", &temp_Bootup_Window_Scale, 0.0f, 1.0f);
+				config_Display.Bootup_Window_Scale = (fp64)temp_Bootup_Window_Scale;
+			}
+			ImGui::NewLine();
 		}
 		ImGui::SeparatorText("Windowed/Fullscreen"); {
 			using namespace Display_Fullscreen;
@@ -1441,7 +1453,7 @@ void Menu_Settings() {
 			ImGui::TextColored(highlight_color, "%s",
 				config_data.File_Paths.Path_Screenshot.c_str()
 			);
-			#ifndef PLATFORM_WINDOWS
+			#ifdef PLATFORM_WINDOWS
 				if (ImGui::Button("Set Screenshot Directory")) {
 					static char path_Screenshot[324]; memset(path_Screenshot,'\0',sizeof(path_Screenshot));
 					int setDirectoryState = selectFolderInterface(
@@ -1490,6 +1502,7 @@ void Menu_Settings() {
 		if(ImGui::Button("Default Configuration Data")) {
 			default_User_Configuration_Data(config_data, false);
 			set_IMGUI_Theme((Display_GUI::IMGUI_Theme)config_data.GUI_Settings.GUI_Theme);
+			refresh_IMGUI(config_data);
 		}
 		if(ImGui::Button("Reset Parameter Sensitivity")) { default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, false); }
 		#ifndef BUILD_RELEASE

@@ -124,6 +124,8 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern Render_Data primaryRenderData;
 	extern Render_Data secondaryRenderData;
 
+	extern bool Render_Background_Color;
+
 /* Keyboard */
 
 	extern const uint8_t* SDL_Keyboard_State;

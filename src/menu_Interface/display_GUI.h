@@ -21,7 +21,7 @@ int render_IMGUI();
 
 struct User_Configuration_Data;
 
-void refresh_IMGUI(User_Configuration_Data& config);
+void refresh_IMGUI(const User_Configuration_Data& config);
 
 namespace Display_GUI {
 	enum IMGUI_Theme {

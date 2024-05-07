@@ -73,14 +73,18 @@ void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type) {
 			FRAC.showFloatingJulia = false;
 			FRAC.adjustZoomToPower = false;
 			FRAC.polarMandelbrot = false;
+			FRAC.integerPolarPower = false;
 			FRAC.lockToCardioid = false;
 			FRAC.flipCardioidSide = false;
+			/* Power */
+			FRAC.power = 2;
+			FRAC.polarPower = FRAC.power;
 			/* Coordinates */
 			FRAC.r = 0.0;
 			FRAC.i = 0.0;
 			FRAC.zr = 0.0;
 			FRAC.zi = 0.0;
-			FRAC.zoom = -log10(getABSFractalMaxRadius(2.0));
+			FRAC.zoom = zoomDefault(FRAC.power);
 			/* Transformation */
 			FRAC.rot = 0.0;
 			FRAC.sX = 1.0;
@@ -89,9 +93,6 @@ void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type) {
 			/* Parameters */
 			FRAC.maxItr = 192;
 			FRAC.maxItr_Log2 = log2(192.0);
-			FRAC.power = 2;
-			FRAC.polarPower = 2.0;
-			FRAC.integerPolarPower = false;
 			FRAC.formula = 0;
 			FRAC.breakoutValue = 4096.0;
 			/* Coloring */
@@ -133,12 +134,15 @@ void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type) {
 			FRAC.integerPolarPower = false;
 			FRAC.lockToCardioid = false;
 			FRAC.flipCardioidSide = false;
+			/* Power */
+			FRAC.polarPower = 3.0;
+			FRAC.power = (uint32_t)FRAC.polarPower;
 			/* Coordinates */
 			FRAC.r = 0.0;
 			FRAC.i = 0.0;
 			FRAC.zr = 0.0;
 			FRAC.zi = 0.0;
-			FRAC.zoom = -log10(getABSFractalMaxRadius(3.0));
+			FRAC.zoom = zoomDefault(FRAC.polarPower);
 			/* Transformation */
 			FRAC.rot = 0.0;
 			FRAC.sX = 1.0;
@@ -147,8 +151,6 @@ void setDefaultParameters(ABS_Mandelbrot* frac, enum FractalTypeEnum type) {
 			/* Parameters */
 			FRAC.maxItr = 192;
 			FRAC.maxItr_Log2 = log2(192.0);
-			FRAC.power = 3;
-			FRAC.polarPower = 3.0;
 			FRAC.formula = 0;
 			FRAC.breakoutValue = 4096.0;
 			/* Coloring */
