@@ -522,8 +522,8 @@ void Menu_Fractal() {
 						}
 					} break;
 				}
+				ImGui::NewLine();
 			}
-			ImGui::NewLine();
 	ImGui::Unindent(); }
 
 	ImGui::SeparatorText("Julia Set"); { ImGui::Indent();
@@ -1503,7 +1503,6 @@ void Menu_Settings() {
 		
 	ImGui::Unindent(); }
 	
-
 	if (ImGui::CollapsingHeader("RESET DATA")) { ImGui::Indent();
 		ImGui::Text("Reset Configurations:");
 		if(ImGui::Button("Default Configuration Data")) {

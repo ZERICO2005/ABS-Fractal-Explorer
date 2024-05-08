@@ -474,10 +474,10 @@ void polarRender_Generic(FractalParameters(fpX, fpColor)) {
 			if (p0 >= p1 || ABORT_RENDERING == true) {
 				return;
 			}
-			fpColor outR = 0.0;
-			fpColor outG = 0.0;
-			fpColor outB = 0.0;
-			fpColor outA = 0.0;
+			fpColor outR = (fpColor)0.0;
+			fpColor outG = (fpColor)0.0;
+			fpColor outB = (fpColor)0.0;
+			fpColor outA = (fpColor)0.0;
 			for (int32_t v = 0; v < param.sample; v++) {
 				fpX yCord = (((fpX)y - param.numY) * param.neg_recip_numW);
 				for (int32_t u = 0; u < param.sample; u++) {
@@ -489,8 +489,8 @@ void polarRender_Generic(FractalParameters(fpX, fpColor)) {
 					fpX zi = (param.juliaSet) ? ((yCord * param.rotCos_PC + xCord * param.rotSin_PC) + param.imagCord) : param.imagJulia;
 					
 					fpX low = (fpX)4.0;
-					fpX zs = (fpX)(zr * zr + zi * zi);
-					fpX za = 0.0;
+					fpX zs = zr * zr + zi * zi;
+					fpX za = (fpX)0.0;
 					for (uint32_t itr = 0; itr < param.maxItr; itr++) {
 						za = atan2(zi, zr) * power;
 						zr = pow(zs, powerHalf) * cos(za) + cr;
@@ -512,7 +512,7 @@ void polarRender_Generic(FractalParameters(fpX, fpColor)) {
 				y++;
 			}
 			y -= param.sample;
-			if (outA != 0.0) {
+			if (outA != (fpColor)0.0) {
 				outR = outR / outA;
 				outG = outG / outA;
 				outB = outB / outA;
