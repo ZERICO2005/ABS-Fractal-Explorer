@@ -82,8 +82,8 @@ typedef int32_t dim32_t;
 	// Macro to Number
 	#define STR_N(x) STR_M(x)
 
-	#define ARRAY_LENGTH(x) ( (sizeof(x[0]) != 0) ? (sizeof(x) / sizeof(x[0])) : 0 )
-	#define TEXT_LENGTH(x) ( (sizeof(x[0]) != 0) ? ( ((sizeof(x) / sizeof(x[0])) != 0) ? ((sizeof(x) / sizeof(x[0])) - 1) : 0 ) : 0 )
+	#define ARRAY_LENGTH(x)  (sizeof(x) / sizeof(x[0]))
+	#define TEXT_LENGTH(x) ( ((sizeof(x) / sizeof(x[0])) != 0) ? ((sizeof(x) / sizeof(x[0])) - 1) : 0 )
 	#define FREE(x) free(x); x = nullptr
 
 /* Functions */

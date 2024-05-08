@@ -16,19 +16,29 @@
 	*(true)*<br>
 	Automatically exports configurations to `./config.fracExpConfig`
 
+# File_Paths
+	Absoulte paths to files/folders. These paths will not be used if ABS-Fractal-Explorer detects that it is being run from a different computer/system.
+	
+	## Path_Screenshots
+		The directory/folder that screenshots will be written to.
+		
+	## Path_FracExpKB
+		(Unimplemented)
+		The location of the file where key-binds will be loaded from at startup.
+
 # Parameter_Sensitivity
 	Determines the speed that position, zoom, etc. will change by.
-	* global: 1.000000
+	* global: 1.00
 	global sensitivity adjusts all sensitivities by the same amount.
-	* coordinate: 1.000000
-	* zoom: 1.000000
+	* coordinate: 1.00
+	* zoom: 1.00
 	* invert_zoom: false
-	* maxIter: 1.000000
-	* julia: 1.000000
-	* rotation: 1.000000
-	* stretch: 1.000000
-	* polar_power: 1.000000
-	* breakout_value: 1.000000
+	* maxIter: 1.00
+	* julia: 1.00
+	* rotation: 1.00
+	* stretch: 1.00
+	* polar_power: 1.00
+	* breakout_value: 1.00
 
 # Display_Preferences
 	## Display_Bootup_Type

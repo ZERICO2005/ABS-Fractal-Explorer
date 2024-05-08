@@ -356,76 +356,26 @@ void Menu_Coordinates() {
 		ImGui::NewLine();
 	ImGui::Unindent(); }
 	ImGui::SeparatorText("Parameters"); { ImGui::Indent();
-		ImGui::Text("Maximum Iterations:");
+		/* Iterations */
+			ImGui::Text("Maximum Iterations:");
 			uint32_t temp_Iterations = FRAC.maxItr;
 			constexpr uint32_t Iterations_Step = 16;
 			constexpr uint32_t Iterations_Step_Fast = 256;
 			if (ImGui::InputScalar("##input_maxIter", ImGuiDataType_U32, &temp_Iterations, &Iterations_Step, &Iterations_Step_Fast, "%" PRIu32)) {
 				setMaxItr(&FRAC, temp_Iterations);
 			}
-		ImGui::NewLine();
-	ImGui::Unindent(); }
-	ImGui::SeparatorText("Fractal Formula and Power"); { ImGui::Indent();
-		if (current_Fractal.polarMandelbrot == true) {
-			constexpr fp64 Polar_Power_Step = 1.0;
-			constexpr fp64 Polar_Power_Step_Fast = 0.1;
-			ImGui::Text("Power: %s", getPowerText(round(FRAC.polarPower)));
-			if (ImGui::InputScalar("##input_polar_power", ImGuiDataType_Double, &FRAC.polarPower, &Polar_Power_Step, &Polar_Power_Step_Fast, "%.5" PRIfp64)) {
-				valueClamp(FRAC.polarPower, POLAR_POWER_MINIMUM, POLAR_POWER_MAXIMUM);
-			}
-		} else {
-			constexpr uint32_t Mandelbrot_Power_Step = 1;
-			constexpr uint32_t Mandelbrot_Power_Step_Fast = 1;
-			ImGui::Text("Power: %s", getPowerText((uint32_t)FRAC.power));
-			if (ImGui::InputScalar("##input_power", ImGuiDataType_U32, &FRAC.power, &Mandelbrot_Power_Step, &Mandelbrot_Power_Step_Fast, "%" PRIu32)) {
-				valueClamp(FRAC.power, MANDELBROT_POWER_MINIMUM, MANDELBROT_POWER_MAXIMUM);
-			}
-		}
-		ImGui::NewLine();
-		ImGui::Text("Fractal Formula:");
-			static bool inputHexadecimal = false;
-			if (inputHexadecimal == true) {
-				Int_InputText("##input_formula", FRAC.formula, "%" PRIX64, stringTo_Uint64, 16);
+			ImGui::NewLine();
+
+		/* Breakout Value */
+			fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
+			if (FRAC.breakoutValue < 100.0) {
+				ImGui::Text("Breakout Value: %.3lf", sqrt(FRAC.breakoutValue));
 			} else {
-				Int_InputText("##input_formula", FRAC.formula, "%" PRIu64, stringTo_Uint64, 10);
+				ImGui::Text("Breakout Value: %.1lf", sqrt(FRAC.breakoutValue));
 			}
-			ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
-			
-			if (FRAC.polarMandelbrot == false) {
-				switch (FRAC.power) {
-					case Mandelbrot_Quadratic: {
-						ImGui::NewLine();
-						ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
-						int Combo_Quadractic_Fractals = 0;
-						if (ImGui::Combo("##Combo_Quadratic_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
-							if (Combo_Quadractic_Fractals != 0) {
-								FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
-							}
-						}
-					} break;
-					case Mandelbrot_Cubic: {
-						ImGui::NewLine();
-						ImGui::Text("Select a fractal from the \"330 Cubic Fractals\" video:");
-						int Combo_Cubic_Fractals = 0;
-						if (ImGui::Combo("##Combo_Cubic_Fractals", &Combo_Cubic_Fractals, Cubic_Fractals_Text, ARRAY_LENGTH(Cubic_Fractals_Text))) {
-							if (Combo_Cubic_Fractals != 0) {
-								FRAC.formula = Cubic_Fractals_Formula[Combo_Cubic_Fractals];
-							}
-						}
-					} break;
-					case Mandelbrot_Quartic: {
-						ImGui::NewLine();
-						ImGui::Text("Select one of the \"5265 Quartic Fractals\":");
-						int Combo_Quartic_Fractals = 0;
-						if (ImGui::Combo("##Combo_Cubic_Fractals", &Combo_Quartic_Fractals, Quartic_Fractals_Text, ARRAY_LENGTH(Quartic_Fractals_Text))) {
-							if (Combo_Quartic_Fractals != 0) {
-								FRAC.formula = Quartic_Fractals_Formula[Combo_Quartic_Fractals];
-							}
-						}
-					} break;
-				}
-			}
-		ImGui::NewLine();
+			ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,"");
+			FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
+			ImGui::NewLine();
 	ImGui::Unindent(); }
 	ImGui::SeparatorText("Julia Set:"); { ImGui::Indent();
 		ImGui::Text("Julia Coordinate:");
@@ -439,8 +389,9 @@ void Menu_Coordinates() {
 			FRAC.zi = juliaMagnitude * sin(juliaTheta);
 		}
 		ImGui::NewLine();
-		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
-		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
+		if (ImGui::Button("Julia Set Options")) {
+			buttonSelection = GUI_Menu_Fractal;
+		}
 		ImGui::NewLine();
 	ImGui::Unindent(); }
 
@@ -479,35 +430,118 @@ void Menu_Fractal() {
 
 	ABS_Mandelbrot& FRAC = current_Fractal;
 
-	static int Combo_FractalType = 0;
-	ImGui::Text("Fractal Type:");
-    if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
-		switch(Combo_FractalType) {
-			case Fractal_ABS_Mandelbrot:
-				setDefaultParameters(&current_Fractal, Fractal_ABS_Mandelbrot);
-			break;
-			case Fractal_Polar_Mandelbrot:
-				setDefaultParameters(&current_Fractal, Fractal_Polar_Mandelbrot);
-			break;
-			default:
-			printError("Unknown Fractal Type: %" PRId32, Combo_FractalType);
+	int Combo_FractalType = FRAC.polarMandelbrot ? Fractal_Polar_Mandelbrot : Fractal_ABS_Mandelbrot;
+	ImGui::Text("Fractal Type:"); {
+		if (ImGui::Combo("##fractalType", &Combo_FractalType, BufAndLen(FractalTypeText))) {
+			switch(Combo_FractalType) {
+				case Fractal_ABS_Mandelbrot:
+					setDefaultParameters(&FRAC, Fractal_ABS_Mandelbrot);
+				break;
+				case Fractal_Polar_Mandelbrot:
+					setDefaultParameters(&FRAC, Fractal_Polar_Mandelbrot);
+				break;
+				default:
+				printError("Unknown Fractal Type: %" PRId32, Combo_FractalType);
+			}
 		}
-    }
-	ImGui::NewLine();
-	ImGui::Separator(); { ImGui::Indent();
-		fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
-		fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
-		ImGui::Text("Fractal Radius: %.6lg",maxRadius);
-		ImGui::Text("Cardioid Location: %.6lg",minRadius);
-		if (Combo_FractalType == Fractal_ABS_Mandelbrot) {
-			ImGui::Text("Fractal Power: %s",getPowerText((uint32_t)FRAC.power));
-			int temp_input_power = (int)FRAC.power;
-			ImGui::InputInt("##temp_input_power",&temp_input_power,1,1); FRAC.power = (uint32_t)temp_input_power;
-			valueClamp(FRAC.power, 2, 6); // Support up to Sextic
-		} else {
-			fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
-			ImGui::Text("Fractal Power: %s",getPowerText(round(FRAC.polarPower)));
-			ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f"); FRAC.polarPower = (fp64)temp_input_polar_power;
+		ImGui::NewLine();
+	}
+	ImGui::SeparatorText("Fractal Formula and Power"); { ImGui::Indent();
+		/* Radius */
+			fp64 maxRadius = getABSFractalMaxRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
+			fp64 minRadius = getABSFractalMinRadius((Combo_FractalType == Fractal_ABS_Mandelbrot) ? (fp64)FRAC.power : FRAC.polarPower);
+			ImGui::Text("Fractal Radius: %.6lf",maxRadius);
+			ImGui::Text("Cardioid Location: %.6lf",minRadius);
+			ImGui::NewLine();
+		/* Power */
+			if (FRAC.polarMandelbrot == true) {
+				static bool use_Power_Sliders = true;
+				constexpr fp64 Polar_Power_Step = 1.0;
+				constexpr fp64 Polar_Power_Step_Fast = 0.1;
+				ImGui::Text("Power: %s", getPowerText(round(FRAC.polarPower)));
+				if (use_Power_Sliders == true) {
+					fp32 temp_input_polar_power = (fp32)FRAC.polarPower;
+					ImGui::SliderFloat("##input_polar_power",&temp_input_polar_power,(fp32)POLAR_POWER_MINIMUM,(fp32)POLAR_POWER_MAXIMUM,"%.4f");
+					FRAC.polarPower = (fp64)temp_input_polar_power;
+				} else {
+					if (ImGui::InputScalar("##input_polar_power", ImGuiDataType_Double, &FRAC.polarPower, &Polar_Power_Step, &Polar_Power_Step_Fast, "%.5" PRIfp64)) {
+						valueClamp(FRAC.polarPower, POLAR_POWER_MINIMUM, POLAR_POWER_MAXIMUM);
+					}
+				}
+				ImGui::Checkbox("Use Sliders##Use_Power_Sliders", &use_Power_Sliders);
+			} else {
+				constexpr uint32_t Mandelbrot_Power_Step = 1;
+				constexpr uint32_t Mandelbrot_Power_Step_Fast = 1;
+				ImGui::Text("Power: %s", getPowerText((uint32_t)FRAC.power));
+				if (ImGui::InputScalar("##input_power", ImGuiDataType_U32, &FRAC.power, &Mandelbrot_Power_Step, &Mandelbrot_Power_Step_Fast, "%" PRIu32)) {
+					valueClamp(FRAC.power, MANDELBROT_POWER_MINIMUM, MANDELBROT_POWER_MAXIMUM);
+				}
+			}
+			ImGui::NewLine();
+
+		/* Formula */
+			if (FRAC.polarMandelbrot == false) {
+				ImGui::Text("Fractal Formula:");
+				static bool inputHexadecimal = false;
+				if (inputHexadecimal == true) {
+					Int_InputText("##input_formula", FRAC.formula, "%" PRIX64, stringTo_Uint64, 16);
+				} else {
+					Int_InputText("##input_formula", FRAC.formula, "%" PRIu64, stringTo_Uint64, 10);
+				}
+				ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
+			
+				switch (FRAC.power) {
+					case Mandelbrot_Quadratic: {
+						ImGui::NewLine();
+						ImGui::Text("Select a fractal from the \"75 Mandelbrot Variants\" video:");
+						int Combo_Quadractic_Fractals = 0;
+						if (ImGui::Combo("##Combo_Quadratic_Fractals", &Combo_Quadractic_Fractals, Quadratic_Fractals_Text, ARRAY_LENGTH(Quadratic_Fractals_Text))) {
+							if (Combo_Quadractic_Fractals != 0) {
+								FRAC.formula = Quadratic_Fractals_Formula[Combo_Quadractic_Fractals];
+							}
+						}
+					} break;
+					case Mandelbrot_Cubic: {
+						ImGui::NewLine();
+						ImGui::Text("Select a fractal from the \"330 Cubic Fractals\" video:");
+						int Combo_Cubic_Fractals = 0;
+						if (ImGui::Combo("##Combo_Cubic_Fractals", &Combo_Cubic_Fractals, Cubic_Fractals_Text, ARRAY_LENGTH(Cubic_Fractals_Text))) {
+							if (Combo_Cubic_Fractals != 0) {
+								FRAC.formula = Cubic_Fractals_Formula[Combo_Cubic_Fractals];
+							}
+						}
+					} break;
+					case Mandelbrot_Quartic: {
+						ImGui::NewLine();
+						ImGui::Text("Select one of the \"5265 Quartic Fractals\":");
+						int Combo_Quartic_Fractals = 0;
+						if (ImGui::Combo("##Combo_Cubic_Fractals", &Combo_Quartic_Fractals, Quartic_Fractals_Text, ARRAY_LENGTH(Quartic_Fractals_Text))) {
+							if (Combo_Quartic_Fractals != 0) {
+								FRAC.formula = Quartic_Fractals_Formula[Combo_Quartic_Fractals];
+							}
+						}
+					} break;
+				}
+			}
+			ImGui::NewLine();
+	ImGui::Unindent(); }
+
+	ImGui::SeparatorText("Julia Set"); { ImGui::Indent();
+		ImGui::Text("Julia Set Options:");
+		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
+		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
+		Item_Tooltip("Toggles initial Z values when rendering the Mandelbrot Set");
+
+		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
+		if (FRAC.cursorZValue) {
+			ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue);
+			Item_Tooltip("Ignores the zoom value when calculating cursor Z values");
+		}
+		ImGui::NewLine();
+	ImGui::Unindent(); }
+
+	ImGui::SeparatorText("Fractal Options"); { ImGui::Indent();
+		if (Combo_FractalType == Fractal_Polar_Mandelbrot) {
 			ImGui::Checkbox("Lock position to Cardioid",&FRAC.lockToCardioid);
 			if (FRAC.lockToCardioid) {
 				ImGui::Checkbox("Flip Cardioid position",&FRAC.flipCardioidSide);
@@ -515,34 +549,7 @@ void Menu_Fractal() {
 			ImGui::Checkbox("Integer Powers",&FRAC.integerPolarPower);
 		}
 		ImGui::Checkbox("Adjust zoom value to power",&FRAC.adjustZoomToPower);
-		// fp32 temp_input_maxItr = (fp32)log2(FRAC.maxItr);
-		// ImGui::Text("Maximum Iterations: %" PRIu32,FRAC.maxItr);
-		// ImGui::SliderFloat("##temp_super_screenshot_maxItr",&temp_input_maxItr,log2(16.0f),log2(16777216.0f),"");
-		// FRAC.maxItr = (uint32_t)(pow(2.0f,temp_input_maxItr));
-		// valueClamp(FRAC.maxItr,16,16777216); valueClamp(temp_input_maxItr,log2(16.0f),log2(16777216.0f));
 		
-		ImGui::NewLine();
-		
-		fp32 temp_input_breakoutValue = (fp32)log2(FRAC.breakoutValue);
-		if (FRAC.breakoutValue < 100.0) {
-			ImGui::Text("Breakout Value: %.3lf",FRAC.breakoutValue);
-		} else {
-			ImGui::Text("Breakout Value: %.1lf",FRAC.breakoutValue);
-		}
-		ImGui::SliderFloat("##input_breakoutValue",&temp_input_breakoutValue,-2.0,32.0,"");
-		FRAC.breakoutValue = pow(2.0,(fp64)temp_input_breakoutValue);
-		ImGui::NewLine();
-	ImGui::Unindent(); }
-
-	ImGui::Separator(); { ImGui::Indent();
-		ImGui::Text("Julia Set Options:");
-		ImGui::Checkbox("Render Julia Set",&FRAC.juliaSet);
-		ImGui::Checkbox("Toggle starting Z values",&FRAC.startingZ);
-		ImGui::Checkbox("Use Cursor for Z values",&FRAC.cursorZValue);
-		if (FRAC.cursorZValue) {
-			ImGui::Checkbox("Use relative Z values",&FRAC.relativeZValue);
-			Item_Tooltip("Ignores the zoom value when calculating cursor Z values");
-		}
 		ImGui::NewLine();
 	ImGui::Unindent(); }
 	

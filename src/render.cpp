@@ -37,6 +37,8 @@ constexpr uint8_t color_square_divider = 2; // 5 dark, 4 dim, 3 ambient, 2 brigh
 // ImageBuffer primaryFracImage;
 // ImageBuffer secondaryFracImage;
 
+static bool force_quit_flag = false;
+
 int exportScreenshot();
 int exportSuperScreenshot();
 
@@ -191,7 +193,7 @@ void updateKeys() {
 			if (bind.key == (SDL_Scancode)i) {
 				Key_Function::Key_Function_Enum func = bind.func;
 				if (Lock_Key_Inputs == true) { // Only listens to FUNCTION key-binds when key inputs are locked
-					if (func <= Key_Function::SCREEN_SPLIT || func >= Key_Function::FUNCTIONS) {
+					if (func <= Key_Function::FORMULA /* Key_Function::SCREEN_SPLIT */ || func >= Key_Function::FUNCTIONS) {
 						continue;
 					}
 				}
@@ -216,7 +218,7 @@ void recolorKeyboard() {
 			{NONE,0.0,0.0,0.5},
 			{COORDINATES,0.0,0.7,1.0},{TRANSFORMATIONS,180.0,0.7,1.0},{JULIA,300.0,0.6,1.0},
 			{PARAMETERS,59.9,1.0,1.0},{POLAR,240.0,0.7,0.7},{FORMULA,210.0,0.3,0.8},
-			{SCREEN_SPLIT,30.0,0.3,1.0},{FUNCTIONS,120.0,0.8,0.8},{RENDERING,180.0,0.4,0.6},
+			/* {SCREEN_SPLIT,30.0,0.3,1.0}, */ {FUNCTIONS,120.0,0.8,0.8},{RENDERING,180.0,0.4,0.6},
 		};
 		struct init_key_RGB {
 			enum Key_Function_Enum type;
@@ -652,11 +654,14 @@ int_enum updateFractalParameters() {
 		
 		paramToggle(toggleAdjustZoomToPower, FRAC.adjustZoomToPower, 0.4);
 		paramToggleUpdate(toggleJulia, FRAC.juliaSet, 0.4, Major_Reset);
-		paramToggleUpdate(toggleABSandPolarMandelbrot, FRAC.polarMandelbrot, 0.4, Major_Reset);
+		paramToggleUpdate(togglePolarMandelbrot, FRAC.polarMandelbrot, 0.4, Major_Reset);
 		paramToggle(toggleRelativeZValue, FRAC.relativeZValue, 0.4);
 		paramToggle(toggleCursorZValue, FRAC.cursorZValue, 0.4);
 		paramToggleUpdate(toggleStartingZ, FRAC.startingZ, 0.4, Minor_Reset);
 		paramToggleUpdate(toggleIntegerPower, FRAC.integerPolarPower, 0.4, Minor_Reset);
+
+		paramToggle(lockToCardioid, FRAC.lockToCardioid, 0.4);
+		paramToggle(flipCardioidSide, FRAC.flipCardioidSide, 0.4);
 		
 	/* Real and Imaginary Coordinates */
 		if (func_stat[incRealPos].triggered == true) {
@@ -851,11 +856,17 @@ int_enum updateFractalParameters() {
 		if (funcTimeDelay(rotate180,0.3)) {
 			FRAC.rot += (TAU * (180.0/360.0));
 		}
-		if (funcTimeDelay(clockwiseRotStep, 1.0/10.0)) {
+		if (funcTimeDelay(clockwiseRot15, 1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
 		}
-		if (funcTimeDelay(counterclockwiseRotStep, 1.0/10.0)) {
+		if (funcTimeDelay(counterclockwiseRot15, 1.0/10.0)) {
+			FRAC.rot -= (TAU * (15.0/360.0));
+		}
+		if (funcTimeDelay(clockwiseRot5, 1.0/10.0)) {
 			FRAC.rot += (TAU * (15.0/360.0));
+		}
+		if (funcTimeDelay(counterclockwiseRot5, 1.0/10.0)) {
+			FRAC.rot -= (TAU * (15.0/360.0));
 		}
 		if (funcTimeDelay(clockwiseRotPower, 1.0/6.0)) {
 			FRAC.rot += (TAU * (1.0 / (fp64)((FRAC.power - 1) * 2)));
@@ -876,6 +887,9 @@ int_enum updateFractalParameters() {
 		}
 		if (funcTimeDelay(resetStretch, 0.2)) {
 			FRAC.stretch = 0.0;
+		}
+		if (funcTimeDelay(reverseStretch, 0.4)) {
+			FRAC.stretch *= -1.0;
 		}
 		if (funcTimeDelay(resetTransformations, 0.2)) {
 			FRAC.rot = 0.0;
@@ -936,21 +950,21 @@ int_enum updateFractalParameters() {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
-		if (funcTimeDelay(fp16GpuRendering, 0.2)) {
-			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float16)) {
-				write_Update_Level(Change_Level::Method_of_Rendering);
-			}
-		}
+		// if (funcTimeDelay(fp16GpuRendering, 0.2)) {
+		// 	if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float16)) {
+		// 		write_Update_Level(Change_Level::Method_of_Rendering);
+		// 	}
+		// }
 		if (funcTimeDelay(fp32GpuRendering, 0.2)) {
 			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float32)) {
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
-		if (funcTimeDelay(fp64GpuRendering, 0.2)) {
-			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float64)) {
-				write_Update_Level(Change_Level::Method_of_Rendering);
-			}
-		}
+		// if (funcTimeDelay(fp64GpuRendering, 0.2)) {
+		// 	if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float64)) {
+		// 		write_Update_Level(Change_Level::Method_of_Rendering);
+		// 	}
+		// }
 		
 		primaryRenderData.render_precision = Render_Config.get_Render_Precision();
 		primaryRenderData.render_method = Render_Config.get_Render_Method();
@@ -973,23 +987,29 @@ int_enum updateFractalParameters() {
 	/* Polar Mandelbrot */
 	/* Global Application Functions */
 	#define GUI_MENU_TOGGLE(m) buttonSelection = (buttonSelection == (m)) ? -1 : (m);
+		if (funcTimeDelay(closeMenu,0.2)) {
+			buttonSelection = -1;
+		}
 		if (funcTimeDelay(inputFormula,0.4)) {
 			GUI_MENU_TOGGLE(GUI_Menu_Coordinates);
 		}
 		if (funcTimeDelay(inputPower,0.4)) {
 			GUI_MENU_TOGGLE(GUI_Menu_Fractal);
 		}
+		if (funcTimeDelay(openCordinateMenu,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_Coordinates);
+		}
 		if (funcTimeDelay(openFractalMenu,0.4)) {
 			GUI_MENU_TOGGLE(GUI_Menu_Fractal);
-		}
-		if (funcTimeDelay(openKeyBindsMenu,0.4)) {
-			GUI_MENU_TOGGLE(GUI_Menu_KeyBinds);
 		}
 		if (funcTimeDelay(openRenderingMenu,0.4)) {
 			GUI_MENU_TOGGLE(GUI_Menu_Rendering);
 		}
 		if (funcTimeDelay(openSettingsMenu,0.4)) {
 			GUI_MENU_TOGGLE(GUI_Menu_Settings);
+		}
+		if (funcTimeDelay(openKeyBindsMenu,0.4)) {
+			GUI_MENU_TOGGLE(GUI_Menu_KeyBinds);
 		}
 		if (funcTimeDelay(toggleFullscreen,0.4)) {
 			toggle_Window_Fullscreen_Mode();
@@ -1003,6 +1023,15 @@ int_enum updateFractalParameters() {
 		}
 		if (funcTimeDelay(takeSuperScreenshot,0.4)) {
 			exportSuperScreenshot();
+		}
+		if (funcTimeDelay(abortRendering,0.2)) {
+			Abort_Rendering_Flag = true;
+			Waiting_To_Abort_Rendering = true;
+			write_Abort_Render_Ongoing(true);
+			abortTimer = getNanoTime();
+		}
+		if (funcTimeDelay(exitApplication,0.4)) {
+			force_quit_flag = true;
 		}
 	write_Update_Level(update_level);
 	return update_level;
@@ -1067,6 +1096,10 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 				ABORT_RENDERING = true;
 				QUIT_FLAG = true;
 			}
+		}
+		if (force_quit_flag == true) {
+			QUIT_FLAG = true;
+			ABORT_RENDERING = true;
 		}
 		updateKeys();
 		if (GUI_FrameTimer.timerReset()) {
@@ -1993,7 +2026,7 @@ size_t calculate_Dst_Buf_overlap_with_Src_Buf(
 
 /* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
 int Manually_Transform_Frame(const ImageBuffer& image) {
-	nano64_t startTime = getNanoTime();
+	// nano64_t startTime = getNanoTime();
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	ABS_Mandelbrot& FRAC = current_Fractal;
@@ -2160,12 +2193,12 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 
 	renderJuliaCordinatePoint(blit);
 
-	nano64_t endTime = getNanoTime();
-	printfInterval(0.4,
-		"\ntime(%d): %.3lfms %.3lfFPS ", MT_Value,
-		NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
-		NANO_TO_FRAMERATE(endTime - startTime)
-	);
+	// nano64_t endTime = getNanoTime();
+	// printfInterval(0.4,
+	// 	"\ntime(%d): %.3lfms %.3lfFPS ", MT_Value,
+	// 	NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
+	// 	NANO_TO_FRAMERATE(endTime - startTime)
+	// );
 	return 0;
 }
 

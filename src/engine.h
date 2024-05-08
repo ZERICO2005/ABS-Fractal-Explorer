@@ -22,43 +22,103 @@ void get_GPU_Hardware_Hash(uint64_t& hash);
 
 /* Enum of Functions that can be activated by a KeyboardScancode */
 namespace Key_Function {
+	
 	const char* const Key_Function_Text[] = {
 		"NONE",
-		"incRealPos","decRealPos","resetRealPos","incImagPos","decImagPos","resetImagPos","incZoom","decZoom","resetZoom","resetCoordinates",
-		"COORDINATES",
-		"clockwiseRot","counterclockwiseRot","resetRotation","clockwiseRot90","rotate180","counterclockwiseRot90","flipHorizontal","flipVertical","resetFlip","clockwiseRotStep","counterclockwiseRotStep","clockwiseRotPower","counterclockwiseRotPower","incStretch","decStretch","resetStretch","resetTransformations",
-		"TRANSFORMATIONS",
-		"toggleJulia","toggleStartingZ","toggleCursorZValue","toggleRelativeZValue","incZReal","decZReal","resetZReal","incZImag","decZImag","resetZImag",
-		"JULIA",
-		"incMaxItr","decMaxItr","resetMaxItr","toggleAutoItr","incBreakout","decBreakout","resetBreakout","toggleAdjustZoomToPower",
-		"PARAMETERS",
-		"toggleABSandPolarMandelbrot","roundPower","floorPower","ceilingPower","toggleIntegerPower","lockToCardioid","flipCardioidSide",
-		"POLAR",
-		"inputFormula","resetFormula","incFormula","decFormula","incFamily","decFamily","inputPower","resetPower","incPower","decPower",
-		"FORMULA",
-		"toggleScreenSplit","nextScreenSplit","prevScreenSplit","clockwiseCornerSplit","counterClockwiseCornerSplit","toggleFloatingWindow","swapPrimaryAndSecondary",
-		"SCREEN_SPLIT",
-		"openFractalMenu","exportFractal","importFractal","takeScreenshot","takeSuperScreenshot","openRenderingMenu","openSettingsMenu","openKeyBindsMenu","abortRendering","exitApplication","toggleFullscreen","toggleMenuBar","toggleCordinateBar","toggleButtonBar",
-		"FUNCTIONS",
-		"refreshFractal","switchCPUandGPU","fp16GpuRendering","fp32GpuRendering","fp64GpuRendering","fp32CpuRendering","fp64CpuRendering","fp80CpuRendering","fp128CpuRendering","incSuperSample","decSuperSample","resetSuperSample","incSubSample","decSubSample","resetSubSample",
-		"RENDERING",
-		"Parameter_Function_Count"
+		/* Cordinates */
+			"incRealPos", "decRealPos", "resetRealPos",
+			"incImagPos", "decImagPos", "resetImagPos",
+			"incZoom"   , "decZoom"   , "resetZoom"   ,
+			"resetCoordinates",
+			"COORDINATES",
+		/* Transformations */
+			"clockwiseRot"     , "counterclockwiseRot"    , "resetRotation",
+			"clockwiseRot90"   , "counterclockwiseRot90"  , "rotate180"    ,
+			"clockwiseRot15"   , "counterclockwiseRot15"  ,
+			"clockwiseRot5"    , "counterclockwiseRot5"   ,
+			// "clockwiseRotStep" , "counterclockwiseRotStep",
+			"clockwiseRotPower", "counterclockwiseRotPower",
+			// "flipHorizontal", "flipVertical", "resetFlip",
+			"incStretch", "decStretch", "resetStretch", "reverseStretch",
+			"resetTransformations",
+			"TRANSFORMATIONS",
+		/* Julia */
+			"toggleJulia",
+			"toggleStartingZ",
+			"toggleCursorZValue",
+			"toggleRelativeZValue",
+			"incZReal", "decZReal", "resetZReal",
+			"incZImag", "decZImag", "resetZImag",
+			"JULIA",
+		/* Parameters */
+			"incMaxItr", "decMaxItr", "resetMaxItr",
+			// "toggleAutoItr",
+			"incBreakout", "decBreakout", "resetBreakout",
+			"toggleAdjustZoomToPower",
+			"PARAMETERS",
+		/* Polar */
+			"togglePolarMandelbrot",
+			"roundPower", "floorPower", "ceilingPower",
+			"toggleIntegerPower",
+			"lockToCardioid",
+			"flipCardioidSide",
+			"POLAR",
+		/* Formula */
+			"inputFormula", "resetFormula",
+			"incFormula"  , "decFormula"  ,
+			"incFamily"   , "decFamily"   ,
+			"inputPower"  , "resetPower"  ,
+			"incPower"    , "decPower"    ,
+			"FORMULA",
+		/* Screen Split */
+			// "toggleScreenSplit", "nextScreenSplit", "prevScreenSplit",
+			// "clockwiseCornerSplit", "counterClockwiseCornerSplit",
+			// "toggleFloatingWindow",
+			// "swapPrimaryAndSecondary",
+			// "SCREEN_SPLIT",
+		/* Functions */
+			"closeMenu",
+			"openCordinateMenu",
+			"openFractalMenu",
+			// "exportFractal",
+			// "importFractal",
+			"takeScreenshot",
+			"takeSuperScreenshot",
+			"openRenderingMenu",
+			"openSettingsMenu",
+			"openKeyBindsMenu",
+			"abortRendering",
+			"exitApplication",
+			"toggleFullscreen",
+			// "toggleMenuBar", "toggleCordinateBar", "toggleButtonBar",
+			"FUNCTIONS",
+		/* Rendering */
+			"refreshFractal",
+			// "switchCPUandGPU",
+			/* "fp16GpuRendering", */ "fp32GpuRendering", /* "fp64GpuRendering", */
+			"fp32CpuRendering", "fp64CpuRendering", "fp80CpuRendering", "fp128CpuRendering",
+			"incSuperSample"  , "decSuperSample"  , "resetSuperSample",
+			"incSubSample"    , "decSubSample"    , "resetSubSample"  ,
+			"RENDERING"
 	};
+
 	enum Key_Function_Enum {
 		NONE,
 		/* Cordinates */
-			incRealPos,decRealPos,resetRealPos,
-			incImagPos,decImagPos,resetImagPos,
-			incZoom,decZoom,resetZoom,
+			incRealPos, decRealPos, resetRealPos,
+			incImagPos, decImagPos, resetImagPos,
+			incZoom   , decZoom   , resetZoom   ,
 			resetCoordinates,
 			COORDINATES,
 		/* Transformations */
-			clockwiseRot,counterclockwiseRot,resetRotation,
-			clockwiseRot90,rotate180,counterclockwiseRot90,
-			flipHorizontal,flipVertical,resetFlip,
-			clockwiseRotStep,counterclockwiseRotStep,
-			clockwiseRotPower,counterclockwiseRotPower,
-			incStretch,decStretch,resetStretch,
+			clockwiseRot     , counterclockwiseRot    , resetRotation,
+			clockwiseRot90   , counterclockwiseRot90  , rotate180    ,
+			clockwiseRot15   , counterclockwiseRot15  ,
+			clockwiseRot5    , counterclockwiseRot5   ,
+			// clockwiseRotStep , counterclockwiseRotStep,
+			clockwiseRotPower, counterclockwiseRotPower,
+			// flipHorizontal, flipVertical, resetFlip,
+			incStretch, decStretch, resetStretch, reverseStretch,
 			resetTransformations,
 			TRANSFORMATIONS,
 		/* Julia */
@@ -66,39 +126,41 @@ namespace Key_Function {
 			toggleStartingZ,
 			toggleCursorZValue,
 			toggleRelativeZValue,
-			incZReal,decZReal,resetZReal,
-			incZImag,decZImag,resetZImag,
+			incZReal, decZReal, resetZReal,
+			incZImag, decZImag, resetZImag,
 			JULIA,
 		/* Parameters */
-			incMaxItr,decMaxItr,resetMaxItr,
-			toggleAutoItr,
-			incBreakout,decBreakout,resetBreakout,
+			incMaxItr, decMaxItr, resetMaxItr,
+			// toggleAutoItr,
+			incBreakout, decBreakout, resetBreakout,
 			toggleAdjustZoomToPower,
 			PARAMETERS,
 		/* Polar */
-			toggleABSandPolarMandelbrot,
-			roundPower,floorPower,ceilingPower,
+			togglePolarMandelbrot,
+			roundPower, floorPower, ceilingPower,
 			toggleIntegerPower,
 			lockToCardioid,
 			flipCardioidSide,
 			POLAR,
 		/* Formula */
-			inputFormula,resetFormula,
-			incFormula,decFormula,
-			incFamily,decFamily,
-			inputPower,resetPower,
-			incPower,decPower,
+			inputFormula, resetFormula,
+			incFormula  , decFormula  ,
+			incFamily   , decFamily   ,
+			inputPower  , resetPower  ,
+			incPower    , decPower    ,
 			FORMULA,
 		/* Screen Split */
-			toggleScreenSplit,nextScreenSplit,prevScreenSplit,
-			clockwiseCornerSplit,counterClockwiseCornerSplit,
-			toggleFloatingWindow,
-			swapPrimaryAndSecondary,
-			SCREEN_SPLIT,
+			// toggleScreenSplit, nextScreenSplit, prevScreenSplit,
+			// clockwiseCornerSplit, counterClockwiseCornerSplit,
+			// toggleFloatingWindow,
+			// swapPrimaryAndSecondary,
+			// SCREEN_SPLIT,
 		/* Functions */
+			closeMenu,
+			openCordinateMenu,
 			openFractalMenu,
-			exportFractal,
-			importFractal,
+			// exportFractal,
+			// importFractal,
 			takeScreenshot,
 			takeSuperScreenshot,
 			openRenderingMenu,
@@ -107,27 +169,63 @@ namespace Key_Function {
 			abortRendering,
 			exitApplication,
 			toggleFullscreen,
-			toggleMenuBar,toggleCordinateBar,toggleButtonBar,
+			// toggleMenuBar, toggleCordinateBar, toggleButtonBar,
 			FUNCTIONS,
 		/* Rendering */
 			refreshFractal,
-			switchCPUandGPU,
-			fp16GpuRendering,fp32GpuRendering,fp64GpuRendering,
-			fp32CpuRendering,fp64CpuRendering,fp80CpuRendering,fp128CpuRendering,
-			incSuperSample,decSuperSample,resetSuperSample,
-			incSubSample,decSubSample,resetSubSample,
+			// switchCPUandGPU,
+			/* fp16GpuRendering, */ fp32GpuRendering, /* fp64GpuRendering, */
+			fp32CpuRendering, fp64CpuRendering, fp80CpuRendering, fp128CpuRendering,
+			incSuperSample  , decSuperSample  , resetSuperSample,
+			incSubSample    , decSubSample    , resetSubSample  ,
 			RENDERING,
 		Parameter_Function_Count
 	};
-	const size_t Key_Function_Map[] = {
-		NONE,COORDINATES,TRANSFORMATIONS,JULIA,PARAMETERS,POLAR,FORMULA,SCREEN_SPLIT,FUNCTIONS,RENDERING
-	};
+	static_assert(
+		Parameter_Function_Count == ARRAY_LENGTH(Key_Function_Text),
+		"Parameter_Function_Count != ARRAY_LENGTH(Key_Function_Text)"
+	);
 
-	const char* const Key_Function_Category_Text[] = {
-		"NONE","COORDINATES","TRANSFORMATIONS","JULIA","PARAMETERS","POLAR","FORMULA","SCREEN_SPLIT","FUNCTIONS","RENDERING"
+	const size_t Key_Function_Map[] = {
+		NONE,
+		COORDINATES,
+		TRANSFORMATIONS,
+		JULIA,
+		PARAMETERS,
+		POLAR,
+		FORMULA,
+		// SCREEN_SPLIT,
+		FUNCTIONS,
+		RENDERING
 	};
+	const char* const Key_Function_Category_Text[] = {
+		"NONE",
+		"COORDINATES",
+		"TRANSFORMATIONS",
+		"JULIA",
+		"PARAMETERS",
+		"POLAR",
+		"FORMULA",
+		// "SCREEN_SPLIT",
+		"FUNCTIONS",
+		"RENDERING"
+	};
+	static_assert(
+		ARRAY_LENGTH(Key_Function_Map) == ARRAY_LENGTH(Key_Function_Category_Text),
+		"ARRAY_LENGTH(Key_Function_Map) != ARRAY_LENGTH(Key_Function_Category_Text)"
+	);
+
 	enum Key_Function_Category {
-		Category_NONE,Category_COORDINATES,Category_TRANSFORMATIONS,Category_JULIA,Category_PARAMETERS,Category_POLAR,Category_FORMULA,Category_SCREEN_SPLIT,Category_FUNCTIONS,Category_RENDERING
+		Category_NONE,
+		Category_COORDINATES,
+		Category_TRANSFORMATIONS,
+		Category_JULIA,
+		Category_PARAMETERS,
+		Category_POLAR,
+		Category_FORMULA,
+		// Category_SCREEN_SPLIT,
+		Category_FUNCTIONS,
+		Category_RENDERING
 	};
 };
 /* String of Functions that can be activated by a KeyboardScancode */

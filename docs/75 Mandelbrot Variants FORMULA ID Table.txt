@@ -85,6 +85,6 @@ Asymmetric Fractals Part-2:
 	052 | 75. | Pitcher
 
 Geometric Shapes:
-	130 | 76. | Rhombus
-	134 | 77. | Teardrop
-	162 | 78. | Pointed Teardrop
+	002 | 76. | Rhombus
+	006 | 77. | Teardrop
+	034 | 78. | Pointed Teardrop

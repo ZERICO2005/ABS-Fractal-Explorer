@@ -185,9 +185,9 @@ uint64_t Quadratic_Fractals_Formula[] = {
 	180,
 	 52,
 	/* Quadratic Geometric Shapes */
-	130,
-	134,
-	162
+	  2,
+	  6,
+	 34
 };
 
 Quadratic_Fractal_Video_ID Quadratic_Standard_Fractals[] = {
