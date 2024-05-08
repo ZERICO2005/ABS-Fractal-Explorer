@@ -455,7 +455,7 @@ void Menu_Coordinates() {
 		if (ImGui::Button("Rotate 90 deg clockwise")) { FRAC.rot += DEGREES_TO_RADIANS(90.0); }
 		ImGui::NewLine();
 
-		ImGui::Text("Stretch Image: 2.0^%.4" PRIfp64, FRAC.stretch);
+		ImGui::Text("Stretch Image: 2.0^%.5" PRIfp64, FRAC.stretch);
 		constexpr fp64 Stretch_Step = 1.0 / 4.0;
 		constexpr fp64 Stretch_Step_Fast = 1.0;
 		if (ImGui::InputScalar("##input_stretch", ImGuiDataType_Double, &FRAC.stretch, &Stretch_Step, &Stretch_Step_Fast, "%.5" PRIfp64)) {
@@ -851,14 +851,13 @@ void Menu_Rendering() {
 		ImGui::Unindent(); }
 		if (ImGui::CollapsingHeader("SUPER SCREENSHOT SETTINGS")) { ImGui::Indent();
 
-			ImGui::Text("Bounding Box: (Unimplemented)");
-			static int_enum Combo_BoundingBox = Namespace_Image_Render_Bounding_Box::Fill_Area;
-			ImGui::Combo("##SuperScreenshotBoundingBox", &Combo_BoundingBox,
-				Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
-				ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
-			); Item_Tooltip("Which area should be used for taking the sceenshot");
-			//SubMenu_SuperScreenshot();
-			ImGui::NewLine();
+			// ImGui::Text("Bounding Box:");
+			// ImGui::Combo("##SuperScreenshotBoundingBox", &Super_Screenshot_Bounding_Box,
+			// 	Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
+			// 	ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
+			// ); Item_Tooltip("Which area should be used for taking the sceenshot");
+			// //SubMenu_SuperScreenshot();
+			// ImGui::NewLine();
 			
 			static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
 			ImGui::Text("Maximum Iterations: %" PRId32,super_screenshot_maxItr);
@@ -1169,6 +1168,7 @@ void Menu_Settings() {
 			);
 			export_config_data(config_data,filePath);
 		}
+		ImGui::NewLine();
 	#else
 		{
 			static char filePath[324] = "./config.fracExpConfig";

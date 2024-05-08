@@ -84,8 +84,7 @@ const User_Configuration_Data Default_Config = {
 	}
 
 	void clean_File_Paths(__attribute__((unused)) User_File_Paths& config_data) {
-		
-		return; // Automatic_Behaviour only has bools
+		return;
 	}
 
 	void clean_Parameter_Sensitivity(User_Parameter_Sensitivity& config_data) {
@@ -137,6 +136,7 @@ const User_Configuration_Data Default_Config = {
 
 	void clean_User_Configuration_Data(User_Configuration_Data& config_data) {
 		clean_Automatic_Behaviour(config_data.Automatic_Behaviour);
+		clean_File_Paths(config_data.File_Paths);
 		clean_Parameter_Sensitivity(config_data.Parameter_Sensitivity);
 		clean_Display_Preferences(config_data.Display_Preferences);
 		clean_GUI_Settings(config_data.GUI_Settings);
@@ -177,6 +177,7 @@ const User_Configuration_Data Default_Config = {
 
 	void default_User_Configuration_Data(User_Configuration_Data& config_data, bool reset_Extra) {
 		default_Automatic_Behaviour(config_data.Automatic_Behaviour);
+		default_File_Paths(config_data.File_Paths);
 		default_Parameter_Sensitivity(config_data.Parameter_Sensitivity, reset_Extra);
 		default_Display_Preferences(config_data.Display_Preferences);
 		default_GUI_Settings(config_data.GUI_Settings, reset_Extra, reset_Extra);

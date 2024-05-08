@@ -726,9 +726,14 @@ int_enum updateFractalParameters() {
 		}
 		if (FRAC.cursorZValue == true) {
 			if (FRAC.relativeZValue == true) {
-				fp64 resZ = (fp64)((Master.resX > Master.resY) ? Master.resY : Master.resX);
-				FRAC.zr = 4.0 * ((fp64)ImGui::GetMousePos().x - ((fp64)Master.resX / 2.0)) / resZ;
-				FRAC.zi = 4.0 * ((fp64)(ImGui::GetMousePos().y - (fp64)RESY_UI) - ((fp64)Master.resY / 2.0)) / resZ;
+				ABS_Mandelbrot temp_FRAC = FRAC;
+				temp_FRAC.zoom = -log10(getABSFractalMaxRadius(FRAC.polarMandelbrot ? FRAC.polarPower : (fp64)FRAC.power));
+				pixel_to_coordinate(
+					(int32_t)(ImGui::GetMousePos().x), (int32_t)ImGui::GetMousePos().y - (int32_t)RESY_UI,
+					FRAC.zr, FRAC.zi, temp_FRAC, primaryRenderData.resX, primaryRenderData.resY
+				);
+				FRAC.zr -= FRAC.r;
+				FRAC.zi -= FRAC.i;
 			} else {
 				pixel_to_coordinate(
 					(int32_t)(ImGui::GetMousePos().x), (int32_t)ImGui::GetMousePos().y - (int32_t)RESY_UI,
@@ -1604,6 +1609,101 @@ int exportScreenshot() {
 	return 0;
 }
 
+/* Not quite finished yet */
+void set_Super_Screenshot_Bounding_Box(
+	ABS_Mandelbrot& frac,
+	Render_Data& ren,
+	dim32_t resX, dim32_t resY,
+	Namespace_Image_Render_Bounding_Box::Enum_Image_Render_Bounding_Box bound_type
+) {
+	fp64 ratio_Render = (fp64)ren.resX / (fp64)ren.resY;
+	fp64 ratio_Window = (fp64)resX / (fp64)resY;
+	using namespace Namespace_Image_Render_Bounding_Box;
+	if (ratio_Window >= 1.0) {
+		if (ratio_Render >= 1.0) {
+			/* Both Wide Ratios */
+			switch(bound_type) {
+				default:
+				case Expand_From_Center:
+					break; // Nothing to be done
+				case Fill_Area: {
+					// Wider than window
+					if (ratio_Render >= ratio_Window) {
+						
+					} else {
+						frac.zoom -= log10(ratio_Window / ratio_Render);
+					}
+				} break;
+				case Fit_Area: {
+					if (ratio_Render >= ratio_Window) {
+						frac.zoom += log10(ratio_Render / ratio_Window);				
+					} else {
+						
+					}
+				} break;
+				case Fit_Width: {
+					if (ratio_Render >= ratio_Window) {
+						frac.zoom += log10(ratio_Render / ratio_Window);				
+					} else {
+						
+					}
+				} break;
+				case Fit_Height: {
+					if (ratio_Render >= ratio_Window) {
+						
+					} else {
+						
+					}
+				} break;
+			}
+		} else {
+			/* Window is Wide, and Render is Tall */
+		}
+	} else {
+		if (ratio_Render >= 1.0) {
+			/* Window is Tall, and Render is Wide*/
+
+		} else {
+			/* Both Tall Ratios*/
+			switch(bound_type) {
+				default:
+				case Expand_From_Center:
+					break; // Nothing to be done
+				case Fill_Area: {
+					// Wider than window
+					if (ratio_Render >= ratio_Window) {
+						frac.zoom -= log10(ratio_Window / ratio_Render);
+					} else {
+						
+					}
+				} break;
+				case Fit_Area: {
+					if (ratio_Render >= ratio_Window) {
+								
+					} else {
+						frac.zoom += log10(ratio_Window / ratio_Render);	
+					}
+				} break;
+				case Fit_Width: {
+					if (ratio_Render >= ratio_Window) {
+										
+					} else {
+						
+					}
+				} break;
+				case Fit_Height: {
+					if (ratio_Render >= ratio_Window) {
+						frac.zoom -= log10(ratio_Render / ratio_Window);
+					} else {
+						
+					}
+				} break;
+			}
+		}
+	}
+	
+}
+
 int exportSuperScreenshot() {
 	static nano64_t resetTime = 0;
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportSuperFractalBuffer == false) {
@@ -1618,6 +1718,12 @@ int exportSuperScreenshot() {
 		superRenderData.subSample = 1;
 		superRenderData.CPU_Threads = (uint32_t)super_screenshot_maxThreads * (uint32_t)super_screenshot_threadMultiplier;
 		const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
+		// set_Super_Screenshot_Bounding_Box(
+		// 	superFrac,
+		// 	superRenderData,
+		// 	primaryRenderData.resX, primaryRenderData.resY,
+		// 	(Namespace_Image_Render_Bounding_Box::Enum_Image_Render_Bounding_Box)Super_Screenshot_Bounding_Box
+		// );
 		switch(screenshot_settings.screenshotFileType) {
 			case Image_File_Format::PNG:
 			default:
@@ -1887,7 +1993,7 @@ size_t calculate_Dst_Buf_overlap_with_Src_Buf(
 
 /* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
 int Manually_Transform_Frame(const ImageBuffer& image) {
-	// nano64_t startTime = getNanoTime();
+	nano64_t startTime = getNanoTime();
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	ABS_Mandelbrot& FRAC = current_Fractal;
@@ -1900,7 +2006,6 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 	}
 	
 	//size_t plotted_pixels = 0;
-
 
 	const uint32_t* image_buf = (uint32_t*)image.vram;
 	uint32_t* blit_buf = (uint32_t*)blit.vram;
@@ -2055,12 +2160,12 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 
 	renderJuliaCordinatePoint(blit);
 
-	// nano64_t endTime = getNanoTime();
-	// printfInterval(0.4,
-	// 	"\ntime(%d): %.3lfms %.3lfFPS ", MT_Value,
-	// 	NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
-	// 	NANO_TO_FRAMERATE(endTime - startTime)
-	// );
+	nano64_t endTime = getNanoTime();
+	printfInterval(0.4,
+		"\ntime(%d): %.3lfms %.3lfFPS ", MT_Value,
+		NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
+		NANO_TO_FRAMERATE(endTime - startTime)
+	);
 	return 0;
 }
 

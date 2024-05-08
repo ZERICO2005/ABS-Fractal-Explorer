@@ -67,6 +67,8 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern Render_Data primarySuperRenderData;
 	extern Render_Data secondarySuperRenderData;
 
+	extern int_enum Super_Screenshot_Bounding_Box;
+
 /* ImGui Stuff */
 	extern ImGuiIO* io_IMGUI;
 	extern dim32_t ImGui_WINDOW_MARGIN;
