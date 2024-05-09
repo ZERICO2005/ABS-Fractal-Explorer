@@ -26,7 +26,7 @@ find_package(OpenCL REQUIRED)
 # ImGui
 file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
 add_library(IMGUI_LIB OBJECT ${IMGUI_FILES})
-target_compile_options(IMGUI_LIB PRIVATE -g -O3 -Wall -Wshadow)
+target_compile_options(IMGUI_LIB PRIVATE -O3 -Wall -Wshadow)
 
 # Source Files
 file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp")
@@ -45,7 +45,7 @@ endif()
 
 include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bitGraphics_Font")
 # Compiler Flags Debug(-g -O0) Release(-O3)
-set(OPT_FLAG -g -O3)
+set(OPT_FLAG -O3)
 
 set(MARCH_FLAGS -msse2)
 

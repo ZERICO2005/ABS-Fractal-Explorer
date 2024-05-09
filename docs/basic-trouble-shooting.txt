@@ -70,8 +70,5 @@ If the next frame is not finished rendering yet and you zoom, you may see some r
 ## Missing pixels at the bottom of the screen
 This is a bug where I miscalculated how many pixels need to be rendered on the GPU.
 
-## Missing pixels on the right side of the screen
-The CPU has special *SIMD* instructions to make rendering faster by rendering 2/4/8/16 pixels at a time. Things get a little bit tricky when the resolution is an odd number, because the *SIMD* instructions render 2/4/8/16 pixels at a time. This may lead to some pixels going missing when the number of pixels to render is miscalculated.
-
 ## Frame looks corrupted after using Abort rendering
 This is a bug where frames are not cleared/discarded properly. The previous frame gets overwritten when rendering, so you will sometimes see some mixture of a previous frame partially overwritten by the frame where Abort rendering was called.

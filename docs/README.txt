@@ -49,7 +49,7 @@ System Requirements:
 
 ABS-Fractal-Explorer is also available for Linux and 32bit Windows Vista.
 
-If you encounter any bugs or issues, fill out a bug report at the link below:
+If you encounter any bugs or issues, you can read through "basic-trouble-shooting.txt", or fill out a bug report at the link below:
 https://forms.gle/zqmkkH8ESY1bhCyw9
 
 You can checkout the source code on GitHub https://github.com/ZERICO2005/ABS-Fractal-Explorer.
