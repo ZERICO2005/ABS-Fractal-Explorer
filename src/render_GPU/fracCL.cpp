@@ -17,7 +17,7 @@ bool initialized_OpenCL = false;
 
 uint32_t compiledYet = 0;
 
-OpenCL_Engine engine;
+OpenCL_Engine GPU_Engine;
 cl_int err; // Error Code Flags
 size_t local_size, global_size;
 //uint8_t* resultBuf;
@@ -72,15 +72,15 @@ int32_t init_OpenCL() {
 	/* OpenCL structures */
 	//resultBuf = (uint8_t*)malloc(sizeof(uint8_t) * resX * resY * IMAGE_BUFFER_CHANNELS); 
 	try {
-		engine.device = create_device();
-		engine.context = clCreateContext(NULL, 1, &engine.device, NULL, NULL, &err);
-		engine.program = build_program(engine.context, engine.device, PROGRAM_FILE); /* Build program */
-		engine.queue = clCreateCommandQueue(engine.context, engine.device, 0, &err); /* Create a command queue */
-		//deviceResultBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, resX*resY*IMAGE_BUFFER_CHANNELS, NULL, NULL); /* Create data buffer */
+		GPU_Engine.device = create_device();
+		GPU_Engine.context = clCreateContext(NULL, 1, &GPU_Engine.device, NULL, NULL, &err);
+		GPU_Engine.program = build_program(GPU_Engine.context, GPU_Engine.device, PROGRAM_FILE); /* Build program */
+		GPU_Engine.queue = clCreateCommandQueue(GPU_Engine.context, GPU_Engine.device, 0, &err); /* Create a command queue */
+		//deviceResultBuf = clCreateBuffer(GPU_Engine.context, CL_MEM_WRITE_ONLY, resX*resY*IMAGE_BUFFER_CHANNELS, NULL, NULL); /* Create data buffer */
 		deviceResultBuf = NULL;
 		// Write our data set into the input array in device memory
 		//err = clEnqueueWriteBuffer(queue, dreals, CL_TRUE, 0, sizeof(float)*nreals, reals, 0, NULL, NULL);
-		engine.kernel = clCreateKernel(engine.program, KERNEL_FUNC, &err); /* Create a kernel */
+		GPU_Engine.kernel = clCreateKernel(GPU_Engine.program, KERNEL_FUNC, &err); /* Create a kernel */
 	} catch(const std::exception& error) {
 		printFlush("\nError: %s",error.what());
 		return -1;
@@ -113,15 +113,38 @@ void printFloatingPointConfig(const char* headerText, uint64_t config) {
 	configPrint(CL_FP_SOFT_FLOAT,"CL_FP_SOFT_FLOAT");
 	*/
 }
+
+void query_OpenCL_Device_Properties(const OpenCL_Engine& engine, OpenCL_Device_Properties device_properties) {
+	// clGetDeviceInfo(engine.device, CL_DEVICE_, sizeof(device_properties.), &device_properties., NULL);
+	// CL_DEVICE_NAME                      ;
+	// CL_DEVICE_VENDOR                    ;
+	// CL_DRIVER_VERSION                   ;
+	// CL_DEVICE_VERSION                   ;
+	// CL_DEVICE_PROFILE                   ;
+	// CL_DEVICE_MAX_WORK_GROUP_SIZE       ;
+	// CL_DEVICE_MAX_COMPUTE_UNITS         ;
+	// CL_DEVICE_GLOBAL_MEM_SIZE           ;
+	// CL_DEVICE_MAX_MEM_ALLOC_SIZE        ;
+	// CL_DEVICE_MAX_CLOCK_FREQUENCY       ;
+	// CL_DEVICE_MAX_PARAMETER_SIZE        ;
+	// CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE  ;
+	// CL_DEVICE_MAX_CONSTANT_ARGS         ;
+	// CL_DEVICE_LOCAL_MEM_SIZE            ;
+	// CL_DEVICE_PROFILING_TIMER_RESOLUTION;
+	// CL_DEVICE_SINGLE_FP_CONFIG          ;
+	// CL_DEVICE_DOUBLE_FP_CONFIG          ;
+}
+
+/* Legacy */
 void queryOpenCL_GPU() {
 	uint8_t enablePrinting = 0;
 	#define printDeviceText(f,inDat,outDat); \
 	{ \
 		size_t retSize; \
-		err = clGetDeviceInfo(engine.device,inDat,0,NULL,&retSize); \
+		err = clGetDeviceInfo(GPU_Engine.device,inDat,0,NULL,&retSize); \
 		if (printOpenCLError(err) == 0) { \
 			outDat = (char*)malloc(retSize); \
-			err = clGetDeviceInfo(engine.device,inDat,retSize,outDat,NULL); \
+			err = clGetDeviceInfo(GPU_Engine.device,inDat,retSize,outDat,NULL); \
 			if (enablePrinting != 0) { \
 				printFlush(f,outDat); \
 			} else { \
@@ -130,8 +153,8 @@ void queryOpenCL_GPU() {
 		} \
 	}
 
-	#define printDeviceStat(f,in,out) err = clGetDeviceInfo(engine.device,in,sizeof(out),&out,NULL); if (enablePrinting != 0) { printFlush(f,out); } else { writefToLog(f,out); } printOpenCLError(err)
-	#define printKernelStat(f,in,out) err = clGetKernelWorkGroupInfo(engine.kernel,engine.device,in,sizeof(out),&out,NULL); if (enablePrinting != 0) { printFlush(f,out); } else { writefToLog(f,out); } printOpenCLError(err)
+	#define printDeviceStat(f,in,out) err = clGetDeviceInfo(GPU_Engine.device,in,sizeof(out),&out,NULL); if (enablePrinting != 0) { printFlush(f,out); } else { writefToLog(f,out); } printOpenCLError(err)
+	#define printKernelStat(f,in,out) err = clGetKernelWorkGroupInfo(GPU_Engine.kernel,GPU_Engine.device,in,sizeof(out),&out,NULL); if (enablePrinting != 0) { printFlush(f,out); } else { writefToLog(f,out); } printOpenCLError(err)
 
 	printFlush("\nGPU Hardware Information:");
 		printDeviceText("\n\tCL_DEVICE_NAME: %s",CL_DEVICE_NAME,DeviceName);
@@ -176,11 +199,11 @@ int32_t terminate_OpenCL() { /* Deallocate resources */
 		return 0;
 	}
 	try {
-		clReleaseKernel(engine.kernel);
+		clReleaseKernel(GPU_Engine.kernel);
 		clReleaseMemObject(deviceResultBuf);
-		clReleaseCommandQueue(engine.queue);
-		clReleaseProgram(engine.program);
-		clReleaseContext(engine.context);
+		clReleaseCommandQueue(GPU_Engine.queue);
+		clReleaseProgram(GPU_Engine.program);
+		clReleaseContext(GPU_Engine.context);
 	} catch (...) {
 		printFlush("\nError: Unable to terminate OpenCL. OpenCL might not be initialized");
 		return -1;
@@ -212,7 +235,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 		// printf("\nr: %" PRId32 " %" PRId32,rX,rY); fflush(stdout);
 		size_t global_pixels = 0;
 		getGlobalAndLocalSize(&global_pixels,nullptr,KernelWorkGroupSize,(size_t)resX * (size_t)resY);
-		cl_mem tempBuf = clCreateBuffer(engine.context, CL_MEM_WRITE_ONLY, global_pixels * buf->channels, NULL, NULL);
+		cl_mem tempBuf = clCreateBuffer(GPU_Engine.context, CL_MEM_WRITE_ONLY, global_pixels * buf->channels, NULL, NULL);
 		clReleaseMemObject(deviceResultBuf);
 		deviceResultBuf = tempBuf;
 	}
@@ -274,45 +297,45 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 			(fp32)(param.interior_B_Amp * param.interior_Alpha), (fp32)param.interior_B_Freq, (fp32)(param.interior_B_Phase * TAU)
 	};
 	
-	err = clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &r);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &i);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &maxItr);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &resX);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &resY); 
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &zr0);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &zi0);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &formula);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &power);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(uint32_t), &sample);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &rot_Sin);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &rot_Cos);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &breakoutValue);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &recip_numZ);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &neg_recip_numW);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(cl_mem), &deviceResultBuf);
+	err = clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &r);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &i);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &maxItr);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &resX);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &resY); 
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &zr0);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &zi0);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &formula);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &power);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &sample);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &rot_Sin);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &rot_Cos);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &breakoutValue);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &recip_numZ);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &neg_recip_numW);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(cl_mem), &deviceResultBuf);
 
 	/* Exterior Color */
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Freq_mult_TAU          );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Phase_mult_TAU         );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Amp_mult_Exterior_Alpha);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Freq_mult_TAU          );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Phase_mult_TAU         );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Amp_mult_Exterior_Alpha);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Freq_mult_TAU          );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Phase_mult_TAU         );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Amp_mult_Exterior_Alpha);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Freq_mult_TAU          );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Phase_mult_TAU         );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_R_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Freq_mult_TAU          );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Phase_mult_TAU         );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_G_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Freq_mult_TAU          );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Phase_mult_TAU         );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_B_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Exterior_Alpha);
 	/* Interior Color */
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Freq                   );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Phase_mult_TAU         );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Amp_mult_Interior_Alpha);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Freq                   );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Phase_mult_TAU         );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Amp_mult_Interior_Alpha);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Freq                   );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Phase_mult_TAU         );
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Amp_mult_Interior_Alpha);
-	err |= clSetKernelArg(engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Freq                   );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Phase_mult_TAU         );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_R_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Freq                   );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Phase_mult_TAU         );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_G_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Freq                   );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Phase_mult_TAU         );
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_B_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &temp_Color.Interior_Alpha);
 
 	printErrorChange("\nKernelArgs: %" PRId32,err);
 
@@ -331,7 +354,7 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	// 	local_size = KernelWorkGroupSize;
 	// 	global_size = pSize + cor; // Number of total work items - localSize must be devisor
 
-	// 	err = clEnqueueNDRangeKernel(engine.queue, engine.kernel, 1, &p0, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
+	// 	err = clEnqueueNDRangeKernel(GPU_Engine.queue, GPU_Engine.kernel, 1, &p0, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
 	// 	printErrorChange("\nclEnqueueNDRangeKernel: %" PRId32,err);
 	// }
 	// if (ABORT_RENDERING == true) {
@@ -339,14 +362,18 @@ int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelb
 	// } else {
 	// 	printFlush("\nSafe Return");
 	// }
-	getGlobalAndLocalSize(&global_size,&local_size,KernelWorkGroupSize,(size_t)resX * (size_t)resY);
-	//printfInterval(0.25,"\n%" PRIu32 "x%" PRIu32 " == %" PRIu32 " | kernel %zu |cor %" PRIu32 " --> %" PRIu32 "\n\tSize: %zu",resX,resY,resX*resY,KernelWorkGroupSize,cor,resX*resY+cor,getBufferBoxSize(buf));
-	err = clEnqueueNDRangeKernel(engine.queue, engine.kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
-	printErrorChange("\nclEnqueueNDRangeKernel: %" PRId32,err);
+	
+	getGlobalAndLocalSize(&global_size, &local_size, KernelWorkGroupSize, (size_t)resX * (size_t)resY);
+	printfInterval(0.3, "\n%" PRId32 "x%" PRId32 " == %" PRId32 " | kernel %zu global %zu local %zu",
+		resX, resY, resX * resY, KernelWorkGroupSize, global_size, local_size
+	);
+	
+	err = clEnqueueNDRangeKernel(GPU_Engine.queue, GPU_Engine.kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
+	printErrorChange("\nclEnqueueNDRangeKernel: %" PRId32, err);
 
-	clFinish(engine.queue); /* Wait for the command queue to get serviced before reading back results */
+	clFinish(GPU_Engine.queue); /* Wait for the command queue to get serviced before reading back results */
 
-	clEnqueueReadBuffer(engine.queue, deviceResultBuf, CL_TRUE, 0, getBufferBoxSize(buf), buf->vram, 0, NULL, NULL); /* Read the kernel's output */
+	clEnqueueReadBuffer(GPU_Engine.queue, deviceResultBuf, CL_TRUE, 0, getBufferBoxSize(buf), buf->vram, 0, NULL, NULL); /* Read the kernel's output */
 	//for (u32 z = 0; z < resX * resY * IMAGE_BUFFER_CHANNELS; z++) { data[z] = resultBuf[z]; }
 	
 	return 0;

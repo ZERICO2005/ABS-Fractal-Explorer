@@ -27,7 +27,7 @@
 	#define Enable_OpenCL
 
 	// Uses the OpenCV scaler over the SDL2 one
-	// #define Enable_OpenCV_Scaler
+	#define Enable_OpenCV_Scaler
 
 	// Remove Color
 	// #define MONOCHROME_MODE
@@ -39,7 +39,7 @@
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 2
 #define PROGRAM_V_PATCH 0
-#define PROGRAM_V_TAG "debug rev-1"
+#define PROGRAM_V_TAG "debug developer rev-2"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */

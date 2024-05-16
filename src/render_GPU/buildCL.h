@@ -11,20 +11,9 @@
 
 #define PROGRAM_FILE "src/render_GPU/fracCL.cl"
 #define KERNEL_FUNC "renderFracCLPoint"
-#define CL_TARGET_OPENCL_VERSION 120
-
-#include <CL/cl.h>
 
 //#define BUILD_FRAC_FROM_FILE
 #define BUILD_FRAC_FROM_CONST
-
-struct _OpenCL_Engine {
-	cl_device_id device;
-	cl_context context;
-	cl_program program;
-	cl_kernel kernel;
-	cl_command_queue queue;
-}; typedef struct _OpenCL_Engine OpenCL_Engine;
 
 const char* getOpenCLErrorString(cl_int errorCode);
 cl_device_id create_device();

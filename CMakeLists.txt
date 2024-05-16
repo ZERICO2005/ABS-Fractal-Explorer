@@ -21,7 +21,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Packages
 find_package(SDL2 REQUIRED)
 find_package(OpenCL REQUIRED)
-# find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # ImGui
 file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
@@ -58,4 +58,4 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 target_compile_options(${PROJECT_NAME} PRIVATE ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
 
 # If using the OpenCV Scaler, add ${OpenCV_LIBS}
-target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL -l:libquadmath.a IMGUI_LIB)
+target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -lSDL2 -lSDL2main OpenCL -l:libquadmath.a IMGUI_LIB ${OpenCV_LIBS})

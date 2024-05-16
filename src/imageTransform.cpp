@@ -14,7 +14,7 @@
 
 #ifdef Enable_OpenCV_Scaler
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp> // Ensure that find_package(OpenCV REQUIRED) and ${OpenCV_LIBS} are in the CMakeLists.txt file
 
 int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, const BufferBox* backgroundImage, const BufferBox* foregroundImage) {
 	
