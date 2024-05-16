@@ -16,9 +16,16 @@ constexpr size_t Bit_Graphics_Channels = 4;
 extern const uint8_t char6x8[1536]; // bitGraphics_Font.h
 
 Bit_Graphics::Bit_Graphics() {
+	buf = NULL;
+	buf0 = NULL;
+	buf1 = NULL;
+	initialized = false;
 	terminate_Bit_Graphics();
 }
 Bit_Graphics::Bit_Graphics(size_t resX, size_t resY) {
+	buf = NULL;
+	buf0 = NULL;
+	buf1 = NULL;
 	initialized = false;
 	init_Bit_Graphics(resX,resY);
 }

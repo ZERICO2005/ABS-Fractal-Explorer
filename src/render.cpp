@@ -12,14 +12,16 @@
 #include "temp_global_render.h"
 
 #include "copyBuffer.h"
-#include "BufferCopy.hpp"
+// #include "BufferCopy.hpp"
 #include "fractal.h"
 #include "keybind.h"
 #include "engine.h"
 #include "fracExp_Files/fracExpKB.h"
 #include "fileManager.h"
+
 #include "imageBuffer.h"
 #include "imageTransform.h"
+#include "frame_Transformation.h"
 
 #include <SDL2/SDL.h>
 
@@ -31,6 +33,8 @@
 
 #include "menu_Interface/display_GUI.h"
 #include "displayInfo.h"
+
+
 
 constexpr uint8_t color_square_divider = 2; // 5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 
@@ -2023,7 +2027,6 @@ size_t calculate_Dst_Buf_overlap_with_Src_Buf(
 	return 0;
 }
 
-
 /* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
 int Manually_Transform_Frame(const ImageBuffer& image) {
 	// nano64_t startTime = getNanoTime();
@@ -2037,159 +2040,8 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 		printError("Invalid blit BufferBox");
 		return -1;
 	}
-	
-	//size_t plotted_pixels = 0;
 
-	const uint32_t* image_buf = (uint32_t*)image.vram;
-	uint32_t* blit_buf = (uint32_t*)blit.vram;
-	
-	typedef fp32 fpTran;
-
-	/* Pre calculated constants */
-		const fpTran Recip_Image_DimX = (fpTran)1.0 / (fpTran)(image.resX - 1);
-		const fpTran Recip_Image_DimY = (fpTran)1.0 / (fpTran)(image.resY - 1);
-
-		const fpTran Image_Cord_X00 = (fpTran)(image.x00 - FRAC.r);
-		const fpTran Image_Cord_Y00 = (fpTran)(image.y00 - FRAC.i);
-		const fpTran Image_Cord_X01_sub_X00 = (fpTran)(image.x01 - image.x00);
-		const fpTran Image_Cord_Y01_sub_Y00 = (fpTran)(image.y01 - image.y00);
-		// const fpTran Image_Cord_X10 = (fpTran)(image.x10 - FRAC.r);
-		// const fpTran Image_Cord_Y10 = (fpTran)(image.y10 - FRAC.i);
-		// const fpTran Image_Cord_X11_sub_X10 = (fpTran)(image.x11 - image.x10);
-		// const fpTran Image_Cord_Y11_sub_Y10 = (fpTran)(image.y11 - image.y10);
-
-		const fpTran Image_Cord_X10_sub_X00 = (fpTran)(image.x10 - image.x00);
-		const fpTran Image_Cord_Y10_sub_Y00 = (fpTran)(image.y10 - image.y00);
-
-		/* Cancel Out to Zero, probably applicable to quadralaterals */
-		// const fpTran Image_Cord_X11subX10_sub_X01subX00 = (fpTran)(Image_Cord_X11_sub_X10 - Image_Cord_X01_sub_X00);
-		// const fpTran Image_Cord_Y11subY10_sub_Y01subY00 = (fpTran)(Image_Cord_Y11_sub_Y10 - Image_Cord_Y01_sub_Y00);
-
-		const fpTran ResX_div_2 = (fpTran)(blit.resX - 1) / (fpTran)2.0;
-		const fpTran ResY_div_2 = (fpTran)(blit.resY - 1) / (fpTran)2.0;
-		const fpTran Zoom_Value_mult_ResZ_div_2 = pow((fpTran)10.0, (fpTran)FRAC.zoom) * ( (blit.resX >= blit.resY) ? ResY_div_2 : ResX_div_2 );
-		const fpTran Rot_Cos = cos((fpTran)FRAC.rot);
-		const fpTran Rot_Sin = sin((fpTran)FRAC.rot);
-		const fpTran     Rot_Sin_mult_ZVmRZd2_div_Stretch_X = ( Rot_Sin * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sX;
-		const fpTran neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (-Rot_Sin * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
-		const fpTran     Rot_Cos_mult_ZVmRZd2_div_Stretch_X = ( Rot_Cos * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sX;
-		const fpTran neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (-Rot_Cos * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
-	
-	/* Pixel Jumps */
-
-		const fpTran Horiz_JumpX = Recip_Image_DimX * (Image_Cord_X10_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y10_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
-		const fpTran Horiz_JumpY = Recip_Image_DimX * (Image_Cord_Y10_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X10_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
-		const fpTran Verti_JumpX = Recip_Image_DimY * (Image_Cord_X01_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y01_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
-		const fpTran Verti_JumpY = Recip_Image_DimY * (Image_Cord_Y01_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X01_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
-
-		constexpr size_t Pixel_Size = 1;
-		
-		const fpTran JumpX_Sign = (signbit(Horiz_JumpX * -Verti_JumpX) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
-		const fpTran JumpY_Sign = (signbit(Horiz_JumpY *  Verti_JumpY) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
-		const int32_t JumpX = (int32_t)ceil(hypot(Horiz_JumpX, Verti_JumpX) * JumpX_Sign);
-		const int32_t JumpY = (int32_t)ceil(hypot(Horiz_JumpY, Verti_JumpY) * JumpY_Sign);
-
-		const int32_t Repeat_X = (JumpX == 0) ? 1 : JumpX;
-		const int32_t Repeat_Y = (JumpY == 0) ? 1 : JumpY;
-		const size_t Repeat_U = (size_t)abs(Repeat_X);
-		const size_t Repeat_V = (size_t)abs(Repeat_Y);
-
-		const int32_t Minimum_PosX = (Repeat_X >= 0) ? 0 : -(Repeat_X - 1);
-		const int32_t Minimum_PosY = (Repeat_Y >= 0) ? 0 : -(Repeat_Y - 1);
-		const int32_t Maximum_PosX = blit.resX - ((Repeat_X <= 0) ? 0 : (Repeat_X - 1));
-		const int32_t Maximum_PosY = blit.resY - ((Repeat_Y <= 0) ? 0 : (Repeat_Y - 1));
-		
-		const size_t blit_Size = getBufferBoxSize(&blit) / IMAGE_BUFFER_CHANNELS;
-		const size_t blit_Pitch = getBufferBoxPitch(&blit) / IMAGE_BUFFER_CHANNELS;
-		const size_t blit_Pixel_Jump = (Repeat_X >= 0) ? Pixel_Size : -Pixel_Size;
-		const size_t blit_Pitch_Jump = (Repeat_Y >= 0) ? (blit_Pitch - ((size_t)abs(Repeat_X) * Pixel_Size)) : -(blit_Pitch - ((size_t)abs(Repeat_X) * Pixel_Size));
-
-
-		// printfInterval(0.4, "\nPixel Jump: X{%.5f,%.5f} Y{%.5f,%.5f} Repeat{%d,%d} Min{%d,%d} Max{%d,%d}",
-		// 	Horiz_JumpX, Horiz_JumpY, Verti_JumpX, Verti_JumpY,
-		// 	Repeat_X, Repeat_Y, Minimum_PosX, Minimum_PosY, Maximum_PosX, Maximum_PosY
-		// );
-
-	size_t image_offset = 0;
-	fpTran Y_Value = (fpTran)0.0;
-
-	#define Manual_Transform_Start() \
-		for (dim32_t y = 0; y < image.resY; y++) {\
-			/* Calculates which two points to interpolate between in the next loop */\
-			const fpTran X0_Cord = Image_Cord_X00 + Y_Value * Image_Cord_X01_sub_X00;\
-			const fpTran Y0_Cord = Image_Cord_Y00 + Y_Value * Image_Cord_Y01_sub_Y00;\
-			fpTran X_Value = (fpTran)0.0;\
-			\
-			for (dim32_t x = 0; x < image.resX; x++) {\
-				/* Calculates the X and Y cordinates of what pixel the Src buffer maps to on the Dst buffer */\
-				fpTran X_Cord = X0_Cord + X_Value * Image_Cord_X10_sub_X00;\
-				fpTran Y_Cord = Y0_Cord + X_Value * Image_Cord_Y10_sub_Y00;\
-				\
-				int32_t posX = (int32_t)(X_Cord *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Y_Cord *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X + ResX_div_2);\
-				int32_t posY = (int32_t)(Y_Cord * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - X_Cord * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y + ResY_div_2);\
-				\
-				/* Does the same thing, but is much slower */\
-					/* int32_t posX; int32_t posY; */\
-					/* coordinate_to_pixel(X_Cord, Y_Cord, posX, posY, FRAC, blit.resX, blit.resY); */\
-				\
-				/* Copies the pixel data from src to dst if the pixel is in bounds */\
-				if (posX >= Minimum_PosX && posX < Maximum_PosX && posY >= Minimum_PosY && posY < Maximum_PosY) {
-
-
-	#define Manual_Transform_End() \
-				}\
-				image_offset += Pixel_Size;\
-				X_Value += Recip_Image_DimX;\
-			}\
-			Y_Value += Recip_Image_DimY;\
-		}
-	
-	enum Manual_Transform_Enum {
-		MT_Xn_Yn, MT_X1_Yn,
-		MT_Xn_Y1, MT_X1_Y1
-	};
-	int_enum MT_Value = (int_enum)(
-		((Repeat_U > 1) ? 0 : (Repeat_U)) +
-		((Repeat_V > 1) ? 0 : (2 * Repeat_V))
-	);
-	switch (MT_Value) {
-		case MT_Xn_Yn: default: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
-
-			for (size_t v = 0; v < Repeat_V; v++) {
-				for (size_t u = 0; u < Repeat_U; u++) {
-					if (blit_offset < blit_Size) {
-						blit_buf[blit_offset] = image_buf[image_offset];
-					}
-					blit_offset += blit_Pixel_Jump;
-				}
-				blit_offset += blit_Pitch_Jump;
-			}
-			Manual_Transform_End(); } break;
-		case MT_X1_Yn: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
-			for (size_t v = 0; v < Repeat_V; v++) {
-				if (blit_offset < blit_Size) {
-					blit_buf[blit_offset] = image_buf[image_offset];
-				}
-				blit_offset += blit_Pitch;
-			}
-			Manual_Transform_End(); } break;
-		case MT_Xn_Y1: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
-				for (size_t u = 0; u < Repeat_U; u++) {
-					if (blit_offset < blit_Size) {
-						blit_buf[blit_offset] = image_buf[image_offset];
-					}
-					blit_offset += blit_Pixel_Jump;
-				}
-			Manual_Transform_End(); } break;
-		case MT_X1_Y1: { Manual_Transform_Start();
-			size_t blit_offset = ((size_t)posY * blit_Pitch) + ((size_t)posX * Pixel_Size);
-			blit_buf[blit_offset] = image_buf[image_offset];
-			Manual_Transform_End(); } break;
-	}
-				
+	int ret_val = frame_Transform(image, blit, FRAC, config_data.Rendering_Settings);	
 
 	renderJuliaCordinatePoint(blit);
 
@@ -2199,7 +2051,7 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 	// 	NANO_TO_SECONDS(endTime - startTime) * 1.0e3,
 	// 	NANO_TO_FRAMERATE(endTime - startTime)
 	// );
-	return 0;
+	return ret_val;
 }
 
 /* OpenCV Frame Transformation */

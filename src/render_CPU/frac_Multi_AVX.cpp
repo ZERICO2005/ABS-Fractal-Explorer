@@ -64,12 +64,12 @@
 			);
 
 		#define printf_m256_u64(x) \
-			printFlush("\n" STR_M(x) ": %016X %016X %016X %016X", \
+			printFlush("\n" STR_M(x) ": %016" PRIX64 " %016" PRIX64 " %016" PRIX64 " %016" PRIX64 "", \
 				((uint64_t*)((void*)(&x)))[0], ((uint64_t*)((void*)(&x)))[1], ((uint64_t*)((void*)(&x)))[2], ((uint64_t*)((void*)(&x)))[3]\
 			);
 
 		#define printfInterval_m256_u64(freq, x) \
-			printfInterval(freq, "\n" STR_M(x) ": %016X %016X %016X %016X", \
+			printfInterval(freq, "\n" STR_M(x) ": %016" PRIX64 " %016" PRIX64 " %016" PRIX64 " %016" PRIX64, \
 				((uint64_t*)((void*)(&x)))[0], ((uint64_t*)((void*)(&x)))[1], ((uint64_t*)((void*)(&x)))[2], ((uint64_t*)((void*)(&x)))[3]\
 			);
 
