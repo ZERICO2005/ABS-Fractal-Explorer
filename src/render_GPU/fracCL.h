@@ -16,11 +16,12 @@ struct BufferBox;
 struct Render_Data;
 struct ABS_Mandelbrot;
 
-int32_t renderOpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING);
+int32_t render_OpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING);
 
 int32_t init_OpenCL();
 int32_t terminate_OpenCL();
-void queryOpenCL_GPU();
+
+void query_OpenCL_GPU();
 
 void calculate_GPU_Hardware_Hash(uint64_t& hash);
 

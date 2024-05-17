@@ -139,7 +139,6 @@ void Generate_PreCalc_Param(
 		preCalc_Param.sample = ren.sample;
 		preCalc_Param.maxItr = param.maxItr;
 		preCalc_Param.juliaSet = param.juliaSet;
-		preCalc_Param.power = param.power;
 	/* Coordinates */
 		preCalc_Param.realCord = (fpX)param.r;
 		preCalc_Param.imagCord = (fpX)param.i;
@@ -150,6 +149,10 @@ void Generate_PreCalc_Param(
 		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);
 		preCalc_Param.rotCos_PC = (fpX)cos((fpCord)param.rot);
 		preCalc_Param.breakoutValue = (fpX)param.breakoutValue;
+		if (std::is_same<fpX, fp32>::value && preCalc_Param.breakoutValue > 65536.0f) {
+			preCalc_Param.breakoutValue = 65536.0f;
+		}
+		
 		
 		const dim32_t sResY = preCalc_Param.Cord_ResY - 1;
 		const dim32_t sResX = preCalc_Param.Cord_ResX - 1;

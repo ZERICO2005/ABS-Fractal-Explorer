@@ -64,24 +64,20 @@ const char* const FractalOpenCL_SRC = "\
 	uint8_t type = (formula & 0x40000000) ? 1 : (uint8_t)power;\n\
 	fp32 y = (fp32)(id / resX);\n\
 	fp32 x = (fp32)(id % resX);\n\
-	\n\
-	//fp32 cr0,ci0,zrc,zic;\n\
 \n\
-	resX = (resX * sample) - 1;\n\
-	resY = (resY * sample) - 1;\n\
-	x *= sample;\n\
-	y *= sample;\n\
-	const fp32 numY = ((fp32)resY / 2.0f);\n\
-	const fp32 numX = ((fp32)resX / 2.0f);\n\
+	x *= (fp32)sample;\n\
+	y *= (fp32)sample;\n\
+	const fp32 numY = ((fp32)((resY * sample) - 1) / 2.0f);\n\
+	const fp32 numX = ((fp32)((resX * sample) - 1) / 2.0f);\n\
 	x -= numX;\n\
 	y -= numY;\n\
 \n\
 	for (uint32_t v = 0; v < sample; v++) {\n\
 		fp32 yC = y * neg_recip_numW;\n\
 		for (uint32_t u = 0; u < sample; u++) {\n\
-			if (id >= resX * resY) {\n\
-				return;\n\
-			}\n\
+			// if (id >= resX * resY) {\n\
+			//	return;\n\
+			// }\n\
 			fp32 cr,ci,zr,zi;\n\
 			fp32 low = 4.0f; // Squared\n\
 			fp32 temp = 0.0f;\n\

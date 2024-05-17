@@ -32,78 +32,6 @@ ImageBuffer* previewBuf = nullptr;
 static Render_Configurator Engine_Config;
 static Render_Configurator Super_Engine_Config;
 
-void calculate_Render_Config(
-	Render_Configurator& Config,
-	const Render_Data& ren
-) {
-	return;
-	/*
-	**	TEMPORARY CODE DISABLING!
-	**	TEMPORARY CODE DISABLING!
-	**	TEMPORARY CODE DISABLING!
-	**	TEMPORARY CODE DISABLING!
-	**	TEMPORARY CODE DISABLING!
-	**	TEMPORARY CODE DISABLING!
-	*/
-	// using namespace Rendering_Configuration;
-	// Rendering_Precision render_precision = Render_Precision_Automatic;
-	// Rendering_Method render_method = Render_Method_Automatic;
-	// if (ren.rendering_method == Legacy_Rendering_Method::GPU_Rendering) {
-	// 	switch(ren.GPU_Precision) {
-	// 		case 16:
-	// 			render_precision = Render_Precision_Float16;
-	// 			break;
-	// 		case 32:
-	// 		default:
-	// 			render_precision = Render_Precision_Float32;
-	// 			break;
-	// 		case 64:
-	// 			render_precision = Render_Precision_Float64;
-	// 			break;
-	// 	}
-	// 	render_method = Render_Method_GPU;
-	// } else {
-
-	// 	switch(ren.CPU_Precision) {
-	// 		case 16:
-	// 			render_precision = Render_Precision_Float16;
-	// 			break;
-	// 		case 32:
-	// 			render_precision = Render_Precision_Float32;
-	// 			break;
-	// 		case 64:
-	// 		default:
-	// 			render_precision = Render_Precision_Float64;
-	// 			break;
-	// 		case 80:
-	// 			render_precision = Render_Precision_Float80;
-	// 			break;
-	// 		case 128:
-	// 			render_precision = Render_Precision_Float128;
-	// 			break;
-	// 	}
-	// 	if (render_precision == Render_Precision_Float32 || render_precision == Render_Precision_Float64) {
-	// 		if (Config.validate_Rendering_Method(Render_Method_CPU_AVX512)) {
-	// 			render_method = Render_Method_CPU_AVX512;
-	// 		} else if (Config.validate_Rendering_Method(Render_Method_CPU_AVX)) {
-	// 			render_method = Render_Method_CPU_AVX;
-	// 		} else if (Config.validate_Rendering_Method(Render_Method_CPU_SSE2)) {
-	// 			render_method = Render_Method_CPU_SSE2;
-	// 		} else {
-	// 			render_method = Render_Method_CPU_Generic;
-	// 		}
-	// 	} else {
-	// 		render_method = Render_Method_CPU_Generic;
-	// 	}
-	// }
-	// Config.calculate_Rendering_Precision_and_Method(
-	// 	render_precision, render_method, render_precision, render_method
-	// );
-	// Config.suggest_Render_Precision_and_Method(
-	// 	render_precision, render_method
-	// );
-}
-
 void get_GPU_Hardware_Hash(uint64_t& hash) { 
 	//calculate_GPU_Hardware_Hash(hash);
 }
@@ -172,7 +100,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 				ABORT_RENDERING, primaryRender.CPU_Threads
 			);
 		} else if (Super_Engine_Config.current_Render_Method_GPU() == true) {
-			renderOpenCL_ABS_Mandelbrot(
+			render_OpenCL_ABS_Mandelbrot(
 				&image_box, image_render_data, image_fractal_data,
 				ABORT_RENDERING
 			);
@@ -239,7 +167,7 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 				ABORT_RENDERING, primaryRender.CPU_Threads
 			);
 		} else if (Engine_Config.current_Render_Method_GPU() == true) {
-			renderOpenCL_ABS_Mandelbrot(
+			render_OpenCL_ABS_Mandelbrot(
 				&renderBox, primaryRender, fracData,
 				ABORT_RENDERING
 			);
@@ -337,7 +265,7 @@ bool init_GPU_Renderer(bool& GPU_Float16, bool& GPU_Float32, bool& GPU_Float64) 
 			}
 			return false;
 		}
-		queryOpenCL_GPU();
+		query_OpenCL_GPU();
 		{ /* GPU Float Support */
 			GPU_Float16 = false;
 			GPU_Float32 = true;
