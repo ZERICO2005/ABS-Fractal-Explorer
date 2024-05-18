@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2024)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -24,6 +24,8 @@
 #include "../fractal_Information/Mandelbrot_Information.h"
 
 #include "../render_Configuration.hpp"
+
+#include "display_GPU_info.h"
 
 // #include "copyBuffer.h"
 // #include "fractal.h"
@@ -396,11 +398,20 @@ void Menu_Coordinates() {
 	ImGui::Unindent(); }
 
 	ImGui::SeparatorText("Transformations"); { ImGui::Indent();
-		fp32 image_rotation = (fp32)FRAC.rot;
+		
 		ImGui::Text("Rotate Image:");
-		if (ImGui::SliderAngle("##RotateImage", &image_rotation, -360.0f, 360.0f, "%.1f deg")) {
-			FRAC.rot = (fp64)image_rotation;
-		}
+			/* Input */
+				constexpr fp64 Rotate_Image_Step = 15.0;
+				constexpr fp64 Rotate_Image_Step_Fast = 45.0;
+				fp64 frac_rot = RADIANS_TO_DEGREES(FRAC.rot);
+				if (ImGui::InputScalar("##input_image_rotation", ImGuiDataType_Double, &frac_rot, &Rotate_Image_Step, &Rotate_Image_Step_Fast, "%.5" PRIfp64)) {
+					FRAC.rot = clampRotation(DEGREES_TO_RADIANS(frac_rot));
+				}
+			/* Slider */
+				fp32 image_rotation = (fp32)FRAC.rot;
+				if (ImGui::SliderAngle("##RotateImage", &image_rotation, -360.0f, 360.0f, "%.1f deg")) {
+					FRAC.rot = (fp64)image_rotation;
+				}
 		if (ImGui::Button("Rotate 90 deg counter-clockwise")) { FRAC.rot -= DEGREES_TO_RADIANS(90.0); }
 		ImGui::SameLine();
 		if (ImGui::Button("Rotate 90 deg clockwise")) { FRAC.rot += DEGREES_TO_RADIANS(90.0); }
@@ -672,9 +683,6 @@ void SubMenu_SuperScreenshot() {
 	}
 }
 
-constexpr inline const char* Enable_Text(const bool& b) { return b ? "Enabled" : "Disabled"; }
-constexpr inline const char* Available_Text(const bool& b) { return b ? "Available" : "Unavailable"; }
-
 /* Rendering Selection */
 
 	constexpr nano64_t Rendering_Selection_Error_Message_Duration = SECONDS_TO_NANO(2.5);
@@ -872,7 +880,7 @@ void Menu_Rendering() {
 			super_screenshot_maxItr = (uint32_t)(pow(2.0f,temp_super_screenshot_maxItr));
 			valueClamp(super_screenshot_maxItr,16,16777216); valueClamp(temp_super_screenshot_maxItr,log2(16.0f),log2(16777216.0f));
 
-			const uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
+			constexpr uint64_t MaximumImageSize = (uint64_t)2147000000; // INT32_MAX minus some arbritrary overhead amount
 
 			ImGui::Text("Samples per pixel: %" PRId32,super_screenshot_super_sample * super_screenshot_super_sample);
 			ImGui::SliderInt("##super_screenshot_super_sample",&super_screenshot_super_sample,1,32,"");
@@ -880,16 +888,25 @@ void Menu_Rendering() {
 			size_t totalResY = (size_t)super_screenshot_resY * (size_t)super_screenshot_super_sample;
 
 			ImGui::NewLine();
-			static int Combo_Common_ResolutionPreset = 3;
-			const uint32_t Combo_Common_ResolutionPreset_RESX[] = {640,1280,1366,1920,2560,3840,5120,7680};
-			const uint32_t Combo_Common_ResolutionPreset_RESY[] = {480, 720, 768,1080,1440,2160,2880,4320};
+
+			int Combo_Common_ResolutionPreset = 0;
+
+			const uint32_t Combo_Common_ResolutionPreset_RESX[] = {0,640,1280,1920,2560,3840,5120,7680};
+			const uint32_t Combo_Common_ResolutionPreset_RESY[] = {0,480, 720,1080,1440,2160,2880,4320};
 			static const char* Common_ResolutionPreset[] = {
-				"640x480 SD","1280x720 HD","1366x768 WXGA","1920x1080 FHD","2560x1440 QHD","3840x2160 4K","5120x2880 5K","7680x4320 8K"
+				"Select a preset","640x480 SD","1280x720 HD","1920x1080 FHD","2560x1440 QHD","3840x2160 4K","5120x2880 5K","7680x4320 8K"
 			};
+			static_assert(
+				ARRAY_LENGTH(Common_ResolutionPreset) == ARRAY_LENGTH(Combo_Common_ResolutionPreset_RESX) &&
+				ARRAY_LENGTH(Common_ResolutionPreset) == ARRAY_LENGTH(Combo_Common_ResolutionPreset_RESY)
+			);
+			
 			ImGui::Text("Resolution Presets:");
 			if (ImGui::Combo("##Common_Resolutions",&Combo_Common_ResolutionPreset,BufAndLen(Common_ResolutionPreset))) {
-				super_screenshot_resX = (int32_t)Combo_Common_ResolutionPreset_RESX[Combo_Common_ResolutionPreset];
-				super_screenshot_resY = (int32_t)Combo_Common_ResolutionPreset_RESY[Combo_Common_ResolutionPreset];
+				if (Combo_Common_ResolutionPreset != 0) {
+					super_screenshot_resX = (int32_t)Combo_Common_ResolutionPreset_RESX[Combo_Common_ResolutionPreset];
+					super_screenshot_resY = (int32_t)Combo_Common_ResolutionPreset_RESY[Combo_Common_ResolutionPreset];
+				}
 			}
 
 			ImGui::Text("Resolution X:");
@@ -900,11 +917,18 @@ void Menu_Rendering() {
 			ImGui::InputInt("##super_screenshot_resY",&super_screenshot_resY,16,64);
 			valueClamp(super_screenshot_resY,64,65536); valueMaximumClamp(super_screenshot_resY,(int32_t)MaximumImageSize / super_screenshot_resX / 3);
 			
+			if (ImGui::Button("Use Current Screen Resolution##SuperScreenshotUseCurrentScreenResolution")) {
+				const DisplayInfo* disp = getDisplayFromWindowPosition(window);
+				if (disp != nullptr) {
+					disp->getResolution(super_screenshot_resX, super_screenshot_resY);
+				}
+			}
+
 			ImGui::NewLine();
 			ImGui::Text("Total Pixels Rendered: %zux%zu %.3lfMP",totalResX,totalResY,(fp64)(totalResX * totalResY) / 1000000.0);
-			if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS >= 1000000000) {
+			if ((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * (uint64_t)IMAGE_BUFFER_CHANNELS >= 1000000000) {
 				ImGui::Text("Current Image Size: %.1lf megabytes",
-					(fp64)((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * IMAGE_BUFFER_CHANNELS) / 1000000.0
+					(fp64)((uint64_t)super_screenshot_resX * (uint64_t)super_screenshot_resY * (uint64_t)IMAGE_BUFFER_CHANNELS) / 1000000.0
 				);
 				ImGui::Text("Maximum Image Size: %.1lf megabytes",
 					(fp64)(MaximumImageSize) / 1000000.0
@@ -954,7 +978,8 @@ void Menu_Rendering() {
 			const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
 			
 			ImGui::Text("CPU Threads: %u", std::thread::hardware_concurrency());
-
+			ImGui::Text("System RAM: %dMiB", SDL_GetSystemRAM());
+			ImGui::NewLine();
 			ImGui::Text("SSE2 Rendering: %s",
 				Enable_Text(Available_CPU_Instruction.SSE_Family.SSE2)
 			); Item_Tooltip("SSE2 allows the CPU to process 4 32bit floats or 2 64bit floats at a time."\
@@ -1036,10 +1061,9 @@ void Menu_Rendering() {
 				ImGui::NewLine();
 			}
 		ImGui::Unindent(); }
-		// if (ImGui::CollapsingHeader("GPU INFORMATION")) { ImGui::Indent();
-		// 	ImGui::Text("Not Implemented");
-		// 	ImGui::NewLine(); 
-		// } ImGui::Unindent();
+		if (ImGui::CollapsingHeader("GPU INFORMATION")) { ImGui::Indent();
+			SubMenu_GPU_Information();
+		ImGui::Unindent(); }
 	}
 	ImGui::SeparatorText("ADVANCED RENDERING SETTINGS:"); {
 		if (ImGui::CollapsingHeader("RENDERING CONFIGURATION")) { ImGui::Indent();

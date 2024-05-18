@@ -1,5 +1,5 @@
 /*
-**	Author: zerico2005 (2024)
+**	Author: zerico2005 (2023-2024)
 **	Project: ABS-Fractal-Explorer
 **	License: MIT License
 **	A copy of the MIT License should be included with
@@ -29,8 +29,9 @@ namespace Display_GUI {
 	};
 }
 
-void set_IMGUI_Theme(Display_GUI::IMGUI_Theme theme);
+void Item_Tooltip(const char* fmt, ...);
 
+void set_IMGUI_Theme(Display_GUI::IMGUI_Theme theme);
 
 void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags);
 

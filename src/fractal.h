@@ -49,6 +49,10 @@ inline fp64 getABSFractalMaxRadius(uint32_t power) {
 	return getABSFractalMaxRadius((fp64)power);
 }
 
+constexpr inline fp64 clampRotation(fp64 rotation) {
+	return (rotation >= 0.0) ? fmod(rotation, TAU) : fmod(rotation + TAU, TAU);
+}
+
 uint64_t limitFormulaID(uint32_t power, uint64_t formula);
 uint64_t getABSValue(uint32_t power);
 

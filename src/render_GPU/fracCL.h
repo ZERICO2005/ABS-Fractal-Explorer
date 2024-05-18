@@ -25,4 +25,8 @@ void query_OpenCL_GPU();
 
 void calculate_GPU_Hardware_Hash(uint64_t& hash);
 
+struct OpenCL_Engine;
+
+const OpenCL_Engine get_GPU_Information();
+
 #endif /* FRAC_CL_H */

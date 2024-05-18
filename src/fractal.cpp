@@ -249,7 +249,7 @@ void correctFracParameters(ABS_Mandelbrot* frac) {
 	valueClamp(frac->zi, (fpCord)-4.0, (fpCord)4.0);
 	valueClamp(frac->maxItr, ITERATION_COUNT_MINIMUM, ITERATION_COUNT_MAXIMUM);
 	valueClamp(frac->maxItr_Log2, log2((fp64)ITERATION_COUNT_MINIMUM), log2((fp64)ITERATION_COUNT_MAXIMUM));
-	frac->rot = (frac->rot >= 0.0) ? fmod(frac->rot, TAU) : fmod(frac->rot + TAU, TAU);
+	frac->rot = clampRotation(frac->rot);
 	valueClamp(frac->stretch, STRETCH_VALUE_MINIMUM, STRETCH_VALUE_MAXIMUM);
 	setStretchValue(frac);
 	valueClamp(frac->breakoutValue, 0.25, 4294967296.0);

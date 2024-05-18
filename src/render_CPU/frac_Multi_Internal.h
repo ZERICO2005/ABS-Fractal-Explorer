@@ -142,8 +142,8 @@ void Generate_PreCalc_Param(
 	/* Coordinates */
 		preCalc_Param.realCord = (fpX)param.r;
 		preCalc_Param.imagCord = (fpX)param.i;
-		preCalc_Param.realJulia = (fpX)param.zr;
-		preCalc_Param.imagJulia = (fpX)param.zi;
+		preCalc_Param.realJulia = param.startingZ ? (fpX)param.zr : (fpX)0.0;
+		preCalc_Param.imagJulia = param.startingZ ? (fpX)param.zi : (fpX)0.0;
 		const fpCord zoom_PC = pow((fpCord)10.0, (fpCord)param.zoom);
 		preCalc_Param.zoom_PC = (fpX)zoom_PC;
 		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);

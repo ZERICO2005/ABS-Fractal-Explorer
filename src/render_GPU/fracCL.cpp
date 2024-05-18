@@ -15,6 +15,20 @@
 #include "../fractal.h"
 #include "../user_data.h"
 
+/* GPU Information */
+	static OpenCL_Engine Public_GPU_Engine;
+	std::mutex Public_GPU_Engine_Mutex;
+
+	const OpenCL_Engine get_GPU_Information() {
+		std::lock_guard<std::mutex> lock(Public_GPU_Engine_Mutex);
+		return Public_GPU_Engine;
+	}
+	static void set_GPU_Information(const OpenCL_Engine& engine) {
+		std::lock_guard<std::mutex> lock(Public_GPU_Engine_Mutex);
+		Public_GPU_Engine = engine;
+	}
+
+
 bool initialized_OpenCL = false;
 
 uint32_t compiledYet = 0;
@@ -194,6 +208,7 @@ int32_t init_OpenCL() {
 		printFlush("\nError: Unknown OpenCL Error");
 		return -1;
 	}
+	set_GPU_Information(GPU_Engine);
 	initialized_OpenCL = true;
 	return 0;
 }

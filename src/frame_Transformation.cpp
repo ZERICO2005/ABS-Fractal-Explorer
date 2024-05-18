@@ -19,6 +19,9 @@
 
 #include <xmmintrin.h>
 
+// Precision used for transformations
+typedef fp32 fpTran;
+
 /**
  * @brief Generic Method. Runs faster, but leaves pixels gaps and skips pixels near the edge of the frame.
 */
@@ -34,9 +37,43 @@ __attribute__((unused)) static int frame_Transform_Generic_Fast(
 	const uint32_t* image_buf = (uint32_t*)image.vram;
 	uint32_t* blit_buf = (uint32_t*)blit.vram;
 	
-	typedef fp32 fpTran;
+	/* Calculation Constants */
+
+		const fpCord CALC_Recip_Image_DimX = (fpCord)1.0 / (fpCord)(image.resX - 1);
+		const fpCord CALC_Recip_Image_DimY = (fpCord)1.0 / (fpCord)(image.resY - 1);
+		// const fpCord CALC_Image_Cord_X00 = image.x00 - FRAC.r;
+		// const fpCord CALC_Image_Cord_Y00 = image.y00 - FRAC.i;
+		const fpCord CALC_Image_Cord_X01_sub_X00 = image.x01 - image.x00;
+		const fpCord CALC_Image_Cord_Y01_sub_Y00 = image.y01 - image.y00;
+		const fpCord CALC_Image_Cord_X10_sub_X00 = image.x10 - image.x00;
+		const fpCord CALC_Image_Cord_Y10_sub_Y00 = image.y10 - image.y00;
+
+		const fpCord CALC_Zoom_Value_mult_ResZ_div_2 = pow((fpCord)10.0, (fpCord)FRAC.zoom) * (
+			(blit.resX >= blit.resY) ?
+			((fpCord)(blit.resY - 1) / (fpCord)2.0) :
+			((fpCord)(blit.resX - 1) / (fpCord)2.0)
+		);
+		const fpCord CALC_Rot_Cos = cos((fpCord)FRAC.rot);
+		const fpCord CALC_Rot_Sin = sin((fpCord)FRAC.rot);
+
+		const fpCord     CALC_Rot_Sin_mult_ZVmRZd2_div_Stretch_X = ( CALC_Rot_Sin * CALC_Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sX;
+		const fpCord CALC_neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (-CALC_Rot_Sin * CALC_Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
+		const fpCord     CALC_Rot_Cos_mult_ZVmRZd2_div_Stretch_X = ( CALC_Rot_Cos * CALC_Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sX;
+		const fpCord CALC_neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (-CALC_Rot_Cos * CALC_Zoom_Value_mult_ResZ_div_2) / (fpCord)FRAC.sY;
+
+		const fpCord CALC_Horiz_JumpX = CALC_Recip_Image_DimX * (CALC_Image_Cord_X10_sub_X00 *     CALC_Rot_Cos_mult_ZVmRZd2_div_Stretch_X + CALC_Image_Cord_Y10_sub_Y00 *     CALC_Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
+		const fpCord CALC_Horiz_JumpY = CALC_Recip_Image_DimX * (CALC_Image_Cord_Y10_sub_Y00 * CALC_neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - CALC_Image_Cord_X10_sub_X00 * CALC_neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
+		const fpCord CALC_Verti_JumpX = CALC_Recip_Image_DimY * (CALC_Image_Cord_X01_sub_X00 *     CALC_Rot_Cos_mult_ZVmRZd2_div_Stretch_X + CALC_Image_Cord_Y01_sub_Y00 *     CALC_Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
+		const fpCord CALC_Verti_JumpY = CALC_Recip_Image_DimY * (CALC_Image_Cord_Y01_sub_Y00 * CALC_neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - CALC_Image_Cord_X01_sub_X00 * CALC_neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
 
 	/* Pre calculated constants */
+
+		const int32_t JumpX_Sign = (signbit(CALC_Horiz_JumpX * -CALC_Verti_JumpX) >= (fpCord)0.0) ? 1 : -1;
+		const int32_t JumpY_Sign = (signbit(CALC_Horiz_JumpY *  CALC_Verti_JumpY) >= (fpCord)0.0) ? 1 : -1;
+		const int32_t JumpX = (int32_t)ceil(hypot(CALC_Horiz_JumpX, CALC_Verti_JumpX)) * JumpX_Sign;
+		const int32_t JumpY = (int32_t)ceil(hypot(CALC_Horiz_JumpY, CALC_Verti_JumpY)) * JumpY_Sign;
+		
+
 		const fpTran Recip_Image_DimX = (fpTran)1.0 / (fpTran)(image.resX - 1);
 		const fpTran Recip_Image_DimY = (fpTran)1.0 / (fpTran)(image.resY - 1);
 
@@ -56,29 +93,24 @@ __attribute__((unused)) static int frame_Transform_Generic_Fast(
 		// const fpTran Image_Cord_X11subX10_sub_X01subX00 = (fpTran)(Image_Cord_X11_sub_X10 - Image_Cord_X01_sub_X00);
 		// const fpTran Image_Cord_Y11subY10_sub_Y01subY00 = (fpTran)(Image_Cord_Y11_sub_Y10 - Image_Cord_Y01_sub_Y00);
 
-		const fpTran ResX_div_2 = (fpTran)(blit.resX - 1) / (fpTran)2.0;
-		const fpTran ResY_div_2 = (fpTran)(blit.resY - 1) / (fpTran)2.0;
-		const fpTran Zoom_Value_mult_ResZ_div_2 = pow((fpTran)10.0, (fpTran)FRAC.zoom) * ( (blit.resX >= blit.resY) ? ResY_div_2 : ResX_div_2 );
-		const fpTran Rot_Cos = cos((fpTran)FRAC.rot);
-		const fpTran Rot_Sin = sin((fpTran)FRAC.rot);
-		const fpTran     Rot_Sin_mult_ZVmRZd2_div_Stretch_X = ( Rot_Sin * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sX;
-		const fpTran neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (-Rot_Sin * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
-		const fpTran     Rot_Cos_mult_ZVmRZd2_div_Stretch_X = ( Rot_Cos * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sX;
-		const fpTran neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (-Rot_Cos * Zoom_Value_mult_ResZ_div_2) / (fpTran)FRAC.sY;
+		const fpTran     Rot_Sin_mult_ZVmRZd2_div_Stretch_X = (fpTran)    CALC_Rot_Sin_mult_ZVmRZd2_div_Stretch_X;
+		const fpTran neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y = (fpTran)CALC_neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y;
+		const fpTran     Rot_Cos_mult_ZVmRZd2_div_Stretch_X = (fpTran)    CALC_Rot_Cos_mult_ZVmRZd2_div_Stretch_X;
+		const fpTran neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y = (fpTran)CALC_neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y;
 	
 	/* Pixel Jumps */
 
-		const fpTran Horiz_JumpX = Recip_Image_DimX * (Image_Cord_X10_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y10_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
-		const fpTran Horiz_JumpY = Recip_Image_DimX * (Image_Cord_Y10_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X10_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
-		const fpTran Verti_JumpX = Recip_Image_DimY * (Image_Cord_X01_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y01_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
-		const fpTran Verti_JumpY = Recip_Image_DimY * (Image_Cord_Y01_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X01_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
+		// const fpTran Horiz_JumpX = Recip_Image_DimX * (Image_Cord_X10_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y10_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
+		// const fpTran Horiz_JumpY = Recip_Image_DimX * (Image_Cord_Y10_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X10_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
+		// const fpTran Verti_JumpX = Recip_Image_DimY * (Image_Cord_X01_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y01_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
+		// const fpTran Verti_JumpY = Recip_Image_DimY * (Image_Cord_Y01_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X01_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
 
 		constexpr size_t Pixel_Size = 1;
 		
-		const fpTran JumpX_Sign = (signbit(Horiz_JumpX * -Verti_JumpX) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
-		const fpTran JumpY_Sign = (signbit(Horiz_JumpY *  Verti_JumpY) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
-		const int32_t JumpX = (int32_t)ceil(hypot(Horiz_JumpX, Verti_JumpX) * JumpX_Sign);
-		const int32_t JumpY = (int32_t)ceil(hypot(Horiz_JumpY, Verti_JumpY) * JumpY_Sign);
+		// const fpTran JumpX_Sign = (signbit(Horiz_JumpX * -Verti_JumpX) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
+		// const fpTran JumpY_Sign = (signbit(Horiz_JumpY *  Verti_JumpY) >= (fpTran)0.0) ? (fpTran)1.0 : (fpTran)-1.0;
+		// const int32_t JumpX = (int32_t)ceil(hypot(Horiz_JumpX, Verti_JumpX) * JumpX_Sign);
+		// const int32_t JumpY = (int32_t)ceil(hypot(Horiz_JumpY, Verti_JumpY) * JumpY_Sign);
 
 		const int32_t Repeat_X = (JumpX == 0) ? 1 : JumpX;
 		const int32_t Repeat_Y = (JumpY == 0) ? 1 : JumpY;
@@ -100,14 +132,14 @@ __attribute__((unused)) static int frame_Transform_Generic_Fast(
 
 
 		// Ensures that the pixel jumps are positive to simplify logic
-		const fpTran PosX_Offset_plus_ResX_div_2 = (fpTran)((Repeat_X >= 1) ? 0 : (Repeat_X + 1)) + ResX_div_2;
-		const fpTran PosY_Offset_plus_ResY_div_2 = (fpTran)((Repeat_Y >= 1) ? 0 : (Repeat_Y + 1)) + ResY_div_2;
+		const fpTran PosX_Offset_plus_ResX_div_2 = (fpTran)((Repeat_X >= 1) ? 0 : (Repeat_X + 1)) + ((fpTran)(blit.resX - 1) / (fpTran)2.0);
+		const fpTran PosY_Offset_plus_ResY_div_2 = (fpTran)((Repeat_Y >= 1) ? 0 : (Repeat_Y + 1)) + ((fpTran)(blit.resY - 1) / (fpTran)2.0);
 
 		// printfInterval(0.4, "\nPixel Jump: X{%.5f,%.5f} Y{%.5f,%.5f} Repeat{%d,%d} Min{%d,%d} Max{%d,%d}",
 		// 	Horiz_JumpX, Horiz_JumpY, Verti_JumpX, Verti_JumpY,
 		// 	Repeat_X, Repeat_Y, Minimum_PosX, Minimum_PosY, Maximum_PosX, Maximum_PosY
 		// );
-
+		
 	//size_t image_offset = 0;
 	fpTran Y_Value = (fpTran)0.0;
 
