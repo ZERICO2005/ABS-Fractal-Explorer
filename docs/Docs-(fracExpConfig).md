@@ -23,7 +23,7 @@
 		The directory/folder that screenshots will be written to.
 		
 	## Path_FracExpKB
-		(Unimplemented)
+		(Unimplemented)<br>
 		The location of the file where key-binds will be loaded from at startup.
 
 # Parameter_Sensitivity
@@ -195,10 +195,34 @@
 	Generates a unique hash value for your hardware configuration. This hash is used to detect any changes to hardware, which can help prevent one's slow laptop from attempting to render at the same presets as a powerful desktop computer. If changes to the hardware configuration are detected, you will be prompted with a choice of loading the `Rendering_Settings` from the config file (Which may or may not perform well on another computer), or loading the default `Rendering_Settings`, which are designed to be able to run fine on most computers.
 	
 	## Frame_Interpolation_Method
-	*(0 Nearest Neighbor)*
+	*(0 Nearest Neighbor)*<br>
+	Only applicable if ABS-Fractal-Explorer is using the OpenCV scaler.
 	
 	0. Nearest Neighbor: (Fastest) Doesn't blend/smear pixels but may look pixelated.
 	1. Linear: (Fast) Provides a smoother transition between pixels.
 	2. Bicubic: (Slow) Provides a higher quality transition between pixels.
 	3. Area Interpolation: (Fast) Supposedly the same as Nearest Neighbor when zoomed in, but does a nicer job when zoomed out.
 	4. Lanczos4: (Slowest) Uses an advanced algorithm to interpolate between pixels.
+	
+	## Image_Render_Bounding_Box
+	*(0 Fill Area)*<br>
+	The area that is used for taking a super-screenshot or high quality render if the aspect ratio's of the view-port and super-screenshot area do not match.
+	
+	0. Fill Area: Ensures that the entirety of the view-port is visible in the super-screenshot, but may include areas outside the view-port.
+	1. Fit Area: Ensures that the super-screenshot area lies entirely inside the view-port, this may exclude some parts of the view-port.
+	2. Fit Width: Ensures the left and right sides of the view-port are included in the super-screenshot, this may crop or expand the top and bottom sides of the view-port.
+	3. Fit Height: Ensures the top and bottom sides of the view-port are included in the super-screenshot, this may crop or expand the left and right sides of the view-port.
+	4. Expand from Center: The center 1:1 square of the view-port will remain visible, but pixels may be cropped or expanded on the left/right and top/bottom sides of the super-screenshot.
+	5. Stretch to Fit (Not Implemented): Stretches the super-screenshot to cover the exact same area as the view-port, this may distort the image.
+	
+	## JuliaPoint_Enabled
+	*(True)*<br>
+	Plots the current Julia-Cordinate point on screen.
+	
+	## JuliaPoint_OuterRadius
+	*(8.0)*
+	The outer-radius of the Julia-Cordinate point. Larger values can make the Julia-Cordinate easier to spot.
+	
+	## JuliaPoint_InnerRadius
+	*(2.4)*
+	The inner-radius of the Julia-Cordinate point, used to create a crosshair or "donut" shape. You can disable the inner-radius by setting it to 0.0

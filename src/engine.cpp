@@ -18,7 +18,9 @@
 
 #include "render_CPU/frac_Multi.h"
 
-#include "render_GPU/fracCL.h"
+#ifdef Enable_OpenCL
+	#include "render_GPU/fracCL.h"
+#endif
 
 #include "render_Configuration.hpp"
 
@@ -100,10 +102,14 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 				ABORT_RENDERING, primaryRender.CPU_Threads
 			);
 		} else if (Super_Engine_Config.current_Render_Method_GPU() == true) {
-			render_OpenCL_ABS_Mandelbrot(
-				&image_box, image_render_data, image_fractal_data,
-				ABORT_RENDERING
-			);
+			#ifdef Enable_OpenCL
+				render_OpenCL_ABS_Mandelbrot(
+					&image_box, image_render_data, image_fractal_data,
+					ABORT_RENDERING
+				);
+			#else
+				printfInterval(0.5,"Error: Super Screenshot, GPU rendering has been disabled in this version of ABS-Fractal-Explorer");
+			#endif
 		} else {
 			printfInterval(0.5,"Error: Super Screenshot, unknown rendering method %" PRId32, Super_Engine_Config.get_Render_Method());
 		}
@@ -167,10 +173,14 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 				ABORT_RENDERING, primaryRender.CPU_Threads
 			);
 		} else if (Engine_Config.current_Render_Method_GPU() == true) {
-			render_OpenCL_ABS_Mandelbrot(
-				&renderBox, primaryRender, fracData,
-				ABORT_RENDERING
-			);
+			#ifdef Enable_OpenCL
+				render_OpenCL_ABS_Mandelbrot(
+					&renderBox, primaryRender, fracData,
+					ABORT_RENDERING
+				);
+			#else
+				printfInterval(0.5,"Error: GPU rendering has been disabled in this version of ABS-Fractal-Explorer");
+			#endif
 		} else {
 			printfInterval(0.5, "Unknown rendering method %" PRId32, Engine_Config.get_Render_Method());
 		}
@@ -272,8 +282,10 @@ bool init_GPU_Renderer(bool& GPU_Float16, bool& GPU_Float32, bool& GPU_Float64) 
 			GPU_Float64 = false;
 		}
 		return true;
-	#else 
-		printFlush("\nNote: OpenCL GPU rendering is disabled");
+	#else
+		#ifndef BUILD_RELEASE
+			printFlush("\nNote: OpenCL GPU rendering is disabled");
+		#endif
 
 		{ /* GPU Float Support */
 			GPU_Float16 = false;

@@ -154,16 +154,18 @@ uint8_t printOpenCLError(cl_int errorCode) {
 	}
 
 void query_OpenCL_GPU() {
-	const OpenCL_Device_Properties& Device = GPU_Engine.device_properties;
-	printf("\nGPU Hardware Information:");
-	printf("\n\tDevice Name: %s | %s",
-		Device.Name.c_str(), Device.Vendor.c_str()
-	);
-	printf("\n\tDriver Version: %s | %s | %s",
-		Device.Driver_Version.c_str(), Device.OpenCL_Version.c_str(), Device.Profile.c_str()
-	);
-	printf("\n\tDevice VRAM: %" PRIu64 "MB", Device.Global_Memory_Size / 1048576);
-	fflush(stdout);
+	#ifndef BUILD_RELEASE
+		const OpenCL_Device_Properties& Device = GPU_Engine.device_properties;
+		printf("\nGPU Hardware Information:");
+		printf("\n\tDevice Name: %s | %s",
+			Device.Name.c_str(), Device.Vendor.c_str()
+		);
+		printf("\n\tDriver Version: %s | %s | %s",
+			Device.Driver_Version.c_str(), Device.OpenCL_Version.c_str(), Device.Profile.c_str()
+		);
+		printf("\n\tDevice VRAM: %" PRIu64 "MB", Device.Global_Memory_Size / 1048576);
+		fflush(stdout);
+	#endif
 }
 
 int32_t terminate_OpenCL() { /* Deallocate resources */

@@ -65,8 +65,6 @@ Frame_Pacer GUI_Frame_Pacer;
 	Render_Data primarySuperRenderData = {0};
 	Render_Data secondarySuperRenderData = {0};
 
-	int_enum Super_Screenshot_Bounding_Box = Namespace_Image_Render_Bounding_Box::Fill_Area;
-
 /* ImGui Stuff */
 	ImGuiIO* io_IMGUI = nullptr;
 	dim32_t ImGui_WINDOW_MARGIN = 8;

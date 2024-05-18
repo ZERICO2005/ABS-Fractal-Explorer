@@ -1291,7 +1291,9 @@ int32_t loadDisplayInformation(
 		printError("Failed to detect displays");
 		return 0;
 	}
-	printf("\n\tDisplay Count: %" PRId32,displayCount);
+	#ifndef BUILD_RELEASE
+		printf("\n\tDisplay Count: %" PRId32,displayCount);
+	#endif
 	int32_t cursorPosX, cursorPosY;
 	SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
 	const DisplayInfo* disp = getBootupDisplay(
@@ -1355,8 +1357,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
 		return -1;
 	}
-	printf("\nSystem Information:");
-	
+	#ifndef BUILD_RELEASE
+		printf("\nSystem Information:");
+	#endif
 	dim32_t dispResX, dispResY;
 	dim32_t initResX, initResY, initPosX, initPosY;
 	int32_t initDisplayIndex = loadDisplayInformation(Display_Preferences, initResX, initResY, initPosX, initPosY);
@@ -1383,8 +1386,10 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 			);
 	}
 	//printFlush("\nNew: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
-	printf("\n\tOperating System: %s", SDL_GetPlatform());
-	printf("\n\tSystem RAM: %" PRId32 "MB", SDL_GetSystemRAM());
+	#ifndef BUILD_RELEASE
+		printf("\n\tOperating System: %s", SDL_GetPlatform());
+		printf("\n\tSystem RAM: %" PRId32 "MB", SDL_GetSystemRAM());
+	#endif
 	// Allocate Buffers
 	//initBufferBox(&Master,NULL,initResX,initResY,IMAGE_BUFFER_CHANNELS);
 	Master = ImageBuffer(initResX,initResY,IMAGE_BUFFER_CHANNELS);
@@ -1469,7 +1474,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	
 	write_Render_Ready(true);
 	write_Parameters(&current_Fractal, &primaryRenderData, &secondaryRenderData);
-	printFlush("\n");
+	#ifndef BUILD_RELEASE
+		printFlush("\n");
+	#endif
 
 	while (read_Engine_Ready() == false) {
 		if (QUIT_FLAG == true) {
@@ -1646,22 +1653,28 @@ int exportScreenshot() {
 	return 0;
 }
 
-/* Not quite finished yet */
 void set_Super_Screenshot_Bounding_Box(
 	ABS_Mandelbrot& frac,
 	Render_Data& ren,
 	dim32_t resX, dim32_t resY,
 	Namespace_Image_Render_Bounding_Box::Enum_Image_Render_Bounding_Box bound_type
 ) {
+	// fp64 ORIGINAL_ZOOM = frac.zoom;
 	fp64 ratio_Render = (fp64)ren.resX / (fp64)ren.resY;
 	fp64 ratio_Window = (fp64)resX / (fp64)resY;
+	if (ratio_Render == ratio_Window) {
+		return; // Nothing to be done
+	}
 	using namespace Namespace_Image_Render_Bounding_Box;
+	if (bound_type == Expand_from_Center) {
+		return; // Nothing to be done
+	}
+	
 	if (ratio_Window >= 1.0) {
 		if (ratio_Render >= 1.0) {
 			/* Both Wide Ratios */
 			switch(bound_type) {
 				default:
-				case Expand_From_Center:
 					break; // Nothing to be done
 				case Fill_Area: {
 					// Wider than window
@@ -1673,16 +1686,16 @@ void set_Super_Screenshot_Bounding_Box(
 				} break;
 				case Fit_Area: {
 					if (ratio_Render >= ratio_Window) {
-						frac.zoom += log10(ratio_Render / ratio_Window);				
+						frac.zoom += log10(ratio_Render / ratio_Window);
 					} else {
 						
 					}
 				} break;
 				case Fit_Width: {
 					if (ratio_Render >= ratio_Window) {
-						frac.zoom += log10(ratio_Render / ratio_Window);				
+						frac.zoom += log10(ratio_Render / ratio_Window);
 					} else {
-						
+						frac.zoom -= log10(ratio_Window / ratio_Render);
 					}
 				} break;
 				case Fit_Height: {
@@ -1695,16 +1708,46 @@ void set_Super_Screenshot_Bounding_Box(
 			}
 		} else {
 			/* Window is Wide, and Render is Tall */
+			switch(bound_type) {
+				default:
+					break; // Nothing to be done
+				case Fill_Area: {
+					frac.zoom -= log10(ratio_Window);
+				} break;
+				case Fit_Area: {
+					frac.zoom += log10(1.0 / ratio_Render);
+				} break;
+				case Fit_Width: {
+					frac.zoom -= log10(ratio_Window);
+				} break;
+				case Fit_Height: {
+					frac.zoom += log10(1.0 / ratio_Render);
+				} break;
+			}
 		}
 	} else {
 		if (ratio_Render >= 1.0) {
 			/* Window is Tall, and Render is Wide*/
-
+			switch(bound_type) {
+				default:
+					break; // Nothing to be done
+				case Fill_Area: {
+					frac.zoom -= log10(1.0 / ratio_Window);
+				} break;
+				case Fit_Area: {
+					frac.zoom += log10(ratio_Render);
+				} break;
+				case Fit_Width: {
+					frac.zoom += log10(ratio_Render);
+				} break;
+				case Fit_Height: {
+					frac.zoom -= log10(1.0 / ratio_Window);
+				} break;
+			}
 		} else {
 			/* Both Tall Ratios*/
 			switch(bound_type) {
 				default:
-				case Expand_From_Center:
 					break; // Nothing to be done
 				case Fill_Area: {
 					// Wider than window
@@ -1732,13 +1775,13 @@ void set_Super_Screenshot_Bounding_Box(
 					if (ratio_Render >= ratio_Window) {
 						frac.zoom -= log10(ratio_Render / ratio_Window);
 					} else {
-						
+						frac.zoom += log10(ratio_Window / ratio_Render);
 					}
 				} break;
 			}
 		}
 	}
-	
+	// printFlush("\nZoom Change: %.3lf --> %.3lf", ORIGINAL_ZOOM, frac.zoom);
 }
 
 int exportSuperScreenshot() {
@@ -1755,12 +1798,12 @@ int exportSuperScreenshot() {
 		superRenderData.subSample = 1;
 		superRenderData.CPU_Threads = (uint32_t)super_screenshot_maxThreads * (uint32_t)super_screenshot_threadMultiplier;
 		const User_Screenshot_Settings& screenshot_settings = config_data.Screenshot_Settings;
-		// set_Super_Screenshot_Bounding_Box(
-		// 	superFrac,
-		// 	superRenderData,
-		// 	primaryRenderData.resX, primaryRenderData.resY,
-		// 	(Namespace_Image_Render_Bounding_Box::Enum_Image_Render_Bounding_Box)Super_Screenshot_Bounding_Box
-		// );
+		set_Super_Screenshot_Bounding_Box(
+			superFrac,
+			superRenderData,
+			primaryRenderData.resX, primaryRenderData.resY,
+			(Namespace_Image_Render_Bounding_Box::Enum_Image_Render_Bounding_Box)config_data.Rendering_Settings.Image_Render_Bounding_Box
+		);
 		switch(screenshot_settings.screenshotFileType) {
 			case Image_File_Format::PNG:
 			default:

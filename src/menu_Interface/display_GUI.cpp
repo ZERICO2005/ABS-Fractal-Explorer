@@ -25,7 +25,9 @@
 
 #include "../render_Configuration.hpp"
 
-#include "display_GPU_info.h"
+#ifdef Enable_OpenCL
+	#include "display_GPU_info.h"
+#endif
 
 // #include "copyBuffer.h"
 // #include "fractal.h"
@@ -866,13 +868,13 @@ void Menu_Rendering() {
 		ImGui::Unindent(); }
 		if (ImGui::CollapsingHeader("SUPER SCREENSHOT SETTINGS")) { ImGui::Indent();
 
-			// ImGui::Text("Bounding Box:");
-			// ImGui::Combo("##SuperScreenshotBoundingBox", &Super_Screenshot_Bounding_Box,
-			// 	Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
-			// 	ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
-			// ); Item_Tooltip("Which area should be used for taking the sceenshot");
-			// //SubMenu_SuperScreenshot();
-			// ImGui::NewLine();
+			ImGui::Text("Bounding Box:");
+			ImGui::Combo("##SuperScreenshotBoundingBox", &config_data.Rendering_Settings.Image_Render_Bounding_Box,
+				Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text,
+				ARRAY_LENGTH(Namespace_Image_Render_Bounding_Box::Image_Render_Bounding_Box_Text)
+			); Item_Tooltip("Which area should be used for taking the sceenshot");
+			//SubMenu_SuperScreenshot();
+			ImGui::NewLine();
 			
 			static fp32 temp_super_screenshot_maxItr = log2((fp32)default_Super_Screenshot_MaxItr);
 			ImGui::Text("Maximum Iterations: %" PRId32,super_screenshot_maxItr);
@@ -1061,9 +1063,11 @@ void Menu_Rendering() {
 				ImGui::NewLine();
 			}
 		ImGui::Unindent(); }
-		if (ImGui::CollapsingHeader("GPU INFORMATION")) { ImGui::Indent();
-			SubMenu_GPU_Information();
-		ImGui::Unindent(); }
+		#ifdef Enable_OpenCL
+			if (ImGui::CollapsingHeader("GPU INFORMATION")) { ImGui::Indent();
+				SubMenu_GPU_Information();
+			ImGui::Unindent(); }
+		#endif
 	}
 	ImGui::SeparatorText("ADVANCED RENDERING SETTINGS:"); {
 		if (ImGui::CollapsingHeader("RENDERING CONFIGURATION")) { ImGui::Indent();

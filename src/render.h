@@ -86,10 +86,10 @@ namespace Image_File_Format {
 
 namespace Namespace_Image_Render_Bounding_Box {
 	enum Enum_Image_Render_Bounding_Box {
-		Fill_Area, Fit_Area, Fit_Width, Fit_Height, Expand_From_Center,
+		Fill_Area, Fit_Area, Fit_Width, Fit_Height, Expand_from_Center, // Stretch_to_Area
 		Image_Render_Bounding_Box_Count
 	};
-	const char* const Image_Render_Bounding_Box_Text[] = {"Fill Area", "Fit Area", "Fit Width", "Fit Height", "Expand from Center"};
+	const char* const Image_Render_Bounding_Box_Text[] = {"Fill Area", "Fit Area", "Fit Width", "Fit Height", "Expand from Center"/*, "Stretch to Area"*/};
 };
 
 uint64_t get_Hardware_Hash();
