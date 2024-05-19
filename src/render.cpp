@@ -12,7 +12,7 @@
 #include "temp_global_render.h"
 
 #include "copyBuffer.h"
-// #include "BufferCopy.hpp"
+
 #include "fractal.h"
 #include "keybind.h"
 #include "engine.h"
@@ -33,8 +33,6 @@
 
 #include "menu_Interface/display_GUI.h"
 #include "displayInfo.h"
-
-
 
 constexpr uint8_t color_square_divider = 2; // 5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 
@@ -437,52 +435,6 @@ void correctTextFloat(char* buf, size_t len, uint8_t level) { /* Strips characte
 	}
 }
 
-void correctUsernameText(char* buf, size_t len) { /* Strips characters */
-	size_t p = 0;
-	for (size_t i = 0; i < strnlen(buf,len); i++) {
-		#ifdef displayTerribleProgrammingJokes
-			if (i == 0) {
-				while (i < strnlen(buf,len) && (buf[i] >= '0' && buf[i] <= '9')) {
-					i++;
-				}
-			}
-		#endif
-		if (!(
-			(buf[i] >= 'A' && buf[i] <= 'Z') || 
-			(buf[i] >= 'a' && buf[i] <= 'z') ||
-			(buf[i] >= '0' && buf[i] <= '9') ||
-			(buf[i] == '_')
-		)) {
-			if ((buf[i] == ' ') || (buf[i] == '-') || (buf[i] == '.') || (buf[i] == '~')) {
-				buf[i] = '_';
-			} else {
-				continue;
-			}
-		}
-		buf[p] = buf[i];
-		p++;
-	}
-	for (;p < len; p++) {
-		buf[p] = '\0';
-	}
-}
-
-int32_t utitledFileNameGenerator(char* buf, size_t maxLen) {
-	static const char* UntitledFile_Front[] = { // Easier to read atomic names
-		"Aluminum","Argon","Beryllium","Bismuth","Boron","Bromine","Calcium","Carbon","Cesium","Chlorine","Chromium","Cobalt","Copper","Fluorine","Gallium","Gold","Hafnium","Helium","Hydrogen","Iodine","Iridium","Iron","Krypton","Lithium","Magnesium","Neon","Neptunium","Nickel","Nitrogen","Osmium","Oxygen","Phosphorus","Platinum","Plutonium","Potassium","Rhodium","Silicon","Silver","Sodium","Sulfur","Technetium","Thorium","Titanium","Tungsten","Uranium","Vanadium","Xenon"
-	};
-	static const char* UntitledFile_Middle[] = { // Common color names
-		"Amber","Aquamarine","Beige","Black","Blue","Brown","Charcoal","Cyan","Fuchsia","Green","Grey","Indigo","Lime","Magenta","Maroon","Mint","Olive","Orange","Pink","Purple","Red","Teal","Turquoise","Violet","White","Yellow"
-	};
-	static const char* UntitledFile_End[] = { // Shapes and mathematical terms
-		"Cardiod","Catenary","Circle","Cube","Cycloid","Cylinder","Diamond","Dodecagon","Ellispse","Exponential","Hexagon","Hyperbola","Icosahedron","Logarithm","Nephroid","Octogon","Parabola","Parallelogram","Pentagon","Polynomial","Rectangle","Rhombus","Sphere","Square","Star","Tangent","Tesseract","Tetreahedron","Trapozoid","Triangle","Vertex"
-	};
-	srand((unsigned int)getNanoTime());
-	uint32_t choice_front = (uint32_t)rand() % (uint32_t)ARRAY_LENGTH(UntitledFile_Front);
-	uint32_t choice_middle = (uint32_t)rand() % (uint32_t)ARRAY_LENGTH(UntitledFile_Middle);
-	uint32_t choice_end = (uint32_t)rand() % (uint32_t)ARRAY_LENGTH(UntitledFile_End);
-	return snprintf(buf,maxLen,"%s-%s-%s",UntitledFile_Front[choice_front],UntitledFile_Middle[choice_middle],UntitledFile_End[choice_end]);
-};
 /*
 void initFunctionTimers() {
 	using namespace Key_Function;
@@ -1239,6 +1191,25 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 	return 0;
 // }
 
+uint64_t get_Hardware_Hash() {
+	uint64_t hardwareHash = 0x0;
+	uint8_t value8 = 0x0; uint16_t value16 = 0x0; uint32_t value32 = 0x0;
+	value8 = PROGRAM_V_MAJOR;
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value8,sizeof(int8_t));
+	value32 = std::thread::hardware_concurrency();
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	value32 = (uint32_t)SDL_GetCPUCacheLineSize();
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	value32 = (uint32_t)SDL_GetSystemRAM();
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	value16 = (uint16_t)count_Supported_CPU_Instruction(get_Available_CPU_Instruction());
+	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value16,sizeof(int16_t));
+	// #ifdef Enable_OpenCL
+	// 	get_GPU_Hardware_Hash(hardwareHash);
+	// #endif
+	return hardwareHash;
+}
+
 void init_config_data() {
 	std::string import_path = get_RelativeFilePath();
 	import_path += "config.fracExpConfig";
@@ -1252,6 +1223,7 @@ void init_config_data() {
 			config_data.File_Paths.Path_Screenshot = get_RelativeFilePath();
 			config_data.File_Paths.Path_FracExpKeybind = get_RelativeFilePath();
 		}
+		write_Screenshot_Path(config_data.File_Paths.Path_Screenshot.c_str());
 	} else {
 		default_User_Configuration_Data(config_data, true);
 	}
@@ -1489,25 +1461,6 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	return 0;
 }
 
-uint64_t get_Hardware_Hash() {
-	uint64_t hardwareHash = 0x0;
-	uint8_t value8 = 0x0; uint16_t value16 = 0x0; uint32_t value32 = 0x0;
-	value8 = PROGRAM_V_MAJOR;
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value8,sizeof(int8_t));
-	value32 = std::thread::hardware_concurrency();
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
-	value32 = (uint32_t)SDL_GetCPUCacheLineSize();
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
-	value32 = (uint32_t)SDL_GetSystemRAM();
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
-	value16 = (uint16_t)count_Supported_CPU_Instruction(get_Available_CPU_Instruction());
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value16,sizeof(int16_t));
-	// #ifdef Enable_OpenCL
-	// 	get_GPU_Hardware_Hash(hardwareHash);
-	// #endif
-	return hardwareHash;
-}
-
 int terminate_Render() {
 	terminate_config_data();
 	terminateKeyboardGraphics();
@@ -1515,12 +1468,15 @@ int terminate_Render() {
 	ImGui_ImplSDLRenderer2_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
 	ImGui::DestroyContext();
+
+	SDL_DestroyTexture(kTexture);
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 	return 0;
 }
+
 
 
 void setRenderedBufferBox(BufferBox* box) {
@@ -1595,28 +1551,28 @@ void renderStatusGraphic(BufferBox& buf, Status_Graphic::Status_Graphic_Enum sta
 	size_t z = 0;
 	switch (status_graphic) {
 		case Status_Graphic::Graphic_Abort:
-			for (uint32_t p = 0; p < patternLength; p++) {
+			for (size_t p = 0; p < patternLength; p++) {
 				pattern[z] = (uint8_t)((w + p) % 256); pattern[z] /= color_square_divider; z++;
 				pattern[z] = (uint8_t)((w + p) % 256) / 4; pattern[z] /= color_square_divider; z++;
 				pattern[z] = 0; z++;
-				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
+				if constexpr (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
 			break;
 		case Status_Graphic::Graphic_Pause:
-			for (uint32_t p = 0; p < patternLength; p++) {
+			for (size_t p = 0; p < patternLength; p++) {
 				pattern[z] = 0; z++;
 				pattern[z] = (uint8_t)((w + p) % 256); pattern[z] /= color_square_divider; z++;
 				pattern[z] = 0; z++;
-				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
+				if constexpr (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
 			break;
 		case Status_Graphic::Graphic_Loading:
 		default:
-			for (uint32_t p = 0; p < patternLength; p++) {
+			for (size_t p = 0; p < patternLength; p++) {
 				pattern[z] = 0; z++;
 				pattern[z] = 0; z++;
 				pattern[z] = (uint8_t)((w + p) % 256); pattern[z] /= color_square_divider; z++;
-				if (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
+				if constexpr (IMAGE_BUFFER_CHANNELS == 4) { pattern[z] = 0xFF; z++; }
 			}
 			break;
 	};

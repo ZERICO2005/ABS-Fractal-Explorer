@@ -11,19 +11,24 @@
 #include "display_GUI.h"
 #include "../temp_global_render.h"
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 // #include <opencv2/opencv.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
+#include "../user_data.h"
 #include "../displayInfo.h"
 
+#include "../programData.h"
 #include "../render.h"
 #include "../fractal_Information/Mandelbrot_Information.h"
 
+#include "../fileManager.h"
+
 #include "../render_Configuration.hpp"
+#include "../keybind.h"
 
 #ifdef Enable_OpenCL
 	#include "display_GPU_info.h"
@@ -1199,7 +1204,8 @@ void Menu_Settings() {
 				filePath,sizeof(filePath),
 				"Save FracExp-Configuration File",
 				"Config Files (*.fracExpConfig)\0*.fracExpConfig\0"\
-				"All Files (*.*)\0*.*\0"
+				"All Files (*.*)\0*.*\0",
+				"config"
 			);
 			export_config_data(config_data,filePath);
 		}
@@ -1495,8 +1501,9 @@ void Menu_Settings() {
 						path_Screenshot, sizeof(path_Screenshot),
 						"Select Screenshot Folder or Directory"
 					);
-					if (setDirectoryState == 0) {
+					if (setDirectoryState == 0) { // Success
 						config_data.File_Paths.Path_Screenshot.assign(path_Screenshot);
+						write_Screenshot_Path(config_data.File_Paths.Path_Screenshot.c_str());
 					}
 				}
 			#else

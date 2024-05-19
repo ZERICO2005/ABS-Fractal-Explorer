@@ -11,7 +11,8 @@
 
 #include "Common_Def.h"
 
-#include "user_data.h"
+/* Forward declarations */
+	struct User_Display_Preferences;
 
 class DisplayInfo {
 	public:

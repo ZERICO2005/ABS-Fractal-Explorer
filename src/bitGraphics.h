@@ -8,8 +8,9 @@
 
 #ifndef BITGRAPHICS_H
 #define BITGRAPHICS_H
+
 #include "Common_Def.h"
-#include "copyBuffer.h"
+struct BufferBox;
 
 class Bit_Graphics {
 	public:
@@ -21,14 +22,14 @@ class Bit_Graphics {
 		void resizeBuffer(size_t resX, size_t resY);
 		void swapBuffer();
 		void clearBuffer(); // Writes 0's
-		uint8_t* getDrawBuffer();
-		uint8_t* getDisplayBuffer();
+		uint8_t* getDrawBuffer() const;
+		uint8_t* getDisplayBuffer() const;
 		void getDrawBufferBox(BufferBox* box);
 		void getDisplayBufferBox(BufferBox* box);
-		size_t getResX();
-		size_t getResY();
-		size_t getResZ();
-		size_t getBufferSize();
+		size_t getResX() const;
+		size_t getResY() const;
+		size_t getResZ() const;
+		size_t getBufferSize() const;
 	/* Set color */
 		void gColor_RGB(uint8_t r, uint8_t g, uint8_t b);
 		void gColor_Hex(uint32_t col);

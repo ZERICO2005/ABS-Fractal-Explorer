@@ -11,31 +11,20 @@
 
 #include "temp_global_render.h"
 
-#include "render.h"
-
-#include "programData.h"
-#include "copyBuffer.h"
-#include "fractal.h"
-#include "keybind.h"
 #include "engine.h"
+#include "programData.h"
+
 #include "fracExp_Files/fracExpKB.h"
-#include "fileManager.h"
-#include "imageBuffer.h"
-#include "imageTransform.h"
-
-#include <SDL.h>
-
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
 
 #include "user_data.h"
 
-#include "menu_Interface/display_GUI.h"
-
+#include "imageBuffer.h"
 #include "framePacer.hpp"
+#include "render_Configuration.hpp"
 
 Frame_Pacer GUI_Frame_Pacer;
+
+User_Configuration_Data config_data;
 
 /* Resolution */
 	// constexpr dim32_t RESX_Default = 800;
@@ -159,11 +148,3 @@ Frame_Pacer GUI_Frame_Pacer;
 	// #else
 	// 	const char* buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds"};
 	// #endif
-
-/* Other */
-
-	User_Configuration_Data config_data = {0};
-	bool SaveUsernameInFiles = false; /* This MUST be False by Default */
-	//#define FileUsernameLength 32
-	char FileUsername[FileUsernameLength] = {0};
-	bool SaveHardwareInfoInFiles = false; /* This MUST be False by Default */

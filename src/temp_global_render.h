@@ -11,33 +11,23 @@
 
 #include "Common_Def.h"
 #include "Program_Def.h"
-#include "render.h"
 
-#include "programData.h"
-#include "copyBuffer.h"
-#include "fractal.h"
-#include "keybind.h"
 #include "engine.h"
+
 #include "fracExp_Files/fracExpKB.h"
-#include "fileManager.h"
-#include "imageBuffer.h"
-#include "imageTransform.h"
 
-#include <SDL.h>
+struct SDL_Renderer;
+struct SDL_Window;
+struct SDL_Texture;
+struct SDL_Surface;
 
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
-
-#include "user_data.h"
-
-#include "menu_Interface/display_GUI.h"
-
-#include "framePacer.hpp"
-
-#include "render_Configuration.hpp"
-
+class Frame_Pacer;
 extern Frame_Pacer GUI_Frame_Pacer;
+
+struct User_Configuration_Data;
+extern User_Configuration_Data config_data;
+
+struct Render_Data;
 
 /* Resolution */
 	constexpr dim32_t RESX_Default = 800;
@@ -68,6 +58,7 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern Render_Data secondarySuperRenderData;
 
 /* ImGui Stuff */
+	struct ImGuiIO;
 	extern ImGuiIO* io_IMGUI;
 	extern dim32_t ImGui_WINDOW_MARGIN;
 
@@ -82,6 +73,7 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	// Rounds the initial screen resolution for debug purposes
 	//#define ROUND_INIT_WINDOW_RESX
 	
+	class Render_Configurator;
 	extern Render_Configurator Render_Config;
 
 	extern SDL_Texture* scale_tex;
@@ -90,10 +82,14 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	extern bool exportFractalBuffer;
 	extern bool exportSuperFractalBuffer;
 
+	struct BufferBox;
 	extern BufferBox* rendered_buf;
 
 	extern bool Abort_Rendering_Flag;
 	extern bool Waiting_To_Abort_Rendering;
+
+	class ImageBuffer;
+
 	extern ImageBuffer Master;
 	
 	extern ImageBuffer* Primary_Image;
@@ -120,7 +116,9 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 /* Fractals */
 
+	struct ABS_Mandelbrot;
 	extern ABS_Mandelbrot current_Fractal;
+	
 	extern Render_Data primaryRenderData;
 	extern Render_Data secondaryRenderData;
 
@@ -143,6 +141,7 @@ extern Frame_Pacer GUI_Frame_Pacer;
 
 	extern Key_Status Key_List[SDL_NUM_SCANCODES];
 
+	struct Function_Status;
 	extern Function_Status func_stat[Key_Function::Parameter_Function_Count];
 
 /* Menus */
@@ -154,7 +153,7 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	
 	extern bool Lock_Key_Inputs;
 
-	#define BufAndLen(x) x,ARRAY_LENGTH(x)
+	#define BufAndLen(x) x, ARRAY_LENGTH(x)
 
 	extern int buttonSelection;
 	extern bool ShowTheXButton;
@@ -167,14 +166,5 @@ extern Frame_Pacer GUI_Frame_Pacer;
 	#else
 		const char* const buttonLabels[] = {"Fractal", "Screenshot", "Rendering", "Settings", "KeyBinds", "Status"};
 	#endif
-
-/* Other */
-
-	extern bool SaveUsernameInFiles; /* This MUST be False by Default */
-	#define FileUsernameLength 32
-	extern char FileUsername[FileUsernameLength];
-	extern bool SaveHardwareInfoInFiles; /* This MUST be False by Default */
-	extern User_Configuration_Data config_data;
-
 
 #endif /* TEMP_GLOBAL_RENDER_H */

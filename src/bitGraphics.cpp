@@ -83,11 +83,11 @@ void Bit_Graphics::swapBuffer() {
 void Bit_Graphics::clearBuffer() {
 	memset(buf,0,ResZ * Bit_Graphics_Channels);
 }
-uint8_t* Bit_Graphics::getDrawBuffer() {
+uint8_t* Bit_Graphics::getDrawBuffer() const {
 	if (initialized == false) { return NULL; }
 	return (buf == buf0) ? buf0 : buf1;
 }
-uint8_t* Bit_Graphics::getDisplayBuffer() {
+uint8_t* Bit_Graphics::getDisplayBuffer() const {
 	if (initialized == false) { return NULL; }
 	return (buf == buf0) ? buf1 : buf0;
 }
@@ -121,10 +121,10 @@ void Bit_Graphics::getDisplayBufferBox(BufferBox* box) {
 	box->channels = Bit_Graphics_Channels;
 	box->padding = 0;
 }
-size_t Bit_Graphics::getResX() { return ResX; }
-size_t Bit_Graphics::getResY() { return ResY; }
-size_t Bit_Graphics::getResZ() { return ResZ; }
-size_t Bit_Graphics::getBufferSize() { return ResZ * 3; }
+size_t Bit_Graphics::getResX() const { return ResX; }
+size_t Bit_Graphics::getResY() const { return ResY; }
+size_t Bit_Graphics::getResZ() const { return ResZ; }
+size_t Bit_Graphics::getBufferSize() const { return ResZ * Bit_Graphics_Channels; }
 /* Set color */
 void Bit_Graphics::gColor_RGB(uint8_t r, uint8_t g, uint8_t b) {
 	gColor[0] = r;
@@ -148,21 +148,21 @@ void Bit_Graphics::gColor_HSV(fp32 h, fp32 s, fp32 v) { // 0.0-360.0, 0.0-1.0, 0
 }
 
 /* Internal Routines | No safety checks */
-void Bit_Graphics::internal_plot(size_t x, size_t y) {
+inline void Bit_Graphics::internal_plot(size_t x, size_t y) {
 	size_t z = (y * ResX + x) * Bit_Graphics_Channels;
 	buf[z] = gColor[0]; z++;
 	buf[z] = gColor[1]; z++;
 	buf[z] = gColor[2]; z++;
 	buf[z] = gColor[3];
 }
-void Bit_Graphics::internal_plotFast(size_t z) { //z position
+inline void Bit_Graphics::internal_plotFast(size_t z) { //z position
 	z *= Bit_Graphics_Channels;
 	buf[z] = gColor[0]; z++;
 	buf[z] = gColor[1]; z++;
 	buf[z] = gColor[2]; z++;
 	buf[z] = gColor[3];
 }
-void Bit_Graphics::internal_horiz(size_t x0, size_t y, size_t x1) { //x start, y postion, x length
+inline void Bit_Graphics::internal_horiz(size_t x0, size_t y, size_t x1) { //x start, y postion, x length
 	size_t fill = (x0 + y * ResX) * Bit_Graphics_Channels;
 	patternMemcpy(&buf[fill], x1 * Bit_Graphics_Channels, gColor, Bit_Graphics_Channels);
 }

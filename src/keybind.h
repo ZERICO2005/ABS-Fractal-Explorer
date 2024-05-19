@@ -10,8 +10,8 @@
 #define KEYBIND_H
 #include "Common_Def.h"
 #include "copyBuffer.h"
-#include <SDL_keycode.h>
-#include <SDL_scancode.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_scancode.h>
 
 /* 0 = ANSI 104key, 1 = Extended 152key, 2 = Complete 242key */
 void renderKeyboard(

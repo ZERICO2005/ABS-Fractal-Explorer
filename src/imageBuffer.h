@@ -20,29 +20,34 @@ class ImageBuffer {
 		dim32_t resX;
 		dim32_t resY;
 		size_t channels;
-		// No Initialization
-		ImageBuffer();
-		// Minimal Initialization
-		ImageBuffer(size_t Channels);
-		// Full Initialization
-		ImageBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels);
-		ImageBuffer(dim32_t ResX, dim32_t ResY, size_t Channels);
-		// Preallocated Buffer
-		ImageBuffer(uint8_t* Vram, uint32_t ResX, uint32_t ResY, uint8_t Channels);
-		ImageBuffer(uint8_t* Vram, dim32_t ResX, dim32_t ResY, size_t Channels);
-		void deleteBuffer();
+		/* Constructors */
+			// No Initialization
+			ImageBuffer();
+			// Minimal Initialization
+			ImageBuffer(size_t Channels);
+			// Full Initialization
+			ImageBuffer(dim32_t ResX, dim32_t ResY, size_t Channels);
+			// Preallocated Buffer
+			ImageBuffer(uint8_t* Vram, dim32_t ResX, dim32_t ResY, size_t Channels);
+			/* Destructors */
+			void deleteBuffer();
+
+		
 		bool allocated() const; // Returns if buffer is allocated
 		bool bufferSafe() const; // Returns if the buffer is safe to write to
-		void reallocateBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels);
+		
 		void reallocateBuffer(dim32_t ResX, dim32_t ResY, size_t Channels);
-		void resizeBuffer(uint32_t ResX, uint32_t ResY, uint8_t Channels); // Reallocates buffer only if more memory is needed
-		void resizeBuffer(dim32_t ResX, dim32_t ResY, size_t Channels); // Reallocates buffer only if more memory is needed
+		
+		// Reallocates buffer only if more memory is needed
+		void resizeBuffer(dim32_t ResX, dim32_t ResY, size_t Channels);
+
 		void trimBuffer(); // Reallocates buffer to current image size
 		void getBufferBox(BufferBox* buf) const;
 		void vramCopy(const ImageBuffer* buf, bool reallocBuf = false);
 		void clearBuffer();
 		void clearBuffer(uint8_t r, uint8_t g, uint8_t b);
 		void clearBuffer(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+		// Returns the size of the buffer
 		size_t getBufferSize() const;
 		size_t getAllocatedSize() const;
 		

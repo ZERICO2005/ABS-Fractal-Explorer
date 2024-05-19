@@ -12,8 +12,8 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 
-#include <SDL_keycode.h>
-#include <SDL_scancode.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_scancode.h>
 
 #include "engine.h"
 #include "render.h"
@@ -39,7 +39,7 @@ struct Render_Item {
 	nano64_t time_sent;
 	Render_Data render_data;
 	ABS_Mandelbrot fractal_data;
-}; typedef Render_Item Render_Item;
+};
 
 enum Render_Queue_Enum { Queue_Primary, Queue_Secondary, Queue_Count};
 
@@ -49,7 +49,7 @@ struct Render_Task {
 	nano64_t time_sent;
 	Render_Data render_data;
 	ABS_Mandelbrot fractal_data;
-}; typedef Render_Task Render_Task;
+};
 
 /* Update Level */
 
@@ -96,7 +96,7 @@ struct Function_Status {
 	bool triggered;
 	nano64_t resetTime;
 	nano64_t freqTime;
-}; typedef struct Function_Status Function_Status;
+};
 
 int read_Function_Status(Function_Status* list);
 int write_Function_Status(const Function_Status* list);

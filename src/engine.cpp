@@ -125,13 +125,13 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			nano64_t curTime = getNanoTime();
 			curTime /= 1000;
 			char id_number[64]; memset(id_number,'\0',sizeof(id_number));
-			snprintf(id_number,sizeof(id_number),"_id-%" PRIu64,image_fractal_data.formula);
+			snprintf(id_number, sizeof(id_number), "id-%" PRIu64, image_fractal_data.formula);
 			const char* fractal_name = (image_fractal_data.polarMandelbrot == true) ? FractalTypeFileText[Fractal_Polar_Mandelbrot] : FractalTypeFileText[Fractal_ABS_Mandelbrot];
-			const char* format_str = "Super_%s-%s_(%" PRId64 ")";
-			size_t size = (size_t)snprintf(nullptr, 0, format_str, fractal_name, id_number,curTime);
-			size++;
-			char* name = (char*)calloc(size,sizeof(char));
-			snprintf(name, size, format_str, fractal_name, id_number, curTime);
+			const char* format_str = "Super_%s_%s_(%" PRId64 ")";
+			size_t name_size = (size_t)snprintf(nullptr, 0, format_str, fractal_name, id_number, curTime);
+			name_size++;
+			char* name = (char*)calloc(name_size, sizeof(char));
+			snprintf(name, name_size, format_str, fractal_name, id_number, curTime);
 			std::string path = read_Screenshot_Path();
 			switch(image_file_format) {
 				case Image_File_Format::PNG:

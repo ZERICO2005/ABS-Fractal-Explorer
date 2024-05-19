@@ -11,8 +11,8 @@
 #include "keybind.h"
 #include "keybind_data.h"
 
-#include <SDL_keycode.h>
-#include <SDL_scancode.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_scancode.h>
 #include "bitGraphics.h"
 #include "copyBuffer.h"
 #include "render.h"
@@ -55,7 +55,7 @@ static void renderKeyText(
 		if (dst.vram == NULL) { printfInterval(0.4,"\ndst.vram is NULL"); }
 		return;
 	}
-	copyBuffer(src,dst,0,0,x1,y1,(int32_t)x0,(int32_t)y0,x1,y1,true);
+	copyBuffer(src,dst,0,0,x1,y1,x0,y0,x1,y1,true);
 }
 
 // Default color
@@ -336,22 +336,24 @@ void renderKeyboard(
 	buf->vram = Keyboard_Graphic.getDisplayBuffer();
 }
 
+static inline constexpr uint8_t Uint8_Mult(const uint8_t value, const fp64 mult) { return (uint8_t)((fp64)value * mult); }
+
 void setRGB_Scancode(uint8_t r, uint8_t g, uint8_t b, SDL_Scancode code) {
 	size_t z = (size_t)code * IMAGE_BUFFER_CHANNELS;
 	Scancode_Color_Key[z] = r;
-	Scancode_Color_Hover[z] = (uint8_t)((fp64)r * 0.8333);
-	Scancode_Color_Press[z] = (uint8_t)((fp64)r * 0.75);
-	Scancode_Color_Click[z] = (uint8_t)((fp64)r * 0.667);
+	Scancode_Color_Hover[z] = Uint8_Mult(r, 0.8333);
+	Scancode_Color_Press[z] = Uint8_Mult(r, 0.75  );
+	Scancode_Color_Click[z] = Uint8_Mult(r, 0.667 );
 	z++;
 	Scancode_Color_Key[z] = g;
-	Scancode_Color_Hover[z] = (uint8_t)((fp64)g * 0.8333);
-	Scancode_Color_Press[z] = (uint8_t)((fp64)g * 0.75);
-	Scancode_Color_Click[z] = (uint8_t)((fp64)g * 0.667);
+	Scancode_Color_Hover[z] = Uint8_Mult(g, 0.8333);
+	Scancode_Color_Press[z] = Uint8_Mult(g, 0.75  );
+	Scancode_Color_Click[z] = Uint8_Mult(g, 0.667 );
 	z++;
 	Scancode_Color_Key[z] = b;
-	Scancode_Color_Hover[z] = (uint8_t)((fp64)b * 0.8333);
-	Scancode_Color_Press[z] = (uint8_t)((fp64)b * 0.75);
-	Scancode_Color_Click[z] = (uint8_t)((fp64)b * 0.667);
+	Scancode_Color_Hover[z] = Uint8_Mult(b, 0.8333);
+	Scancode_Color_Press[z] = Uint8_Mult(b, 0.75  );
+	Scancode_Color_Click[z] = Uint8_Mult(b, 0.667 );
 	z++;
 	Scancode_Color_Key[z] = 0xFF;
 	Scancode_Color_Hover[z] = 0xFF;

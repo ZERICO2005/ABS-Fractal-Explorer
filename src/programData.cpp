@@ -11,8 +11,8 @@
 #include "programData.h"
 
 /* Thread Ready */
-	std::mutex pDat_Render_Ready_Mutex;
-	bool pDat_Render_Ready = false;
+	static std::mutex pDat_Render_Ready_Mutex;
+	static bool pDat_Render_Ready = false;
 	bool read_Render_Ready() {
 		std::lock_guard<std::mutex> lock(pDat_Render_Ready_Mutex);
 		return pDat_Render_Ready;
@@ -22,8 +22,8 @@
 		pDat_Render_Ready = f;
 	}
 
-	std::mutex pDat_Engine_Ready_Mutex;
-	bool pDat_Engine_Ready = false;
+	static std::mutex pDat_Engine_Ready_Mutex;
+	static bool pDat_Engine_Ready = false;
 	bool read_Engine_Ready() {
 		std::lock_guard<std::mutex> lock(pDat_Engine_Ready_Mutex);
 		return pDat_Engine_Ready;
@@ -34,9 +34,9 @@
 	}
 
 /* Update_Level */
-	std::mutex pDat_Update_Level_Mutex;
-	int pDat_Update_Level = Change_Level::Full_Reset;
-	nano64_t pDat_Update_Timecode = 0;
+	static std::mutex pDat_Update_Level_Mutex;
+	static int pDat_Update_Level = Change_Level::Full_Reset;
+	static nano64_t pDat_Update_Timecode = 0;
 
 	// Used to deterimine if rendering should pause, continue, or reset
 	int read_Update_Level() {
@@ -64,34 +64,34 @@
 	}
 
 /* Cycle Buffer */
-	std::mutex pDat_Cycle_Mutex;
+	static std::mutex pDat_Cycle_Mutex;
 
-	#define Cycle_Buffer_Amount 3
+	constexpr size_t Cycle_Buffer_Amount = 3;
 	struct Cycle_Image_Buffer {
 		ImageBuffer image_buf[Cycle_Buffer_Amount];
-		int read_pos;
-		int write_pos;
-	}; typedef struct Cycle_Image_Buffer Cycle_Image_Buffer;
+		size_t read_pos;
+		size_t write_pos;
+	};
 	Cycle_Image_Buffer Cycle_Buffer[Cycle_Buffer_Count];
 
-	#define Cycle_Buf Cycle_Buffer[buf]
 	// Gets the next frame to read from, returns false if there are no frames to grab
 	int next_Read_Cycle_Pos(ImageBuffer** ptr, int buf) {
 		if (ptr == nullptr) { return -2; }
 		if (buf >= Cycle_Buffer_Count) { return -3; }
 		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
-		if (Cycle_Buffer[buf].read_pos == Cycle_Buffer[buf].write_pos) {
+		Cycle_Image_Buffer& Current_Cycle_Buf = Cycle_Buffer[buf];
+		if (Current_Cycle_Buf.read_pos == Current_Cycle_Buf.write_pos) {
 			printCriticalError(
-				"next_Read_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%d].read_pos == Cycle_Buffer[%d].write_pos",
-				Cycle_Buffer[buf].read_pos, Cycle_Buffer[buf].write_pos
+				"next_Read_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%zu].read_pos == Cycle_Buffer[%zu].write_pos",
+				Current_Cycle_Buf.read_pos, Current_Cycle_Buf.write_pos
 			);
 			return -1;
 		}
-		if ((Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount == Cycle_Buf.write_pos) {
+		if ((Current_Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount == Current_Cycle_Buf.write_pos) {
 			return 1;
 		}
-		Cycle_Buf.read_pos = (Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount;
-		*ptr = &Cycle_Buf.image_buf[Cycle_Buf.read_pos];
+		Current_Cycle_Buf.read_pos = (Current_Cycle_Buf.read_pos + 1) % Cycle_Buffer_Amount;
+		*ptr = &Current_Cycle_Buf.image_buf[Current_Cycle_Buf.read_pos];
 		return 0;
 	}
 	// Gets the next buffer to write to, returns false if there are no buffers to grab
@@ -99,18 +99,19 @@
 		if (ptr == nullptr) { return -2; }
 		if (buf >= Cycle_Buffer_Count) { return -3; }
 		std::lock_guard<std::mutex> lock(pDat_Cycle_Mutex);
+		Cycle_Image_Buffer& Current_Cycle_Buf = Cycle_Buffer[buf];
 		if (Cycle_Buffer[buf].read_pos == Cycle_Buffer[buf].write_pos) {
 			printCriticalError(
-				"next_Write_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%d].read_pos == Cycle_Buffer[%d].write_pos",
+				"next_Write_Cycle_Pos(): Overlapping Thread Data Pointers\nCycle_Buffer[%zu].read_pos == Cycle_Buffer[%zu].write_pos",
 				Cycle_Buffer[buf].read_pos, Cycle_Buffer[buf].write_pos
 			);
 			return -1;
 		}
-		if ((Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount == Cycle_Buf.read_pos) {
+		if ((Current_Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount == Current_Cycle_Buf.read_pos) {
 			return 1;
 		}
-		Cycle_Buf.write_pos = (Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount;
-		*ptr = &Cycle_Buf.image_buf[Cycle_Buf.write_pos];
+		Current_Cycle_Buf.write_pos = (Current_Cycle_Buf.write_pos + 1) % Cycle_Buffer_Amount;
+		*ptr = &Current_Cycle_Buf.image_buf[Current_Cycle_Buf.write_pos];
 		return 0;
 	}
 	// To be called by main
@@ -152,8 +153,8 @@
 		}
 	}
 
-	std::mutex pDat_Buffer_Size_Mutex;
-	BufferBox pDat_BufSize = {NULL,0,0,IMAGE_BUFFER_CHANNELS,0};
+	static std::mutex pDat_Buffer_Size_Mutex;
+	static BufferBox pDat_BufSize = {NULL,0,0,IMAGE_BUFFER_CHANNELS,0};
 	void write_Buffer_Size(BufferBox size) {
 		std::lock_guard<std::mutex> lock(pDat_Buffer_Size_Mutex);
 		pDat_BufSize.resX = size.resX;
@@ -166,8 +167,8 @@
 		return pDat_BufSize;
 	}
 	
-std::mutex pDat_Abort_Render_Ongoing_Mutex;
-bool pDat_Abort_Render_Ongoing = false;
+static std::mutex pDat_Abort_Render_Ongoing_Mutex;
+static bool pDat_Abort_Render_Ongoing = false;
 
 bool read_Abort_Render_Ongoing() {
 	std::lock_guard<std::mutex> lock(pDat_Abort_Render_Ongoing_Mutex);
@@ -179,8 +180,8 @@ void write_Abort_Render_Ongoing(bool s) {
 }
 
 /* Key Function */
-std::mutex pDat_Function_Status_Mutex;
-Function_Status pDat_Function_Status[Key_Function::Parameter_Function_Count];
+static std::mutex pDat_Function_Status_Mutex;
+static Function_Status pDat_Function_Status[Key_Function::Parameter_Function_Count];
 
 int read_Function_Status(Function_Status* list) {
 	std::lock_guard<std::mutex> lock(pDat_Function_Status_Mutex);
@@ -196,10 +197,10 @@ int write_Function_Status(const Function_Status* list) {
 
 /* Parameters */
 
-std::mutex pDat_Parameter_Mutex;
-ABS_Mandelbrot pDat_Fractal_Data;
-Render_Data pDat_Primary_Render_Data;
-Render_Data pDat_Secondary_Render_Data;
+static std::mutex pDat_Parameter_Mutex;
+static ABS_Mandelbrot pDat_Fractal_Data;
+static Render_Data pDat_Primary_Render_Data;
+static Render_Data pDat_Secondary_Render_Data;
 
 void read_Parameters(ABS_Mandelbrot* frac, Render_Data* primary, Render_Data* secondary) {
 	std::lock_guard<std::mutex> lock(pDat_Parameter_Mutex);
@@ -217,10 +218,10 @@ void write_Parameters(const ABS_Mandelbrot* frac, const Render_Data* primary, co
 
 /* Render Buffers */
 
-std::mutex pDat_Render_Buffers_Mutex;
-BufferBox pDat_primary =   {nullptr, 0, 0, IMAGE_BUFFER_CHANNELS, 0};
-BufferBox pDat_secondary = {nullptr, 0, 0, IMAGE_BUFFER_CHANNELS, 0};
-bool pDat_Render_Buffer_Read = false;
+static std::mutex pDat_Render_Buffers_Mutex;
+static BufferBox pDat_primary =   {nullptr, 0, 0, IMAGE_BUFFER_CHANNELS, 0};
+// static BufferBox pDat_secondary = {nullptr, 0, 0, IMAGE_BUFFER_CHANNELS, 0};
+static bool pDat_Render_Buffer_Read = false;
 
 int read_Render_Buffers(BufferBox* primary) {
 	if (primary == NULL) { // Nothing to do
@@ -269,8 +270,8 @@ int write_Render_Buffers(const BufferBox* primary) {
 }
 
 /* Frame Time */
-	std::mutex pDat_FrameTime_Mutex;
-	nano64_t render_FrameTime = FRAMERATE_TO_NANO(CALC_FRAMERATE_OFFSET(60.0));
+	static std::mutex pDat_FrameTime_Mutex;
+	static nano64_t render_FrameTime = FRAMERATE_TO_NANO(CALC_FRAMERATE_OFFSET(60.0));
 	nano64_t read_FrameTime() {
 		std::lock_guard<std::mutex> lock(pDat_FrameTime_Mutex);
 		return render_FrameTime;
@@ -288,9 +289,9 @@ int write_Render_Buffers(const BufferBox* primary) {
 
 /* Image Buffer */
 
-std::mutex pDat_Image_Buffers_Mutex;
-ImageBuffer pDat_primaryImage = ImageBuffer(IMAGE_BUFFER_CHANNELS);
-bool pDat_Image_Buffers_Read = false;
+static std::mutex pDat_Image_Buffers_Mutex;
+static ImageBuffer pDat_primaryImage = ImageBuffer(IMAGE_BUFFER_CHANNELS);
+static bool pDat_Image_Buffers_Read = false;
 
 int clear_Image_Buffers() {
 	std::lock_guard<std::mutex> lock(pDat_Image_Buffers_Mutex);
@@ -327,8 +328,8 @@ int write_Image_Buffers(const ImageBuffer* primary) {
 
 /* Render Delta Time */
 
-std::mutex pDat_Request_Mutex;
-nano64_t renderDelta = 0;
+static std::mutex pDat_Request_Mutex;
+static nano64_t renderDelta = 0;
 
 void setRenderDelta(nano64_t t) {
 	std::lock_guard<std::mutex> lock(pDat_Request_Mutex);
@@ -341,12 +342,12 @@ nano64_t getRenderDelta() {
 }
 
 /* Image Render */
-	std::mutex pDat_Image_Render_Mutex;
-	ABS_Mandelbrot pDat_Image_Render_Fractal;
-	Render_Data pDat_Image_Render_Data;
-	bool pDat_Image_Render_Ready = false;
-	uint32_t pDat_Image_File_Format = 0;
-	uint8_t pDat_Image_Quality = 8;
+	static std::mutex pDat_Image_Render_Mutex;
+	static ABS_Mandelbrot pDat_Image_Render_Fractal;
+	static Render_Data pDat_Image_Render_Data;
+	static bool pDat_Image_Render_Ready = false;
+	static uint32_t pDat_Image_File_Format = 0;
+	static uint8_t pDat_Image_Quality = 8;
 
 	void reset_Image_Render() {
 		std::lock_guard<std::mutex> lock(pDat_Image_Render_Mutex);
@@ -388,8 +389,8 @@ nano64_t getRenderDelta() {
 	}
 
 /* File Paths */
-	std::mutex pDat_Screenshot_Path_Mutex;
-	std::string pDat_Screenshot_Path = "./";
+	static std::mutex pDat_Screenshot_Path_Mutex;
+	static std::string pDat_Screenshot_Path = "./";
 	void write_Screenshot_Path(const char* path) {
 		std::lock_guard<std::mutex> lock(pDat_Screenshot_Path_Mutex);
 		pDat_Screenshot_Path.assign(path);
@@ -400,9 +401,9 @@ nano64_t getRenderDelta() {
 	}
 
 /* Render Configuration */
-	std::mutex pDat_Engine_Render_Configuration_Mutex;
-	Render_Configurator pDat_Engine_Render_Configuration;
-	bool pDat_Engine_Render_Configuration_Initialized = false;
+	static std::mutex pDat_Engine_Render_Configuration_Mutex;
+	static Render_Configurator pDat_Engine_Render_Configuration;
+	static bool pDat_Engine_Render_Configuration_Initialized = false;
 	
 	void reset_Engine_Render_Configuration() {
 		std::lock_guard<std::mutex> lock(pDat_Engine_Render_Configuration_Mutex);

@@ -187,21 +187,22 @@
 
 int writePNGImage(const BufferBox* buf, const char* path, const char* name, uint32_t compression_level) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
-	if (path == NULL) { printError("char* path is NULL"); return -1; }
-	if (name == NULL) { printError("char* name is NULL"); return -1; }
+	if (path == nullptr) { printError("char* path is NULL"); return -1; }
+	if (name == nullptr) { printError("char* name is NULL"); return -1; }
 	if (getBufferBoxSize(buf) > (size_t)INT32_MAX) {
 		printError("Image size of %zubytes is too large, maximum size: %dbytes",getBufferBoxSize(buf),INT32_MAX);
 		return -1;
 	}
 	stbi_write_png_compression_level = (int32_t)compression_level;
 	int ret = 0;
-	char* fileName = (char*)malloc(strlen(path) + strlen(name) + strlen(".png") + 1);
-	if (fileName == NULL) {
+	const size_t total_filePathLen = strlen(path) + strlen(name) + strlen(".png") + 1;
+	char* fileName = (char*)calloc(total_filePathLen, sizeof(char));
+	if (fileName == nullptr) {
 		printError("Failed to allocate PNG char* fileName");
 		return -1;
 	}
-	sprintf(fileName,"%s%s.png",path,name);
-	printf("\nWriting File: %s",fileName); fflush(stdout);
+	snprintf(fileName, total_filePathLen, "%s%s.png", path, name);
+	printf("\nWriting File: %s", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_png(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram, (int32_t)getBufferBoxPitch(buf));
 	FREE(fileName);
@@ -210,20 +211,21 @@ int writePNGImage(const BufferBox* buf, const char* path, const char* name, uint
 
 int writeJPGImage(const BufferBox* buf, const char* path, const char* name, uint32_t quality) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
-	if (path == NULL) { printError("char* path is NULL"); return -1; }
-	if (name == NULL) { printError("char* name is NULL"); return -1; }
+	if (path == nullptr) { printError("char* path is NULL"); return -1; }
+	if (name == nullptr) { printError("char* name is NULL"); return -1; }
 	if (getBufferBoxSize(buf) > (size_t)INT32_MAX) {
 		printError("Image size of %zubytes is too large, maximum size: %dbytes",getBufferBoxSize(buf),INT32_MAX);
 		return -1;
 	}
 	int ret = 0;
-	char* fileName = (char*)malloc(strlen(path) + strlen(name) + strlen(".jpg") + 1);
-	if (fileName == NULL) {
+	const size_t total_filePathLen = strlen(path) + strlen(name) + strlen(".jpg") + 1;
+	char* fileName = (char*)calloc(total_filePathLen, sizeof(char));
+	if (fileName == nullptr) {
 		printError("Failed to allocate JPG char* fileName");
 		return -1;
 	}
-	sprintf(fileName,"%s%s.jpg",path,name);
-	printf("\nWriting File: %s",fileName); fflush(stdout);
+	snprintf(fileName, total_filePathLen, "%s%s.jpg", path, name);
+	printf("\nWriting File: %s", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_jpg(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram, (int32_t)quality);
 	FREE(fileName);
@@ -232,20 +234,21 @@ int writeJPGImage(const BufferBox* buf, const char* path, const char* name, uint
 
 int writeTGAImage(const BufferBox* buf, const char* path, const char* name) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
-	if (path == NULL) { printError("char* path is NULL"); return -1; }
-	if (name == NULL) { printError("char* name is NULL"); return -1; }
+	if (path == nullptr) { printError("char* path is NULL"); return -1; }
+	if (name == nullptr) { printError("char* name is NULL"); return -1; }
 	if (getBufferBoxSize(buf) > (size_t)INT32_MAX) {
 		printError("Image size of %zubytes is too large, maximum size: %dbytes",getBufferBoxSize(buf),INT32_MAX);
 		return -1;
 	}
 	int ret = 0;
-	char* fileName = (char*)malloc(strlen(path) + strlen(name) + strlen(".tga") + 1);
-	if (fileName == NULL) {
+	const size_t total_filePathLen = strlen(path) + strlen(name) + strlen(".tga") + 1;
+	char* fileName = (char*)calloc(total_filePathLen, sizeof(char));
+	if (fileName == nullptr) {
 		printError("Failed to allocate TGA char* fileName");
 		return -1;
 	}
-	sprintf(fileName,"%s%s.tga",path,name);
-	printf("\nWriting File: %s",fileName); fflush(stdout);
+	snprintf(fileName, total_filePathLen, "%s%s.tga", path, name);
+	printf("\nWriting File: %s", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_tga(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram);
 	FREE(fileName);
@@ -254,20 +257,21 @@ int writeTGAImage(const BufferBox* buf, const char* path, const char* name) {
 
 int writeBMPImage(const BufferBox* buf, const char* path, const char* name) {
 	if (printValidateBufferBox(buf) == false) { return -1; }
-	if (path == NULL) { printError("char* path is NULL"); return -1; }
-	if (name == NULL) { printError("char* name is NULL"); return -1; }
+	if (path == nullptr) { printError("char* path is NULL"); return -1; }
+	if (name == nullptr) { printError("char* name is NULL"); return -1; }
 	if (getBufferBoxSize(buf) > (size_t)INT32_MAX) {
 		printError("Image size of %zubytes is too large, maximum size: %dbytes",getBufferBoxSize(buf),INT32_MAX);
 		return -1;
 	}
 	int ret = 0;
-	char* fileName = (char*)malloc(strlen(path) + strlen(name) + strlen(".bmp") + 1);
-	if (fileName == NULL) {
+	const size_t total_filePathLen = strlen(path) + strlen(name) + strlen(".bmp") + 1;
+	char* fileName = (char*)calloc(total_filePathLen, sizeof(char));
+	if (fileName == nullptr) {
 		printError("Failed to allocate BMP char* fileName");
 		return -1;
 	}
-	sprintf(fileName,"%s%s.bmp",path,name);
-	printf("\nWriting File: %s",fileName); fflush(stdout);
+	snprintf(fileName, total_filePathLen, "%s%s.bmp", path, name);
+	printf("\nWriting File: %s", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_bmp(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram);
 	FREE(fileName);
@@ -276,19 +280,20 @@ int writeBMPImage(const BufferBox* buf, const char* path, const char* name) {
 
 int writeHDRImage(const float* buf, uint32_t resX, uint32_t resY, uint8_t channels, const char* path, const char* name) {
 	/* Trival Errors */
-		if (buf == NULL) { printError("float* buf is NULL"); return -1; }
+		if (buf == nullptr) { printError("float* buf is NULL"); return -1; }
 		if (resX == 0 || resY == 0) { printError("Invalid dimensions %ux%u == 0",resX,resY); return -1; }
 		if (channels == 0) { printError("Image has 0 channels"); return -1; }
-		if (path == NULL) { printError("char* path is NULL"); return -1; }
-		if (name == NULL) { printError("char* name is NULL"); return -1; }
+		if (path == nullptr) { printError("char* path is NULL"); return -1; }
+		if (name == nullptr) { printError("char* name is NULL"); return -1; }
 	int ret = 0;
-	char* fileName = (char*)malloc(strlen(path) + strlen(name) + strlen(".hdr") + 1);
-	if (fileName == NULL) {
+	const size_t total_filePathLen = strlen(path) + strlen(name) + strlen(".hdr") + 1;
+	char* fileName = (char*)calloc(total_filePathLen, sizeof(char));
+	if (fileName == nullptr) {
 		printError("Failed to allocate HDR char* fileName");
 		return -1;
 	}
-	sprintf(fileName,"%s%s.hdr",path,name);
-	printf("\nWriting File: %s",fileName); fflush(stdout);
+	snprintf(fileName, total_filePathLen, "%s%s.hdr", path, name);
+	printf("\nWriting File: %s", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_hdr(fileName, (int32_t)resX, (int32_t)resY, (int32_t)channels, buf);
 	FREE(fileName);

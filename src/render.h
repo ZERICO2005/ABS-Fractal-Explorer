@@ -15,8 +15,8 @@
 #include "menu_Interface/display_GUI.h"
 #include "displayInfo.h"
 
-#include <SDL_keycode.h>
-#include <SDL_scancode.h>
+#include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_scancode.h>
 
 /* Holds resolution, sampling, precision and rendering method */
 struct Render_Data {

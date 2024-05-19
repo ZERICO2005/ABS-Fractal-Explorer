@@ -89,10 +89,10 @@ __attribute__((unused)) static int frame_Transform_Generic_Fast(
 		const size_t Repeat_U = (size_t)abs(Repeat_X);
 		const size_t Repeat_V = (size_t)abs(Repeat_Y);
 
-		const int32_t Minimum_PosX = (Repeat_X >= 0) ? 0 : -(Repeat_X - 1);
-		const int32_t Minimum_PosY = (Repeat_Y >= 0) ? 0 : -(Repeat_Y - 1);
-		const int32_t Maximum_PosX = blit.resX - ((Repeat_X <= 0) ? 0 : (Repeat_X - 1));
-		const int32_t Maximum_PosY = blit.resY - ((Repeat_Y <= 0) ? 0 : (Repeat_Y - 1));
+		const int32_t Minimum_PosX = 0; // (Repeat_X >= 0) ? 0 : -(Repeat_X - 1);
+		const int32_t Minimum_PosY = 0; // (Repeat_Y >= 0) ? 0 : -(Repeat_Y - 1);
+		const int32_t Maximum_PosX = blit.resX - ((Repeat_X == 0) ? 0 : (abs(Repeat_X) - 1));
+		const int32_t Maximum_PosY = blit.resY - ((Repeat_Y == 0) ? 0 : (abs(Repeat_Y) - 1));
 		
 		__attribute__((unused)) const size_t blit_Size = getBufferBoxSize(&blit) / IMAGE_BUFFER_CHANNELS;
 		const size_t blit_Pitch = getBufferBoxPitch(&blit) / IMAGE_BUFFER_CHANNELS;
