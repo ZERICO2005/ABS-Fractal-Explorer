@@ -1,6 +1,6 @@
 ABS-Fractal-Explorer Trouble Shooting Guide
 
-Updated: 2024/05/06
+Updated: 2024/05/19
 
 If you are having problems with ABS-Fractal-Explorer, you can consult this guide to figure out the problems/issue you are experincing. You may also fill out a bug report to help the developers fix the problem.
 
@@ -66,9 +66,6 @@ This could mean that you have to increase the rendering precision to zoom furthe
 
 ## Random dots when zooming in
 If the next frame is not finished rendering yet and you zoom, you may see some random dots or some aliasing patterns. This is because the algorithm I wrote to perform Affine transformations on the frame isn't to great, and has a few pixel gaps. 
-
-## Missing pixels at the bottom of the screen
-This is a bug where I miscalculated how many pixels need to be rendered on the GPU.
 
 ## Frame looks corrupted after using Abort rendering
 This is a bug where frames are not cleared/discarded properly. The previous frame gets overwritten when rendering, so you will sometimes see some mixture of a previous frame partially overwritten by the frame where Abort rendering was called.

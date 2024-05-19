@@ -1,0 +1,10 @@
+ABS-Fractal-Explorer Update-Log
+
+# v1.2.1 (2024/05/19)
+* Super-Screenshot bounding boxes (Fill Area, Fit Area, etc)
+* Faster frame scaling
+* Added GPU information sub-menu
+* General bug fixes
+
+# v1.2.0 (2024/05/08)
+Public Release of ABS-Fractal-Explorer
