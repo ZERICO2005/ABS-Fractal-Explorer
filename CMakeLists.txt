@@ -47,7 +47,7 @@ include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bit
 # Compiler Flags Debug(-g -O0) Release(-O3)
 set(OPT_FLAG -O3)
 
-set(MARCH_FLAGS -msse2 -march=native)
+set(MARCH_FLAGS -msse2)
 
 set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare -Wfloat-conversion)
 set(WARNING_IGNORE_FLAGS -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
