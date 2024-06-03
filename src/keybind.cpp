@@ -27,8 +27,8 @@ uint8_t Scancode_Color_Hover[SDL_NUM_SCANCODES * IMAGE_BUFFER_CHANNELS];
 uint8_t Scancode_Color_Press[SDL_NUM_SCANCODES * IMAGE_BUFFER_CHANNELS];
 uint8_t Scancode_Color_Click[SDL_NUM_SCANCODES * IMAGE_BUFFER_CHANNELS];
 
-Bit_Graphics Keyboard_Graphic;
-Bit_Graphics Text_Graphic;
+static Bit_Graphics Keyboard_Graphic;
+static Bit_Graphics Text_Graphic;
 
 // Maximum dimensions needed to render key text
 #define rktX 62 // 9 coloumns
@@ -40,10 +40,10 @@ static void renderKeyText(
 ) {
 	if (Text_Graphic.isInitialized() == false) { return; }
 	if (x0 < 0 || y0 < 0 || x1 < 0 || y1 < 0) { return; }
-	Text_Graphic.gColor_RGB(cR,cG,cB);
-	Text_Graphic.fillScreen();
+	Text_Graphic.turbo_gColor_RGB(cR,cG,cB);
+	Text_Graphic.turbo_fillScreen();
 	if (text != NULL) {
-		Text_Graphic.gColor_RGB(0x00,0x00,0x00);
+		Text_Graphic.turbo_gColor_RGB(0x00,0x00,0x00);
 		Text_Graphic.printText6x8(0,0,text);
 	}
 	BufferBox src;
@@ -184,10 +184,10 @@ void renderBoard(
 			if (keyPressed(k.Scancode) && col != Scancode_Color_Click) {
 				col = Scancode_Color_Press;
 			}
-			Keyboard_Graphic.gColor_RGB(0x40,0x40,0x40);
-			Keyboard_Graphic.drawRect((size_t)(int64_t)x0,(size_t)(int64_t)y0,(size_t)(int64_t)x1,(size_t)(int64_t)y1);
-			Keyboard_Graphic.gColor_RGB(col[pos], col[pos + 1], col[pos + 2]);
-			Keyboard_Graphic.fillRect((size_t)(int64_t)(x0+1),(size_t)(int64_t)(y0+1),(size_t)(int64_t)(x1-2),(size_t)(int64_t)(y1-2));
+			Keyboard_Graphic.turbo_gColor_RGB(0x40,0x40,0x40);
+			Keyboard_Graphic.turbo_drawRect((size_t)(int64_t)x0,(size_t)(int64_t)y0,(size_t)(int64_t)x1,(size_t)(int64_t)y1);
+			Keyboard_Graphic.turbo_gColor_RGB(col[pos], col[pos + 1], col[pos + 2]);
+			Keyboard_Graphic.turbo_fillRect((size_t)(int64_t)(x0+1),(size_t)(int64_t)(y0+1),(size_t)(int64_t)(x1-2),(size_t)(int64_t)(y1-2));
 			renderKeyText(
 				(char*)Keyboard_List[board][i].name,
 				col[pos],col[pos + 1],col[pos + 2],
@@ -203,6 +203,8 @@ void renderKeyboard(
 	uint8_t KeyboardSize, bool includeNumpad,
 	int32_t curX, int32_t curY, bool click, SDL_Scancode* KB_scancode, SDL_KeyCode* KB_keycode, bool* hoverInBounds
 ) {
+	// nano64_t startTime = getNanoTime();
+
 	if (buf == NULL) { return; }
 	initBufferBox(buf,NULL,0,0,IMAGE_BUFFER_CHANNELS,0);
 	if (KeyboardSize >= Number_of_Keyboard_Sizes) { return; }
@@ -294,8 +296,8 @@ void renderKeyboard(
 	if (KB_scancode != nullptr) { *KB_scancode = SDL_SCANCODE_UNKNOWN; }
 	if (KB_keycode != nullptr) { *KB_keycode = SDLK_UNKNOWN; }
 
-	Keyboard_Graphic.gColor_Hex(0xC0C0C0);
-	Keyboard_Graphic.fillScreen();
+	Keyboard_Graphic.turbo_gColor_Hex(0xC0C0C0);
+	Keyboard_Graphic.turbo_fillScreen();
 
 	renderBoard(
 		KEYB_ANSI,
@@ -334,6 +336,9 @@ void renderKeyboard(
 
 	Keyboard_Graphic.swapBuffer();
 	buf->vram = Keyboard_Graphic.getDisplayBuffer();
+
+	// nano64_t endTime = getNanoTime();
+	// printfInterval(0.3, "\nTime: %5.3lfms %7.1lffps", NANO_TO_SECONDS(endTime - startTime) * 1.0e3, NANO_TO_FRAMERATE(endTime - startTime));
 }
 
 static inline constexpr uint8_t Uint8_Mult(const uint8_t value, const fp64 mult) { return (uint8_t)((fp64)value * mult); }

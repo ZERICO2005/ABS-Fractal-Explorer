@@ -240,6 +240,10 @@ int read_Render_Buffers(BufferBox* primary) {
 		FREE(primary->vram);
 		size_t bufSize = getBufferBoxSize(&pDat_primary);
 		primary->vram = (uint8_t*)malloc(bufSize);
+		if (primary->vram == nullptr) {
+			printError("write_Render_Buffers() failed to malloc primary->vram");
+			return -1;
+		}
 		memcpy(primary->vram,pDat_primary.vram,bufSize);
 	return 0;
 }
@@ -264,6 +268,10 @@ int write_Render_Buffers(const BufferBox* primary) {
 		FREE(pDat_primary.vram);
 		size_t bufSize = getBufferBoxSize(&pDat_primary);
 		pDat_primary.vram = (uint8_t*)malloc(bufSize);
+		if (pDat_primary.vram == nullptr) {
+			printError("write_Render_Buffers() failed to malloc pDat_primary.vram");
+			return -1;
+		}
 		memcpy(pDat_primary.vram,primary->vram,bufSize);
 		pDat_Render_Buffer_Read = true;
 	return 0;
@@ -395,7 +403,7 @@ nano64_t getRenderDelta() {
 		std::lock_guard<std::mutex> lock(pDat_Screenshot_Path_Mutex);
 		pDat_Screenshot_Path.assign(path);
 	}
-	const std::string read_Screenshot_Path() {
+	std::string read_Screenshot_Path() {
 		std::lock_guard<std::mutex> lock(pDat_Screenshot_Path_Mutex);
 		return pDat_Screenshot_Path;
 	}

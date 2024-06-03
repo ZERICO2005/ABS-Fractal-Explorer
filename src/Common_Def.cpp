@@ -194,18 +194,6 @@ uint32_t calcMinRatioMax(uint32_t val, uint32_t min, fp64 ratio, uint32_t max) {
 	return val;
 }
 
-/* Time */
-
-	nano64_t getNanoTime() { // Returns the time in nanoseconds
-		using nanoseconds = std::chrono::duration<nano64_t, std::nano>;
-		auto now = std::chrono::high_resolution_clock::now();
-		return std::chrono::duration_cast<nanoseconds>(now.time_since_epoch()).count();
-	}
-
-	fp64 getDecimalTime() { // Returns the time in seconds
-		return NANO_TO_SECONDS(getNanoTime());
-	}
-
 // const char* getDateAndTimeUTC(
 // 	char DateDelimiter, char DateSeparator, char TimeDelimiter
 // ) {

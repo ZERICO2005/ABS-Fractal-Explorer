@@ -93,6 +93,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		}
 		printf("\n\tClick \"Abort Rendering\" (or use task manager) to cancel.");
 		fflush(stdout);
+
 		nano64_t image_stopwatch = getNanoTime();
 
 		if (Super_Engine_Config.current_Render_Method_CPU() == true) {
@@ -132,7 +133,9 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			name_size++;
 			char* name = (char*)calloc(name_size, sizeof(char));
 			snprintf(name, name_size, format_str, fractal_name, id_number, curTime);
+
 			std::string path = read_Screenshot_Path();
+
 			switch(image_file_format) {
 				case Image_File_Format::PNG:
 					valueRestore(image_quality, 1, 9, 8);

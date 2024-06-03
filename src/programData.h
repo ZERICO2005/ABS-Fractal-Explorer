@@ -135,7 +135,7 @@ nano64_t getRenderDelta();
 
 /* File Paths */
 	void write_Screenshot_Path(const char* i);
-	const std::string read_Screenshot_Path();
+	std::string read_Screenshot_Path();
 
 /* Render Configuration */
 	void reset_Engine_Render_Configuration();

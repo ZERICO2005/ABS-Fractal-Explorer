@@ -64,14 +64,14 @@ const char* const FractalOpenCL_SRC = "\
 	uint8_t type = (formula & 0x40000000) ? 1 : (uint8_t)power;\n\
 	fp32 y = (fp32)(id / resX);\n\
 	fp32 x = (fp32)(id % resX);\n\
-\n\
+	\n\
 	x *= (fp32)sample;\n\
 	y *= (fp32)sample;\n\
 	const fp32 numY = ((fp32)((resY * sample) - 1) / 2.0f);\n\
 	const fp32 numX = ((fp32)((resX * sample) - 1) / 2.0f);\n\
 	x -= numX;\n\
 	y -= numY;\n\
-\n\
+	\n\
 	for (uint32_t v = 0; v < sample; v++) {\n\
 		fp32 yC = y * neg_recip_numW;\n\
 		for (uint32_t u = 0; u < sample; u++) {\n\
@@ -82,7 +82,7 @@ const char* const FractalOpenCL_SRC = "\
 			fp32 low = 4.0f; // Squared\n\
 			fp32 temp = 0.0f;\n\
 			fp32 zs = 0.0f;\n\
-\n\
+			\n\
 			fp32 xC = x * recip_numZ;\n\
 			if (formula & 0x20000000) { // Julia Set // Optimized Coordinate Formula\n\
 				zr = (xC * rCos - yC * rSin) + r;\n\
@@ -96,299 +96,306 @@ const char* const FractalOpenCL_SRC = "\
 				zi = zi0; // Default 0.0f\n\
 			}\n\
 			//formula &= 0x1FFFFFFF;\n\
-			if (type == 1) {\n\
-				zs = (zr * zr + zi * zi); // Otherwise Julia Sets don't work\n\
-				fp32 za = 0.0f;\n\
-				const fp32 powerHalf = power / 2.0f;\n\
-				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
-					za = atan2(zi, zr) * power;\n\
-					zr = pow(zs, powerHalf) * cos(za) + cr;\n\
-					zi = pow(zs, powerHalf) * sin(za) + ci;\n\
-					zs = zr * zr + zi * zi;\n\
-					if (zs < low) {\n\
-						low = zs;\n\
-					} else if (zs > breakoutValue) {\n\
-						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(power)));\n\
-						break;\n\
+			switch (type) {\n\
+				case 1: {\n\
+					zs = (zr * zr + zi * zi); // Otherwise Julia Sets don't work\n\
+					fp32 za = 0.0f;\n\
+					const fp32 powerHalf = power / 2.0f;\n\
+					for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
+						za = atan2(zi, zr) * power;\n\
+						zr = pow(zs, powerHalf) * cos(za) + cr;\n\
+						zi = pow(zs, powerHalf) * sin(za) + ci;\n\
+						zs = zr * zr + zi * zi;\n\
+						if (zs < low) {\n\
+							low = zs;\n\
+						} else if (zs > breakoutValue) {\n\
+							smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(power)));\n\
+							break;\n\
+						}\n\
 					}\n\
-				}\n\
-			} else if (type == 2) {\n\
-				fp32 zr1, zr2, zi1, zi2, s1, s2, s3;\n\
-				uint8_t f[8];\n\
-				for (uint8_t q = 0; q < 8; q++) {\n\
-					f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				s1 = (f[0]) ? -1.0f : 1.0f;\n\
-				s2 = (f[1]) ? -1.0f : 1.0f;\n\
-				s3 = (f[2]) ? -2.0f : 2.0f;\n\
-				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
-					zr1 = (f[3]) ? fabs(zr) : zr;\n\
-					zi1 = (f[4]) ? fabs(zi) : zi;\n\
-					zr2 = (f[5]) ? fabs(zr) : zr;\n\
-					zi2 = (f[6]) ? fabs(zi) : zi;\n\
-					\n\
-					if (f[7] == 0) {\n\
-						zr = s1 * ((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
-						zi = (zr2 * zi2 * s3) + ci;\n\
-					} else {\n\
-						zr = s1 * fabs((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
-						zi = (zr2 * zi2 * s3) + ci;\n\
+				} break;\n\
+				case 2: {\n\
+					fp32 zr1, zr2, zi1, zi2, s1, s2, s3;\n\
+					uint8_t f[8];\n\
+					for (uint8_t q = 0; q < 8; q++) {\n\
+						f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
 					}\n\
-					zs = zr * zr + zi * zi;\n\
-					if (zs < low) {\n\
-						low = zs;\n\
-					} else if (zs > breakoutValue) {\n\
-						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(2.0f)));\n\
-						break;\n\
-					}\n\
-				}\n\
-			} else if (type == 3) {\n\
-				fp32 zr1, zr2, zr3, zi1, zi2, zi3, s1, s2, s3, s4, s5, s6;\n\
-				uint8_t f[14];\n\
-				for (uint8_t q = 0; q < 14; q++) {\n\
-					f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				s1 = (f[0]) ? -1.0f: 1.0f;\n\
-				s2 = (f[1]) ? -3.0f: 3.0f;\n\
-				s3 = (f[2]) ? -3.0f: 3.0f;\n\
-				s4 = (f[3]) ? -1.0f: 1.0f;\n\
-				s5 = (f[4]) ? -1.0f: 1.0f;\n\
-				s6 = (f[5]) ? -1.0f: 1.0f;\n\
-				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
-					zr1 = (f[6]) ? fabs(zr) : zr;\n\
-					zi1 = (f[7]) ? fabs(zi) : zi;\n\
-					zr2 = (f[8]) ? fabs(zr) : zr;\n\
-					zi2 = (f[9]) ? fabs(zi) : zi;\n\
-					zr3 = (f[10]) ? fabs(zr) : zr;\n\
-					zi3 = (f[11]) ? fabs(zi) : zi;\n\
-					if (f[12] == 0) {\n\
-						if (f[13] == 0) {\n\
-							temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-							zr = temp;\n\
+					s1 = (f[0]) ? -1.0f : 1.0f;\n\
+					s2 = (f[1]) ? -1.0f : 1.0f;\n\
+					s3 = (f[2]) ? -2.0f : 2.0f;\n\
+					for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
+						zr1 = (f[3]) ? fabs(zr) : zr;\n\
+						zi1 = (f[4]) ? fabs(zi) : zi;\n\
+						zr2 = (f[5]) ? fabs(zr) : zr;\n\
+						zi2 = (f[6]) ? fabs(zi) : zi;\n\
+						\n\
+						if (f[7] == 0) {\n\
+							zr = s1 * ((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
+							zi = (zr2 * zi2 * s3) + ci;\n\
 						} else {\n\
-							temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-							zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-							zr = temp;\n\
+							zr = s1 * fabs((zr1 * zr) - s2 * (zi1 * zi)) + cr;\n\
+							zi = (zr2 * zi2 * s3) + ci;\n\
+						}\n\
+						zs = zr * zr + zi * zi;\n\
+						if (zs < low) {\n\
+							low = zs;\n\
+						} else if (zs > breakoutValue) {\n\
+							smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(2.0f)));\n\
+							break;\n\
+						}\n\
+					}\n\
+				} break;\n\
+				case 3: {\n\
+					fp32 zr1, zr2, zr3, zi1, zi2, zi3, s1, s2, s3, s4, s5, s6;\n\
+					uint8_t f[14];\n\
+					for (uint8_t q = 0; q < 14; q++) {\n\
+						f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
+					}\n\
+					s1 = (f[0]) ? -1.0f: 1.0f;\n\
+					s2 = (f[1]) ? -3.0f: 3.0f;\n\
+					s3 = (f[2]) ? -3.0f: 3.0f;\n\
+					s4 = (f[3]) ? -1.0f: 1.0f;\n\
+					s5 = (f[4]) ? -1.0f: 1.0f;\n\
+					s6 = (f[5]) ? -1.0f: 1.0f;\n\
+					for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
+						zr1 = (f[6]) ? fabs(zr) : zr;\n\
+						zi1 = (f[7]) ? fabs(zi) : zi;\n\
+						zr2 = (f[8]) ? fabs(zr) : zr;\n\
+						zi2 = (f[9]) ? fabs(zi) : zi;\n\
+						zr3 = (f[10]) ? fabs(zr) : zr;\n\
+						zi3 = (f[11]) ? fabs(zi) : zi;\n\
+						if (f[12] == 0) {\n\
+							if (f[13] == 0) {\n\
+								temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+								zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s5 * ((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+								zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+								zr = temp;\n\
+								}\n\
+						} else {\n\
+							if (f[13] == 0) {\n\
+								temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+								zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
+								zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
+								zr = temp;\n\
 							}\n\
-					} else {\n\
-						if (f[13] == 0) {\n\
-							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-							zi = s6 * ((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-							zr = temp;\n\
-						} else {\n\
-							temp = s5 * fabs((s1 * zr1 * zr * zr) - (s2 * zr2 * zi1 * zi)) + cr;\n\
-							zi = s6 * fabs((s3 * zr3 * zr * zi2) - (s4 * zi3 * zi * zi)) + ci;\n\
-							zr = temp;\n\
+						}\n\
+						zs = zr * zr + zi * zi;\n\
+						if (zs < low) {\n\
+							low = zs;\n\
+						} else if (zs > breakoutValue) {\n\
+							smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(3.0f)));\n\
+							break;\n\
 						}\n\
 					}\n\
-					zs = zr * zr + zi * zi;\n\
-					if (zs < low) {\n\
-						low = zs;\n\
-					} else if (zs > breakoutValue) {\n\
-						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(3.0f)));\n\
-						break;\n\
+				} break;\n\
+				case 4: {\n\
+					fp32 zr1, zr2, zr3, zr4, zi1, zi2, zi3, zi4, s1, s2, s3, s4, s5, s6, s7;\n\
+					uint8_t f[17];\n\
+					for (uint8_t q = 0; q < 17; q++) {\n\
+						f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
 					}\n\
-				}\n\
-			} else if (type == 4) {\n\
-				fp32 zr1, zr2, zr3, zr4, zi1, zi2, zi3, zi4, s1, s2, s3, s4, s5, s6, s7;\n\
-				uint8_t f[17];\n\
-				for (uint8_t q = 0; q < 17; q++) {\n\
-					f[q] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				s1 = (f[0]) ? -1.0f: 1.0f;\n\
-				s2 = (f[1]) ? -6.0f: 6.0f;\n\
-				s3 = (f[2]) ? -1.0f: 1.0f;\n\
-				s4 = (f[3]) ? -4.0f: 4.0f;\n\
-				s5 = (f[4]) ? -4.0f: 4.0f;\n\
-				s6 = (f[5]) ? -1.0f: 1.0f;\n\
-				s7 = (f[6]) ? -1.0f: 1.0f;\n\
-				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
-					zr1 = (f[7]) ? fabs(zr) : zr;\n\
-					zi1 = (f[8]) ? fabs(zi) : zi;\n\
-					zr2 = (f[9]) ? fabs(zr) : zr;\n\
-					zi2 = (f[10]) ? fabs(zi) : zi;\n\
-					zr3 = (f[11]) ? fabs(zr) : zr;\n\
-					zi3 = (f[12]) ? fabs(zi) : zi;\n\
-					zr4 = (f[13]) ? fabs(zr) : zr;\n\
-					zi4 = (f[14]) ? fabs(zi) : zi;\n\
-\n\
-					if (f[15] == 0) {\n\
-						if (f[16] == 0) {\n\
-							temp = s6 * (s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
-							zi = s7 * (s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
-							zr = temp;\n\
+					s1 = (f[0]) ? -1.0f: 1.0f;\n\
+					s2 = (f[1]) ? -6.0f: 6.0f;\n\
+					s3 = (f[2]) ? -1.0f: 1.0f;\n\
+					s4 = (f[3]) ? -4.0f: 4.0f;\n\
+					s5 = (f[4]) ? -4.0f: 4.0f;\n\
+					s6 = (f[5]) ? -1.0f: 1.0f;\n\
+					s7 = (f[6]) ? -1.0f: 1.0f;\n\
+					for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
+						zr1 = (f[7]) ? fabs(zr) : zr;\n\
+						zi1 = (f[8]) ? fabs(zi) : zi;\n\
+						zr2 = (f[9]) ? fabs(zr) : zr;\n\
+						zi2 = (f[10]) ? fabs(zi) : zi;\n\
+						zr3 = (f[11]) ? fabs(zr) : zr;\n\
+						zi3 = (f[12]) ? fabs(zi) : zi;\n\
+						zr4 = (f[13]) ? fabs(zr) : zr;\n\
+						zi4 = (f[14]) ? fabs(zi) : zi;\n\
+						\n\
+						if (f[15] == 0) {\n\
+							if (f[16] == 0) {\n\
+								temp = s6 * (s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
+								zi = s7 * (s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s6 * (s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
+								zi = s7 * fabs(s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							}\n\
 						} else {\n\
-							temp = s6 * (s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
-							zi = s7 * fabs(s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
-							zr = temp;\n\
+							if (f[16] == 0) {\n\
+								temp = s6 * fabs(s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
+								zi = s7 * (s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s6 * fabs(s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
+								zi = s7 * fabs(s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							}\n\
 						}\n\
-					} else {\n\
-						if (f[16] == 0) {\n\
-							temp = s6 * fabs(s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
-							zi = s7 * (s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
-							zr = temp;\n\
-						} else {\n\
-							temp = s6 * fabs(s1 * (zr1 * zr * zr * zr) - s2 * (zr2 * zr * zi1 * zi) + s3 * (zi2 * zi * zi * zi)) + cr;\n\
-							zi = s7 * fabs(s4 * (zr3 * zr * zr * zi3) - s5 * (zr4 * zi4 * zi * zi)) + ci;\n\
-							zr = temp;\n\
-						}\n\
-					}\n\
-					zs = zr * zr + zi * zi;\n\
-					if (zs < low) {\n\
-						low = zs;\n\
-					} else if (zs > breakoutValue) {\n\
-						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(4.0f)));\n\
-						break;\n\
-					}\n\
-				}\n\
-			} else if (type == 5) {\n\
-				fp32 zr1, zr2, zr3, zr4, zr5, zi1, zi2, zi3, zi4, zi5, s1, s2, s3, s4, s5, s6, s7, s8;\n\
-				uint8_t fS[6];\n\
-				uint8_t fA[10];\n\
-				uint8_t fO[4];\n\
-				for (uint8_t q = 0; q < 6; q++) { //0-5\n\
-					fS[q] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				for (uint8_t q = 6; q < 8; q++) { //6-7\n\
-					fO[q - 6] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				for (uint8_t q = 8; q < 18; q++) { //8-17\n\
-					fA[q - 8] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				for (uint8_t q = 18; q < 20; q++) { //18-19\n\
-					fO[q - 16] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				s1 = (fS[0]) ? -1.0f: 1.0f;\n\
-				s2 = (fS[1]) ? -10.0f: 10.0f;\n\
-				s3 = (fS[2]) ? -5.0f: 5.0f;\n\
-				s4 = (fS[3]) ? -5.0f: 5.0f;\n\
-				s5 = (fS[4]) ? -10.0f: 10.0f;\n\
-				s6 = (fS[5]) ? -1.0f: 1.0f;\n\
-				s7 = (fO[0]) ? -1.0f: 1.0f;\n\
-				s8 = (fO[1]) ? -1.0f: 1.0f;\n\
-				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
-					zr1 = (fA[0]) ? fabs(zr) : zr;\n\
-					zi1 = (fA[1]) ? fabs(zi) : zi;\n\
-					zr2 = (fA[2]) ? fabs(zr) : zr;\n\
-					zi2 = (fA[3]) ? fabs(zi) : zi;\n\
-					zr3 = (fA[4]) ? fabs(zr) : zr;\n\
-					zi3 = (fA[5]) ? fabs(zi) : zi;\n\
-					zr4 = (fA[6]) ? fabs(zr) : zr;\n\
-					zi4 = (fA[7]) ? fabs(zi) : zi;\n\
-					zr5 = (fA[8]) ? fabs(zr) : zr;\n\
-					zi5 = (fA[9]) ? fabs(zi) : zi;\n\
-\n\
-					if (fO[2] == 0) {\n\
-						if (fO[3] == 0) {\n\
-							temp = s7 * (s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
-							zi = s8 * (s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
-						} else {\n\
-							temp = s7 * (s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
-							zi = s8 * fabs(s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
-						}\n\
-					} else {\n\
-						if (fO[3] == 0) {\n\
-							temp = s7 * fabs(s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
-							zi = s8 * (s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
-						} else {\n\
-							temp = s7 * fabs(s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
-							zi = s8 * fabs(s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
+						zs = zr * zr + zi * zi;\n\
+						if (zs < low) {\n\
+							low = zs;\n\
+						} else if (zs > breakoutValue) {\n\
+							smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(4.0f)));\n\
+							break;\n\
 						}\n\
 					}\n\
-					zs = zr * zr + zi * zi;\n\
-					if (zs < low) {\n\
-						low = zs;\n\
-					} else if (zs > breakoutValue) {\n\
-						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(5.0f)));\n\
-						break;\n\
+				} break;\n\
+				case 5: {\n\
+					fp32 zr1, zr2, zr3, zr4, zr5, zi1, zi2, zi3, zi4, zi5, s1, s2, s3, s4, s5, s6, s7, s8;\n\
+					uint8_t fS[6];\n\
+					uint8_t fA[10];\n\
+					uint8_t fO[4];\n\
+					for (uint8_t q = 0; q < 6; q++) { //0-5\n\
+						fS[q] = ((formula >> q) & 1) ? 1 : 0;\n\
 					}\n\
-				}\n\
-			} else if (type == 6) {\n\
-				fp32 zr1, zr2, zr3, zr4, zr5, zr6, zi1, zi2, zi3, zi4, zi5, zi6, s1, s2, s3, s4, s5, s6, s7, s8, s9;\n\
-				uint8_t fS[7];\n\
-				uint8_t fA[12];\n\
-				uint8_t fO[4];\n\
-				for (uint8_t q = 0; q <= 6; q++) { /* 0-6 */ \n\
-					fS[q] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				for (uint8_t q = 7; q <= 8; q++) { /* 7-8 */ \n\
-					fO[q - 7] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				for (uint8_t q = 9; q <= 20; q++) { /* 9-20 */ \n\
-					fA[q - 9] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				for (uint8_t q = 21; q <= 22; q++) { /* 21-22 */ \n\
-					fO[q - 19] = ((formula >> q) & 1) ? 1 : 0;\n\
-				}\n\
-				s1 = (fS[0]) ? -1.0f : 1.0f;\n\
-				s2 = (fS[1]) ? -15.0f : 15.0f;\n\
-				s3 = (fS[2]) ? -15.0f : 15.0f;\n\
-				s4 = (fS[3]) ? -1.0f : 1.0f;\n\
-				s5 = (fS[4]) ? -6.0f : 6.0f;\n\
-				s6 = (fS[5]) ? -20.0f : 20.0f;\n\
-				s7 = (fS[6]) ? -6.0f : 6.0f;\n\
-				s8 = (fO[0]) ? -1.0f : 1.0f;\n\
-				s9 = (fO[1]) ? -1.0f : 1.0f;\n\
-				for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
-					zr1 = (fA[0]) ? fabs(zr) : zr;\n\
-					zi1 = (fA[1]) ? fabs(zi) : zi;\n\
-					zr2 = (fA[2]) ? fabs(zr) : zr;\n\
-					zi2 = (fA[3]) ? fabs(zi) : zi;\n\
-					zr3 = (fA[4]) ? fabs(zr) : zr;\n\
-					zi3 = (fA[5]) ? fabs(zi) : zi;\n\
-					zr4 = (fA[6]) ? fabs(zr) : zr;\n\
-					zi4 = (fA[7]) ? fabs(zi) : zi;\n\
-					zr5 = (fA[8]) ? fabs(zr) : zr;\n\
-					zi5 = (fA[9]) ? fabs(zi) : zi;\n\
-					zr6 = (fA[10]) ? fabs(zr) : zr;\n\
-					zi6 = (fA[11]) ? fabs(zi) : zi;\n\
-\n\
-					if (fO[2] == 0) {\n\
-						if (fO[3] == 0) {\n\
-							temp = s8 * (s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
-							zi = s9 * (s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
+					for (uint8_t q = 6; q < 8; q++) { //6-7\n\
+						fO[q - 6] = ((formula >> q) & 1) ? 1 : 0;\n\
+					}\n\
+					for (uint8_t q = 8; q < 18; q++) { //8-17\n\
+						fA[q - 8] = ((formula >> q) & 1) ? 1 : 0;\n\
+					}\n\
+					for (uint8_t q = 18; q < 20; q++) { //18-19\n\
+						fO[q - 16] = ((formula >> q) & 1) ? 1 : 0;\n\
+					}\n\
+					s1 = (fS[0]) ? -1.0f: 1.0f;\n\
+					s2 = (fS[1]) ? -10.0f: 10.0f;\n\
+					s3 = (fS[2]) ? -5.0f: 5.0f;\n\
+					s4 = (fS[3]) ? -5.0f: 5.0f;\n\
+					s5 = (fS[4]) ? -10.0f: 10.0f;\n\
+					s6 = (fS[5]) ? -1.0f: 1.0f;\n\
+					s7 = (fO[0]) ? -1.0f: 1.0f;\n\
+					s8 = (fO[1]) ? -1.0f: 1.0f;\n\
+					for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
+						zr1 = (fA[0]) ? fabs(zr) : zr;\n\
+						zi1 = (fA[1]) ? fabs(zi) : zi;\n\
+						zr2 = (fA[2]) ? fabs(zr) : zr;\n\
+						zi2 = (fA[3]) ? fabs(zi) : zi;\n\
+						zr3 = (fA[4]) ? fabs(zr) : zr;\n\
+						zi3 = (fA[5]) ? fabs(zi) : zi;\n\
+						zr4 = (fA[6]) ? fabs(zr) : zr;\n\
+						zi4 = (fA[7]) ? fabs(zi) : zi;\n\
+						zr5 = (fA[8]) ? fabs(zr) : zr;\n\
+						zi5 = (fA[9]) ? fabs(zi) : zi;\n\
+						\n\
+						if (fO[2] == 0) {\n\
+							if (fO[3] == 0) {\n\
+								temp = s7 * (s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
+								zi = s8 * (s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s7 * (s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
+								zi = s8 * fabs(s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							}\n\
 						} else {\n\
-							temp = s8 * (s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
-							zi = s9 * fabs(s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
+							if (fO[3] == 0) {\n\
+								temp = s7 * fabs(s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
+								zi = s8 * (s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s7 * fabs(s1 * (zr1 * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zi1 * zi) + s3 * (zr3 * zi2 * zi * zi * zi)) + cr;\n\
+								zi = s8 * fabs(s4 * (zr4 * zr * zr * zr * zi3) - s5 * (zr5 * zr * zi4 * zi * zi) + s6 * (zi5 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							}\n\
 						}\n\
-					} else {\n\
-						if (fO[3] == 0) {\n\
-							temp = s8 * fabs(s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
-							zi = s9 * (s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
-						} else {\n\
-							temp = s8 * fabs(s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
-							zi = s9 * fabs(s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
-							zr = temp;\n\
+						zs = zr * zr + zi * zi;\n\
+						if (zs < low) {\n\
+							low = zs;\n\
+						} else if (zs > breakoutValue) {\n\
+							smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(5.0f)));\n\
+							break;\n\
 						}\n\
 					}\n\
-					zs = zr * zr + zi * zi;\n\
-					if (zs < low) {\n\
-						low = zs;\n\
-					} else if (zs > breakoutValue) {\n\
-						smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(6.0f)));\n\
-						break;\n\
+				} break;\n\
+				case 6: {\n\
+					fp32 zr1, zr2, zr3, zr4, zr5, zr6, zi1, zi2, zi3, zi4, zi5, zi6, s1, s2, s3, s4, s5, s6, s7, s8, s9;\n\
+					uint8_t fS[7];\n\
+					uint8_t fA[12];\n\
+					uint8_t fO[4];\n\
+					for (uint8_t q = 0; q <= 6; q++) { /* 0-6 */ \n\
+						fS[q] = ((formula >> q) & 1) ? 1 : 0;\n\
 					}\n\
-				}\n\
+					for (uint8_t q = 7; q <= 8; q++) { /* 7-8 */ \n\
+						fO[q - 7] = ((formula >> q) & 1) ? 1 : 0;\n\
+					}\n\
+					for (uint8_t q = 9; q <= 20; q++) { /* 9-20 */ \n\
+						fA[q - 9] = ((formula >> q) & 1) ? 1 : 0;\n\
+					}\n\
+					for (uint8_t q = 21; q <= 22; q++) { /* 21-22 */ \n\
+						fO[q - 19] = ((formula >> q) & 1) ? 1 : 0;\n\
+					}\n\
+					s1 = (fS[0]) ? -1.0f : 1.0f;\n\
+					s2 = (fS[1]) ? -15.0f : 15.0f;\n\
+					s3 = (fS[2]) ? -15.0f : 15.0f;\n\
+					s4 = (fS[3]) ? -1.0f : 1.0f;\n\
+					s5 = (fS[4]) ? -6.0f : 6.0f;\n\
+					s6 = (fS[5]) ? -20.0f : 20.0f;\n\
+					s7 = (fS[6]) ? -6.0f : 6.0f;\n\
+					s8 = (fO[0]) ? -1.0f : 1.0f;\n\
+					s9 = (fO[1]) ? -1.0f : 1.0f;\n\
+					for (uint32_t itr = 0; itr < maxItr; itr++) {\n\
+						zr1 = (fA[0]) ? fabs(zr) : zr;\n\
+						zi1 = (fA[1]) ? fabs(zi) : zi;\n\
+						zr2 = (fA[2]) ? fabs(zr) : zr;\n\
+						zi2 = (fA[3]) ? fabs(zi) : zi;\n\
+						zr3 = (fA[4]) ? fabs(zr) : zr;\n\
+						zi3 = (fA[5]) ? fabs(zi) : zi;\n\
+						zr4 = (fA[6]) ? fabs(zr) : zr;\n\
+						zi4 = (fA[7]) ? fabs(zi) : zi;\n\
+						zr5 = (fA[8]) ? fabs(zr) : zr;\n\
+						zi5 = (fA[9]) ? fabs(zi) : zi;\n\
+						zr6 = (fA[10]) ? fabs(zr) : zr;\n\
+						zi6 = (fA[11]) ? fabs(zi) : zi;\n\
+						\n\
+						if (fO[2] == 0) {\n\
+							if (fO[3] == 0) {\n\
+								temp = s8 * (s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+								zi = s9 * (s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s8 * (s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+								zi = s9 * fabs(s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							}\n\
+						} else {\n\
+							if (fO[3] == 0) {\n\
+								temp = s8 * fabs(s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+								zi = s9 * (s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							} else {\n\
+								temp = s8 * fabs(s1 * (zr1 * zr * zr * zr * zr * zr) - s2 * (zr2 * zr * zr * zr * zi1 * zi) + s3 * (zr3 * zr * zi2 * zi * zi * zi) - s4 * (zi3 * zi * zi * zi * zi * zi)) + cr;\n\
+								zi = s9 * fabs(s5 * (zr4 * zr * zr * zr * zr * zi4) - s6 * (zr5 * zr * zr * zi5 * zi * zi) + s7 * (zr6 * zi6 * zi * zi * zi * zi)) + ci;\n\
+								zr = temp;\n\
+							}\n\
+						}\n\
+						zs = zr * zr + zi * zi;\n\
+						if (zs < low) {\n\
+							low = zs;\n\
+						} else if (zs > breakoutValue) {\n\
+							smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(6.0f)));\n\
+							break;\n\
+						}\n\
+					}\n\
+				} break;\n\
 			}\n\
 			\n\
 			if (zs > breakoutValue) {\n\
-				outR += Exterior_R_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_R_Freq_mult_TAU * smooth + Exterior_R_Phase_mult_TAU));\n\
-				outG += Exterior_G_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_G_Freq_mult_TAU * smooth + Exterior_G_Phase_mult_TAU));\n\
-				outB += Exterior_B_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_B_Freq_mult_TAU * smooth + Exterior_B_Phase_mult_TAU));\n\
-				outA += Exterior_Alpha;\n\
+				outR += (Exterior_R_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_R_Freq_mult_TAU * smooth + Exterior_R_Phase_mult_TAU))) * (Exterior_R_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_R_Freq_mult_TAU * smooth + Exterior_R_Phase_mult_TAU)));\n\
+				outG += (Exterior_G_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_G_Freq_mult_TAU * smooth + Exterior_G_Phase_mult_TAU))) * (Exterior_G_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_G_Freq_mult_TAU * smooth + Exterior_G_Phase_mult_TAU)));\n\
+				outB += (Exterior_B_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_B_Freq_mult_TAU * smooth + Exterior_B_Phase_mult_TAU))) * (Exterior_B_Amp_mult_Exterior_Alpha * (0.5f - 0.5f * cos(Exterior_B_Freq_mult_TAU * smooth + Exterior_B_Phase_mult_TAU)));\n\
+				outA += Exterior_Alpha * Exterior_Alpha;\n\
 			} else {\n\
-				outR += Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_R_Freq + Interior_R_Phase_mult_TAU));\n\
-				outG += Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_G_Freq + Interior_G_Phase_mult_TAU));\n\
-				outB += Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_B_Freq + Interior_B_Phase_mult_TAU));\n\
-				outA += Interior_Alpha;\n\
+				outR += (Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_R_Freq + Interior_R_Phase_mult_TAU))) * (Interior_R_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_R_Freq + Interior_R_Phase_mult_TAU)));\n\
+				outG += (Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_G_Freq + Interior_G_Phase_mult_TAU))) * (Interior_G_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_G_Freq + Interior_G_Phase_mult_TAU)));\n\
+				outB += (Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_B_Freq + Interior_B_Phase_mult_TAU))) * (Interior_B_Amp_mult_Interior_Alpha * (0.5f - 0.5f * cos(log(low) * Interior_B_Freq + Interior_B_Phase_mult_TAU)));\n\
+				outA += Interior_Alpha * Interior_Alpha;\n\
 			}\n\
 			x++;\n\
 		}\n\
@@ -396,10 +403,10 @@ const char* const FractalOpenCL_SRC = "\
 		y++;\n\
 	}\n\
 	if (outA != 0.0f) {\n\
-		outR = outR / outA;\n\
-		outG = outG / outA;\n\
-		outB = outB / outA;\n\
-		outA = outA / (fp32)(sample * sample);\n\
+		outR = sqrt(outR / outA);\n\
+		outG = sqrt(outG / outA);\n\
+		outB = sqrt(outB / outA);\n\
+		outA = sqrt(outA / (fp32)(sample * sample));\n\
 	}\n\
 	outR *= 255.0f;\n\
 	outG *= 255.0f;\n\

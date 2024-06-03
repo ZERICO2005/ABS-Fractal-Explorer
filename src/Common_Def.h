@@ -163,18 +163,26 @@ typedef int32_t dim32_t;
 	constexpr inline fp64 DEGREES_TO_RADIANS(fp64 degrees) { return degrees * (TAU / 360.0); }
 
 /* Time */
+
 	// Returns the time in nanoseconds
-	nano64_t getNanoTime();
-	// Returns the time in seconds 
-	fp64 getDecimalTime();
+	inline nano64_t getNanoTime() { 
+		using nanoseconds = std::chrono::duration<nano64_t, std::nano>;
+		auto now = std::chrono::high_resolution_clock::now();
+		return std::chrono::duration_cast<nanoseconds>(now.time_since_epoch()).count();
+	}
 
 	constexpr inline fp64 NANO_TO_SECONDS(nano64_t t) { return (fp64)t / 1.0e9; }
-	constexpr inline fp64 NANO_TO_FRAMERATE(nano64_t t) { return (1.0e9) / (fp64)t; }
+	constexpr inline fp64 NANO_TO_FRAMERATE(nano64_t t) { return 1.0e9 / (fp64)t; }
 	constexpr inline nano64_t SECONDS_TO_NANO(fp64 s) { return (nano64_t)(s * 1.0e9); }
 	constexpr inline fp64 SECONDS_TO_FRAMERATE(fp64 s) { return 1.0 / s; }
 	constexpr inline nano64_t FRAMERATE_TO_NANO(fp64 f) { return (nano64_t)(1.0e9 / f); }
 	constexpr inline fp64 FRAMERATE_TO_SECONDS(fp64 f) { return 1.0 / f; }
 	
+	// Returns the time in seconds
+	inline fp64 getDecimalTime() {
+		return NANO_TO_SECONDS(getNanoTime());
+	}
+
 /* String Functions */
 
 #ifdef PLATFORM_WINDOWS

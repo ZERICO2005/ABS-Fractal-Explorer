@@ -302,17 +302,17 @@ void Bit_Graphics::printText6x8(size_t xW, size_t yW, const char* text) {
 	if (initialized == false) { return; }
 	size_t x = xW;
 	size_t y = yW;
-	size_t t = 0; // For tabs
+	size_t tabPos = 0; // For tabs
 	while (*text != '\0') {
 		switch(*text) {
 			case '\n': // New Line
 				x = xW;
 				y += 9;
-				t = 0;
+				tabPos = 0;
 				break;
 			case '\t': // Horizontal Tab
-				x += (4 - ((t - 1) % 4)) * 7;
-				t = 0;
+				x += (4 - ((tabPos - 1) % 4)) * 7;
+				tabPos = 0;
 				break;
 			case '\v': // Vertical Tab
 				y += 9;
@@ -328,7 +328,7 @@ void Bit_Graphics::printText6x8(size_t xW, size_t yW, const char* text) {
 				x += 7;
 		}
 		text++;
-		t++;
+		tabPos++;
 	}
 }
 void Bit_Graphics::printTextWarp6x8(size_t xW, size_t yW, const char* text, size_t width = 0) {
@@ -336,17 +336,17 @@ void Bit_Graphics::printTextWarp6x8(size_t xW, size_t yW, const char* text, size
 	if (width == 0) { width = ResX; }
 	size_t x = xW;
 	size_t y = yW;
-	size_t t = 0; // For tabs
+	size_t tabPos = 0; // For tabs
 	while (*text != '\0') {
 		switch(*text) {
 			case '\n': // New Line
 				x = xW;
 				y += 9;
-				t = 0;
+				tabPos = 0;
 				break;
 			case '\t': // Horizontal Tab
-				x += (4 - ((t - 1) % 4)) * 7;
-				t = 0;
+				x += (4 - ((tabPos - 1) % 4)) * 7;
+				tabPos = 0;
 				break;
 			case '\v': // Vertical Tab
 				y += 9;
@@ -363,11 +363,11 @@ void Bit_Graphics::printTextWarp6x8(size_t xW, size_t yW, const char* text, size
 			if (xW + 7 > width) { // New Line
 				x = xW;
 				y += 9;
-				t = 0;
+				tabPos = 0;
 			}
 		}
 		text++;
-		t++;
+		tabPos++;
 	}
 }
 /*

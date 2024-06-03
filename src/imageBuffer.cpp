@@ -134,7 +134,12 @@
 	}
 
 	// Returns if buffer is allocated
-	bool ImageBuffer::allocated() const { return vramAllocated; }
+	bool ImageBuffer::allocated() const {
+		if (bytesAllocated == 0 || vram == nullptr) {
+			return false;
+		}
+		return vramAllocated;
+	}
 	// Returns if the buffer is safe to write to
 	bool ImageBuffer::bufferSafe() const {
 		if (vramAllocated == false) { return false; }

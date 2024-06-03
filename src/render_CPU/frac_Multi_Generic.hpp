@@ -13,18 +13,20 @@
 
 /* BOILERPLATE */
 
+	#define color_pow_2(x) (x) * (x)
+
 	#define CPU_Interior_Coloring(fpX, fpColor); \
-		outR += param.Interior_R_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU));\
-		outG += param.Interior_G_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU));\
-		outB += param.Interior_B_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU));\
-		outA += param.Interior_Alpha;
+		outR += color_pow_2(param.Interior_R_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_R_Freq + param.Interior_R_Phase_mult_TAU)));\
+		outG += color_pow_2(param.Interior_G_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_G_Freq + param.Interior_G_Phase_mult_TAU)));\
+		outB += color_pow_2(param.Interior_B_Amp_mult_Interior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos((fpColor)log((fpColor)low) * param.Interior_B_Freq + param.Interior_B_Phase_mult_TAU)));\
+		outA += color_pow_2(param.Interior_Alpha);
 
 	#define CPU_Exterior_Coloring(fpX, fpColor, inverse_log2_power); \
 		fpColor smooth = (fpColor)log1p((fpColor)fmax((fpColor)0.0, (fpColor)itr - (fpColor)log2(log2(zs) / (fpX)2.0) * inverse_log2_power));\
-		outR += param.Exterior_R_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU));\
-		outG += param.Exterior_G_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU));\
-		outB += param.Exterior_B_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU));\
-		outA += param.Exterior_Alpha;
+		outR += color_pow_2(param.Exterior_R_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_R_Freq_mult_TAU * smooth + param.Exterior_R_Phase_mult_TAU)));\
+		outG += color_pow_2(param.Exterior_G_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_G_Freq_mult_TAU * smooth + param.Exterior_G_Phase_mult_TAU)));\
+		outB += color_pow_2(param.Exterior_B_Amp_mult_Exterior_Alpha * ((fpColor)0.5 - (fpColor)0.5 * (fpColor)cos(param.Exterior_B_Freq_mult_TAU * smooth + param.Exterior_B_Phase_mult_TAU)));\
+		outA += color_pow_2(param.Exterior_Alpha);
 
 #define Block_Init_Generic(fpX, fpColor);
 
@@ -76,10 +78,10 @@
 			}\
 			y -= param.sample;\
 			if (outA != (fpColor)0.0) {\
-				outR = outR / outA;\
-				outG = outG / outA;\
-				outB = outB / outA;\
-				outA = outA / param.alphaDiv;\
+				outR = sqrt(outR / outA);\
+				outG = sqrt(outG / outA);\
+				outB = sqrt(outB / outA);\
+				outA = sqrt(outA / param.alphaDiv);\
 			}\
 			outR *= (fpColor)255.0;\
 			outG *= (fpColor)255.0;\
