@@ -949,8 +949,10 @@ void Menu_Rendering() {
 			ImGui::NewLine();
 		ImGui::Unindent(); }
 		if (ImGui::CollapsingHeader("FRAME INTERPOLATION")) { ImGui::Indent();
-			ImGui::Checkbox("Render Background Color", &Render_Background_Color);
-			ImGui::NewLine();
+			#ifndef Enable_OpenCV_Scaler
+				ImGui::Checkbox("Render Background Color", &Render_Background_Color);
+				ImGui::NewLine();
+			#endif
 			#ifdef Enable_OpenCV_Scaler
 				static const char* OpenCV_interpolation_mode_list[] = {"Nearest Neighbor (Default)","Linear","Cubic","Area","Lanczos"};
 				int_enum& OpenCV_interpolation_mode = config_data.Rendering_Settings.Frame_Interpolation_Method;

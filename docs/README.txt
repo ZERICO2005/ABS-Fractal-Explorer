@@ -1,5 +1,5 @@
-ABS-Fractal-Explorer v1.2.1 (Windows 10 Edition)
-zerico2005 | 2024/05/19
+ABS-Fractal-Explorer v1.2.1 (Revision-2) (Windows 10 Edition)
+zerico2005 | 2024/06/09
 
 ABS-Fractal-Explorer will allow you to explore hundereds of different Mandelbrot variants. From Quadratic to Sextic fractals, there is always something new and novel to explore!
 

@@ -224,6 +224,9 @@ __attribute__((unused)) static int frame_Transform_Generic_Fast(
 		Generic_Fast_Transform_End(); } break;
 	}
 
+	#undef Generic_Fast_Transform_Start
+	#undef Generic_Fast_Transform_End
+
 	// nano64_t finishTime = getNanoTime();
 	// printfInterval(0.4,"\nTime: %.3lf | %zux%zu", NANO_TO_SECONDS(finishTime - startTime) * 1.0e3, Repeat_U, Repeat_V);
 	

@@ -7,6 +7,9 @@
 */
 
 #include "display_GUI_Internal.h"
+
+#ifdef Enable_OpenCL
+
 #include "display_GPU_info.h"
 
 #include "display_GUI.h"
@@ -79,3 +82,5 @@ void SubMenu_GPU_Information() {
 		ImGui::Unindent(); }
 	}
 }
+
+#endif
