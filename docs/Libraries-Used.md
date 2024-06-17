@@ -42,14 +42,19 @@ Used to display the window, handling the keyboard, and other I/O
 https://github.com/ocornut/imgui
 Used for the Graphical User Interface (GUI)
 
-## STB Image
-https://github.com/nothings/stb
-Used for writing PNG/JPG images
+## OpenCL
+https://www.khronos.org/opencl/
+Used for GPU rendering
 
 ## QuadMath
 https://gcc.gnu.org/onlinedocs/libquadmath/
 Used for high precision 128bit float calculations
 
+## STB Image
+https://github.com/nothings/stb
+Used for writing PNG/JPG images
+
 ## OpenCV
 https://opencv.org/
 Used for frame scaling in custom versions of ABS-Fractal-Explorer
+

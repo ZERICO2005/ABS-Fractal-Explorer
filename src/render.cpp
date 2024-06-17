@@ -2220,7 +2220,7 @@ void fill_Background_Color(const ImageBuffer& image) {
 void newFrame() {
 	// nano64_t startTime = getNanoTime();
 
-	constexpr fp64 Maximum_Rotation_Difference = 0.0 * (TAU / 360.0);
+	__attribute__((unused)) constexpr fp64 Maximum_Rotation_Difference = 0.0 * (TAU / 360.0);
 	if (Master.bufferSafe() == false) {
 		printError("Master ImageBuffer is invalid");
 		return;

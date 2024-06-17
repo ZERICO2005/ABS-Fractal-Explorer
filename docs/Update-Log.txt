@@ -1,5 +1,8 @@
 ABS-Fractal-Explorer Update-Log
 
+# v1.2.1 (Revision-2) (2024/06/09)
+* Corrected color averaging algorithm
+
 # v1.2.1 (2024/05/19)
 * Super-Screenshot bounding boxes (Fill Area, Fit Area, etc)
 * Faster frame scaling

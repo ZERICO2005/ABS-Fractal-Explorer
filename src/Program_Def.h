@@ -16,30 +16,32 @@
 */
 
 /* Toggable Features */
-
-	// long double
-	#define Enable_Float80
-
-	// quadmath.h
-	#define Enable_Float128
-
-	// GPU Rendering
-	#define Enable_OpenCL
-
-	// Uses the OpenCV scaler over the SDL2 one
-	// #define Enable_OpenCV_Scaler
-
-	// Remove Color
-	// #define MONOCHROME_MODE
+// Moved to CMakeLists.txt
+/*
+**	// long double
+**	#define Enable_Float80
+**
+**	// quadmath.h
+**	#define Enable_Float128
+**
+**	// GPU Rendering
+**	// #define Enable_OpenCL
+**
+**	// Uses the OpenCV scaler over the SDL2 one
+**	// #define Enable_OpenCV_Scaler
+**
+**	// Remove Color
+**	// #define MONOCHROME_MODE
+*/
 
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/06/02" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/06/09" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 2
 #define PROGRAM_V_PATCH 1
-#define PROGRAM_V_TAG "Rev-1 Developer Debug"
+#define PROGRAM_V_TAG "(Revision-2) Pre-Release"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */

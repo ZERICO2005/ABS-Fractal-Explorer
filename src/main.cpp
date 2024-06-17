@@ -41,6 +41,7 @@ void print_pointer_sizes() {
 	printf("\nsizeof(void*)       = %3zu | %3zub", sizeof(void*)      , sizeof(void*)       * CHAR_BIT);
 	printf("\nsizeof(size_t)      = %3zu | %3zub", sizeof(size_t)     , sizeof(size_t)      * CHAR_BIT);
 	printf("\nsizeof(ptrdiff_t)   = %3zu | %3zub", sizeof(ptrdiff_t)  , sizeof(ptrdiff_t)   * CHAR_BIT);
+	printf("\nsizeof(intptr_t)    = %3zu | %3zub", sizeof(intptr_t)   , sizeof(intptr_t)    * CHAR_BIT);
 	printf("\nsizeof(char)        = %3zu | %3zub", sizeof(char)       , sizeof(char)        * CHAR_BIT);
 	printf("\nsizeof(wchar_t)     = %3zu | %3zub", sizeof(wchar_t)    , sizeof(wchar_t)     * CHAR_BIT);
 	printf("\nsizeof(bool)        = %3zu | %3zub", sizeof(bool)       , sizeof(bool)        * CHAR_BIT);
