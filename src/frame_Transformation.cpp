@@ -77,8 +77,8 @@ __attribute__((unused)) static int frame_Transform_Generic_Fast(
 		const fpTran Verti_JumpX = Recip_Image_DimY * (Image_Cord_X01_sub_X00 *     Rot_Cos_mult_ZVmRZd2_div_Stretch_X + Image_Cord_Y01_sub_Y00 *     Rot_Sin_mult_ZVmRZd2_div_Stretch_X);
 		const fpTran Verti_JumpY = Recip_Image_DimY * (Image_Cord_Y01_sub_Y00 * neg_Rot_Cos_mult_ZVmRZd2_div_Stretch_Y - Image_Cord_X01_sub_X00 * neg_Rot_Sin_mult_ZVmRZd2_div_Stretch_Y);
 
-		const int32_t JumpX_Sign = (signbit(Horiz_JumpX * -Verti_JumpX) >= (fpTran)0.0) ? 1 : -1;
-		const int32_t JumpY_Sign = (signbit(Horiz_JumpY *  Verti_JumpY) >= (fpTran)0.0) ? 1 : -1;
+		const int32_t JumpX_Sign = (Horiz_JumpX * -Verti_JumpX >= (fpTran)0.0) ? 1 : -1;
+		const int32_t JumpY_Sign = (Horiz_JumpY *  Verti_JumpY >= (fpTran)0.0) ? 1 : -1;
 		const int32_t JumpX = (int32_t)ceil(hypot(Horiz_JumpX, Verti_JumpX)) * JumpX_Sign;
 		const int32_t JumpY = (int32_t)ceil(hypot(Horiz_JumpY, Verti_JumpY)) * JumpY_Sign;
 

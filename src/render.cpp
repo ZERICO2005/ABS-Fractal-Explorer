@@ -1082,6 +1082,10 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			updateFractalParameters();
 			write_Parameters(&current_Fractal, &primaryRenderData, &secondaryRenderData);
 			newFrame();
+		} else {
+			if (GUI_FrameTimer.timeToTimerReadyNano() > SECONDS_TO_NANO(1.0e-3)) {
+				std::this_thread::yield();
+			}
 		}
 	}
 	return 0;

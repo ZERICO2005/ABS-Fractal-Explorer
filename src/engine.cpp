@@ -261,6 +261,9 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			if (read_Abort_Render_Ongoing() == true) {
 				write_Abort_Render_Ongoing(false);
 			}
+			if (fracTime.timeToTimerReadyNano() > SECONDS_TO_NANO(1.0e-3)) {
+				std::this_thread::yield();
+			}
 		}
 	}
 	return 0;

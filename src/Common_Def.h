@@ -182,6 +182,40 @@ typedef int32_t dim32_t;
 	inline fp64 getDecimalTime() {
 		return NANO_TO_SECONDS(getNanoTime());
 	}
+	
+	// Sleeps for a given duration. Returns the difference between the duration and the actual time slept (negative being late)
+	inline nano64_t accurateSleep(nano64_t duration) {
+		constexpr nano64_t getNanoTimePrecision = 100;
+		duration = (duration / getNanoTimePrecision) * getNanoTimePrecision;
+		
+		constexpr nano64_t sleep_threshold    = SECONDS_TO_NANO(1.0e0 );
+		constexpr nano64_t yield_threshold    = SECONDS_TO_NANO(1.0e-3);
+		constexpr nano64_t spinlock_threshold = getNanoTimePrecision;
+		
+		const nano64_t sleep_End = getNanoTime() + duration;
+		nano64_t time_dif = sleep_End - getNanoTime();
+		
+		// Sleep
+		while (time_dif > sleep_threshold) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			time_dif = sleep_End - getNanoTime();
+		}
+		// Yield
+		while (time_dif > yield_threshold) {
+			std::this_thread::yield();
+			time_dif = sleep_End - getNanoTime();
+		}
+		// Spin-lock
+		while (time_dif > spinlock_threshold) {
+			time_dif = sleep_End - getNanoTime();
+		}
+		return time_dif;
+	}
+	
+	// Sleeps for a given duration. Returns the difference between the duration and the actual time slept (negative being late)
+	inline fp64 accurateSleep(fp64 duration) {
+		return NANO_TO_SECONDS(accurateSleep(SECONDS_TO_NANO(duration)));
+	}
 
 /* String Functions */
 
