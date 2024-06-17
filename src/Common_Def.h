@@ -84,7 +84,7 @@ typedef int32_t dim32_t;
 
 	#define ARRAY_LENGTH(x)  (sizeof(x) / sizeof(x[0]))
 	#define TEXT_LENGTH(x) ( ((sizeof(x) / sizeof(x[0])) != 0) ? ((sizeof(x) / sizeof(x[0])) - 1) : 0 )
-	#define FREE(x) free(x); x = nullptr
+	#define FREE(x) do { free(x); x = nullptr; } while(0)
 
 /* Functions */
 	// Left Circular Shift
@@ -264,37 +264,34 @@ typedef int32_t dim32_t;
 #endif
 
 /* Print Functions */
-	#define printFlush(...) printf(__VA_ARGS__); fflush(stdout)
-	#define printFatalError(...) printf("\n============\nFATAL ERROR: "); printf(__VA_ARGS__); printf("\n============\n"); fflush(stdout)
-	#define printCriticalError(...) printf("\nCRITICAL ERROR: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
-	#define printError(...) printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
-	#define printWarning(...) printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
+	#define printFlush(...) do { printf(__VA_ARGS__); fflush(stdout); } while(0)
+	#define printFatalError(...) do { printf("\n============\nFATAL ERROR: "); printf(__VA_ARGS__); printf("\n============\n"); fflush(stdout); } while(0)
+	#define printCriticalError(...) do { printf("\nCRITICAL ERROR: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout); } while(0)
+	#define printError(...) do { printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout); } while(0)
+	#define printWarning(...) do { printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout); } while(0)
 
 	// Print change in value, also calls fflush(stdout);
-	#define printfChange(type, value, ...) \
-	{ \
+	#define printfChange(type, value, ...) do { \
 		static type Detect_Change = (value); \
 		if (Detect_Change != (value)) { \
 			printf(__VA_ARGS__); \
 			fflush(stdout); \
 			Detect_Change = (value); \
 		} \
-	}
+	} while(0)
 
 	// Print up to every (freq) seconds, also calls fflush(stdout);
-	#define printfInterval(freq, ...); \
-	{ \
+	#define printfInterval(freq, ...); do { \
 		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
 		if (getNanoTime() - ResetTime_PrintfInterval > SECONDS_TO_NANO(freq)) { \
 			ResetTime_PrintfInterval = getNanoTime(); \
 			printf(__VA_ARGS__); \
 			fflush(stdout); \
 		} \
-	}
+	} while(0)
 
 	// Print change in value up to every (freq) seconds, also calls fflush(stdout);
-	#define printfChangeInterval(type, value, freq, ...) \
-	{ \
+	#define printfChangeInterval(type, value, freq, ...) do { \
 		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
 		static type Detect_Change = (value); \
 		if (getNanoTime() - ResetTime_PrintfInterval > SECONDS_TO_NANO(freq)) { \
@@ -305,7 +302,7 @@ typedef int32_t dim32_t;
 				Detect_Change = (value); \
 			} \
 		} \
-	}
+	} while(0)
 	
 	// (Debugging Tool) Waits for a duration in seconds
 	inline void BurnTime(fp64 s) {

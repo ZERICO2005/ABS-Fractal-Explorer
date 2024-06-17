@@ -328,33 +328,30 @@ void Menu_Coordinates() {
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	ABS_Mandelbrot& FRAC = current_Fractal;
-	#define NumberTextLen 64
+	#define NumberTextLen (64)
 	
-	#define FloatCoordinate_InputText(lbl, num, fmt); \
-		{ \
+	#define FloatCoordinate_InputText(lbl, num, fmt); do { \
 			static char Temp_Text_Input_Buf[NumberTextLen]; \
 			FloatCoordinate_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
 			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
 				num = stringTo_FloatCoordinate(Temp_Text_Input_Buf, nullptr); \
 			} \
-		}
+		} while(0)
 
-	#define Float_InputText(lbl, num, fmt, func); \
-		{ \
+	#define Float_InputText(lbl, num, fmt, func); do { \
 			static char Temp_Text_Input_Buf[NumberTextLen]; \
 			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
 			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
 				num = func(Temp_Text_Input_Buf, nullptr); \
 			} \
-		}
-	#define Int_InputText(lbl, num, fmt, func, base); \
-		{ \
+		} while(0)
+	#define Int_InputText(lbl, num, fmt, func, base); do { \
 			static char Temp_Text_Input_Buf[NumberTextLen]; \
 			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
 			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
 				num = func(Temp_Text_Input_Buf, nullptr, base); \
 			} \
-		}
+		} while(0)
 	ImGui::SeparatorText("Cordinates"); { ImGui::Indent();
 		ImGui::Text("Real and Imaginary Coordinate:");
 				FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord);
@@ -1955,12 +1952,11 @@ void Menu_Keybinds() {
 	ImGui::Separator();
 	ImGui::NewLine();
 	ImGui::Text("Movement Sensitivity:");
-	#define sen_slider(lbl,num,min,max) \
-		{ \
+	#define sen_slider(lbl,num,min,max) do {\
 			fp32 temp_sensitivity_float_slider = (fp32)num; \
 			ImGui::SliderFloat(lbl,&temp_sensitivity_float_slider,min,max,"%.2f"); \
 			num = (fp64)temp_sensitivity_float_slider; \
-		}
+		} while(0)
 	ImGui::NewLine();
 	ImGui::Text("Global Sensitivity Multiplier:");
 

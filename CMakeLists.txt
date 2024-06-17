@@ -16,8 +16,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(FEATURE_OpenCL        "")
 	set(FEATURE_WindowsFileIO "")
 
-	set(FEATURE_OpenCV_Scaler "")
-	set(STATIC_OpenCV_Scaler  "")
+#	set(FEATURE_OpenCV_Scaler "")
+#	set(STATIC_OpenCV_Scaler  "")
+
+#   set(COMPILE_FLTO "")
 
 # Compiler
 	set(CMAKE_C_COMPILER "gcc")
@@ -51,7 +53,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 # Packages and Macros
 	find_package(SDL2 REQUIRED)
-
 
 	if(DEFINED FEATURE_Float80)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_Float80)
@@ -97,15 +98,21 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_WindowsFileDialog)
 	endif()
 
+	if (DEFINED COMPILE_FLTO)
+		set(FLTO_FLAG "-flto")
+	else()
+		set(FLTO_FLAG "")
+	endif()
+
 # ImGui
 	file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
 	add_library(IMGUI_LIB OBJECT ${IMGUI_FILES})
-	target_compile_options(IMGUI_LIB PRIVATE -O3 -flto -Wall -Wshadow)
+	target_compile_options(IMGUI_LIB PRIVATE -O3 ${FLTO_FLAG} -Wall -Wshadow)
 
 	include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bitGraphics_Font" ${OpenCV_INCLUDE_DIRS})
 
 # Compiler Flags Debug(-g -O0) Release(-O3)
-	set(OPT_FLAG -O3 -flto)
+	set(OPT_FLAG -O3 ${FLTO_FLAG})
 
 	set(MARCH_FLAGS -msse2)
 
