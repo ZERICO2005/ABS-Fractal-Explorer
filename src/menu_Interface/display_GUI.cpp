@@ -15,8 +15,8 @@
 // #include <opencv2/opencv.hpp>
 
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "backends/imgui_impl_sdl2.h"
+#include "backends/imgui_impl_sdlrenderer2.h"
 
 #include "../user_data.h"
 #include "../displayInfo.h"
@@ -169,7 +169,7 @@ int render_IMGUI() {
 	}
 
 	ImGui::Render();
-	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+	ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 	
 	//SDL_RenderPresent(renderer); // Redundant
 	return 0;

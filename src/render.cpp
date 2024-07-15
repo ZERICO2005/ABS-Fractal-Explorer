@@ -26,13 +26,15 @@
 #include <SDL2/SDL.h>
 
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "backends/imgui_impl_sdl2.h"
+#include "backends/imgui_impl_sdlrenderer2.h"
 #include "programData.h"
 #include "user_data.h"
 
 #include "menu_Interface/display_GUI.h"
 #include "displayInfo.h"
+
+#include "fnv1a_hash.hpp"
 
 constexpr uint8_t color_square_divider = 2; // 5 dark, 4 dim, 3 ambient, 2 bright, 1 the sun
 
@@ -282,7 +284,7 @@ int setup_fracExpKB(int argc, char* argv[]) {
 		KeyBind_Preset* temp_KeyBind = currentKBPreset;
 		for (int a = 1; a < argc; a++) {
 			if (strstr(argv[a],".fracExpKB") != NULL) {
-				printFlush("\nFracExp_KeyBind File: %s",argv[a]);
+				printFlush("FracExp_KeyBind File: %s\n",argv[a]);
 				if (import_KeyBindPresets(&KeyBind_PresetList,&temp_KeyBind,argv[a]) == 0) {
 					importedKeyBinds++;
 					if (importedKeyBinds == 1) {
@@ -1094,7 +1096,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING) {
 // 	uint64_t yeildTimeNano = 80000; /* 80 micro seconds */
 // 	uint64_t FRAME_RATE_NANO = SECONDS_TO_NANO(1.0 / FRAME_RATE);
-// 	//printFlush("\nyeildTimeNano: %llu | %lf",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
+// 	//printFlush("yeildTimeNano: %llu | %lf\n",yeildTimeNano,NANO_TO_SECONDS(yeildTimeNano));
 // 	TimerBox frameTimer = TimerBox(1.0/FRAME_RATE);
 // 	TimerBox maxFrameReset = TimerBox(1.0/5.0); /* Keeps track of longest frame times */
 // 	write_Update_Level(Change_Level::Full_Reset);
@@ -1128,7 +1130,7 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 				yeildCount++;
 // 				if (frameTimer.timerReady() == true) {
 // 					yeildError++; yeildPrint = true;
-// 					printFlush("\n%.3lfus",(frameTimer.timeElapsed() - (1.0/FRAME_RATE)) * 1.0e6);
+// 					printFlush("%.3lfus\n",(frameTimer.timeElapsed() - (1.0/FRAME_RATE)) * 1.0e6);
 // 				} else {
 // 					yeildSave += yeildEnd;
 // 				}
@@ -1141,12 +1143,12 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 		if (frameTimer.timerReady() == false) {
 // 			uint64_t timeElapsed = frameTimer.timeElapsedNano();
 // 			uint64_t timeLeft = frameTimer.timeToTimerReadyNano();
-// 			printFlush("\n\nElapsed: %6lluus TimeLeft:  %6lluus",timeElapsed/TIME_SCALE, timeLeft/TIME_SCALE);
+// 			printFlush("\nElapsed: %6" PRIu64 "us TimeLeft:  %6" PRIu64 "us\n",timeElapsed/TIME_SCALE, timeLeft/TIME_SCALE);
 // 			if (timeLeft > END_SLEEP_HEADROOM) {
 // 				uint64_t sleepTime = timeLeft - END_SLEEP_HEADROOM;
 // 				std::this_thread::sleep_for(std::chrono::nanoseconds(sleepTime));
 // 				uint64_t remainingTime = frameTimer.timeToTimerReadyNano();
-// 				printFlush("\nSleep:   %6lluus Remaining: %6lluus",sleepTime/TIME_SCALE,remainingTime/TIME_SCALE);
+// 				printFlush("Sleep:   %6" PRIu64 "us Remaining: %6" PRIu64 "us\n",sleepTime/TIME_SCALE,remainingTime/TIME_SCALE);
 // 			}
 // 		}
 // 		*/
@@ -1166,10 +1168,10 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // 					if (yeildPrint == true || yeildSwitch == true) {
 // 						yeildSwitch = false;
 // 						yeildPrint = false;
-// 						printFlush("\n\nYeild Count: %llu Errors: %" PRIu64,yeildCount, yeildError);
-// 						printFlush("\nTime Saved: %.3lfms",NANO_TO_SECONDS(yeildSave) * 1.0e3);
+// 						printFlush("\nYeild Count: " PRIu64 " Errors: %" PRIu64 "\n",yeildCount, yeildError);
+// 						printFlush("Time Saved: %.3lfms\n",NANO_TO_SECONDS(yeildSave) * 1.0e3);
 // 						yeildSum += yeildCount;
-// 						printFlush("\nYeild Error: %.3lfms per error\n",((fp64)(getNanoTime() - yeildTimer) / (fp64)yeildError) / 1.0e6);
+// 						printFlush("Yeild Error: %.3lfms per error\n\n",((fp64)(getNanoTime() - yeildTimer) / (fp64)yeildError) / 1.0e6);
 // 						yeildCount = 0;
 // 					}
 // 					*/				
@@ -1196,22 +1198,22 @@ int start_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 // }
 
 uint64_t get_Hardware_Hash() {
-	uint64_t hardwareHash = 0x0;
+	FNV1A_Hash hardwareHash;
 	uint8_t value8 = 0x0; uint16_t value16 = 0x0; uint32_t value32 = 0x0;
 	value8 = PROGRAM_V_MAJOR;
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value8,sizeof(int8_t));
-	value32 = std::thread::hardware_concurrency();
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	hardwareHash += value8;
+	value32 = (uint32_t)std::thread::hardware_concurrency();
+	hardwareHash += value32;
 	value32 = (uint32_t)SDL_GetCPUCacheLineSize();
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	hardwareHash += value32;
 	value32 = (uint32_t)SDL_GetSystemRAM();
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value32,sizeof(int32_t));
+	hardwareHash += value32;
 	value16 = (uint16_t)count_Supported_CPU_Instruction(get_Available_CPU_Instruction());
-	fnv1a_hash_continous(hardwareHash,(uint8_t*)(void*)&value16,sizeof(int16_t));
+	hardwareHash += value16;
 	// #ifdef Enable_OpenCL
 	// 	get_GPU_Hardware_Hash(hardwareHash);
 	// #endif
-	return hardwareHash;
+	return hardwareHash.get_hash();
 }
 
 void init_config_data() {
@@ -1268,7 +1270,7 @@ int32_t loadDisplayInformation(
 		return 0;
 	}
 	#ifndef BUILD_RELEASE
-		printf("\n\tDisplay Count: %" PRId32,displayCount);
+		printf("\tDisplay Count: %" PRId32 "\n",displayCount);
 	#endif
 	int32_t cursorPosX, cursorPosY;
 	SDL_GetGlobalMouseState(&cursorPosX, &cursorPosY);
@@ -1334,7 +1336,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		return -1;
 	}
 	#ifndef BUILD_RELEASE
-		printf("\nSystem Information:");
+		printf("System Information:\n");
 	#endif
 	dim32_t dispResX, dispResY;
 	dim32_t initResX, initResY, initPosX, initPosY;
@@ -1344,7 +1346,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	}
 	dispResX = initResX;
 	dispResY = initResY;
-	//printFlush("\nOld: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
+	//printFlush("Old: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32 "\n",initResX,initResY,initPosX,initPosY);
 	calculate_init_window_size(
 		dispResX, dispResY,
 		initResX, initResY,
@@ -1361,10 +1363,10 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 				initPosX, initPosY
 			);
 	}
-	//printFlush("\nNew: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32,initResX,initResY,initPosX,initPosY);
+	//printFlush("New: %" PRId32 "x%" PRId32 " %" PRId32 ",%" PRId32 "\n",initResX,initResY,initPosX,initPosY);
 	#ifndef BUILD_RELEASE
-		printf("\n\tOperating System: %s", SDL_GetPlatform());
-		printf("\n\tSystem RAM: %" PRId32 "MB", SDL_GetSystemRAM());
+		printf("\tOperating System: %s\n", SDL_GetPlatform());
+		printf("\tSystem RAM: %" PRId32 "MB\n", SDL_GetSystemRAM());
 	#endif
 	// Allocate Buffers
 	//initBufferBox(&Master,NULL,initResX,initResY,IMAGE_BUFFER_CHANNELS);
@@ -1438,7 +1440,7 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 		SDL_DestroyTexture(texture);
 	}
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, (int)Master.resX, (int)Master.resY);
-	// printf("\nInit_Render: %s", ((QUIT_FLAG == true) ? "True" : "False"));
+	// printf("Init_Render: %s\n", ((QUIT_FLAG == true) ? "True" : "False"));
 	init_KeyBind_PresetList();
 	initKeys();
 	//cleanKeyBind(&currentKeyBind);
@@ -1608,7 +1610,7 @@ int exportScreenshot() {
 	if (getNanoTime() - resetTime > SECONDS_TO_NANO(0.5) && exportFractalBuffer == false) {
 		resetTime = getNanoTime();
 		exportFractalBuffer = true;
-		printFlush("\nTaking Screenshot");
+		printFlush("Taking Screenshot\n");
 	}
 	return 0;
 }
@@ -1741,7 +1743,7 @@ void set_Super_Screenshot_Bounding_Box(
 			}
 		}
 	}
-	// printFlush("\nZoom Change: %.3lf --> %.3lf", ORIGINAL_ZOOM, frac.zoom);
+	// printFlush("Zoom Change: %.3lf --> %.3lf\n", ORIGINAL_ZOOM, frac.zoom);
 }
 
 int exportSuperScreenshot() {
@@ -1848,13 +1850,13 @@ void renderJuliaCordinatePoint(const BufferBox& box) {
 // 	);
 // 	SDL_SetRenderTarget(renderer, texture_Scale);
 // 	if (SDL_RenderCopyEx(renderer, texture_Rot, &srcRect_Rot, &dstRect_Rot, rotation_Angle, nullptr, SDL_FLIP_NONE)) {
-// 		printf("\nrenderCopyEx: %s", SDL_GetError()); fflush(stdout);
+// 		printf("renderCopyEx: %s\n", SDL_GetError()); fflush(stdout);
 // 	}
 // 	SDL_SetRenderTarget(renderer, nullptr);
 // 	SDL_Rect srcRect_Scale = {0, 0, ren.resX, ren.resY};
 // 	SDL_Rect dstRect_Scale = {fx0, fy0, fx1, fy1};
 // 	if (SDL_RenderCopy(renderer, texture_Scale, &srcRect_Scale, &dstRect_Scale)) {
-// 		printf("\nrenderCopy: %s", SDL_GetError()); fflush(stdout);
+// 		printf("renderCopy: %s\n", SDL_GetError()); fflush(stdout);
 // 	}
 // 	SDL_DestroyTexture(texture_Scale);
 // 	SDL_DestroyTexture(texture_Rot);
@@ -1890,7 +1892,7 @@ int Transform_Frame_Rotate(
 	SDL_Rect dstRect = {0, RESY_UI, ren.resX, ren.resY};
 	scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
 	if (SDL_RenderCopyEx(renderer, scale_tex, &srcRect, &dstRect, rotation_Angle, nullptr, SDL_FLIP_NONE)) {
-		printf("\nrenderCopyEx: %s", SDL_GetError()); fflush(stdout);
+		printf("renderCopyEx: %s\n", SDL_GetError()); fflush(stdout);
 	}
 	SDL_DestroyTexture(scale_tex);
 	SDL_FreeSurface(scale_surface);
@@ -1930,7 +1932,7 @@ int Transform_Frame_Scale_Translate(
 		SDL_Rect dstRect = {fx0, fy0 + RESY_UI, fx1, fy1};
 		scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
 		if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
-			printf("\nrenderCopy: %s", SDL_GetError()); fflush(stdout);
+			printf("renderCopy: %s\n", SDL_GetError()); fflush(stdout);
 		}
 		SDL_DestroyTexture(scale_tex);
 		SDL_FreeSurface(scale_surface);
@@ -1954,7 +1956,7 @@ int Transform_Frame_None(
 	SDL_Rect dstRect = {0, RESY_UI, ren.resX, ren.resY};
 	scale_tex = SDL_CreateTextureFromSurface(renderer, scale_surface);
 	if (SDL_RenderCopy(renderer, scale_tex, &srcRect, &dstRect)) {
-		printf("\nrenderCopy: %s", SDL_GetError()); fflush(stdout);
+		printf("renderCopy: %s\n", SDL_GetError()); fflush(stdout);
 	}
 	SDL_DestroyTexture(scale_tex);
 	SDL_FreeSurface(scale_surface);

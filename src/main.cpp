@@ -36,23 +36,22 @@ int init_Fractal_Engine(int argc, char* argv[]) {
 }
 
 void print_pointer_sizes() {
-	printf("\nCHAR_BIT: %2d bits", CHAR_BIT);
-	// printf("\nsizeof(void)        = %3zu | %3zub", sizeof(void)       , sizeof(void)        * CHAR_BIT);
-	printf("\nsizeof(void*)       = %3zu | %3zub", sizeof(void*)      , sizeof(void*)       * CHAR_BIT);
-	printf("\nsizeof(size_t)      = %3zu | %3zub", sizeof(size_t)     , sizeof(size_t)      * CHAR_BIT);
-	printf("\nsizeof(ptrdiff_t)   = %3zu | %3zub", sizeof(ptrdiff_t)  , sizeof(ptrdiff_t)   * CHAR_BIT);
-	printf("\nsizeof(intptr_t)    = %3zu | %3zub", sizeof(intptr_t)   , sizeof(intptr_t)    * CHAR_BIT);
-	printf("\nsizeof(char)        = %3zu | %3zub", sizeof(char)       , sizeof(char)        * CHAR_BIT);
-	printf("\nsizeof(wchar_t)     = %3zu | %3zub", sizeof(wchar_t)    , sizeof(wchar_t)     * CHAR_BIT);
-	printf("\nsizeof(bool)        = %3zu | %3zub", sizeof(bool)       , sizeof(bool)        * CHAR_BIT);
-	printf("\nsizeof(short)       = %3zu | %3zub", sizeof(short)      , sizeof(short)       * CHAR_BIT);
-	printf("\nsizeof(int)         = %3zu | %3zub", sizeof(int)        , sizeof(int)         * CHAR_BIT);
-	printf("\nsizeof(long)        = %3zu | %3zub", sizeof(long)       , sizeof(long)        * CHAR_BIT);
-	printf("\nsizeof(long long)   = %3zu | %3zub", sizeof(long long)  , sizeof(long long)   * CHAR_BIT);
-	printf("\nsizeof(float)       = %3zu | %3zub", sizeof(float)      , sizeof(float)       * CHAR_BIT);
-	printf("\nsizeof(double)      = %3zu | %3zub", sizeof(double)     , sizeof(double)      * CHAR_BIT);
-	printf("\nsizeof(long double) = %3zu | %3zub", sizeof(long double), sizeof(long double) * CHAR_BIT);
-	printf("\n");
+	printf("CHAR_BIT: %2d bits\n", CHAR_BIT);
+	// printf("sizeof(void)        = %3zu | %3zub\n", sizeof(void)       , sizeof(void)        * CHAR_BIT);
+	printf("sizeof(void*)       = %3zu | %3zub\n", sizeof(void*)      , sizeof(void*)       * CHAR_BIT);
+	printf("sizeof(size_t)      = %3zu | %3zub\n", sizeof(size_t)     , sizeof(size_t)      * CHAR_BIT);
+	printf("sizeof(ptrdiff_t)   = %3zu | %3zub\n", sizeof(ptrdiff_t)  , sizeof(ptrdiff_t)   * CHAR_BIT);
+	printf("sizeof(intptr_t)    = %3zu | %3zub\n", sizeof(intptr_t)   , sizeof(intptr_t)    * CHAR_BIT);
+	printf("sizeof(char)        = %3zu | %3zub\n", sizeof(char)       , sizeof(char)        * CHAR_BIT);
+	printf("sizeof(wchar_t)     = %3zu | %3zub\n", sizeof(wchar_t)    , sizeof(wchar_t)     * CHAR_BIT);
+	printf("sizeof(bool)        = %3zu | %3zub\n", sizeof(bool)       , sizeof(bool)        * CHAR_BIT);
+	printf("sizeof(short)       = %3zu | %3zub\n", sizeof(short)      , sizeof(short)       * CHAR_BIT);
+	printf("sizeof(int)         = %3zu | %3zub\n", sizeof(int)        , sizeof(int)         * CHAR_BIT);
+	printf("sizeof(long)        = %3zu | %3zub\n", sizeof(long)       , sizeof(long)        * CHAR_BIT);
+	printf("sizeof(long long)   = %3zu | %3zub\n", sizeof(long long)  , sizeof(long long)   * CHAR_BIT);
+	printf("sizeof(float)       = %3zu | %3zub\n", sizeof(float)      , sizeof(float)       * CHAR_BIT);
+	printf("sizeof(double)      = %3zu | %3zub\n", sizeof(double)     , sizeof(double)      * CHAR_BIT);
+	printf("sizeof(long double) = %3zu | %3zub\n", sizeof(long double), sizeof(long double) * CHAR_BIT);
 	fflush(stdout);
 }
 

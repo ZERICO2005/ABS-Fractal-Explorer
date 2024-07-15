@@ -45,7 +45,7 @@ int setup_fracExp(int argc, char* argv[]) {
 				continue;
 			}
 			if (strstr(argv[a],".fracExp") != NULL) {
-				printFlush("\nFracExp File: %s",argv[a]);
+				printFlush("FracExp File: %s\n",argv[a]);
 			}
 		}
 	}
@@ -83,15 +83,15 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		}
 		memset(image_box.vram, 0, image_box_size);
 
-		printf("\n\nRendering Super Screenshot:");
-		printf("\n\t%" PRIu32 "x%" PRIu32 " %" PRIu32 " samples", image_box.resX, image_box.resY, image_render_data.sample * image_render_data.sample);
+		printf("\nRendering Super Screenshot:\n");
+		printf("\t%" PRIu32 "x%" PRIu32 " %" PRIu32 " samples\n", image_box.resX, image_box.resY, image_render_data.sample * image_render_data.sample);
 		printf(", %" PRIu32 " iterations", image_fractal_data.maxItr);
 		if (Super_Engine_Config.current_Render_Method_CPU() == true) {
-			printf("\n\tFP%zu CPU rendering, %" PRIu32 " threads", Super_Engine_Config.get_Current_Float_Size(), image_render_data.CPU_Threads);
+			printf("\tFP%zu CPU rendering, %" PRIu32 " threads\n", Super_Engine_Config.get_Current_Float_Size(), image_render_data.CPU_Threads);
 		} else if (Super_Engine_Config.current_Render_Method_GPU() == true) {
-			printf("\n\tFP%zu GPU rendering", Super_Engine_Config.get_Current_Float_Size());
+			printf("\tFP%zu GPU rendering\n", Super_Engine_Config.get_Current_Float_Size());
 		}
-		printf("\n\tClick \"Abort Rendering\" (or use task manager) to cancel.");
+		printf("\tClick \"Abort Rendering\" (or use task manager) to cancel.\n");
 		fflush(stdout);
 
 		nano64_t image_stopwatch = getNanoTime();
@@ -120,8 +120,8 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 		int32_t time_seconds = (int32_t)((nano64_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000)) % (nano64_t)60);
 		int32_t time_minutes = (int32_t)((nano64_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000 * (nano64_t)60)) % (nano64_t)60);
 		int32_t time_hours = (int32_t)(image_render_time / ((nano64_t)1000000 * (nano64_t)1000 * (nano64_t)60 * (nano64_t)60));
-		printFlush("\n\tRendered in: %02" PRId32 ":%02" PRId32 ":%02" PRId32 ".%03" PRId32,time_hours,time_minutes,time_seconds,time_mili);		
-		printFlush("\n\tSaving Super Screenshot");
+		printFlush("\tRendered in: %02" PRId32 ":%02" PRId32 ":%02" PRId32 ".%03" PRId32 "\n",time_hours,time_minutes,time_seconds,time_mili);		
+		printFlush("\tSaving Super Screenshot\n");
 		{
 			nano64_t curTime = getNanoTime();
 			curTime /= 1000;
@@ -238,9 +238,9 @@ int start_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERIN
 			// 	Rendering_Configuration::Rendering_Preset_Name[primaryRender.render_preset],
 			// 	Rendering_Configuration::Rendering_Preset_Name[secondaryRender.render_preset]
 			// );
-			//printFlush("\nRender: %07llu",(render_update_timecode/1000) % 10000000);
+			//printFlush("Render: %07" PRIu64 "\n",(render_update_timecode/1000) % 10000000);
 			render_Engine(ABORT_RENDERING);
-			//printFlush("\nExport: %07llu",(render_update_timecode/1000) % 10000000);
+			//printFlush("Export: %07" PRIu64 "\n",(render_update_timecode/1000) % 10000000);
 			next_Write_Cycle_Pos(&currentBuf, Primary_Full);
 			deltaTime = fracTime.getDeltaTimeNano();
 			setRenderDelta(deltaTime);
@@ -290,7 +290,7 @@ bool init_GPU_Renderer(bool& GPU_Float16, bool& GPU_Float32, bool& GPU_Float64) 
 		return true;
 	#else
 		#ifndef BUILD_RELEASE
-			printFlush("\nNote: OpenCL GPU rendering is disabled");
+			printFlush("Note: OpenCL GPU rendering is disabled\n");
 		#endif
 
 		{ /* GPU Float Support */

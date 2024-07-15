@@ -50,7 +50,7 @@
 	
 /* Factorials */
 
-	const uint64_t factorialLUT[] = {
+	constexpr uint64_t factorialLUT[] = {
 		/*        0! */ 1,
 		/*  1! -  4! */ 1, 2, 6, 24,
 		/*  5! -  8! */ 120, 720,5040,40320,
@@ -62,7 +62,8 @@
 	#define nPr(n,r) (factorialLUT[(n)] / (factorialLUT[(n) - (r)]))
 	#define nCr(n,r) (factorialLUT[(n)] / (factorialLUT[(r)] * factorialLUT[(n) - (r)]))
 
-#define FractalParameters(fpX, fpColor) uint8_t* data, const PreCalc_Param<fpX, fpColor> param, size_t p0, const size_t p1, std::atomic<bool>& ABORT_RENDERING
+#define FractalParameters(fpX, fpColor) \
+	uint8_t* data, const PreCalc_Param<fpX, fpColor> param, size_t p0, const size_t p1, std::atomic<bool>& ABORT_RENDERING
 
 template<typename fpX>
 constexpr inline fpX inverse_log2(fpX p) { return (fpX)1.0 / log2(p); }
@@ -142,8 +143,9 @@ void Generate_PreCalc_Param(
 	/* Coordinates */
 		preCalc_Param.realCord = (fpX)param.r;
 		preCalc_Param.imagCord = (fpX)param.i;
-		preCalc_Param.realJulia = param.startingZ ? (fpX)param.zr : (fpX)0.0;
-		preCalc_Param.imagJulia = param.startingZ ? (fpX)param.zi : (fpX)0.0;
+		bool use_startingZ = (param.startingZ || param.juliaSet) ? true : false;
+		preCalc_Param.realJulia = use_startingZ ? (fpX)param.zr : (fpX)0.0;
+		preCalc_Param.imagJulia = use_startingZ ? (fpX)param.zi : (fpX)0.0;
 		const fpCord zoom_PC = pow((fpCord)10.0, (fpCord)param.zoom);
 		preCalc_Param.zoom_PC = (fpX)zoom_PC;
 		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);

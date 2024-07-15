@@ -20,7 +20,7 @@
 
 // Debug function
 inline void print_Registers(unsigned int info[4]) {
-	printf("\nRegisters: %08X %08X %08X %08X", info[0], info[1], info[2], info[3]);
+	printf("Registers: %08X %08X %08X %08X\n", info[0], info[1], info[2], info[3]);
 }
 
 inline void cpuid_func(unsigned int info[4], unsigned int InfoType) {
@@ -61,7 +61,7 @@ const char* get_CPU_Name(unsigned int REG_EBX, unsigned int REG_ECX, unsigned in
 			return CPU_Signature_List[i].CPU_Signature;
 		}
 	}
-	printf("\nUnknown CPU Signature: %08X %08X %08X", REG_EBX, REG_ECX, REG_EDX);
+	printf("Unknown CPU Signature: %08X %08X %08X\n", REG_EBX, REG_ECX, REG_EDX);
 	return CPU_Signature_List[0].CPU_Signature;
 }
 
@@ -188,57 +188,58 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 
 	void print_Supported_SSE_Family_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		const Supported_SSE_Family_Instruction& SSE_Family = instruction_list.SSE_Family;
+		printf("\n");
 		printf(
-			"\nSSE Family:"\
-			"\n\tSSE   | SSE2  | SSE3  | SSSE3 | SSE4.1 | SSE4.2 | SSE4a"\
-			"\n\t%-5s | %-5s | %-5s | %-5s | %-5s  | %-5s  | %-5s",
+			"SSE Family:\n"\
+			"\tSSE   | SSE2  | SSE3  | SSSE3 | SSE4.1 | SSE4.2 | SSE4a\n"\
+			"\t%-5s | %-5s | %-5s | %-5s | %-5s  | %-5s  | %-5s\n",
 			bool_Text(SSE_Family.SSE), bool_Text(SSE_Family.SSE2),
 			bool_Text(SSE_Family.SSE3), bool_Text(SSE_Family.SSSE3),
 			bool_Text(SSE_Family.SSE4_1), bool_Text(SSE_Family.SSE4_1),
 			bool_Text(SSE_Family.SSE4a)
 		);
-		printf("\n");
 	}
 
 	void print_Supported_AVX_Family_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		const Supported_AVX_Family_Instruction& AVX_Family = instruction_list.AVX_Family;
+		printf("\n");
 		printf(
-			"\nAVX Family:"\
-			"\n\tAVX      | F16C          | FMA            | AVX2"\
-			"\n\t%-5s    | %-5s         | %-5s          | %-5s",
+			"AVX Family:\n"\
+			"\tAVX      | F16C          | FMA            | AVX2\n"\
+			"\t%-5s    | %-5s         | %-5s          | %-5s\n",
 			bool_Text(AVX_Family.AVX), bool_Text(AVX_Family.F16C),
 			bool_Text(AVX_Family.FMA), bool_Text(AVX_Family.AVX2)
 		);
 		printf(
-			"\n\t===================================================="
+			"\t====================================================\n"
 		);
 		printf(
-			"\n\tAVX_VNNI | AVX_VNNI_INT8 | AVX_NE_CONVERT | AVX_IFMA"\
-			"\n\t%-5s    | %-5s         | %-5s          | %-5s",
+			"\tAVX_VNNI | AVX_VNNI_INT8 | AVX_NE_CONVERT | AVX_IFMA\n"\
+			"\t%-5s    | %-5s         | %-5s          | %-5s\n",
 			bool_Text(AVX_Family.AVX_VNNI), bool_Text(AVX_Family.AVX_VNNI_INT8),
 			bool_Text(AVX_Family.AVX_NE_CONVERT), bool_Text(AVX_Family.AVX_IFMA)
 		);
-		printf("\n");
 	}
 
 	void print_Supported_AVX512_Family_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		const Supported_AVX512_Family_Instruction& AVX512_Family = instruction_list.AVX512_Family;
+		printf("\n");
 		/*
 		printf(
-			"\nAVX512 Family:"\
-			"\n\tF     | BW     | CD    | DQ    | IFMA52 | VL           | VPOPCNTDQ"\
-			"\n\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s        | %-5s",
+			"AVX512 Family:\n"\
+			"\tF     | BW     | CD    | DQ    | IFMA52 | VL           | VPOPCNTDQ\n"\
+			"\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s        | %-5s\n",
 			bool_Text(AVX512_Family.AVX512_F), bool_Text(AVX512_Family.AVX512_BW),
 			bool_Text(AVX512_Family.AVX512_CD), bool_Text(AVX512_Family.AVX512_DQ),
 			bool_Text(AVX512_Family.AVX512_IFMA52), bool_Text(AVX512_Family.AVX512_VL),
 			bool_Text(AVX512_Family.AVX512_VPOPCNTDQ)
 		);
 		printf(
-			"\n\t=================================================================="
+			"\t==================================================================\n"
 		);
 		printf(
-			"\n\tBF16  | BITALG | VBMI  | VBMI2 | VNNI   | VP2INTERSECT | FP16"\
-			"\n\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s        | %-5s",
+			"\tBF16  | BITALG | VBMI  | VBMI2 | VNNI   | VP2INTERSECT | FP16\n"\
+			"\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s        | %-5s\n",
 			bool_Text(AVX512_Family.AVX512_BF16), bool_Text(AVX512_Family.AVX512_BITALG),
 			bool_Text(AVX512_Family.AVX512_VBMI), bool_Text(AVX512_Family.AVX512_VBMI2),
 			bool_Text(AVX512_Family.AVX512_VNNI), bool_Text(AVX512_Family.AVX512_VP2INTERSECT), 
@@ -246,34 +247,33 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 		);
 		*/
 		printf(
-			"\nAVX512 Family:"\
-			"\n\tF     | BW     | CD    | DQ    | IFMA52 | VL    | VPOPCNTDQ"\
-			"\n\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s | %-5s",
+			"AVX512 Family:\n"\
+			"\tF     | BW     | CD    | DQ    | IFMA52 | VL    | VPOPCNTDQ\n"\
+			"\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s | %-5s\n",
 			bool_Text(AVX512_Family.AVX512_F), bool_Text(AVX512_Family.AVX512_BW),
 			bool_Text(AVX512_Family.AVX512_CD), bool_Text(AVX512_Family.AVX512_DQ),
 			bool_Text(AVX512_Family.AVX512_IFMA52), bool_Text(AVX512_Family.AVX512_VL),
 			bool_Text(AVX512_Family.AVX512_VPOPCNTDQ)
 		);
 		printf(
-			"\n\t==========================================================="
+			"\t===========================================================\n"
 		);
 		printf(
-			"\n\tBF16  | BITALG | VBMI  | VBMI2 | VNNI   | FP16"\
-			"\n\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s",
+			"\tBF16  | BITALG | VBMI  | VBMI2 | VNNI   | FP16\n"\
+			"\t%-5s | %-5s  | %-5s | %-5s | %-5s  | %-5s\n",
 			bool_Text(AVX512_Family.AVX512_BF16), bool_Text(AVX512_Family.AVX512_BITALG),
 			bool_Text(AVX512_Family.AVX512_VBMI), bool_Text(AVX512_Family.AVX512_VBMI2),
 			bool_Text(AVX512_Family.AVX512_VNNI), bool_Text(AVX512_Family.AVX512_FP16)
 		);
-		printf("\n");
 	}
 
 	/*
 	void print_Supported_AMX_Family_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		const Supported_AMX_Family_Instruction& AMX_Family = instruction_list.AMX_Family;
 		printf(
-			"\nAMX Family:"\
-			"\n\tBF16  | INT8  | TILE  | FP16  | COMPLEX"\
-			"\n\t%-5s | %-5s | %-5s | %-5s | %-5s",
+			"AMX Family:\n"\
+			"\tBF16  | INT8  | TILE  | FP16  | COMPLEX\n"\
+			"\t%-5s | %-5s | %-5s | %-5s | %-5s\n",
 			bool_Text(AMX_Family.AMX_BF16), bool_Text(AMX_Family.AMX_INT8),
 			bool_Text(AMX_Family.AMX_TILE), bool_Text(AMX_Family.AMX_FP16),
 			bool_Text(AMX_Family.AMX_COMPLEX)
@@ -283,18 +283,18 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 	*/
 
 	void print_Supported_Other_Instruction(const Supported_CPU_Instruction& instruction_list) {
+		printf("\n");
 		printf(
-			"\nOther Instruction Sets:"\
-			"\n\tMMX"\
-			"\n\t%-5s",
+			"Other Instruction Sets:\n"\
+			"\tMMX\n"\
+			"\t%-5s\n",
 			bool_Text(instruction_list.MMX)
 		);
-		printf("\n");
 	}
 
 	void print_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		printf(
-			"\nSupported CPU Instruction Sets: <%12s>", instruction_list.CPU_Signature
+			"Supported CPU Instruction Sets: <%12s>\n", instruction_list.CPU_Signature
 		);
 		print_Supported_SSE_Family_Instruction   (instruction_list);
 		print_Supported_AVX_Family_Instruction   (instruction_list);

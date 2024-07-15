@@ -14,7 +14,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(FEATURE_Float80       "")
 	set(FEATURE_Float128      "")
 	set(FEATURE_OpenCL        "")
-	set(FEATURE_WindowsFileIO "")
+#	set(FEATURE_WindowsFileIO "")
 
 #	set(FEATURE_OpenCV_Scaler "")
 #	set(STATIC_OpenCV_Scaler  "")
@@ -59,7 +59,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	endif()
 
 	if(DEFINED FEATURE_Float128)
-		set(LIB_QuadMath "-l:libquadmath.a")
+		set(LIB_QuadMath "quadmath")
+		#set(LIB_QuadMath "-l:libquadmath.a")
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_Float128)
 	else()
 		set(LIB_QuadMath "")
@@ -105,7 +106,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	endif()
 
 # ImGui
-	file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
+	file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp" "${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp" "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer2.cpp")
 	add_library(IMGUI_LIB OBJECT ${IMGUI_FILES})
 	target_compile_options(IMGUI_LIB PRIVATE -O3 ${FLTO_FLAG} -Wall -Wshadow)
 

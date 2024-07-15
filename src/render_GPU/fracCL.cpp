@@ -15,6 +15,8 @@
 #include "../fractal.h"
 #include "../user_data.h"
 
+#include "../fnv1a_hash.hpp"
+
 /* GPU Information */
 	static OpenCL_Engine Public_GPU_Engine;
 	std::mutex Public_GPU_Engine_Mutex;
@@ -35,30 +37,21 @@ uint32_t compiledYet = 0;
 
 static OpenCL_Engine GPU_Engine;
 
-cl_int err; // Error Code Flags
-
 cl_mem deviceResultBuf = nullptr;
 
-void calculate_GPU_Hardware_Hash(uint64_t& hash) {
+void calculate_GPU_Hardware_Hash(FNV1A_Hash& hash) {
 	if (initialized_OpenCL == false) { return; }
 	const OpenCL_Device_Properties& Device = GPU_Engine.device_properties;
-	fnv1a_hash_continous(hash, (uint8_t*)(void*)&
-		Device.Maximum_Compute_Units, sizeof(Device.Maximum_Compute_Units)
-	);
-	fnv1a_hash_continous(hash, (uint8_t*)(void*)&
-		Device.Global_Memory_Size, sizeof(Device.Global_Memory_Size)
-	);
-	fnv1a_hash_continous(hash, (uint8_t*)(void*)&
-		Device.Float32_Config.Flags, sizeof(Device.Float32_Config.Flags)
-	);
-	fnv1a_hash_continous(hash, (uint8_t*)(void*)&
-		Device.Float64_Config.Flags, sizeof(Device.Float64_Config.Flags)
-	);
+	hash += Device.Maximum_Compute_Units;
+	hash += Device.Global_Memory_Size;
+	hash += Device.Float32_Config.Flags;
+	hash += Device.Float64_Config.Flags;
 }
 
 uint8_t printOpenCLError(cl_int errorCode) {
 	if (errorCode != 0) {
-		printFlush("\nOpenCL Error: %" PRId32 " %s", errorCode, getOpenCLErrorString(errorCode));
+		const char* errorString = getOpenCLErrorString(errorCode);
+		printFlush("OpenCL Error: %" PRId32 " %s\n", errorCode, (errorString != nullptr) ? errorString : "<Unknown>");
 		return 1;
 	}
 	return 0;
@@ -156,14 +149,14 @@ uint8_t printOpenCLError(cl_int errorCode) {
 void query_OpenCL_GPU() {
 	#ifndef BUILD_RELEASE
 		const OpenCL_Device_Properties& Device = GPU_Engine.device_properties;
-		printf("\nGPU Hardware Information:");
-		printf("\n\tDevice Name: %s | %s",
+		printf("GPU Hardware Information:\n");
+		printf("\tDevice Name: %s | %s\n",
 			Device.Name.c_str(), Device.Vendor.c_str()
 		);
-		printf("\n\tDriver Version: %s | %s | %s",
+		printf("\tDriver Version: %s | %s | %s\n",
 			Device.Driver_Version.c_str(), Device.OpenCL_Version.c_str(), Device.Profile.c_str()
 		);
-		printf("\n\tDevice VRAM: %" PRIu64 "MB", Device.Global_Memory_Size / 1048576);
+		printf("\tDevice VRAM: %" PRIu64 "MB\n", Device.Global_Memory_Size / 1048576);
 		fflush(stdout);
 	#endif
 }
@@ -179,7 +172,7 @@ int32_t terminate_OpenCL() { /* Deallocate resources */
 		clReleaseProgram(GPU_Engine.program);
 		clReleaseContext(GPU_Engine.context);
 	} catch (...) {
-		printFlush("\nError: Unable to terminate OpenCL. OpenCL might not be initialized");
+		printFlush("Error: Unable to terminate OpenCL. OpenCL might not be initialized\n");
 		return -1;
 	}
 	initialized_OpenCL = false;
@@ -188,26 +181,39 @@ int32_t terminate_OpenCL() { /* Deallocate resources */
 
 int32_t init_OpenCL() {
 	if (initialized_OpenCL == true) {
-		printFlush("\nError: OpenCL is already initialized");
+		printFlush("Error: OpenCL is already initialized\n");
 		return -1;
 	}
+	cl_int err = 0; // Error Code Flags
 	/* OpenCL structures */
 	try {
 		GPU_Engine.device_id = create_device();
 		GPU_Engine.context = clCreateContext(NULL, 1, &GPU_Engine.device_id, NULL, NULL, &err);
+		if (GPU_Engine.context == nullptr || err != 0) {
+			printf("GPU_Engine.context Error: %s\n", getOpenCLErrorString(err));
+		}
 		GPU_Engine.program = build_program(GPU_Engine.context, GPU_Engine.device_id, PROGRAM_FILE); /* Build program */
+		if (GPU_Engine.program == nullptr || err != 0) {
+			printf("GPU_Engine.program Error: %s\n", getOpenCLErrorString(err));
+		}
 		GPU_Engine.command_queue = clCreateCommandQueue(GPU_Engine.context, GPU_Engine.device_id, 0, &err); /* Create a command queue */
+		if (GPU_Engine.command_queue == nullptr || err != 0) {
+			printf("GPU_Engine.command_queue Error: %s\n", getOpenCLErrorString(err));
+		}
 		deviceResultBuf = NULL;
 		// Write our data set into the input array in device memory
 		//err = clEnqueueWriteBuffer(queue, dreals, CL_TRUE, 0, sizeof(float)*nreals, reals, 0, NULL, NULL);
 		GPU_Engine.kernel = clCreateKernel(GPU_Engine.program, KERNEL_FUNC, &err); /* Create a kernel */
+		if (GPU_Engine.kernel == nullptr || err != 0) {
+			printf("GPU_Engine.kernel Error: %s\n", getOpenCLErrorString(err));
+		}
 		query_OpenCL_Device_Properties(GPU_Engine.device_properties, GPU_Engine.device_id);
 		query_OpenCL_Kernel_Properties(GPU_Engine.kernel_properties, GPU_Engine.kernel, GPU_Engine.device_id);
 	} catch(const std::exception& error) {
-		printFlush("\nError: %s",error.what());
+		printFlush("Error: %s\n",error.what());
 		return -1;
 	} catch(...) {
-		printFlush("\nError: Unknown OpenCL Error");
+		printFlush("Error: Unknown OpenCL Error\n");
 		return -1;
 	}
 	set_GPU_Information(GPU_Engine);
@@ -269,6 +275,7 @@ int32_t render_OpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandel
 	/* Kernel Arguments */
 	
 	uint32_t kArg = 0;
+	cl_int err = 0;
 
 	err  = clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.realCord      );
 	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.imagCord      );
@@ -310,7 +317,7 @@ int32_t render_OpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandel
 	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_B_Amp_mult_Interior_Alpha);
 	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_Alpha);
 
-	printErrorChange("\nKernelArgs: %" PRId32,err);
+	printErrorChange("KernelArgs: %" PRId32 "\n",err);
 
 	/* Execute Kernel */
 
@@ -343,7 +350,7 @@ int32_t render_OpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandel
 	calculate_Global_and_Local_Size(global_work_size, local_work_size, GPU_Engine, Buffer_Pixel_Count);
 	
 	err = clEnqueueNDRangeKernel(GPU_Engine.command_queue, GPU_Engine.kernel, 1, NULL, &global_work_size, &local_work_size, 0, NULL, NULL); /* Enqueue kernel */
-	printErrorChange("\nclEnqueueNDRangeKernel: %" PRId32, err);
+	printErrorChange("clEnqueueNDRangeKernel: %" PRId32 "\n", err);
 
 	clFinish(GPU_Engine.command_queue); /* Wait for the command queue to get serviced before reading back results */
 
