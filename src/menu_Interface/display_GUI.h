@@ -9,7 +9,7 @@
 #ifndef DISPLAY_GUI_H
 #define DISPLAY_GUI_H
 
-#include "imgui.h"
+// #include "imgui.h"
 
 // struct Display_GUI {
 // 	ImGuiIO* io_IMGUI;
@@ -32,8 +32,6 @@ namespace Display_GUI {
 void Item_Tooltip(const char* fmt, ...);
 
 void set_IMGUI_Theme(Display_GUI::IMGUI_Theme theme);
-
-void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags);
 
 void Menu_Coordinates();
 void Menu_Fractal();

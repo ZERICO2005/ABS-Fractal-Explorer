@@ -10,10 +10,10 @@
 
 
 /* CPU Information */
-	static Supported_CPU_Instruction Available_CPU_Instruction;
-	static bool initialized_Available_CPU_Instruction = false;
-
 	const Supported_CPU_Instruction& get_Available_CPU_Instruction() {
+		static Supported_CPU_Instruction Available_CPU_Instruction;
+		static bool initialized_Available_CPU_Instruction = false;
+		
 		if (initialized_Available_CPU_Instruction == false) {
 			get_Supported_CPU_Instruction(Available_CPU_Instruction);
 			initialized_Available_CPU_Instruction = true;
@@ -65,30 +65,6 @@
 		memcpy((uint8_t*)buf + pos, buf, bufSize - len); // Copies the remaining portion
 		return 0;
 	}
-
-// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
-uint64_t fnv1a_hash(const uint8_t* buf, size_t len) {
-	if (buf == nullptr) { return 0; }
-	constexpr uint64_t fnv1a_Prime = 0x100000001B3; // FNV prime (64bit)
-	uint64_t fnv1a_Hash = 0xCBF29CE484222325; // FNV offset basis (64bit)
-	for (size_t i = 0; i < len; i++) {
-		fnv1a_Hash ^= buf[i];
-		fnv1a_Hash *= fnv1a_Prime;
-	}
-	return fnv1a_Hash;
-}
-
-// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
-// Set hash to 0x0 to start. Allows multiple arrays to be used in the hash
-void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len) {
-	if (buf == nullptr) { return; }
-	constexpr uint64_t fnv1a_Prime = 0x100000001B3; // FNV prime (64bit)
-	hash = (hash == 0x0) ? 0xCBF29CE484222325 : hash; // FNV offset basis (64bit)
-	for (size_t i = 0; i < len; i++) {
-		hash ^= buf[i];
-		hash *= fnv1a_Prime;
-	}
-}
 
 fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio) {
 	if (val < min) {

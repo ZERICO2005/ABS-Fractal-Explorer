@@ -16,7 +16,7 @@ class Bit_Graphics {
 	public:
 		Bit_Graphics();
 		Bit_Graphics(size_t resX, size_t resY);
-		bool isInitialized();
+		bool isInitialized() const;
 		void init_Bit_Graphics(size_t resX, size_t resY);
 		void terminate_Bit_Graphics();
 		void resizeBuffer(size_t resX, size_t resY);
