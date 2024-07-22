@@ -20,7 +20,9 @@
 #include "fileManager.h"
 
 #include "imageBuffer.h"
-#include "imageTransform.h"
+#ifdef Enable_OpenCV_Scaler
+	#include "imageTransform.h"
+#endif
 #include "frame_Transformation.h"
 
 #include <SDL2/SDL.h>
@@ -1858,7 +1860,7 @@ void renderJuliaCordinatePoint(const BufferBox& box) {
 // 	return 0;
 // }
 
-int Transform_Frame_Rotate(
+static int Transform_Frame_Rotate(
 	const ImageBuffer& image,
 	const Render_Data& ren,
 	const ABS_Mandelbrot& FRAC
@@ -1893,7 +1895,7 @@ int Transform_Frame_Rotate(
 	return 0;
 }
 
-int Transform_Frame_Scale_Translate(
+static int Transform_Frame_Scale_Translate(
 	const ImageBuffer& image,
 	const Render_Data& ren,
 	const ABS_Mandelbrot& FRAC
@@ -1934,10 +1936,9 @@ int Transform_Frame_Scale_Translate(
 	return 0;
 }
 
-int Transform_Frame_None(
+static int Transform_Frame_None(
 	const ImageBuffer& image,
-	const Render_Data& ren,
-	const ABS_Mandelbrot& FRAC
+	const Render_Data& ren
 ) {
 	scale_surface = SDL_CreateRGBSurfaceWithFormatFrom(
 		image.vram,
@@ -1958,7 +1959,7 @@ int Transform_Frame_None(
 }
 
 // Returns what transformations need to be applied to the image buffer
-inline void calculate_Tranformation_Change(
+static inline void calculate_Tranformation_Change(
 	const ImageBuffer& image, const ABS_Mandelbrot& FRAC,
 	bool& Scale_Translate_Transformation, bool& Stretched_Image, fp64& Rotation_Difference
 ) {
@@ -1976,7 +1977,7 @@ inline void calculate_Tranformation_Change(
 }
 
 /* SDL2 Frame Transformation */
-int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
+static int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	if (image.resX <= 0 || image.resY <= 0) {
@@ -2008,26 +2009,12 @@ int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 		// 	"\nTransform_Frame_None\nRot: %5.1lf - %5.1lf = %5.1lf\n",
 		// 	FRAC.rot * (360.0 / TAU), image.rot * (360.0 / TAU), Rotation_Difference * (360.0 / TAU)
 		// );
-		return Transform_Frame_None(image, ren, FRAC);
+		return Transform_Frame_None(image, ren);
 	}
 }
 
-size_t calculate_Dst_Buf_overlap_with_Src_Buf(
-	dim32_t src_ResX, dim32_t src_ResY,
-	fpCord dst_x00, fpCord dst_y00,
-	fpCord dst_x11, fpCord dst_y11,
-	fpCord dst_x01, fpCord dst_y01,
-	fpCord dst_x10, fpCord dst_y10,
-	fpCord src_x00, fpCord src_y00,
-	fpCord src_x11, fpCord src_y11,
-	fpCord src_x01, fpCord src_y01,
-	fpCord src_x10, fpCord src_y10
-) {
-	return 0;
-}
-
 /* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
-int Manually_Transform_Frame(const ImageBuffer& image) {
+static int Manually_Transform_Frame(const ImageBuffer& image) {
 	// nano64_t startTime = getNanoTime();
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
@@ -2053,117 +2040,119 @@ int Manually_Transform_Frame(const ImageBuffer& image) {
 	return ret_val;
 }
 
-/* OpenCV Frame Transformation */
-int transformFracImage(const ImageBuffer& image, const Render_Data& ren) {
-	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
-	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
-	ABS_Mandelbrot& FRAC = current_Fractal;
+#ifdef Enable_OpenCV_Scaler
+	/* OpenCV Frame Transformation */
+	static int transformFracImage(const ImageBuffer& image, const Render_Data& ren) {
+		if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
+		if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
+		ABS_Mandelbrot& FRAC = current_Fractal;
 
-	BufferBox blit;
-	BufferBox temp_MASTER;
-	Master.getBufferBox(&temp_MASTER);
-	if (validateBufferBox(&temp_MASTER) == false) {
-		printError("Invalid temp_MASTER BufferBox");
-		return -1;
-	}
+		BufferBox blit;
+		BufferBox temp_MASTER;
+		Master.getBufferBox(&temp_MASTER);
+		if (validateBufferBox(&temp_MASTER) == false) {
+			printError("Invalid temp_MASTER BufferBox");
+			return -1;
+		}
 
-	const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
+		const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
 
-	fp32 dx00 = 0.0f; fp32 dy00 = 0.0f; fp32 dx11 = 0.0f; fp32 dy11 = 0.0f;
-	fp32 dx01 = 0.0f; fp32 dy01 = 0.0f; fp32 dx10 = 0.0f; fp32 dy10 = 0.0f;
-	coordinate_to_pixel(image.x00, image.y00, dx00, dy00, FRAC, ren.resX, ren.resY);
-	coordinate_to_pixel(image.x11, image.y11, dx11, dy11, FRAC, ren.resX, ren.resY);
-	coordinate_to_pixel(image.x01, image.y01, dx01, dy01, FRAC, ren.resX, ren.resY);
-	coordinate_to_pixel(image.x10, image.y10, dx10, dy10, FRAC, ren.resX, ren.resY);
-	dim32_t resX = (dim32_t)(image.resX);
-	dim32_t resY = (dim32_t)(image.resY);
-	// printfInterval(0.5,
-	// 	"\nres{%" PRIu32 "x%" PRIu32 "}"
-	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}"
-	// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}\n",
-	// 	resX,resY,
-	// 	dx00,dy00,dx10,dy10,
-	// 	dx01,dy01,dx11,dy11
-	// );
+		fp32 dx00 = 0.0f; fp32 dy00 = 0.0f; fp32 dx11 = 0.0f; fp32 dy11 = 0.0f;
+		fp32 dx01 = 0.0f; fp32 dy01 = 0.0f; fp32 dx10 = 0.0f; fp32 dy10 = 0.0f;
+		coordinate_to_pixel(image.x00, image.y00, dx00, dy00, FRAC, ren.resX, ren.resY);
+		coordinate_to_pixel(image.x11, image.y11, dx11, dy11, FRAC, ren.resX, ren.resY);
+		coordinate_to_pixel(image.x01, image.y01, dx01, dy01, FRAC, ren.resX, ren.resY);
+		coordinate_to_pixel(image.x10, image.y10, dx10, dy10, FRAC, ren.resX, ren.resY);
+		dim32_t resX = (dim32_t)(image.resX);
+		dim32_t resY = (dim32_t)(image.resY);
+		// printfInterval(0.5,
+		// 	"\nres{%" PRIu32 "x%" PRIu32 "}"
+		// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}"
+		// 	"\n{%7.2f,%7.2f} --- {%7.2f,%7.2f}\n",
+		// 	resX,resY,
+		// 	dx00,dy00,dx10,dy10,
+		// 	dx01,dy01,dx11,dy11
+		// );
 
-	fp32 sx00 =       0.0f; fp32 sy00 =       0.0f;
-	// fp32 sx11 = (fp32)resX; fp32 sy11 = (fp32)resY;
-	fp32 sx01 =       0.0f; fp32 sy01 = (fp32)resY;
-	fp32 sx10 = (fp32)resX; fp32 sy10 =       0.0f;
-	// image->printTransformationData(0.6);
-	// printfInterval(0.6,"\nsrc: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
-	// printfInterval(0.6,"\ndst: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
-	uint32_t backgroundColor = 0xFF000000;
-	backgroundColor |= (uint32_t)(FRAC.exterior_R_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_R_Phase)));
-	backgroundColor |= (uint32_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase))) << 8;
-	backgroundColor |= (uint32_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase))) << 16;
+		fp32 sx00 =       0.0f; fp32 sy00 =       0.0f;
+		// fp32 sx11 = (fp32)resX; fp32 sy11 = (fp32)resY;
+		fp32 sx01 =       0.0f; fp32 sy01 = (fp32)resY;
+		fp32 sx10 = (fp32)resX; fp32 sy10 =       0.0f;
+		// image->printTransformationData(0.6);
+		// printfInterval(0.6,"\nsrc: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}",sx00,sy00,sx11,sy11,sx01,sy01,sx10,sy10);
+		// printfInterval(0.6,"\ndst: 00{%" PRId32 ",%" PRId32 "} 11{%" PRId32 ",%" PRId32 "} 01{%" PRId32 ",%" PRId32 "} 10{%" PRId32 ",%" PRId32 "}\n",dx00,dy00,dx11,dy11,dx01,dy01,dx10,dy10);
+		uint32_t backgroundColor = 0xFF000000;
+		backgroundColor |= (uint32_t)(FRAC.exterior_R_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_R_Phase)));
+		backgroundColor |= (uint32_t)(FRAC.exterior_G_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_G_Phase))) << 8;
+		backgroundColor |= (uint32_t)(FRAC.exterior_B_Amp * (127.5 - 127.5 * cos(TAU * FRAC.exterior_B_Phase))) << 16;
 
-	constexpr fp32 Minimum_Image_Size = 0.1f;
-	fp32 Approximate_Image_Size = fabs(dx11 - dx00) * fabs(dy11 - dy00);
-	if (Approximate_Image_Size < Minimum_Image_Size) {
-		return -2; // Displays a loading graphic if the User jumps from being very zoomed in to very zoomed out as no more than 1 pixel would be rendered. Although I may have to alter this behaviour to account for intentionally zooming out
-	}
-	int Image_Scaler_Return_Value = Image_Scaler_Parallelogram(
-		&blit, &image, &ren,
-		backgroundColor,
-		nullptr, nullptr,
-		Rendering_Settings.Frame_Interpolation_Method,
-		sx00, sy00,
-		sx01, sy01, sx10, sy10,
-		dx00, dy00,
-		dx01, dy01, dx10, dy10
-	);
-	if (Image_Scaler_Return_Value < 0) {
+		constexpr fp32 Minimum_Image_Size = 0.1f;
+		fp32 Approximate_Image_Size = fabs(dx11 - dx00) * fabs(dy11 - dy00);
+		if (Approximate_Image_Size < Minimum_Image_Size) {
+			return -2; // Displays a loading graphic if the User jumps from being very zoomed in to very zoomed out as no more than 1 pixel would be rendered. Although I may have to alter this behaviour to account for intentionally zooming out
+		}
+		int Image_Scaler_Return_Value = Image_Scaler_Parallelogram(
+			&blit, &image, &ren,
+			backgroundColor,
+			nullptr, nullptr,
+			Rendering_Settings.Frame_Interpolation_Method,
+			sx00, sy00,
+			sx01, sy01, sx10, sy10,
+			dx00, dy00,
+			dx01, dy01, dx10, dy10
+		);
+		if (Image_Scaler_Return_Value < 0) {
+			FREE(blit.vram);
+			printError("\nImage_Scaler_Parallelogram failed (%d)", Image_Scaler_Return_Value);
+			return -1;
+		}
+		renderJuliaCordinatePoint(blit);
+		copyBuffer_VeritcalOffset(temp_MASTER, blit, (size_t)RESY_UI);
 		FREE(blit.vram);
-		printError("\nImage_Scaler_Parallelogram failed (%d)", Image_Scaler_Return_Value);
-		return -1;
+		
+		// if (
+		// 	Image_Scaler_Quadrilateral(
+		// 		&blit, &image, &ren,
+		// 		Rendering_Settings.Frame_Interpolation_Method,
+		// 		sx00, sy00, sx11, sy11,
+		// 		sx01, sy01, sx10, sy10,
+		// 		dx00, dy00, dx11, dy11,
+		// 		dx01, dy01, dx10, dy10
+		// 	) == -1
+		// ) {
+		// 	FREE(blit.vram);
+		// 	printError("\nImage_Scaler_Quadrilateral failed");
+		// 	return -1;
+		// }
+
+		//printfInterval(0.6,"\n%p: %" PRIu32 "x%" PRIu32 " %" PRIu32 "C %" PRIu32 "P",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
+		
+		// nano64_t startTime0 = getNanoTime();
+		
+			// uint8_t* dstBuf = temp_MASTER.vram;
+			// Buffer_Data srcData; set_Buffer_Data(srcData,
+			// 	blit.resX, blit.resY,
+			// 	IMAGE_BUFFER_CHANNELS, (size_t)temp_MASTER.resX * IMAGE_BUFFER_CHANNELS
+			// );
+			// const uint8_t* srcBuf = blit.vram;
+			// Buffer_Data dstData; set_Buffer_Data(dstData,
+			// 	temp_MASTER.resX, temp_MASTER.resY,
+			// 	IMAGE_BUFFER_CHANNELS, (size_t)temp_MASTER.resX * IMAGE_BUFFER_CHANNELS
+			// );
+			// BufferCopy(dstBuf, srcBuf, dstData, srcData, 0, (int32_t)RESY_UI, true);
+		// nano64_t endTime0 = getNanoTime();
+		// nano64_t startTime1 = getNanoTime();
+		// 	copyBuffer(blit,temp_MASTER,0,(int32_t)RESY_UI,true);
+		// nano64_t endTime1 = getNanoTime();
+
+		// printfInterval(0.1,"\ntime0: %.3lf\ntime1: %.3lf\n",
+		// 	(fp64)(endTime0 - startTime0) / 1.0e6,
+		// 	(fp64)(endTime1 - startTime1) / 1.0e6
+		// );
+
+		return 0;
 	}
-	renderJuliaCordinatePoint(blit);
-	copyBuffer_VeritcalOffset(temp_MASTER, blit, (size_t)RESY_UI);
-	FREE(blit.vram);
-	
-	// if (
-	// 	Image_Scaler_Quadrilateral(
-	// 		&blit, &image, &ren,
-	// 		Rendering_Settings.Frame_Interpolation_Method,
-	// 		sx00, sy00, sx11, sy11,
-	// 		sx01, sy01, sx10, sy10,
-	// 		dx00, dy00, dx11, dy11,
-	// 		dx01, dy01, dx10, dy10
-	// 	) == -1
-	// ) {
-	// 	FREE(blit.vram);
-	// 	printError("\nImage_Scaler_Quadrilateral failed");
-	// 	return -1;
-	// }
-
-	//printfInterval(0.6,"\n%p: %" PRIu32 "x%" PRIu32 " %" PRIu32 "C %" PRIu32 "P",blit.vram,blit.resX,blit.resY,blit.channels,blit.padding);
-	
-	// nano64_t startTime0 = getNanoTime();
-	
-		// uint8_t* dstBuf = temp_MASTER.vram;
-		// Buffer_Data srcData; set_Buffer_Data(srcData,
-		// 	blit.resX, blit.resY,
-		// 	IMAGE_BUFFER_CHANNELS, (size_t)temp_MASTER.resX * IMAGE_BUFFER_CHANNELS
-		// );
-		// const uint8_t* srcBuf = blit.vram;
-		// Buffer_Data dstData; set_Buffer_Data(dstData,
-		// 	temp_MASTER.resX, temp_MASTER.resY,
-		// 	IMAGE_BUFFER_CHANNELS, (size_t)temp_MASTER.resX * IMAGE_BUFFER_CHANNELS
-		// );
-		// BufferCopy(dstBuf, srcBuf, dstData, srcData, 0, (int32_t)RESY_UI, true);
-	// nano64_t endTime0 = getNanoTime();
-	// nano64_t startTime1 = getNanoTime();
-	// 	copyBuffer(blit,temp_MASTER,0,(int32_t)RESY_UI,true);
-	// nano64_t endTime1 = getNanoTime();
-
-	// printfInterval(0.1,"\ntime0: %.3lf\ntime1: %.3lf\n",
-	// 	(fp64)(endTime0 - startTime0) / 1.0e6,
-	// 	(fp64)(endTime1 - startTime1) / 1.0e6
-	// );
-
-	return 0;
-}
+#endif
 
 void fill_Background_Color(const ImageBuffer& image) {
 	if (Render_Background_Color == false) {

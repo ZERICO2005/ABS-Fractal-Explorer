@@ -76,7 +76,8 @@ class ImageBuffer {
 		void setTransformationData(const ImageBuffer* buf);
 		void printTransformationData(fp64 freq = 0.6);
 		
-		void samplePixel(uint8_t* r,uint8_t* g,uint8_t* b,fp64 x, fp64 y);
+		// Going from my experience coding frame_Transformation.cpp, this function would be extremely slow
+		// void samplePixel(uint8_t* r,uint8_t* g,uint8_t* b,fp64 x, fp64 y);
 	private:
 		bool vramAllocated;
 		size_t bytesAllocated;

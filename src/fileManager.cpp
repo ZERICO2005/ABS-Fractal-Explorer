@@ -135,7 +135,7 @@
 		return 1;
 	}
 
-	int init_FileInterface(int argc, char* argv[]) {
+	int init_FileInterface(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[]) {
 		return 0;
 	}
 	int terminate_FileInterface() {
@@ -171,7 +171,7 @@
 		return 0;
 	}
 
-	int init_FileInterface(int argc, char* argv[]) {
+	int init_FileInterface(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[]) {
 		//gtk_init(&argc, &argv);
 		return 0;
 	}

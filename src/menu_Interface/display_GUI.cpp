@@ -1188,7 +1188,7 @@ void Menu_Settings() {
 	ImGui::Separator();
 	ImGui::Checkbox("Lock key inputs in menus",&config_data.GUI_Settings.LockKeyInputsInMenus);
 	ImGui::NewLine();
-	#ifdef PLATFORM_WINDOWS
+	#ifdef Enable_WindowsFileDialog
 		if(ImGui::Button("Import fracExpConfig")) {
 			static char filePath[324]; memset(filePath,'\0',sizeof(filePath));
 			openFileInterface(
@@ -1496,7 +1496,7 @@ void Menu_Settings() {
 			ImGui::TextColored(highlight_color, "%s",
 				config_data.File_Paths.Path_Screenshot.c_str()
 			);
-			#ifdef PLATFORM_WINDOWS
+			#ifdef Enable_WindowsFileDialog
 				if (ImGui::Button("Set Screenshot Directory")) {
 					static char path_Screenshot[324]; memset(path_Screenshot,'\0',sizeof(path_Screenshot));
 					int setDirectoryState = selectFolderInterface(
@@ -1781,12 +1781,12 @@ void Menu_Keybinds() {
 		memset(KeyBindName,'\0',ARRAY_LENGTH(KeyBindName));
 		memcpy(KeyBindName,currentKBPreset->name.c_str(),TEXT_LENGTH(KeyBindName));
 		if (currentKBPreset->kList.size() < 6) {
-			ImGui::Text("Warning: The current Key-bind Preset has %" PRIu64 " key-binds, and may not be functional or practical.",currentKBPreset->kList.size());
+			ImGui::Text("Warning: The current Key-bind Preset has %zu key-binds, and may not be functional or practical.",currentKBPreset->kList.size());
 			ImGui::Text("Current Key-bind Preset[%" PRId32 "]: ",get_currentKBPreset_Pos()); ImGui::SameLine(0.0,1.0);
-			ImGui::TextColored({1.0,0.5,0.5,1.0},"%" PRIu64,currentKBPreset->kList.size()); ImGui::SameLine(0.0,1.0);
+			ImGui::TextColored({1.0,0.5,0.5,1.0},"%zu",currentKBPreset->kList.size()); ImGui::SameLine(0.0,1.0);
 			ImGui::Text(" key-binds");
 		} else {
-			ImGui::Text("Current Key-bind Preset[%" PRId32 "]: %" PRIu64 " key-binds",get_currentKBPreset_Pos(),currentKBPreset->kList.size());
+			ImGui::Text("Current Key-bind Preset[%" PRId32 "]: %zu key-binds",get_currentKBPreset_Pos(),currentKBPreset->kList.size());
 		}
 
 		ImGui::InputText("##KeyBindName",BufAndLen(KeyBindName));
@@ -1835,7 +1835,7 @@ void Menu_Keybinds() {
 		}
 
 		ImGui::NewLine();
-		#ifdef PLATFORM_WINDOWS
+		#ifdef Enable_WindowsFileDialog
 			if (ImGui::Button("Import Key-bind (.FracExpKB)")) {
 				static char importKeyBindFile[324]; memset(importKeyBindFile,'\0',sizeof(importKeyBindFile));
 				int openFileState = openFileInterface(

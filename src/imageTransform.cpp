@@ -12,11 +12,9 @@
 #include "imageBuffer.h"
 #include "render.h"
 
-#ifdef Enable_OpenCV_Scaler
+#include <opencv2/opencv.hpp>
 
-#include <opencv2/opencv.hpp> // Ensure that find_package(OpenCV REQUIRED) and ${OpenCV_LIBS} are in the CMakeLists.txt file
-
-int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, const BufferBox* backgroundImage, const BufferBox* foregroundImage) {
+static int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t backgroundColor, const BufferBox* backgroundImage, const BufferBox* foregroundImage) {
 	
 	initBufferBox(buf, nullptr, Mat_Render.cols, Mat_Render.rows, (size_t)Mat_Render.channels());
 	buf->vram = (uint8_t*)malloc(Mat_Render.total() * Mat_Render.elemSize());
@@ -27,7 +25,7 @@ int export_OpenCV_Render(BufferBox* buf, const cv::Mat& Mat_Render, uint32_t bac
 	return 0;
 }
 
-cv::Mat Image_Place_Parallelogram(
+static cv::Mat Image_Place_Parallelogram(
 	const ImageBuffer* img, const Render_Data* ren,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00,
@@ -59,7 +57,7 @@ cv::Mat Image_Place_Parallelogram(
 	return Mat_Render;
 }
 
-cv::Mat Image_Place_Quadrilateral(
+static cv::Mat Image_Place_Quadrilateral(
 	const ImageBuffer* img, const Render_Data* ren,
 	int interpolation_mode,
 	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
@@ -139,35 +137,3 @@ int Image_Scaler_Quadrilateral(
 	}
 	return 0;
 }
-
-#else
-
-int Image_Scaler_Parallelogram(
-	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
-	uint32_t backgroundColor,
-	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
-	int interpolation_mode,
-	fp32 sx00, fp32 sy00,
-	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
-	fp32 dx00, fp32 dy00,
-	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
-) {
-	printCriticalError("Image_Scaler_Parallelogram() cannot run because OpenCV_Scalar is Disabled");
-	return -1;
-}
-
-int Image_Scaler_Quadrilateral(
-	BufferBox* buf, const ImageBuffer* img, const Render_Data* ren,
-	uint32_t backgroundColor,
-	const BufferBox* backgroundImage, const BufferBox* foregroundImage,
-	int interpolation_mode,
-	fp32 sx00, fp32 sy00, fp32 sx11, fp32 sy11,
-	fp32 sx01, fp32 sy01, fp32 sx10, fp32 sy10,
-	fp32 dx00, fp32 dy00, fp32 dx11, fp32 dy11,
-	fp32 dx01, fp32 dy01, fp32 dx10, fp32 dy10
-) {
-	printCriticalError("Image_Scaler_Quadrilateral() cannot run because OpenCV_Scalar is Disabled");
-	return -1;
-}
-
-#endif

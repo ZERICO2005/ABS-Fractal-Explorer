@@ -375,6 +375,8 @@ nano64_t getRenderDelta() {
 		pDat_Image_Render_Ready = false;
 		pDat_Image_Render_Fractal = *frac;
 		pDat_Image_Render_Data = *super;
+		pDat_Image_File_Format = image_file_format;
+		pDat_Image_Quality = image_quality;
 		pDat_Image_Render_Ready = true;
 	}
 

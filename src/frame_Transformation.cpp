@@ -22,6 +22,20 @@
 // Precision used for transformations
 typedef fp32 fpTran;
 
+// static size_t calculate_Dst_Buf_overlap_with_Src_Buf(
+// 	dim32_t src_ResX, dim32_t src_ResY,
+// 	fpCord dst_x00, fpCord dst_y00,
+// 	fpCord dst_x11, fpCord dst_y11,
+// 	fpCord dst_x01, fpCord dst_y01,
+// 	fpCord dst_x10, fpCord dst_y10,
+// 	fpCord src_x00, fpCord src_y00,
+// 	fpCord src_x11, fpCord src_y11,
+// 	fpCord src_x01, fpCord src_y01,
+// 	fpCord src_x10, fpCord src_y10
+// ) {
+// 	return 0;
+// }
+
 /**
  * @brief Generic Method. Runs faster, but leaves pixels gaps and skips pixels near the edge of the frame.
 */
@@ -237,7 +251,7 @@ int frame_Transform(
 	const ImageBuffer& image,
 	BufferBox& blit,
 	const ABS_Mandelbrot& FRAC,
-	const User_Rendering_Settings& config
+	__attribute__((unused)) const User_Rendering_Settings& config
 ) {
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }

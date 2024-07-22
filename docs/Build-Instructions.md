@@ -28,3 +28,12 @@ Uses OpenCV to scale the current frame instead of the default implementation. Th
 
 ## Static_OpenCV_Scaler
 Statically links some OpenCV dependencies. You will need to compile these yourself from the OpenCV GitHub Repository. Replace the version numbers in CMakeLists.txt if needed.
+
+# Optimizations
+If you want to make ABS-Fractal-Explorer faster, you can try these:
+* Using `-Ofast` instead of `-O3` can make CPU rendering faster. However, `-Ofast` may be unstable, or lead to unexpected behaviour. `-Ofast` will probably be the only noticable increase in performance.
+* Hardcoding formulas can speed up rendering to a point.
+* Changing the OpenCL compiler flags.
+* Adding `-march=native` optimizes and tailors the program to run specifically for CPU and its instruction sets. This may cause ABS-Fractal-Explorer to not run on other computers.
+* Link time optimization (`-flto`) reduces the size of the code slighty and significantly increases compile time. `-flto` might make the code slightly faster, although it would mostly apply to function/library calls.
+* Stripping the exe/binary probably won't impact the performance of the code at all, but it will reduce the size of the code by removing debugging information.

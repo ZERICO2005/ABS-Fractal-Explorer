@@ -28,12 +28,12 @@ void printText(const char* text, size_t len) {
 // size_t param_start;  size_t param_end;
 
 
-void printParamText(const char* raw, const Param_List* item) {
+void printParamText(__attribute__((unused)) const char* raw, const Param_List* item) {
 	for (size_t p = 0; p < item->len; p++) { printfDebug("%c",raw[p + item->pos]); }
 	fflushDebug(stdout);
 }
 
-void printParamTextN(const char* raw, const Param_List* item) {
+void printParamTextN(__attribute__((unused)) const char* raw, const Param_List* item) {
 	printfDebug("\n");
 	for (size_t p = 0; p < item->len; p++) { printfDebug("%c",raw[p + item->pos]); }
 	fflushDebug(stdout);

@@ -134,7 +134,7 @@ void generate_Threads(
 
 void find_Render_Function(
 	Render_Func& output_func,
-	size_t& spacing,
+	__attribute__((unused)) size_t& spacing,
 	const Mandelbrot_Type frac_type,
 	const Rendering_Configuration::Rendering_Preset render_preset,
 	const Render_Configurator& CPU_Rendering_Config

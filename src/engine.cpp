@@ -34,8 +34,10 @@ ImageBuffer* previewBuf = nullptr;
 static Render_Configurator Engine_Config;
 static Render_Configurator Super_Engine_Config;
 
-void get_GPU_Hardware_Hash(uint64_t& hash) { 
-	//calculate_GPU_Hardware_Hash(hash);
+void get_GPU_Hardware_Hash(__attribute__((unused)) uint64_t& hash) { 
+	#ifdef Enable_OpenCL
+		calculate_GPU_Hardware_Hash(hash);
+	#endif
 }
 
 int setup_fracExp(int argc, char* argv[]) {

@@ -11,15 +11,15 @@ project(${PROJECT_NAME})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 # Configuration
-	set(FEATURE_Float80       "")
-	set(FEATURE_Float128      "")
-	set(FEATURE_OpenCL        "")
+#	set(FEATURE_Float80       "")
+#	set(FEATURE_Float128      "")
+#	set(FEATURE_OpenCL        "")
 	set(FEATURE_WindowsFileIO "")
 
-	set(FEATURE_OpenCV_Scaler "")
-	set(STATIC_OpenCV_Scaler  "")
+#	set(FEATURE_OpenCV_Scaler "")
+#	set(STATIC_OpenCV_Scaler  "")
 
-# Compiler
+# Compiling
 	set(CMAKE_C_COMPILER "gcc")
 	set(CMAKE_CXX_COMPILER "g++")
 
@@ -27,12 +27,22 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(CMAKE_C_STANDARD 11)
 	set(CMAKE_CXX_STANDARD 17)
 
+# Compiler Flags
+	set(PROGRAM_OPT_FLAG -O3 -g)
+	set(LIBRARY_OPT_FLAG -O3)
+
+	set(MARCH_FLAGS -msse2)
+
 # Source Files
 	file(GLOB_RECURSE SRC_FILES
 		"${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp"
 	)
 	if(NOT DEFINED FEATURE_OpenCL)
 		file (GLOB REMOVE_FILES "${SRC_DIR}/render_GPU/*.c" "${SRC_DIR}/render_GPU/*.cpp")
+		list(REMOVE_ITEM SRC_FILES ${REMOVE_FILES})
+	endif()
+	if(NOT DEFINED FEATURE_OpenCV)
+		file (GLOB REMOVE_FILES "${SRC_DIR}/imageTransform.cpp")
 		list(REMOVE_ITEM SRC_FILES ${REMOVE_FILES})
 	endif()
 
@@ -100,22 +110,19 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 # ImGui
 	file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
 	add_library(IMGUI_LIB OBJECT ${IMGUI_FILES})
-	target_compile_options(IMGUI_LIB PRIVATE -O3 -flto -Wall -Wshadow)
+	target_compile_options(IMGUI_LIB PRIVATE ${LIBRARY_OPT_FLAG} ${MARCH_FLAGS} -Wall -Wshadow)
 
 	include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bitGraphics_Font" ${OpenCV_INCLUDE_DIRS})
 
-# Compiler Flags Debug(-g -O0) Release(-O3)
-	set(OPT_FLAG -O3 -flto)
-
-	set(MARCH_FLAGS -msse2)
+# Compile and Link options
 
 	set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare -Wfloat-conversion)
-	set(WARNING_IGNORE_FLAGS -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
+	set(WARNING_IGNORE_FLAGS -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
 
 	set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fdiagnostics-color=always")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 
-	target_compile_options(${PROJECT_NAME} PRIVATE ${OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
+	target_compile_options(${PROJECT_NAME} PRIVATE ${PROGRAM_OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
 
 # If using the OpenCV Scaler, add ${OpenCV_LIBS}
 	target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -lSDL2 ${LIB_OpenCL} ${LIB_OpenCV} ${LIB_QuadMath} IMGUI_LIB)
