@@ -95,8 +95,10 @@ namespace Key_Function {
 		/* Rendering */
 			"refreshFractal",
 			// "switchCPUandGPU",
-			/* "fp16GpuRendering", */ "fp32GpuRendering", /* "fp64GpuRendering", */
+			/* "fp16GpuRendering", */ "fp32GpuRendering", "fp64GpuRendering",
+			/* "fp32x2fp32GpuRendering", "fp64x2fp32GpuRendering", */
 			"fp32CpuRendering", "fp64CpuRendering", "fp80CpuRendering", "fp128CpuRendering",
+			"fp32x2CpuRendering", "fp64x2CpuRendering", "fp80x2CpuRendering",
 			"incSuperSample"  , "decSuperSample"  , "resetSuperSample",
 			"incSubSample"    , "decSubSample"    , "resetSubSample"  ,
 			"RENDERING"
@@ -174,8 +176,10 @@ namespace Key_Function {
 		/* Rendering */
 			refreshFractal,
 			// switchCPUandGPU,
-			/* fp16GpuRendering, */ fp32GpuRendering, /* fp64GpuRendering, */
+			/* fp16GpuRendering, */ fp32GpuRendering, fp64GpuRendering,
+			/* fp32x2fp32GpuRendering, fp64x2fp32GpuRendering, */
 			fp32CpuRendering, fp64CpuRendering, fp80CpuRendering, fp128CpuRendering,
+			fp32x2CpuRendering, fp64x2CpuRendering, fp80x2CpuRendering,
 			incSuperSample  , decSuperSample  , resetSuperSample,
 			incSubSample    , decSubSample    , resetSubSample  ,
 			RENDERING,

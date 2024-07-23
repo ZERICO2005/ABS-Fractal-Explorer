@@ -48,7 +48,7 @@ struct KeyBind_Preset {
 		{Key_Function::inputPower,SDL_SCANCODE_X},{Key_Function::incPower,SDL_SCANCODE_LALT},{Key_Function::decPower,SDL_SCANCODE_LCTRL},
 		{Key_Function::incSuperSample,SDL_SCANCODE_APOSTROPHE},{Key_Function::decSuperSample,SDL_SCANCODE_SEMICOLON},{Key_Function::incSubSample,SDL_SCANCODE_PERIOD},{Key_Function::decSubSample,SDL_SCANCODE_COMMA},
 		/* {Key_Function::fp16GpuRendering,SDL_SCANCODE_UNKNOWN}, */ {Key_Function::fp32GpuRendering,SDL_SCANCODE_M}, /* {Key_Function::fp64GpuRendering,SDL_SCANCODE_RALT}, */
-		/* {Key_Function::fp32CpuRendering,SDL_SCANCODE_APPLICATION}, */ {Key_Function::fp64CpuRendering,SDL_SCANCODE_N},{Key_Function::fp80CpuRendering,SDL_SCANCODE_B},{Key_Function::fp128CpuRendering,SDL_SCANCODE_RCTRL}
+		/* {Key_Function::fp32CpuRendering,SDL_SCANCODE_APPLICATION}, */ {Key_Function::fp64CpuRendering,SDL_SCANCODE_N},{Key_Function::fp80CpuRendering,SDL_SCANCODE_B},{Key_Function::fp64x2CpuRendering,SDL_SCANCODE_RCTRL}
 	};
 	// Resets a Key-bind to defaults
 	int initDefaultKeyBind(std::list<KeyBind>* keyBindList);

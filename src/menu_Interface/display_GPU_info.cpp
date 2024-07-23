@@ -40,7 +40,7 @@ static void SubMenu_Float_Config(const char* title, const OpenCL_Float_Config& f
 }
 
 void SubMenu_GPU_Information() {
-	const OpenCL_Engine engine = get_GPU_Information();
+	const OpenCL_Engine_Information engine = get_GPU_Information();
 	const OpenCL_Device_Properties& device = engine.device_properties;
 	const OpenCL_Kernel_Properties& kernel = engine.kernel_properties;
 	/* Text */

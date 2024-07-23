@@ -60,7 +60,14 @@ struct OpenCL_Engine {
 	OpenCL_Device_Properties device_properties;
 	cl_context context;
 	cl_program program;
-	cl_kernel kernel;
+	cl_command_queue command_queue;
+};
+
+struct OpenCL_Engine_Information {
+	cl_device_id device_id;
+	OpenCL_Device_Properties device_properties;
+	cl_context context;
+	cl_program program;
 	OpenCL_Kernel_Properties kernel_properties;
 	cl_command_queue command_queue;
 };

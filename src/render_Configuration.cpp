@@ -131,17 +131,22 @@ using namespace Rendering_Configuration;
 				case Render_Preset_GPU_Float16:
 					return (GPU_Float16_Enabled) ? true : false;
 				case Render_Preset_GPU_Float32:
+				case Render_Preset_GPU_Float32x2:
 					return (GPU_Float32_Enabled) ? true : false;
 				case Render_Preset_GPU_Float64:
+				case Render_Preset_GPU_Float64x2:
 					return (GPU_Float64_Enabled) ? true : false;
 			/* CPU Generic Rendering */
 				case Render_Preset_CPU_Generic_Float16:
 					return (CPU_Float16_Enabled) ? true : false;
 				case Render_Preset_CPU_Generic_Float32:
+				case Render_Preset_CPU_Generic_Float32x2:
 					return true; // Always supported
 				case Render_Preset_CPU_Generic_Float64:
+				case Render_Preset_CPU_Generic_Float64x2:
 					return true; // Always supported
 				case Render_Preset_CPU_Generic_Float80:
+				case Render_Preset_CPU_Generic_Float80x2:
 					return (CPU_Float80_Enabled) ? true : false;
 				case Render_Preset_CPU_Generic_Float128:
 					return (CPU_Float128_Enabled) ? true : false;
@@ -187,10 +192,14 @@ using namespace Rendering_Configuration;
 					return (GPU_Float16_Enabled || CPU_Float16_Enabled || CPU_AVX512_FP16_Enabled)
 						? true : false;
 				case Render_Precision_Float32:
+				case Render_Precision_Float32x2:
 					return true; // Always supported
 				case Render_Precision_Float64:
+				case Render_Precision_Float64x2:
 					return true; // Always supported
 				case Render_Precision_Float80:
+					return (CPU_Float80_Enabled) ? true : false;
+				case Render_Precision_Float80x2:
 					return (CPU_Float80_Enabled) ? true : false;
 				case Render_Precision_Float128:
 					return (CPU_Float128_Enabled) ? true : false;
@@ -248,6 +257,10 @@ using namespace Rendering_Configuration;
 						if (CPU_SSE2_Enabled) { output_method = Render_Method_CPU_SSE2; return; }
 						output_method = Render_Method_CPU_Generic; return;
 					}
+					case Render_Precision_Float32x2: {
+						if (GPU_Float32_Enabled) { output_method = Render_Method_GPU; return; }
+						output_method = Render_Method_CPU_Generic; return;
+					}
 					case Render_Precision_Float64: {
 						if (GPU_Float64_Enabled) { output_method = Render_Method_GPU; return; }
 						if (CPU_AVX512_F_Enabled) { output_method = Render_Method_CPU_AVX512; return; }
@@ -255,15 +268,25 @@ using namespace Rendering_Configuration;
 						if (CPU_SSE2_Enabled) { output_method = Render_Method_CPU_SSE2; return; }
 						output_method = Render_Method_CPU_Generic; return; 
 					}
+					case Render_Precision_Float64x2: {
+						if (GPU_Float64_Enabled) { output_method = Render_Method_GPU; return; }
+						output_method = Render_Method_CPU_Generic; return;
+					}
 					case Render_Precision_Float80: {
 						if (CPU_Float80_Enabled) { output_method = Render_Method_CPU_Generic; return; }
 						output_precision = Render_Precision_Float64;
 						repeatLoop = true;
 						continue;
 					}
+					case Render_Precision_Float80x2: {
+						if (CPU_Float80_Enabled) { output_method = Render_Method_CPU_Generic; return; }
+						output_precision = Render_Precision_Float64x2;
+						repeatLoop = true;
+						continue;
+					}
 					case Render_Precision_Float128: {
 						if (CPU_Float128_Enabled) { output_method = Render_Method_CPU_Generic; return; }
-						output_precision = Render_Precision_Float80;
+						output_precision = Render_Precision_Float80x2;
 						repeatLoop = true;
 						continue;
 					}
@@ -335,8 +358,11 @@ using namespace Rendering_Configuration;
 			// Proitizes searching the most common precisions first
 			constexpr Rendering_Precision Render_Precision_Attempt_Order[] = {
 				Render_Precision_Float64,
+				Render_Precision_Float32x2,
 				Render_Precision_Float32,
 				Render_Precision_Float80,
+				Render_Precision_Float64x2,
+				Render_Precision_Float80x2,
 				Render_Precision_Float128,
 				Render_Precision_Float16
 			};
@@ -383,10 +409,16 @@ using namespace Rendering_Configuration;
 					return 16;
 				case Render_Precision_Float32:
 					return 32;
+				case Render_Precision_Float32x2:
+					return 32 * 2;
 				case Render_Precision_Float64:
 					return 64;
+				case Render_Precision_Float64x2:
+					return 64 * 2;
 				case Render_Precision_Float80:
 					return 80;
+				case Render_Precision_Float80x2:
+					return 80 * 2;
 				case Render_Precision_Float128:
 					return 128;
 				default:
@@ -399,10 +431,16 @@ using namespace Rendering_Configuration;
 					return 10;
 				case Render_Precision_Float32:
 					return 23;
+				case Render_Precision_Float32x2:
+					return 23 * 2;
 				case Render_Precision_Float64:
 					return 52;
+				case Render_Precision_Float64x2:
+					return 52 * 2;
 				case Render_Precision_Float80:
 					return 63;
+				case Render_Precision_Float80x2:
+					return 63 * 2;
 				case Render_Precision_Float128:
 					return 112;
 				default:
@@ -414,10 +452,13 @@ using namespace Rendering_Configuration;
 				case Render_Precision_Float16:
 					return 5;
 				case Render_Precision_Float32:
+				case Render_Precision_Float32x2:
 					return 8;
 				case Render_Precision_Float64:
+				case Render_Precision_Float64x2:
 					return 11;
 				case Render_Precision_Float80:
+				case Render_Precision_Float80x2:
 					return 15;
 				case Render_Precision_Float128:
 					return 15;
@@ -615,22 +656,31 @@ using namespace Rendering_Configuration;
 			Rendering_Method temp_method = Render_Method;
 
 			constexpr fp64 zoom_offset = 2.3;
-			constexpr fp64 zoom_float16  =  1.8 - zoom_offset;
-			constexpr fp64 zoom_float32  =  5.7 - zoom_offset;
-			constexpr fp64 zoom_float64  = 14.4 - zoom_offset;
-			constexpr fp64 zoom_float80  = 17.7 - zoom_offset;
-			__attribute__((unused)) constexpr fp64 zoom_float128 = 32.5 - zoom_offset;
+			constexpr fp64 zoom_float16   =  1.8 - zoom_offset;
+			constexpr fp64 zoom_float32   =  5.7 - zoom_offset;
+			constexpr fp64 zoom_float32x2 = 12.6 - zoom_offset;
+			constexpr fp64 zoom_float64   = 14.4 - zoom_offset;
+			constexpr fp64 zoom_float80   = 17.7 - zoom_offset;
+			constexpr fp64 zoom_float64x2 = 30.7 - zoom_offset;
+			constexpr fp64 zoom_float128  = 32.5 - zoom_offset;
+			__attribute__((unused)) constexpr fp64 zoom_float80x2 = 36.7 - zoom_offset;
 
 			if (zoom < zoom_float16) {
-				calculate_Rendering_Precision_and_Method(Render_Precision_Float16, Render_Precision, Render_Method);
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float16  , Render_Precision, Render_Method);
 			} else if (zoom < zoom_float32) {
-				calculate_Rendering_Precision_and_Method(Render_Precision_Float32, Render_Precision, Render_Method);
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float32  , Render_Precision, Render_Method);
+			} else if (zoom < zoom_float32x2) {
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float32x2, Render_Precision, Render_Method);
 			} else if (zoom < zoom_float64) {
-				calculate_Rendering_Precision_and_Method(Render_Precision_Float64, Render_Precision, Render_Method);
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float64  , Render_Precision, Render_Method);
 			} else if (zoom < zoom_float80) {
-				calculate_Rendering_Precision_and_Method(Render_Precision_Float80, Render_Precision, Render_Method);
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float80  , Render_Precision, Render_Method);
+			} else if (zoom < zoom_float64x2) {
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float64x2, Render_Precision, Render_Method);
+			} else if (zoom < zoom_float128) {
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float128 , Render_Precision, Render_Method);
 			} else {
-				calculate_Rendering_Precision_and_Method(Render_Precision_Float128, Render_Precision, Render_Method);
+				calculate_Rendering_Precision_and_Method(Render_Precision_Float80x2, Render_Precision, Render_Method);
 			}
 			
 			bool changes_detected = (

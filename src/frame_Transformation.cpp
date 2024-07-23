@@ -20,7 +20,7 @@
 #include <xmmintrin.h>
 
 // Precision used for transformations
-typedef fp32 fpTran;
+typedef fp64 fpTran;
 
 // static size_t calculate_Dst_Buf_overlap_with_Src_Buf(
 // 	dim32_t src_ResX, dim32_t src_ResY,

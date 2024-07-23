@@ -10,7 +10,7 @@
 #include "fracCL_Internal.h"
 
 #define PROGRAM_FILE "src/render_GPU/fracCL.cl"
-#define KERNEL_FUNC "renderFracCLPoint"
+// #define KERNEL_FUNC "renderFracCLPoint"
 
 //#define BUILD_FRAC_FROM_FILE
 #define BUILD_FRAC_FROM_CONST
