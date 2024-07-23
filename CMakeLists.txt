@@ -14,10 +14,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(FEATURE_Float80       "")
 	set(FEATURE_Float128      "")
 	set(FEATURE_OpenCL        "")
-#	set(FEATURE_WindowsFileIO "")
+	set(FEATURE_WindowsFileIO "")
 
-#	set(FEATURE_OpenCV_Scaler "")
-#	set(STATIC_OpenCV_Scaler  "")
+	set(FEATURE_OpenCV_Scaler "")
+	set(STATIC_OpenCV_Scaler  "")
 
 #   set(COMPILE_FLTO "")
 
@@ -38,8 +38,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		list(REMOVE_ITEM SRC_FILES ${REMOVE_FILES})
 	endif()
 
+	# -Ofast appears to have a noticable speedup compared to -O3 for SSE2 and AVX rendering.
+	set(RENDER_CPU_OPT_FLAG -Ofast)
+
 	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_AVX.cpp")
-	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS -mavx)
+	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG}")
+	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_SSE2.cpp")
+	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "${RENDER_CPU_OPT_FLAG}")
 
 # Icon
 	set(ICON_FILE "./icons/ABS-Icon.o")

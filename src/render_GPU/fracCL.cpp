@@ -10,6 +10,9 @@
 
 /* Temporary */ #include "../render_CPU/frac_Multi_Internal.h"
 
+
+// #define Enable_OpenCL_Rendering_Partions
+
 #include "fracCL.h"
 #include "buildCL.h"
 #include "../fractal.h"
@@ -17,17 +20,29 @@
 
 #include "../fnv1a_hash.hpp"
 
+#include "../floats/double_Float32.hpp"
+#include "../floats/double_Float64.hpp"
+
+#include "../render_Configuration.hpp"
+
 /* GPU Information */
-	static OpenCL_Engine Public_GPU_Engine;
+	static OpenCL_Engine_Information Public_GPU_Engine;
 	std::mutex Public_GPU_Engine_Mutex;
 
-	const OpenCL_Engine get_GPU_Information() {
+	const OpenCL_Engine_Information get_GPU_Information() {
 		std::lock_guard<std::mutex> lock(Public_GPU_Engine_Mutex);
 		return Public_GPU_Engine;
 	}
-	static void set_GPU_Information(const OpenCL_Engine& engine) {
+	static void set_GPU_Information(
+		const OpenCL_Engine& engine,
+		const OpenCL_Kernel_Properties& kernel_properties
+	) {
 		std::lock_guard<std::mutex> lock(Public_GPU_Engine_Mutex);
-		Public_GPU_Engine = engine;
+		Public_GPU_Engine.device_id         = engine.device_id        ;
+		Public_GPU_Engine.device_properties = engine.device_properties;
+		Public_GPU_Engine.context           = engine.context          ;
+		Public_GPU_Engine.command_queue     = engine.command_queue    ;
+		Public_GPU_Engine.kernel_properties = kernel_properties       ;
 	}
 
 
@@ -38,6 +53,11 @@ uint32_t compiledYet = 0;
 static OpenCL_Engine GPU_Engine;
 
 cl_mem deviceResultBuf = nullptr;
+
+cl_kernel Render_Kernel_Float32   = nullptr;
+cl_kernel Render_Kernel_Float32x2 = nullptr;
+cl_kernel Render_Kernel_Float64   = nullptr;
+cl_kernel Render_Kernel_Float64x2 = nullptr;
 
 void calculate_GPU_Hardware_Hash(FNV1A_Hash& hash) {
 	if (initialized_OpenCL == false) { return; }
@@ -166,7 +186,11 @@ int32_t terminate_OpenCL() { /* Deallocate resources */
 		return 0;
 	}
 	try {
-		clReleaseKernel(GPU_Engine.kernel);
+		/* Render Kernels */
+			clReleaseKernel(Render_Kernel_Float32  );
+			clReleaseKernel(Render_Kernel_Float32x2);
+			clReleaseKernel(Render_Kernel_Float64  );
+			clReleaseKernel(Render_Kernel_Float64x2);
 		clReleaseMemObject(deviceResultBuf);
 		clReleaseCommandQueue(GPU_Engine.command_queue);
 		clReleaseProgram(GPU_Engine.program);
@@ -177,6 +201,15 @@ int32_t terminate_OpenCL() { /* Deallocate resources */
 	}
 	initialized_OpenCL = false;
 	return 0;
+}
+
+int32_t generate_Render_Kernel(cl_kernel& kernel, const char* function_name) {
+	cl_int err = 0;
+	kernel = clCreateKernel(GPU_Engine.program, function_name, &err); /* Create a kernel */
+	if (kernel == nullptr || err != 0) {
+		printf("GPU_Engine.kernel Error: %s\n", getOpenCLErrorString(err));
+	}
+	return err;
 }
 
 int32_t init_OpenCL() {
@@ -203,12 +236,13 @@ int32_t init_OpenCL() {
 		deviceResultBuf = NULL;
 		// Write our data set into the input array in device memory
 		//err = clEnqueueWriteBuffer(queue, dreals, CL_TRUE, 0, sizeof(float)*nreals, reals, 0, NULL, NULL);
-		GPU_Engine.kernel = clCreateKernel(GPU_Engine.program, KERNEL_FUNC, &err); /* Create a kernel */
-		if (GPU_Engine.kernel == nullptr || err != 0) {
-			printf("GPU_Engine.kernel Error: %s\n", getOpenCLErrorString(err));
-		}
+
+		err |= generate_Render_Kernel(Render_Kernel_Float32  , "OpenCL_Mandelbrot_Float32"  );
+		// err |= generate_Render_Kernel(Render_Kernel_Float32x2, "OpenCL_Mandelbrot_Float32x2");
+		err |= generate_Render_Kernel(Render_Kernel_Float64  , "OpenCL_Mandelbrot_Float64"  );
+		// err |= generate_Render_Kernel(Render_Kernel_Float64x2, "OpenCL_Mandelbrot_Float64x2");
+
 		query_OpenCL_Device_Properties(GPU_Engine.device_properties, GPU_Engine.device_id);
-		query_OpenCL_Kernel_Properties(GPU_Engine.kernel_properties, GPU_Engine.kernel, GPU_Engine.device_id);
 	} catch(const std::exception& error) {
 		printFlush("Error: %s\n",error.what());
 		return -1;
@@ -216,7 +250,7 @@ int32_t init_OpenCL() {
 		printFlush("Error: Unknown OpenCL Error\n");
 		return -1;
 	}
-	set_GPU_Information(GPU_Engine);
+	// set_GPU_Information(GPU_Engine);
 	initialized_OpenCL = true;
 	return 0;
 }
@@ -226,22 +260,134 @@ int32_t init_OpenCL() {
 
 static void calculate_Global_and_Local_Size(
 	size_t& global_work_size, size_t& local_work_size,
-	const OpenCL_Engine& engine, size_t pixel_count
+	const OpenCL_Kernel_Properties& kernel_properties, size_t pixel_count
 ) {
-	const size_t WorkGroup_Size = engine.kernel_properties.WorkGroup_Size;
+	const size_t WorkGroup_Size = kernel_properties.WorkGroup_Size;
 	size_t cor = pixel_count % WorkGroup_Size;
 	cor = (cor == 0) ? 0 : (WorkGroup_Size - cor);
 	local_work_size = WorkGroup_Size;
 	global_work_size = pixel_count + cor;
 }
 
-int32_t render_OpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandelbrot param, std::atomic<bool>& ABORT_RENDERING) {
+template <typename fpX, typename fpColor>
+cl_int load_OpenCL_Render(cl_kernel& render_kernel, const BufferBox* buf, const Render_Data& ren, const ABS_Mandelbrot& param) {
+	
+	OpenCL_Kernel_Properties kernel_properties;
+	query_OpenCL_Kernel_Properties(kernel_properties, render_kernel, GPU_Engine.device_id);
+	set_GPU_Information(GPU_Engine, kernel_properties);
+	
+	const size_t Buffer_Pixel_Count = (size_t)buf->resX * (size_t)buf->resY;
+
+	/* Fractal Parameters */
+		PreCalc_Param<fpX, fpColor> preCalc_Param;
+		Generate_PreCalc_Param(
+			preCalc_Param,
+			buf, ren, param
+		);
+		uint32_t polarMandelbrotBool = (param.polarMandelbrot == true) ? 1 : 0;
+		uint32_t juliaSetBool = (param.juliaSet == true) ? 1 : 0;
+		uint32_t formula32 = (uint32_t)param.formula;
+		uint32_t GPU_formula = (polarMandelbrotBool << 30) | (juliaSetBool << 29) | formula32;
+		fpX fractal_power = (param.polarMandelbrot == true) ? (fpX)param.polarPower : (fpX)param.power;
+
+	/* Debug Values */
+		__attribute__((unused)) const uint32_t debug_val_0x00 = 0x00;
+		__attribute__((unused)) const uint32_t debug_val_0xFF = 0xFF;
+		__attribute__((unused)) const fpX debug_val_0f = (fpX)0.0;
+		__attribute__((unused)) const fpX debug_val_1f = (fpX)1.0;
+
+	uint32_t kArg = 0;
+	cl_int err = 0;
+
+	err  = clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.realCord      );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.imagCord      );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(uint32_t), &preCalc_Param.maxItr        );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(uint32_t), &preCalc_Param.Image_ResX    );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(uint32_t), &preCalc_Param.Image_ResY    ); 
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.realJulia     );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.imagJulia     );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(uint32_t), &GPU_formula                 );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &fractal_power               );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(uint32_t), &preCalc_Param.sample        );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.rotSin_PC     );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.rotCos_PC     );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.breakoutValue );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.recip_numZ    );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpX)     , &preCalc_Param.neg_recip_numW);
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(cl_mem)  , &deviceResultBuf);
+
+	/* Exterior Color */
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_R_Freq_mult_TAU          );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_R_Phase_mult_TAU         );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_R_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_G_Freq_mult_TAU          );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_G_Phase_mult_TAU         );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_G_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_B_Freq_mult_TAU          );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_B_Phase_mult_TAU         );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_B_Amp_mult_Exterior_Alpha);
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Exterior_Alpha);
+	/* Interior Color */
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_R_Freq                   );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_R_Phase_mult_TAU         );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_R_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_G_Freq                   );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_G_Phase_mult_TAU         );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_G_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_B_Freq                   );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_B_Phase_mult_TAU         );
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_B_Amp_mult_Interior_Alpha);
+	err |= clSetKernelArg(render_kernel, kArg++, sizeof(fpColor), &preCalc_Param.Interior_Alpha);
+
+	printErrorChange("KernelArgs: %" PRId32 "\n",err);
+
+	/* Execute Kernel */
+
+	size_t local_work_size = 0, global_work_size = 0;
+
+	#ifdef Enable_OpenCL_Rendering_Partitions
+		size_t partitionCount = (ren.GPU_Partitions < resX * resY / 2) ? ren.GPU_Partitions : (resX * resY / 2);
+		for (size_t p = 0; p < partitionCount; p++) {
+			printfInterval(0.3,"GPU: %s %zu/%zu\n",boolText(ABORT_RENDERING),p,partitionCount);
+			if (ABORT_RENDERING == true) {
+				printFlush("Aborted GPU partition %zu/%zu\n",p,partitionCount);
+				break;
+			}
+			size_t p0 = ((resX * resY) * p) / partitionCount;
+			size_t p1 = ((resX * resY) * (p + 1)) / partitionCount;
+			size_t pSize = p1 - p0;
+			size_t cor = (pSize) % KernelWorkGroupSize; // Calculates the correction factor to ensure divisibility
+			cor = (cor == 0) ? 0 : (KernelWorkGroupSize - cor);
+			local_size = KernelWorkGroupSize;
+			global_size = pSize + cor; // Number of total work items - localSize must be devisor
+
+			err = clEnqueueNDRangeKernel(GPU_Engine.command_queue, render_kernel, 1, &p0, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
+			printErrorChange("clEnqueueNDRangeKernel: %" PRId32 "\n",err);
+		}
+		if (ABORT_RENDERING == true) {
+			printFlush("Aborted GPU\n");
+		} else {
+			printFlush("Safe Return\n");
+		}
+	#else
+		calculate_Global_and_Local_Size(global_work_size, local_work_size, kernel_properties, Buffer_Pixel_Count);
+		
+		err = clEnqueueNDRangeKernel(GPU_Engine.command_queue, render_kernel, 1, NULL, &global_work_size, &local_work_size, 0, NULL, NULL); /* Enqueue kernel */
+		printErrorChange("clEnqueueNDRangeKernel: %" PRId32 "\n", err);
+	#endif
+	return err;
+}
+
+int32_t render_OpenCL_ABS_Mandelbrot(
+	const BufferBox* buf, Render_Data ren, ABS_Mandelbrot param,
+	const Render_Configurator& GPU_Render_Config,
+	std::atomic<bool>& ABORT_RENDERING
+) {
 	if (validateBufferBox(buf) == false) {
 		printError("BufferBox* buf is NULL or has invalid data in renderOpenCL_ABS_Mandelbrot()");
 		return -1;
 	}
 	const size_t Buffer_Size = getBufferBoxSize(buf);
-	const size_t Buffer_Pixel_Count = (size_t)buf->resX * (size_t)buf->resY;
 
 	static dim32_t rX = 0;
 	static dim32_t rY = 0;
@@ -253,104 +399,41 @@ int32_t render_OpenCL_ABS_Mandelbrot(BufferBox* buf, Render_Data ren, ABS_Mandel
 	}
 	rX = buf->resX;
 	rY = buf->resY;
-
-	/* Fractal Parameters */
-		PreCalc_Param<fp32, fp32> preCalc_Param;
-		Generate_PreCalc_Param(
-			preCalc_Param,
-			buf, ren, param
-		);
-		uint32_t polarMandelbrotBool = (param.polarMandelbrot == true) ? 1 : 0;
-		uint32_t juliaSetBool = (param.juliaSet == true) ? 1 : 0;
-		uint32_t formula32 = (uint32_t)param.formula;
-		uint32_t GPU_formula = (polarMandelbrotBool << 30) | (juliaSetBool << 29) | formula32;
-		fp32 fractal_power = (param.polarMandelbrot == true) ? (fp32)param.polarPower : (fp32)param.power;
-
-	/* Debug Values */
-		__attribute__((unused)) const uint32_t debug_val_0x00 = 0x00;
-		__attribute__((unused)) const uint32_t debug_val_0xFF = 0xFF;
-		__attribute__((unused)) const fp32 debug_val_0f = 0.0f;
-		__attribute__((unused)) const fp32 debug_val_1f = 1.0f;
 	
 	/* Kernel Arguments */
-	
-	uint32_t kArg = 0;
-	cl_int err = 0;
-
-	err  = clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.realCord      );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.imagCord      );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &preCalc_Param.maxItr        );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &preCalc_Param.Image_ResX    );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &preCalc_Param.Image_ResY    ); 
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.realJulia     );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.imagJulia     );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &GPU_formula                 );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &fractal_power               );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(uint32_t), &preCalc_Param.sample        );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.rotSin_PC     );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.rotCos_PC     );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.breakoutValue );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.recip_numZ    );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32)    , &preCalc_Param.neg_recip_numW);
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(cl_mem)  , &deviceResultBuf);
-
-	/* Exterior Color */
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_R_Freq_mult_TAU          );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_R_Phase_mult_TAU         );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_R_Amp_mult_Exterior_Alpha);
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_G_Freq_mult_TAU          );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_G_Phase_mult_TAU         );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_G_Amp_mult_Exterior_Alpha);
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_B_Freq_mult_TAU          );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_B_Phase_mult_TAU         );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_B_Amp_mult_Exterior_Alpha);
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Exterior_Alpha);
-	/* Interior Color */
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_R_Freq                   );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_R_Phase_mult_TAU         );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_R_Amp_mult_Interior_Alpha);
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_G_Freq                   );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_G_Phase_mult_TAU         );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_G_Amp_mult_Interior_Alpha);
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_B_Freq                   );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_B_Phase_mult_TAU         );
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_B_Amp_mult_Interior_Alpha);
-	err |= clSetKernelArg(GPU_Engine.kernel, kArg++, sizeof(fp32), &preCalc_Param.Interior_Alpha);
-
-	printErrorChange("KernelArgs: %" PRId32 "\n",err);
-
-	/* Execute Kernel */
-
-	size_t local_work_size = 0, global_work_size = 0;
-
-	// size_t partitionCount = (ren.GPU_Partitions < resX * resY / 2) ? ren.GPU_Partitions : (resX * resY / 2);
-	// for (size_t p = 0; p < partitionCount; p++) {
-	// 	printfInterval(0.3,"\nGPU: %s %zu/%zu",boolText(ABORT_RENDERING),p,partitionCount);
-	// 	if (ABORT_RENDERING == true) {
-	// 		printFlush("\nAborted GPU partition %zu/%zu",p,partitionCount);
-	// 		break;
-	// 	}
-	// 	size_t p0 = ((resX * resY) * p) / partitionCount;
-	// 	size_t p1 = ((resX * resY) * (p + 1)) / partitionCount;
-	// 	size_t pSize = p1 - p0;
-	// 	size_t cor = (pSize) % KernelWorkGroupSize; // Calculates the correction factor to ensure divisibility
-	// 	cor = (cor == 0) ? 0 : (KernelWorkGroupSize - cor);
-	// 	local_size = KernelWorkGroupSize;
-	// 	global_size = pSize + cor; // Number of total work items - localSize must be devisor
-
-	// 	err = clEnqueueNDRangeKernel(GPU_Engine.command_queue, GPU_Engine.kernel, 1, &p0, &global_size, &local_size, 0, NULL, NULL); /* Enqueue kernel */
-	// 	printErrorChange("\nclEnqueueNDRangeKernel: %" PRId32,err);
-	// }
-	// if (ABORT_RENDERING == true) {
-	// 	printFlush("\nAborted GPU");
-	// } else {
-	// 	printFlush("\nSafe Return");
-	// }
-	
-	calculate_Global_and_Local_Size(global_work_size, local_work_size, GPU_Engine, Buffer_Pixel_Count);
-	
-	err = clEnqueueNDRangeKernel(GPU_Engine.command_queue, GPU_Engine.kernel, 1, NULL, &global_work_size, &local_work_size, 0, NULL, NULL); /* Enqueue kernel */
-	printErrorChange("clEnqueueNDRangeKernel: %" PRId32 "\n", err);
+	__attribute__((unused)) cl_int err = 0;
+	int_enum GPU_Render_Preset = GPU_Render_Config.get_Render_Preset();
+	switch (GPU_Render_Preset) {
+		using namespace Rendering_Configuration;
+		case Render_Preset_GPU_Float32: {
+			err = load_OpenCL_Render<fp32, fp32>(
+				Render_Kernel_Float32,
+				buf, ren, param
+			);
+		} break;
+		case Render_Preset_GPU_Float32x2: {
+			err = load_OpenCL_Render<fp32x2, fp32>(
+				Render_Kernel_Float32x2,
+				buf, ren, param
+			);
+		} break;
+		case Render_Preset_GPU_Float64: {
+			err = load_OpenCL_Render<fp64, fp64>(
+				Render_Kernel_Float64,
+				buf, ren, param
+			);
+		} break;
+		case Render_Preset_GPU_Float64x2: {
+			err = load_OpenCL_Render<fp64x2, fp64>(
+				Render_Kernel_Float32,
+				buf, ren, param
+			);
+		} break;
+		default: {
+			printfInterval(0.5, "Error: Invalid GPU rendering preset: %d\n", GPU_Render_Preset);
+		}
+	}
+	 
 
 	clFinish(GPU_Engine.command_queue); /* Wait for the command queue to get serviced before reading back results */
 

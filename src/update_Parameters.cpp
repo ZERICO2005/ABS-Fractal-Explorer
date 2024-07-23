@@ -495,6 +495,21 @@ int_enum updateFractalParameters(
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
+		if (funcTimeDelay(fp32x2CpuRendering, 0.2)) {
+			if (Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(Render_Precision_Float32x2)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
+		}
+		if (funcTimeDelay(fp64x2CpuRendering, 0.2)) {
+			if (Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(Render_Precision_Float64x2)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
+		}
+		if (funcTimeDelay(fp80x2CpuRendering, 0.2)) {
+			if (Render_Config.suggest_Render_Precision_and_Fastest_CPU_Method(Render_Precision_Float80x2)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
+		}
 		// if (funcTimeDelay(fp16GpuRendering, 0.2)) {
 		// 	if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float16)) {
 		// 		write_Update_Level(Change_Level::Method_of_Rendering);
@@ -505,11 +520,11 @@ int_enum updateFractalParameters(
 				write_Update_Level(Change_Level::Method_of_Rendering);
 			}
 		}
-		// if (funcTimeDelay(fp64GpuRendering, 0.2)) {
-		// 	if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float64)) {
-		// 		write_Update_Level(Change_Level::Method_of_Rendering);
-		// 	}
-		// }
+		if (funcTimeDelay(fp64GpuRendering, 0.2)) {
+			if (Render_Config.suggest_Render_Preset(Render_Preset_GPU_Float64)) {
+				write_Update_Level(Change_Level::Method_of_Rendering);
+			}
+		}
 		
 		primaryRenderData.render_precision = Render_Config.get_Render_Precision();
 		primaryRenderData.render_method = Render_Config.get_Render_Method();

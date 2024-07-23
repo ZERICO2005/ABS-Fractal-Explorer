@@ -151,7 +151,8 @@ void Generate_PreCalc_Param(
 		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);
 		preCalc_Param.rotCos_PC = (fpX)cos((fpCord)param.rot);
 		preCalc_Param.breakoutValue = (fpX)param.breakoutValue;
-		if (std::is_same<fpX, fp32>::value && preCalc_Param.breakoutValue > 65536.0f) {
+		preCalc_Param.breakoutValue = (fpX)16.0;
+		if (std::is_same<fpX, fp32>::value && (fp32)preCalc_Param.breakoutValue > 65536.0f) {
 			preCalc_Param.breakoutValue = 65536.0f;
 		}
 		

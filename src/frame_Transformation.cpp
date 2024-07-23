@@ -20,7 +20,7 @@
 #include <xmmintrin.h>
 
 // Precision used for transformations
-typedef fp32 fpTran;
+typedef fp64 fpTran;
 
 /**
  * @brief Generic Method. Runs faster, but leaves pixels gaps and skips pixels near the edge of the frame.

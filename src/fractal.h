@@ -208,7 +208,13 @@ constexpr int32_t MANDELBROT_POWER_MINIMUM = 2;
 constexpr int32_t MANDELBROT_POWER_MAXIMUM = 6;
 
 constexpr fp64 ZOOM_VALUE_MINIMUM = -5.0;
-constexpr fp64 ZOOM_VALUE_MAXIMUM = 40.0;
+#if defined(Enable_Float128)
+	constexpr fp64 ZOOM_VALUE_MAXIMUM = 4966.0; // Float128 limit: log10(2^-16382 * 2^-112) rounded up
+#elif defined(Enable_Float80)
+	constexpr fp64 ZOOM_VALUE_MAXIMUM = 4951.0; // Float80 limit: log10(2^-16382 * 2^-63) rounded up
+#else
+	constexpr fp64 ZOOM_VALUE_MAXIMUM = 324.0; // Float64 limit: log10(2^-1022 * 2^-52) rounded up
+#endif
 
 constexpr fp64 STRETCH_VALUE_MINIMUM = -100.0;
 constexpr fp64 STRETCH_VALUE_MAXIMUM =  100.0;

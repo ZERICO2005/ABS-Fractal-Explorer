@@ -54,8 +54,9 @@ const Supported_CPU_Instruction& get_Available_CPU_Instruction();
 typedef float fp32;
 typedef double fp64;
 
-#define PRIfp32 "f"
-#define PRIfp64 "lf"
+// No specifier needed
+#define PRIfp32 ""
+#define PRIfp64 "l"
 
 typedef int int_enum;
 typedef int64_t nano64_t;
@@ -66,8 +67,11 @@ typedef int32_t dim32_t;
 //#define BUILD_DEBUG
 #define BUILD_RELEASE
 
-// #define PLATFORM_WINDOWS
-#define PLATFORM_LINUX
+#ifdef _WIN32
+	#define PLATFORM_WINDOWS
+#else
+	#define PLATFORM_LINUX
+#endif
 
 /* Constants */
 
@@ -130,12 +134,6 @@ typedef int32_t dim32_t;
 	void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict__ PatternData, size_t PatternSize);
 
 	void* inPlacePatternMemcpy(void* __restrict__ buf, size_t bufSize, size_t PatternSize);
-
-	// // NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
-	// uint64_t fnv1a_hash(const uint8_t* buf, size_t len);
-	// // NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
-	// // Set hash to 0x0 to start. Allows multiple arrays to be used in the hash
-	// void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len);
 
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);

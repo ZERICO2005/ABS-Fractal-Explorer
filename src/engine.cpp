@@ -106,6 +106,7 @@ int super_render_code(std::atomic<bool>& ABORT_RENDERING) {
 			#ifdef Enable_OpenCL
 				render_OpenCL_ABS_Mandelbrot(
 					&image_box, image_render_data, image_fractal_data,
+					Super_Engine_Config,
 					ABORT_RENDERING
 				);
 			#else
@@ -179,6 +180,7 @@ int render_Engine(std::atomic<bool>& ABORT_RENDERING) {
 			#ifdef Enable_OpenCL
 				render_OpenCL_ABS_Mandelbrot(
 					&renderBox, primaryRender, fracData,
+					Engine_Config,
 					ABORT_RENDERING
 				);
 			#else
@@ -285,7 +287,7 @@ bool init_GPU_Renderer(bool& GPU_Float16, bool& GPU_Float32, bool& GPU_Float64) 
 		{ /* GPU Float Support */
 			GPU_Float16 = false;
 			GPU_Float32 = true;
-			GPU_Float64 = false;
+			GPU_Float64 = true;
 		}
 		return true;
 	#else

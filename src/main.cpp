@@ -112,8 +112,8 @@ int main(int argc, char* argv[]) {
 		printFlush("\nProgram Exited Normally\n");
 	} else {
 		printFlush(
-			"\nProgram Exited with Error/Warning:"
-			"\n\tinit: %d\n\tterminate: %d\n",
+			"\nProgram Exited with Error/Warning:\n"\
+			"\tinit: %d\n\tterminate: %d\n",
 			ret_init,ret_terminate
 		);
 	}

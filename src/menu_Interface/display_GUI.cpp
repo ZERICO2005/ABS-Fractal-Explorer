@@ -286,13 +286,13 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	static char temp_FloatCoordinate_i[temp_FloatCoordinate_len];
 	static char temp_FloatCoordinate_zr[temp_FloatCoordinate_len];
 	static char temp_FloatCoordinate_zi[temp_FloatCoordinate_len];
-	FloatCoordinate_snprintf(temp_FloatCoordinate_r , temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.r);
-	FloatCoordinate_snprintf(temp_FloatCoordinate_i , temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.i);
-	FloatCoordinate_snprintf(temp_FloatCoordinate_zr, temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.zr);
-	FloatCoordinate_snprintf(temp_FloatCoordinate_zi, temp_FloatCoordinate_len, "%15.12" PRIfpCord, FRAC.zi);
+	FloatCoordinate_snprintf(temp_FloatCoordinate_r , temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.r);
+	FloatCoordinate_snprintf(temp_FloatCoordinate_i , temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.i);
+	FloatCoordinate_snprintf(temp_FloatCoordinate_zr, temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.zr);
+	FloatCoordinate_snprintf(temp_FloatCoordinate_zi, temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.zi);
 
 	ImGui::Text(
-		"Zreal: %s Zimag: %s Rotation: %5.1" PRIfp64 " Stetch: 2^%6.4" PRIfp64,
+		"Zreal: %s Zimag: %s Rotation: %5.1" PRIfp64 "f Stetch: 2^%6.4" PRIfp64 "f",
 		temp_FloatCoordinate_zr, temp_FloatCoordinate_zi, FRAC.rot * 360.0 / TAU, FRAC.stretch
 	);
 	ImGui::NewLine();
@@ -307,7 +307,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 	
 	ImGui::Text(
-		"Real:  %s Imag:  %s Zoom: 10^%6.4" PRIfp64 " Itr: %" PRIu32,
+		"Real:  %s Imag:  %s Zoom: 10^%6.4" PRIfp64 "f Itr: %" PRIu32,
 		temp_FloatCoordinate_r, temp_FloatCoordinate_i, adjustedZoomValue, FRAC.maxItr
 	);
     // End the ImGui window
@@ -350,8 +350,8 @@ void Menu_Coordinates() {
 		} while(0)
 	ImGui::SeparatorText("Cordinates"); { ImGui::Indent();
 		ImGui::Text("Real and Imaginary Coordinate:");
-				FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord);
-				FloatCoordinate_InputText("C-Imag##input_C_Imag", FRAC.i, "%35.32" PRIfpCord);
+				FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord "f");
+				FloatCoordinate_InputText("C-Imag##input_C_Imag", FRAC.i, "%35.32" PRIfpCord "f");
 		ImGui::Text("Zoom:");
 			Float_InputText("##zoom_input", FRAC.zoom, "%.5lf", strtod);
 			
@@ -381,8 +381,8 @@ void Menu_Coordinates() {
 	ImGui::Unindent(); }
 	ImGui::SeparatorText("Julia Set:"); { ImGui::Indent();
 		ImGui::Text("Julia Coordinate:");
-		FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.zr, "%35.32" PRIfpCord);
-		FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.zi, "%35.32" PRIfpCord);
+		FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.zr, "%35.32" PRIfpCord "f");
+		FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.zi, "%35.32" PRIfpCord "f");
 		fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
 		if (ImGui::SliderAngle("Julia Angle",&juliaAngle, -360.0f, 360.0f, "%.1f deg")) {
 			fpCord juliaMagnitude = hypot(FRAC.zr, FRAC.zi);
@@ -404,7 +404,7 @@ void Menu_Coordinates() {
 				constexpr fp64 Rotate_Image_Step = 15.0;
 				constexpr fp64 Rotate_Image_Step_Fast = 45.0;
 				fp64 frac_rot = RADIANS_TO_DEGREES(FRAC.rot);
-				if (ImGui::InputScalar("##input_image_rotation", ImGuiDataType_Double, &frac_rot, &Rotate_Image_Step, &Rotate_Image_Step_Fast, "%.5" PRIfp64)) {
+				if (ImGui::InputScalar("##input_image_rotation", ImGuiDataType_Double, &frac_rot, &Rotate_Image_Step, &Rotate_Image_Step_Fast, "%.5" PRIfp64 "f")) {
 					FRAC.rot = clampRotation(DEGREES_TO_RADIANS(frac_rot));
 				}
 			/* Slider */
@@ -417,10 +417,10 @@ void Menu_Coordinates() {
 		if (ImGui::Button("Rotate 90 deg clockwise")) { FRAC.rot += DEGREES_TO_RADIANS(90.0); }
 		ImGui::NewLine();
 
-		ImGui::Text("Stretch Image: 2.0^%.5" PRIfp64, FRAC.stretch);
+		ImGui::Text("Stretch Image: 2.0^%.5" PRIfp64 "f", FRAC.stretch);
 		constexpr fp64 Stretch_Step = 1.0 / 4.0;
 		constexpr fp64 Stretch_Step_Fast = 1.0;
-		if (ImGui::InputScalar("##input_stretch", ImGuiDataType_Double, &FRAC.stretch, &Stretch_Step, &Stretch_Step_Fast, "%.5" PRIfp64)) {
+		if (ImGui::InputScalar("##input_stretch", ImGuiDataType_Double, &FRAC.stretch, &Stretch_Step, &Stretch_Step_Fast, "%.5" PRIfp64 "f")) {
 			valueRestore(FRAC.stretch, 0.0, STRETCH_VALUE_MINIMUM, STRETCH_VALUE_MAXIMUM);
 		}
 		ImGui::NewLine();
