@@ -28,7 +28,8 @@ int32_t terminate_OpenCL();
 
 void query_OpenCL_GPU();
 
-void calculate_GPU_Hardware_Hash(uint64_t& hash);
+class FNV1A_Hash;
+void calculate_GPU_Hardware_Hash(FNV1A_Hash& hash);
 
 struct OpenCL_Engine_Information;
 

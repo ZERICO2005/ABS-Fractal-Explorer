@@ -114,7 +114,7 @@ cl_device_id create_device() {
 	return dev;
 }
 
-cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename) {
+cl_program build_program(cl_context context, cl_device_id dev, __attribute__((unused)) const char* filename) {
 	
 	#ifdef BUILD_FRAC_FROM_FILE
 		cl_program program;
@@ -137,7 +137,7 @@ cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename)
 		fclose(program_handle);
 
 
-		program = clCreateProgramWithSource(ctx, 1, (const char**)&program_buffer, &program_size, &err);
+		program = clCreateProgramWithSource(context, 1, (const char**)&program_buffer, &program_size, &err);
 		if(err < 0) {
 			//perror("Unable to create program");
 			throw "Unable to create program";
@@ -163,7 +163,7 @@ cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename)
 		int err;
 		static const char* Source_Code_List[] = {FractalOpenCL_SRC};
 		program_size = strlen(FractalOpenCL_SRC);
-		program = clCreateProgramWithSource(ctx, ARRAY_LENGTH(Source_Code_List), Source_Code_List, &program_size, &err);
+		program = clCreateProgramWithSource(context, ARRAY_LENGTH(Source_Code_List), Source_Code_List, &program_size, &err);
 		if(err < 0) {
 			//perror("Unable to create program");
 			throw "Unable to create program";

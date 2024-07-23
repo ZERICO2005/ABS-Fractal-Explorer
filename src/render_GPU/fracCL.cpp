@@ -270,7 +270,11 @@ static void calculate_Global_and_Local_Size(
 }
 
 template <typename fpX, typename fpColor>
-cl_int load_OpenCL_Render(cl_kernel& render_kernel, const BufferBox* buf, const Render_Data& ren, const ABS_Mandelbrot& param) {
+cl_int load_OpenCL_Render(
+	cl_kernel& render_kernel,
+	const BufferBox* buf, const Render_Data& ren, const ABS_Mandelbrot& param,
+	__attribute__((unused)) std::atomic<bool>& ABORT_RENDERING
+) {
 	
 	OpenCL_Kernel_Properties kernel_properties;
 	query_OpenCL_Kernel_Properties(kernel_properties, render_kernel, GPU_Engine.device_id);
@@ -405,30 +409,36 @@ int32_t render_OpenCL_ABS_Mandelbrot(
 	int_enum GPU_Render_Preset = GPU_Render_Config.get_Render_Preset();
 	switch (GPU_Render_Preset) {
 		using namespace Rendering_Configuration;
+		case Render_Preset_GPU_Float32x2: // TEMP //
 		case Render_Preset_GPU_Float32: {
 			err = load_OpenCL_Render<fp32, fp32>(
 				Render_Kernel_Float32,
-				buf, ren, param
+				buf, ren, param,
+				ABORT_RENDERING
 			);
 		} break;
-		case Render_Preset_GPU_Float32x2: {
-			err = load_OpenCL_Render<fp32x2, fp32>(
-				Render_Kernel_Float32x2,
-				buf, ren, param
-			);
-		} break;
+		// case Render_Preset_GPU_Float32x2: {
+		// 	err = load_OpenCL_Render<fp32x2, fp32>(
+		// 		Render_Kernel_Float32x2,
+		// 		buf, ren, param,
+		// 		ABORT_RENDERING
+		// 	);
+		// } break;
+		case Render_Preset_GPU_Float64x2: // TEMP //
 		case Render_Preset_GPU_Float64: {
 			err = load_OpenCL_Render<fp64, fp64>(
 				Render_Kernel_Float64,
-				buf, ren, param
+				buf, ren, param,
+				ABORT_RENDERING
 			);
 		} break;
-		case Render_Preset_GPU_Float64x2: {
-			err = load_OpenCL_Render<fp64x2, fp64>(
-				Render_Kernel_Float32,
-				buf, ren, param
-			);
-		} break;
+		// case Render_Preset_GPU_Float64x2: {
+		// 	err = load_OpenCL_Render<fp64x2, fp64>(
+		// 		Render_Kernel_Float32,
+		// 		buf, ren, param,
+		// 		ABORT_RENDERING
+		// 	);
+		// } break;
 		default: {
 			printfInterval(0.5, "Error: Invalid GPU rendering preset: %d\n", GPU_Render_Preset);
 		}

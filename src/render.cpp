@@ -100,7 +100,7 @@ void Bootup_initRenderData() {
 
 /* Keyboard and Scancodes */
 
-void process_SDL2_event(SDL_Event& event) {
+void process_SDL2_event(__attribute__((unused)) SDL_Event& event) {
 	// switch (event.type) {
 	// 	case SDL_KEYDOWN:
 	// 	case SDL_KEYUP:
@@ -1440,7 +1440,7 @@ static inline void calculate_Tranformation_Change(
 }
 
 /* SDL2 Frame Transformation */
-static int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
+__attribute__((unused)) static int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }
 	if (image.resX <= 0 || image.resY <= 0) {
@@ -1476,8 +1476,8 @@ static int Transform_Frame(const ImageBuffer& image, const Render_Data& ren) {
 	}
 }
 
-/* Naive Method, runs very slow with quadmath.h, and leaves gaps in the image sometimes */
-static int Manually_Transform_Frame(const ImageBuffer& image) {
+/* Affine Frame Transformation */
+__attribute__((unused)) static int Manually_Transform_Frame(const ImageBuffer& image) {
 	// nano64_t startTime = getNanoTime();
 	if (image.vram == nullptr) { printError("const ImageBuffer& image.vram is nullptr"); return -1; }
 	if (image.allocated() == false) { printError("const ImageBuffer& image is not allocated"); return -1; }

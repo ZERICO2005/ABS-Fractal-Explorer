@@ -14,10 +14,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(FEATURE_Float80       "")
 	set(FEATURE_Float128      "")
 	set(FEATURE_OpenCL        "")
-	set(FEATURE_WindowsFileIO "")
+#	set(FEATURE_WindowsFileIO "")
 
-	set(FEATURE_OpenCV_Scaler "")
-	set(STATIC_OpenCV_Scaler  "")
+#	set(FEATURE_OpenCV_Scaler "")
+#	set(STATIC_OpenCV_Scaler  "")
 
 #   set(COMPILE_FLTO "")
 
@@ -32,7 +32,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 # Compiler Flags
 	set(PROGRAM_OPT_FLAG -O3 -g)
 	set(LIBRARY_OPT_FLAG -O3)
-
+	# -Ofast appears to have a noticable speedup compared to -O3 for SSE2 and AVX rendering.
+	set(RENDER_CPU_OPT_FLAG -Ofast)
 	set(MARCH_FLAGS -msse2)
 
 # Source Files
@@ -43,13 +44,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		file (GLOB REMOVE_FILES "${SRC_DIR}/render_GPU/*.c" "${SRC_DIR}/render_GPU/*.cpp")
 		list(REMOVE_ITEM SRC_FILES ${REMOVE_FILES})
 	endif()
-	if(NOT DEFINED FEATURE_OpenCV)
+	if(NOT DEFINED FEATURE_OpenCV_Scaler)
 		file (GLOB REMOVE_FILES "${SRC_DIR}/imageTransform.cpp")
 		list(REMOVE_ITEM SRC_FILES ${REMOVE_FILES})
 	endif()
 
-	# -Ofast appears to have a noticable speedup compared to -O3 for SSE2 and AVX rendering.
-	set(RENDER_CPU_OPT_FLAG -Ofast)
+
 
 	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_AVX.cpp")
 	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG}")
@@ -132,7 +132,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 	set(MARCH_FLAGS -msse2)
 
-	set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare -Wfloat-conversion)
+	set(WARNING_FLAGS
+		-Wall -Wextra -Wshadow
+		-Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare -Wfloat-conversion
+	)
 	set(WARNING_IGNORE_FLAGS -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
 
 	set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fdiagnostics-color=always")

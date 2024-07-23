@@ -48,7 +48,7 @@ __attribute__((unused)) static int frame_Transform_Generic_Fast(
 	
 	//size_t plotted_pixels = 0;
 
-	const uint32_t* image_buf = (uint32_t*)image.vram;
+	const uint32_t* image_buf = (const uint32_t*)image.vram;
 	uint32_t* blit_buf = (uint32_t*)blit.vram;
 
 	/* Pre calculated constants */
