@@ -29,7 +29,7 @@ Bit_Graphics::Bit_Graphics(size_t resX, size_t resY) {
 	initialized = false;
 	init_Bit_Graphics(resX,resY);
 }
-bool Bit_Graphics::isInitialized() { return initialized; }
+bool Bit_Graphics::isInitialized() const { return initialized; }
 void Bit_Graphics::init_Bit_Graphics(size_t resX, size_t resY) {
 	if (initialized == true) { return; }
 	if (resX == 0 || resY == 0) { return; }

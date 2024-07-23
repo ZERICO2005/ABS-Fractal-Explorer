@@ -13,6 +13,8 @@
 
 #include <SDL2/SDL.h>
 
+#include "fnv1a_hash.hpp"
+
 /* class DisplayInfo */
 	DisplayInfo::DisplayInfo() { clearDisplayInfo(); };
 	DisplayInfo::~DisplayInfo() { clearDisplayInfo(); };
@@ -565,7 +567,7 @@ uint64_t getDisplayConfigHash() {
 	if (DisplayList.size() == 0) {
 		return 0x0;
 	}
-	uint64_t hashAcc = 0x0;
+	FNV1A_Hash hashAcc;
 	struct DisplayHash {
 		int32_t index;
 		dim32_t resX; dim32_t resY;
@@ -582,7 +584,8 @@ uint64_t getDisplayConfigHash() {
 			(fp64*)((void*)&dispHash.refreshRate),&dispHash.bitsPerPixel
 		);
 		dispHash.count = DisplayList.size();
-		hashAcc += fnv1a_hash((uint8_t*)((void*)&dispHash),sizeof(DisplayHash));
+		hashAcc += dispHash;
+		//hashAcc += fnv1a_hash((uint8_t*)((void*)&dispHash),sizeof(DisplayHash));
 	}
-	return hashAcc;
+	return hashAcc.get_hash();
 }

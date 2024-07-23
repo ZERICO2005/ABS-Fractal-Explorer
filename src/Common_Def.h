@@ -66,8 +66,8 @@ typedef int32_t dim32_t;
 //#define BUILD_DEBUG
 #define BUILD_RELEASE
 
-#define PLATFORM_WINDOWS
-// #define PLATFORM_LINUX
+// #define PLATFORM_WINDOWS
+#define PLATFORM_LINUX
 
 /* Constants */
 
@@ -84,7 +84,7 @@ typedef int32_t dim32_t;
 
 	#define ARRAY_LENGTH(x)  (sizeof(x) / sizeof(x[0]))
 	#define TEXT_LENGTH(x) ( ((sizeof(x) / sizeof(x[0])) != 0) ? ((sizeof(x) / sizeof(x[0])) - 1) : 0 )
-	#define FREE(x) free(x); x = nullptr
+	#define FREE(x) do { free(x); x = nullptr; } while(0)
 
 /* Functions */
 	// Left Circular Shift
@@ -131,11 +131,11 @@ typedef int32_t dim32_t;
 
 	void* inPlacePatternMemcpy(void* __restrict__ buf, size_t bufSize, size_t PatternSize);
 
-	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
-	uint64_t fnv1a_hash(const uint8_t* buf, size_t len);
-	// NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
-	// Set hash to 0x0 to start. Allows multiple arrays to be used in the hash
-	void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len);
+	// // NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+	// uint64_t fnv1a_hash(const uint8_t* buf, size_t len);
+	// // NOT A CRYPTOGRAPHIC HASH FUNCTION (https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function)
+	// // Set hash to 0x0 to start. Allows multiple arrays to be used in the hash
+	// void fnv1a_hash_continous(uint64_t& hash, const uint8_t* buf, size_t len);
 
 	fp64 calcMinMaxRatio(fp64 val, fp64 min, fp64 max, fp64 ratio);
 	fp32 calcMinMaxRatio(fp32 val, fp32 min, fp32 max, fp32 ratio);
@@ -182,6 +182,40 @@ typedef int32_t dim32_t;
 	inline fp64 getDecimalTime() {
 		return NANO_TO_SECONDS(getNanoTime());
 	}
+	
+	// Sleeps for a given duration. Returns the difference between the duration and the actual time slept (negative being late)
+	inline nano64_t accurateSleep(nano64_t duration) {
+		constexpr nano64_t getNanoTimePrecision = 100;
+		duration = (duration / getNanoTimePrecision) * getNanoTimePrecision;
+		
+		constexpr nano64_t sleep_threshold    = SECONDS_TO_NANO(1.0e0 );
+		constexpr nano64_t yield_threshold    = SECONDS_TO_NANO(1.0e-3);
+		constexpr nano64_t spinlock_threshold = getNanoTimePrecision;
+		
+		const nano64_t sleep_End = getNanoTime() + duration;
+		nano64_t time_dif = sleep_End - getNanoTime();
+		
+		// Sleep
+		while (time_dif > sleep_threshold) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			time_dif = sleep_End - getNanoTime();
+		}
+		// Yield
+		while (time_dif > yield_threshold) {
+			std::this_thread::yield();
+			time_dif = sleep_End - getNanoTime();
+		}
+		// Spin-lock
+		while (time_dif > spinlock_threshold) {
+			time_dif = sleep_End - getNanoTime();
+		}
+		return time_dif;
+	}
+	
+	// Sleeps for a given duration. Returns the difference between the duration and the actual time slept (negative being late)
+	inline fp64 accurateSleep(fp64 duration) {
+		return NANO_TO_SECONDS(accurateSleep(SECONDS_TO_NANO(duration)));
+	}
 
 /* String Functions */
 
@@ -224,43 +258,40 @@ typedef int32_t dim32_t;
 	inline uint32_t stringTo_Uint32(const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (uint32_t)strtoul(nPtr,nullptr,base) : 0; }
 	inline uint64_t stringTo_Uint64(const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (uint64_t)strtoul(nPtr,nullptr,base) : 0; }
 	inline int8_t   stringTo_Int8  (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int8_t)  strtol (nPtr,nullptr,base) : 0; }
-	inline int32_t  stringTo_Int32 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int16_t) strtol (nPtr,nullptr,base) : 0; }
-	inline int16_t  stringTo_Int16 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int32_t) strtol (nPtr,nullptr,base) : 0; }
+	inline int16_t  stringTo_Int16 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int16_t) strtol (nPtr,nullptr,base) : 0; }
+	inline int32_t  stringTo_Int32 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int32_t) strtol (nPtr,nullptr,base) : 0; }
 	inline int64_t  stringTo_Int64 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int64_t) strtol (nPtr,nullptr,base) : 0; }
 #endif
 
 /* Print Functions */
-	#define printFlush(...) printf(__VA_ARGS__); fflush(stdout)
-	#define printFatalError(...) printf("\n============\nFATAL ERROR: "); printf(__VA_ARGS__); printf("\n============\n"); fflush(stdout)
-	#define printCriticalError(...) printf("\nCRITICAL ERROR: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
-	#define printError(...) printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
-	#define printWarning(...) printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout)
+	#define printFlush(...) do { printf(__VA_ARGS__); fflush(stdout); } while(0)
+	#define printFatalError(...) do { printf("\n============\nFATAL ERROR: "); printf(__VA_ARGS__); printf("\n============\n"); fflush(stdout); } while(0)
+	#define printCriticalError(...) do { printf("\nCRITICAL ERROR: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout); } while(0)
+	#define printError(...) do { printf("\nError: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout); } while(0)
+	#define printWarning(...) do { printf("\nWarning: "); printf(__VA_ARGS__); printf("\n"); fflush(stdout); } while(0)
 
 	// Print change in value, also calls fflush(stdout);
-	#define printfChange(type, value, ...) \
-	{ \
+	#define printfChange(type, value, ...) do { \
 		static type Detect_Change = (value); \
 		if (Detect_Change != (value)) { \
 			printf(__VA_ARGS__); \
 			fflush(stdout); \
 			Detect_Change = (value); \
 		} \
-	}
+	} while(0)
 
 	// Print up to every (freq) seconds, also calls fflush(stdout);
-	#define printfInterval(freq, ...); \
-	{ \
+	#define printfInterval(freq, ...); do { \
 		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
 		if (getNanoTime() - ResetTime_PrintfInterval > SECONDS_TO_NANO(freq)) { \
 			ResetTime_PrintfInterval = getNanoTime(); \
 			printf(__VA_ARGS__); \
 			fflush(stdout); \
 		} \
-	}
+	} while(0)
 
 	// Print change in value up to every (freq) seconds, also calls fflush(stdout);
-	#define printfChangeInterval(type, value, freq, ...) \
-	{ \
+	#define printfChangeInterval(type, value, freq, ...) do { \
 		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
 		static type Detect_Change = (value); \
 		if (getNanoTime() - ResetTime_PrintfInterval > SECONDS_TO_NANO(freq)) { \
@@ -271,7 +302,7 @@ typedef int32_t dim32_t;
 				Detect_Change = (value); \
 			} \
 		} \
-	}
+	} while(0)
 	
 	// (Debugging Tool) Waits for a duration in seconds
 	inline void BurnTime(fp64 s) {

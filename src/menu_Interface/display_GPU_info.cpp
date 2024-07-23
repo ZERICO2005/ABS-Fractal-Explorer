@@ -10,8 +10,6 @@
 
 #ifdef Enable_OpenCL
 
-#include "display_GPU_info.h"
-
 #include "display_GUI.h"
 #include "imgui.h"
 
@@ -81,6 +79,12 @@ void SubMenu_GPU_Information() {
 			ImGui::NewLine();
 		ImGui::Unindent(); }
 	}
+}
+
+#else
+
+void SubMenu_GPU_Information() {
+	ImGui::TextWrapped("This version of ABS-Fractal-Explorer does not support GPU rendering/OpenCL.");
 }
 
 #endif

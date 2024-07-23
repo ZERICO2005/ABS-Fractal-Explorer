@@ -11,13 +11,15 @@ project(${PROJECT_NAME})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 # Configuration
-#	set(FEATURE_Float80       "")
-#	set(FEATURE_Float128      "")
-#	set(FEATURE_OpenCL        "")
-	set(FEATURE_WindowsFileIO "")
+	set(FEATURE_Float80       "")
+	set(FEATURE_Float128      "")
+	set(FEATURE_OpenCL        "")
+#	set(FEATURE_WindowsFileIO "")
 
 #	set(FEATURE_OpenCV_Scaler "")
 #	set(STATIC_OpenCV_Scaler  "")
+
+#   set(COMPILE_FLTO "")
 
 # Compiling
 	set(CMAKE_C_COMPILER "gcc")
@@ -62,13 +64,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 # Packages and Macros
 	find_package(SDL2 REQUIRED)
 
-
 	if(DEFINED FEATURE_Float80)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_Float80)
 	endif()
 
 	if(DEFINED FEATURE_Float128)
-		set(LIB_QuadMath "-l:libquadmath.a")
+		set(LIB_QuadMath "quadmath")
+		#set(LIB_QuadMath "-l:libquadmath.a")
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_Float128)
 	else()
 		set(LIB_QuadMath "")
@@ -107,14 +109,23 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_WindowsFileDialog)
 	endif()
 
+	if (DEFINED COMPILE_FLTO)
+		set(FLTO_FLAG "-flto")
+	else()
+		set(FLTO_FLAG "")
+	endif()
+
 # ImGui
-	file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp")
+	file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp" "${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp" "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer2.cpp")
 	add_library(IMGUI_LIB OBJECT ${IMGUI_FILES})
 	target_compile_options(IMGUI_LIB PRIVATE ${LIBRARY_OPT_FLAG} ${MARCH_FLAGS} -Wall -Wshadow)
 
 	include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bitGraphics_Font" ${OpenCV_INCLUDE_DIRS})
 
-# Compile and Link options
+# Compiler Flags Debug(-g -O0) Release(-O3)
+	set(OPT_FLAG -O3 ${FLTO_FLAG})
+
+	set(MARCH_FLAGS -msse2)
 
 	set(WARNING_FLAGS -Wall -Wextra -Wshadow -Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare -Wfloat-conversion)
 	set(WARNING_IGNORE_FLAGS -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)

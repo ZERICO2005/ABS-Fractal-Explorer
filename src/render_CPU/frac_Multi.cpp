@@ -189,7 +189,7 @@ void find_Render_Function(
 			}
 		}
 	}
-	printfInterval(0.5,"\nError: frac_type(%d) is not available with %s",
+	printfInterval(0.5,"Error: frac_type(%d) is not available with %s\n",
 		frac_type, Rendering_Preset_Name[render_preset]
 	);
 }
@@ -239,7 +239,7 @@ void renderCPU_ABS_Mandelbrot(
 
 	switch(Render_Precision) {
 		case Render_Precision_Float16: {
-			printfInterval(0.5, "\nError: Rendering_Precision Float16 is not supported");
+			printfInterval(0.5, "Error: Rendering_Precision Float16 is not supported\n");
 		} break;
 		case Render_Precision_Float32: {
 			load_Fractal_Render<fp32, fp32>(Fractal_Type, Render_Preset, Thread_Arguments);
@@ -258,11 +258,11 @@ void renderCPU_ABS_Mandelbrot(
 			} break;
 		#endif
 		default:
-			printfInterval(0.5, "\nError: Invalid rendering precision enum: %d", Render_Precision);
+			printfInterval(0.5, "Error: Invalid rendering precision enum: %d\n", Render_Precision);
 			break;
 	}
 
 	if (ABORT_RENDERING == true) {
-		printFlush("\nAborted %" PRIu32 " threads", threadCount);
+		printFlush("Aborted %" PRIu32 " threads\n", threadCount);
 	}
 }
