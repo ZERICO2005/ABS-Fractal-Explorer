@@ -6,6 +6,8 @@
 	#include <climits>
 	#include <cfloat>
 	#include <cstdlib>
+	#include <math.h>
+	#include <cmath>
 
 	#if defined(__GNUC__) && !defined(__clang__)
 		typedef __float80 fp80;
@@ -29,6 +31,11 @@
 		return (nPtr != nullptr) ? strtold(nPtr, endPtr) : (fp80)0.0;
 	}
 
+	inline void sincos(fp80 x, fp80* p_sin, fp80* p_cos) {
+		// Unsure why sin(long double) is not defined here.
+		*p_sin = sinl(x);
+		*p_cos = cosl(x);
+	}
 #endif
 
 #endif /* FLOAT80_HPP */

@@ -333,12 +333,12 @@ int init_Engine(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	
 	while (read_Render_Ready() == false) {
 		if (QUIT_FLAG == true) {
-			printWarning("Engine thread exiting initialization: QUIT_FLAG == true");
+			printf("Warning: Engine thread exiting initialization: QUIT_FLAG == true\n");
+			fflush(stdout);
 			return -1;
 		}
 		std::this_thread::yield();
 	}
-	
 	start_Engine(QUIT_FLAG,ABORT_RENDERING);
 	return 0;
 }

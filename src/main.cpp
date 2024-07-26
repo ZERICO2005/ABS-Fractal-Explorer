@@ -81,15 +81,16 @@ static void write_Program_RelativeFilePath(const char* path) {
 }
 
 int main(int argc, char* argv[]) {
-	printFlush("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
-	
+	printf("\n%s v%s\nzerico2005 | %s\n",PROGRAM_NAME,PROGRAM_VERSION,PROGRAM_DATE);
+	fflush(stdout);
 	if (argc >= 1) { write_Program_RelativeFilePath(argv[0]); }
 
 	// print_pointer_sizes();
 
 	const Supported_CPU_Instruction& Available_CPU_Instruction = get_Available_CPU_Instruction();
 	if (count_Supported_CPU_Instruction(Available_CPU_Instruction) == 0) {
-		printWarning("Unable to obtain available CPU instruction set extensions");
+		printf("Warning: Unable to obtain available CPU instruction set extensions\n");
+		fflush(stdout);
 	}
 
 	/* Process .fracExp files */
@@ -109,14 +110,15 @@ int main(int argc, char* argv[]) {
 	int ret_terminate = terminate_Fractal_Engine();
 
 	if (ret_init == 0 && ret_terminate == 0) {
-		printFlush("\nProgram Exited Normally\n");
+		printf("\nProgram Exited Normally\n");
 	} else {
-		printFlush(
+		printf(
 			"\nProgram Exited with Error/Warning:\n"\
 			"\tinit: %d\n\tterminate: %d\n",
 			ret_init,ret_terminate
 		);
 	}
+	fflush(stdout);
 
 	return 0;
 }

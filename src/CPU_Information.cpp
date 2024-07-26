@@ -132,52 +132,56 @@ void get_Supported_CPU_Instruction(Supported_CPU_Instruction& instruction_list) 
 	}
 }
 
+static inline size_t count_if_supported(const bool& input) {
+	return (input == true) ? 1 : 0;
+}
+
 size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list) {
 	size_t count = 0;
 	/* SSE Family */
-		count += (instruction_list.SSE_Family.SSE == true) ? 1 : 0;
-		count += (instruction_list.SSE_Family.SSE2 == true) ? 1 : 0;
-		count += (instruction_list.SSE_Family.SSE3 == true) ? 1 : 0;
-		count += (instruction_list.SSE_Family.SSSE3 == true) ? 1 : 0;
-		count += (instruction_list.SSE_Family.SSE4_1 == true) ? 1 : 0;
-		count += (instruction_list.SSE_Family.SSE4_2 == true) ? 1 : 0;
-		count += (instruction_list.SSE_Family.SSE4a == true) ? 1 : 0;
+		count += count_if_supported(instruction_list.SSE_Family.SSE);
+		count += count_if_supported(instruction_list.SSE_Family.SSE2);
+		count += count_if_supported(instruction_list.SSE_Family.SSE3);
+		count += count_if_supported(instruction_list.SSE_Family.SSSE3);
+		count += count_if_supported(instruction_list.SSE_Family.SSE4_1);
+		count += count_if_supported(instruction_list.SSE_Family.SSE4_2);
+		count += count_if_supported(instruction_list.SSE_Family.SSE4a);
 	/* AVX Family */
-		count += (instruction_list.AVX_Family.AVX == true) ? 1 : 0;
-		count += (instruction_list.AVX_Family.F16C == true) ? 1 : 0;
-		count += (instruction_list.AVX_Family.FMA == true) ? 1 : 0;
-		count += (instruction_list.AVX_Family.AVX2 == true) ? 1 : 0;
-		count += (instruction_list.AVX_Family.AVX_VNNI == true) ? 1 : 0;
-		count += (instruction_list.AVX_Family.AVX_VNNI_INT8 == true) ? 1 : 0;
-		count += (instruction_list.AVX_Family.AVX_NE_CONVERT == true) ? 1 : 0;
-		count += (instruction_list.AVX_Family.AVX_IFMA == true) ? 1 : 0;
-		// count += (instruction_list.AVX_Family.AVX_VNNI_INT16 == true) ? 1 : 0;
-		// count += (instruction_list.AVX_Family.SHA512 == true) ? 1 : 0;
-		// count += (instruction_list.AVX_Family.SM3 == true) ? 1 : 0;
-		// count += (instruction_list.AVX_Family.SM4 == true) ? 1 : 0;
+		count += count_if_supported(instruction_list.AVX_Family.AVX);
+		count += count_if_supported(instruction_list.AVX_Family.F16C);
+		count += count_if_supported(instruction_list.AVX_Family.FMA);
+		count += count_if_supported(instruction_list.AVX_Family.AVX2);
+		count += count_if_supported(instruction_list.AVX_Family.AVX_VNNI);
+		count += count_if_supported(instruction_list.AVX_Family.AVX_VNNI_INT8);
+		count += count_if_supported(instruction_list.AVX_Family.AVX_NE_CONVERT);
+		count += count_if_supported(instruction_list.AVX_Family.AVX_IFMA);
+		// count += count_if_supported(instruction_list.AVX_Family.AVX_VNNI_INT16);
+		// count += count_if_supported(instruction_list.AVX_Family.SHA512);
+		// count += count_if_supported(instruction_list.AVX_Family.SM3);
+		// count += count_if_supported(instruction_list.AVX_Family.SM4);
 	/* AVX512 Family */
-		count += (instruction_list.AVX512_Family.AVX512_F == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_BW == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_CD == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_DQ == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_IFMA52 == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_VL == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_VPOPCNTDQ == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_BF16 == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_BITALG == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_VBMI == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_VBMI2 == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_VNNI == true) ? 1 : 0;
-		// count += (instruction_list.AVX512_Family.AVX512_VP2INTERSECT == true) ? 1 : 0;
-		count += (instruction_list.AVX512_Family.AVX512_FP16 == true) ? 1 : 0;
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_F);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_BW);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_CD);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_DQ);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_IFMA52);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_VL);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_VPOPCNTDQ);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_BF16);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_BITALG);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_VBMI);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_VBMI2);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_VNNI);
+		// count += count_if_supported(instruction_list.AVX512_Family.AVX512_VP2INTERSECT);
+		count += count_if_supported(instruction_list.AVX512_Family.AVX512_FP16);
 	/* AMX Family */
-		// count += (instruction_list.AMX_Family.AMX_BF16 == true) ? 1 : 0;
-		// count += (instruction_list.AMX_Family.AMX_INT8 == true) ? 1 : 0;
-		// count += (instruction_list.AMX_Family.AMX_TILE == true) ? 1 : 0;
-		// count += (instruction_list.AMX_Family.AMX_FP16 == true) ? 1 : 0;
-		// count += (instruction_list.AMX_Family.AMX_COMPLEX == true) ? 1 : 0;
+		// count += count_if_supported(instruction_list.AMX_Family.AMX_BF16);
+		// count += count_if_supported(instruction_list.AMX_Family.AMX_INT8);
+		// count += count_if_supported(instruction_list.AMX_Family.AMX_TILE);
+		// count += count_if_supported(instruction_list.AMX_Family.AMX_FP16);
+		// count += count_if_supported(instruction_list.AMX_Family.AMX_COMPLEX);
 	/* Others */
-		count += (instruction_list.MMX == true) ? 1 : 0;
+		count += count_if_supported(instruction_list.MMX);
 
 	return count;
 }
@@ -294,7 +298,9 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 
 	void print_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		printf(
-			"Supported CPU Instruction Sets: <%12s>\n", instruction_list.CPU_Signature
+			"Supported CPU Instruction Sets: %zu\nCPU Signature: <%12s>\n",
+			count_Supported_CPU_Instruction(instruction_list),
+			instruction_list.CPU_Signature
 		);
 		print_Supported_SSE_Family_Instruction   (instruction_list);
 		print_Supported_AVX_Family_Instruction   (instruction_list);

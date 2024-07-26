@@ -13,8 +13,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 # Configuration
 	set(FEATURE_Float80       "")
 	set(FEATURE_Float128      "")
+	# MPFR converts between dekker-floats and strings
+	set(FEATURE_FloatMPFR     "")
 	set(FEATURE_OpenCL        "")
-#	set(FEATURE_WindowsFileIO "")
+	set(FEATURE_WindowsFileIO "")
 
 #	set(FEATURE_OpenCV_Scaler "")
 #	set(STATIC_OpenCV_Scaler  "")
@@ -74,11 +76,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	endif()
 
 	if(DEFINED FEATURE_Float128)
-		set(LIB_QuadMath "quadmath")
-		#set(LIB_QuadMath "-l:libquadmath.a")
+		#set(LIB_QuadMath "quadmath")
+		set(LIB_QuadMath "-l:libquadmath.a")
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_Float128)
 	else()
 		set(LIB_QuadMath "")
+	endif()
+
+	if(DEFINED FEATURE_FloatMPFR)
+		#set(LIB_MPFR "-lmpfr -lgmp")
+		set(LIB_MPFR "-l:libmpfr.a -l:libgmp.a")
+		
+		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_FloatMPFR)
+	else()
+		set(LIB_MPFR "")
 	endif()
 
 	if(DEFINED FEATURE_OpenCL)
@@ -128,12 +139,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bitGraphics_Font" ${OpenCV_INCLUDE_DIRS})
 
 # Compiler Flags Debug(-g -O0) Release(-O3)
-	set(OPT_FLAG -O3 ${FLTO_FLAG})
+	# set(OPT_FLAG -O3 -g ${FLTO_FLAG})
 
 	set(MARCH_FLAGS -msse2)
 
 	set(WARNING_FLAGS
 		-Wall -Wextra -Wshadow
+		-Werror=infinite-recursion
 		-Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare -Wfloat-conversion
 	)
 	set(WARNING_IGNORE_FLAGS -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
@@ -144,4 +156,4 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	target_compile_options(${PROJECT_NAME} PRIVATE ${PROGRAM_OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
 
 # If using the OpenCV Scaler, add ${OpenCV_LIBS}
-	target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -lSDL2 ${LIB_OpenCL} ${LIB_OpenCV} ${LIB_QuadMath} IMGUI_LIB)
+	target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -lSDL2 -lmpfr -lgmp ${LIB_OpenCL} ${LIB_OpenCV} ${LIB_QuadMath} IMGUI_LIB)

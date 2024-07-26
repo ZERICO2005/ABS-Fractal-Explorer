@@ -147,15 +147,15 @@ void Generate_PreCalc_Param(
 		preCalc_Param.realJulia = use_startingZ ? (fpX)param.zr : (fpX)0.0;
 		preCalc_Param.imagJulia = use_startingZ ? (fpX)param.zi : (fpX)0.0;
 		const fpCord zoom_PC = pow((fpCord)10.0, (fpCord)param.zoom);
+		
+		
 		preCalc_Param.zoom_PC = (fpX)zoom_PC;
 		preCalc_Param.rotSin_PC = (fpX)sin((fpCord)param.rot);
 		preCalc_Param.rotCos_PC = (fpX)cos((fpCord)param.rot);
 		preCalc_Param.breakoutValue = (fpX)param.breakoutValue;
-		preCalc_Param.breakoutValue = (fpX)16.0;
 		if (std::is_same<fpX, fp32>::value && (fp32)preCalc_Param.breakoutValue > 65536.0f) {
 			preCalc_Param.breakoutValue = 65536.0f;
 		}
-		
 		
 		const dim32_t sResY = preCalc_Param.Cord_ResY - 1;
 		const dim32_t sResX = preCalc_Param.Cord_ResX - 1;
@@ -168,7 +168,7 @@ void Generate_PreCalc_Param(
 		preCalc_Param.numX = (fpX)numX;
 		preCalc_Param.recip_numZ = (fpX)((fpCord)param.sX / numT);
 		preCalc_Param.neg_recip_numW = (fpX)(-((fpCord)param.sY / numT));
-		
+
 	/* Polar */
 		preCalc_Param.polarPower = (fpX)param.polarPower;
 		preCalc_Param.polarPowerHalf = (fpX)param.polarPower / (fpX)2.0;
@@ -220,6 +220,14 @@ void Generate_PreCalc_Param(
 	// printfInterval(0.3,"\nPreCalc: %.3lfus %.3lf",
 	// 	NANO_TO_SECONDS(finishTimer - startTimer) * 1.0e6, NANO_TO_FRAMERATE(finishTimer - startTimer)
 	// );
+
+	if (
+		isnan(preCalc_Param.zoom_PC) ||
+		isnan(preCalc_Param.recip_numZ) ||
+		isnan(preCalc_Param.neg_recip_numW)
+	) {
+		/* Invalid cordinates */
+	}
 }
 
 #endif /* FRAC_MULTI_INTERNAL_H */

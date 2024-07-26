@@ -909,15 +909,17 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 
 	bootup_Fractal_Frame_Rendered = false;
 	
-	write_Render_Ready(true);
+	
 	write_Parameters(&current_Fractal, &primaryRenderData, &secondaryRenderData);
 	#ifndef BUILD_RELEASE
 		printFlush("\n");
 	#endif
 
+	write_Render_Ready(true);
 	while (read_Engine_Ready() == false) {
 		if (QUIT_FLAG == true) {
-			printWarning("Render thread exiting initialization: QUIT_FLAG == true");
+			printf("Warning: Render thread exiting initialization: QUIT_FLAG == true\n");
+			fflush(stdout);
 			return -1;
 		}
 		std::this_thread::yield();
@@ -1241,7 +1243,7 @@ int exportSuperScreenshot() {
 void renderJuliaCordinatePoint(const BufferBox& box) {
 	const User_Rendering_Settings& Rendering_Settings = config_data.Rendering_Settings;
 	if (Rendering_Settings.JuliaPoint_Enabled == false) { return; }
-	if (current_Fractal.zr == 0.0 && current_Fractal.zi == 0.0) { return; }
+	if (current_Fractal.zr == (fpCord)0.0 && current_Fractal.zi == (fpCord)0.0) { return; }
 
 	if (validateBufferBox(&box, true) == false) {
 		printError("Unable to renderJuliaCordinatePoint(), to invalid BufferBox");

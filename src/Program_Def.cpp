@@ -7,6 +7,7 @@
 */
 
 #include "Common_Def.h"
+#include "floats/Float128.hpp"
 #include "Program_Def.h"
 
 /* Relative File Path */
@@ -20,6 +21,169 @@
 		std::lock_guard<std::mutex> lock(mutex_RelativeFilePath);
 		string_RelativeFilePath = path;
 	}
+
+/* FloatCoodinate */
+
+#ifdef Enable_FloatMPFR
+	
+	#ifdef Enable_Float128
+		#define MPFR_WANT_FLOAT128
+	#endif
+	#include "mpfr.h"
+	#define PRImpfr "R"
+
+	static constexpr mpfr_prec_t MPFR_PRECISION = 320;
+
+	// Converts double dekker floats to mpfr_t
+	static void fpCord_to_mpfr(
+		mpfr_t& cord_value,
+		const fpCord& cord
+	) {
+		#if defined(Enable_Float128) && !defined(Enable_Float80)
+			mpfr_set_float128(cord_value, cord, MPFR_RNDN);
+		#else
+			mpfr_t cord_hi, cord_lo;
+			mpfr_inits2(MPFR_PRECISION, cord_hi, cord_lo, nullptr);
+			#if defined(Enable_Float80)
+				mpfr_set_ld(cord_hi, cord.hi, MPFR_RNDN);
+				mpfr_set_ld(cord_lo, cord.lo, MPFR_RNDN);
+			#else
+				mpfr_set_d(cord_hi, cord.hi, MPFR_RNDN);
+				mpfr_set_d(cord_lo, cord.lo, MPFR_RNDN);
+			#endif
+			mpfr_add(cord_value, cord_hi, cord_lo, MPFR_RNDN);
+			mpfr_clears(cord_hi, cord_lo, nullptr);
+		#endif
+	}
+
+	int FloatCoordinate_snprintf(char* buf, size_t len, const char* format, fpCord cord) {
+		mpfr_t cord_value;
+		mpfr_init2(cord_value, MPFR_PRECISION);
+		fpCord_to_mpfr(cord_value, cord);
+		int ret_value = mpfr_snprintf(
+			buf, len, format, cord_value
+		);
+		mpfr_clear(cord_value);
+		return ret_value;
+	}
+
+	std::string FloatCoordinate_toString(const char* format, fpCord cord) {
+		mpfr_t cord_value;
+		mpfr_init2(cord_value, MPFR_PRECISION);
+		fpCord_to_mpfr(cord_value, cord);
+		
+		int buf_size = mpfr_snprintf(
+			nullptr, 0, format, cord_value
+		);
+		if (buf_size < 0) {
+			std::string str = "<Failed to convert cordinate to string: Formatting Error>";
+			return str;
+		}
+		char* buf = (char*)calloc((size_t)buf_size + 1, sizeof(char));
+		if (buf == nullptr) {
+			std::string str = "<Failed to convert cordinate to string: Allocation Error>";
+			return str;
+		}
+		int ret_code = mpfr_snprintf(
+			buf, (size_t)buf_size, format, cord_value
+		);
+		if (ret_code < 0) {
+			std::string str = "<Failed to convert cordinate to string: Write Error>";
+			return str;
+		}
+		std::string str;
+		str.assign(buf);
+		FREE(buf);
+		mpfr_clear(cord_value);
+		return str;
+	}
+
+	// Converts mpfr_t to a double dekker float
+	static void mpfr_to_fpCord(
+		fpCord& cord,
+		const mpfr_t& cord_value
+	) {
+		#if defined(Enable_Float128) && !defined(Enable_Float80)
+			cord = mpfr_get_float128(cord_value, MPFR_RNDN);
+		#else
+			mpfr_t cord_diff;
+			mpfr_init2(cord_diff, MPFR_PRECISION);
+			#if defined(Enable_Float80)
+				cord.hi = mpfr_get_ld(cord_value, MPFR_RNDN);
+				{ // mpfr_sub_ld doesn't exist
+					mpfr_t cord_hi_ld;
+					mpfr_init2(cord_hi_ld, MPFR_PRECISION);
+					mpfr_set_ld(cord_hi_ld, cord.hi, MPFR_RNDN);
+					mpfr_sub(cord_diff, cord_value, cord_hi_ld, MPFR_RNDN);
+					mpfr_clear(cord_hi_ld);
+				}
+				cord.lo = mpfr_get_ld(cord_diff, MPFR_RNDN);
+			#else
+				cord.hi = mpfr_get_d(cord_value, MPFR_RNDN);
+				mpfr_sub_d(cord_diff, cord_value, cord.hi, MPFR_RNDN);
+				cord.lo = mpfr_get_d(cord_diff, MPFR_RNDN);
+			#endif
+			mpfr_clear(cord_diff);
+		#endif
+	}
+
+	fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr) {
+		mpfr_t cord_value;
+		mpfr_init2(cord_value, MPFR_PRECISION);
+		mpfr_strtofr(cord_value, nPtr, endPtr, 10, MPFR_RNDN);
+		fpCord cord;
+		mpfr_to_fpCord(cord, cord_value);
+		mpfr_clear(cord_value);
+		return cord;
+	}
+
+#else
+
+	int FloatCoordinate_snprintf(char* buf, size_t len, const char* format, fpCord cord) {
+		#if defined(Enable_Float128)
+			return quadmath_snprintf(buf, len, format, (fp128)cord);
+		#else
+			return snprintf(buf, len, format, cord);
+		#endif
+	}
+
+	std::string FloatCoordinate_toString(const char* format, fpCord cord) {
+		int buf_size = FloatCoordinate_snprintf(
+			nullptr, 0, format, cord
+		);
+		if (buf_size < 0) {
+			std::string str = "<Failed to convert cordinate to string: Formatting Error>";
+			return str;
+		}
+		char* buf = (char*)calloc((size_t)buf_size + 1, sizeof(char));
+		if (buf == nullptr) {
+			std::string str = "<Failed to convert cordinate to string: Allocation Error>";
+			return str;
+		}
+		int ret_code = FloatCoordinate_snprintf(
+			buf, (size_t)buf_size, format, cord
+		);
+		if (ret_code < 0) {
+			std::string str = "<Failed to convert cordinate to string: Write Error>";
+			return str;
+		}
+		std::string str;
+		str.assign(buf);
+		FREE(buf);
+		return str;
+	}
+
+	fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr) {
+		#if defined(Enable_Float128)
+			return (fpCord)stringTo_Float128(nPtr, endPtr);
+		#elif defined(Enable_Float80)
+			return (fpCord)stringTo_Float80(nPtr, endPtr);
+		#else
+			return (fpCord)stringTo_Float64(nPtr, endPtr);
+		#endif
+	}
+
+#endif
 
 /* TimerBox */
 	/* Constructors */

@@ -20,14 +20,17 @@
 #include <cstdint>
 #include <cinttypes>
 #include <cstdlib>
+
+#include <math.h>
 #include <cmath>
+
 #include <cstring>
 
 #include <cstdio>
 #include <iostream>
 
 #include <chrono>
-#include <time.h>
+#include <ctime>
 
 #include <atomic>
 #include <mutex>

@@ -9,6 +9,7 @@
 #define DOUBLE_FLOAT32_HPP
 
 #include <cstdint>
+#include <math.h>
 #include <cmath>
 
 typedef float fp32;
@@ -205,6 +206,19 @@ public:
 
 /* Comparison */
 
+	inline bool operator==(const Float32x2 &value) const {
+		return (
+			this->hi == value.hi &&
+			this->lo == value.lo
+		) ? true : false;
+	}
+	inline bool operator!=(const Float32x2 &value) const {
+		return (
+			this->hi != value.hi ||
+			this->lo != value.lo
+		) ? true : false;
+	}
+
 	inline bool operator<(const Float32x2 &value) const {
 		if (this->hi == value.hi) {
 			return (this->lo < value.lo);
@@ -274,45 +288,101 @@ public:
 
 typedef Float32x2 fp32x2;
 
+/* Math functions */
+	/* Arithmetic */
+	inline fp32x2 fmax(fp32x2 x, fp32x2 y) {
+		return (x > y) ? x : y;
+	}
+	inline fp32x2 fmin(fp32x2 x, fp32x2 y) {
+		return (x < y) ? x : y;
+	}
+	inline fp32x2 fabs(fp32x2 x) {
+		return (x < (fp32x2)0.0) ? -x : x;
+	}
+	/* Tests */
+	inline bool signbit(fp32x2 x) {
+		return (x < (fp32x2)0.0) ? true : false;
+	}
+
 /* Math overloads */
-	/* Trigonometry */
-	inline fp32x2  sin (fp32x2 x) { return (fp32x2) sin ((fp32x2_Math)x); }
-	inline fp32x2  cos (fp32x2 x) { return (fp32x2) cos ((fp32x2_Math)x); }
-	inline fp32x2  tan (fp32x2 x) { return (fp32x2) tan ((fp32x2_Math)x); }
-	inline fp32x2 asin (fp32x2 x) { return (fp32x2)asin ((fp32x2_Math)x); }
-	inline fp32x2 acos (fp32x2 x) { return (fp32x2)acos ((fp32x2_Math)x); }
-	inline fp32x2 atan (fp32x2 x) { return (fp32x2)atan ((fp32x2_Math)x); }
-	inline fp32x2  sinh(fp32x2 x) { return (fp32x2) sinh((fp32x2_Math)x); }
-	inline fp32x2  cosh(fp32x2 x) { return (fp32x2) cosh((fp32x2_Math)x); }
-	inline fp32x2  tanh(fp32x2 x) { return (fp32x2) tanh((fp32x2_Math)x); }
-	inline fp32x2 asinh(fp32x2 x) { return (fp32x2)asinh((fp32x2_Math)x); }
-	inline fp32x2 acosh(fp32x2 x) { return (fp32x2)acosh((fp32x2_Math)x); }
-	inline fp32x2 atanh(fp32x2 x) { return (fp32x2)atanh((fp32x2_Math)x); }
-	inline fp32x2 atan2(fp32x2 y, fp32x2 x) { return (fp32x2)atan2((fp32x2_Math)y, (fp32x2_Math)x); }
-	inline fp32x2 hypot(fp32x2 x, fp32x2 y) { return (fp32x2)hypot((fp32x2_Math)x, (fp32x2_Math)y); }
-	/* Logarithms and Exponents */
-	inline fp32x2 log  (fp32x2 x) { return (fp32x2)log  ((fp32x2_Math)x); }
-	inline fp32x2 log1p(fp32x2 x) { return (fp32x2)log1p((fp32x2_Math)x); }
-	inline fp32x2 log2 (fp32x2 x) { return (fp32x2)log2 ((fp32x2_Math)x); }
-	inline fp32x2 log10(fp32x2 x) { return (fp32x2)log10((fp32x2_Math)x); }
-	inline fp32x2 exp  (fp32x2 x) { return (fp32x2)exp  ((fp32x2_Math)x); }
-	inline fp32x2 expm1(fp32x2 x) { return (fp32x2)expm1((fp32x2_Math)x); }
-	inline fp32x2 exp2 (fp32x2 x) { return (fp32x2)exp2 ((fp32x2_Math)x); }
-	inline fp32x2 pow(fp32x2 x, fp32x2 y) { return (fp32x2)pow((fp32x2_Math)x, (fp32x2_Math)y); }
-	/* Rounding */
-	inline fp32x2 trunc(fp32x2 x) { return (fp32x2)trunc((fp32x2_Math)x); }
-	inline fp32x2 floor(fp32x2 x) { return (fp32x2)floor((fp32x2_Math)x); }
-	inline fp32x2 ceil (fp32x2 x) { return (fp32x2)ceil ((fp32x2_Math)x); }
-	inline fp32x2 round(fp32x2 x) { return (fp32x2)round((fp32x2_Math)x); }
-	/* Others */
-	inline fp32x2 fmax(fp32x2 x, fp32x2 y) { return (fp32x2)fmax((fp32x2_Math)x, (fp32x2_Math)y); }
-	inline fp32x2 fmin(fp32x2 x, fp32x2 y) { return (fp32x2)fmin((fp32x2_Math)x, (fp32x2_Math)y); }
-	inline fp32x2 fmod(fp32x2 x, fp32x2 y) { return (fp32x2)fmod((fp32x2_Math)x, (fp32x2_Math)y); }
-	// inline fp32x2 fabs(fp32x2 x) { return (fp32x2)fabsq((fp32x2_Math)x); }
-	inline fp32x2 fabs(fp32x2 x) { return (x < (fp32x2)0.0) ? -x : x; }
-	inline fp32x2 copysign(fp32x2 x, fp32x2 y) { return (fp32x2)copysign((fp32x2_Math)x, (fp32x2_Math)y); }
-	inline bool signbit(fp32x2 x) { return (signbit((fp32x2_Math)x) != 0) ? true : false; }
-	inline fp32x2 sqrt(fp32x2 x) { return (fp32x2)sqrt((fp32x2_Math)x); }
-	inline fp32x2 cbrt(fp32x2 x) { return (fp32x2)cbrt((fp32x2_Math)x); }
+
+		/* Arithmetic */
+		// inline fp32x2 fmax(fp32x2 x, fp32x2 y) { return (fp32x2)fmax((fp32x2_Math)x, (fp32x2_Math)y); }
+		// inline fp32x2 fmin(fp32x2 x, fp32x2 y) { return (fp32x2)fmin((fp32x2_Math)x, (fp32x2_Math)y); }
+		// inline fp32x2 fabs(fp32x2 x) { return (fp32x2)fabs((fp32x2_Math)x); }
+		inline fp32x2 fdim(fp32x2 x, fp32x2 y) { return (fp32x2)fdim((fp32x2_Math)x, (fp32x2_Math)y); }
+		inline fp32x2 fma(fp32x2 x, fp32x2 y, fp32x2 z) { return (fp32x2)fma((fp32x2_Math)x, (fp32x2_Math)y, (fp32x2_Math)z); }
+		inline fp32x2 copysign(fp32x2 x, fp32x2 y) { return (fp32x2)copysign((fp32x2_Math)x, (fp32x2_Math)y); }
+		inline fp32x2 sqrt(fp32x2 x) { return (fp32x2)sqrt((fp32x2_Math)x); }
+		inline fp32x2 cbrt(fp32x2 x) { return (fp32x2)cbrt((fp32x2_Math)x); }
+		inline fp32x2 hypot(fp32x2 x, fp32x2 y) { return (fp32x2)hypot((fp32x2_Math)x, (fp32x2_Math)y); }
+		/* Trigonometry */
+		inline fp32x2  sin (fp32x2 x) { return (fp32x2) sin ((fp32x2_Math)x); }
+		inline fp32x2  cos (fp32x2 x) { return (fp32x2) cos ((fp32x2_Math)x); }
+		inline fp32x2  tan (fp32x2 x) { return (fp32x2) tan ((fp32x2_Math)x); }
+		inline fp32x2 asin (fp32x2 x) { return (fp32x2)asin ((fp32x2_Math)x); }
+		inline fp32x2 acos (fp32x2 x) { return (fp32x2)acos ((fp32x2_Math)x); }
+		inline fp32x2 atan (fp32x2 x) { return (fp32x2)atan ((fp32x2_Math)x); }
+		inline fp32x2  sinh(fp32x2 x) { return (fp32x2) sinh((fp32x2_Math)x); }
+		inline fp32x2  cosh(fp32x2 x) { return (fp32x2) cosh((fp32x2_Math)x); }
+		inline fp32x2  tanh(fp32x2 x) { return (fp32x2) tanh((fp32x2_Math)x); }
+		inline fp32x2 asinh(fp32x2 x) { return (fp32x2)asinh((fp32x2_Math)x); }
+		inline fp32x2 acosh(fp32x2 x) { return (fp32x2)acosh((fp32x2_Math)x); }
+		inline fp32x2 atanh(fp32x2 x) { return (fp32x2)atanh((fp32x2_Math)x); }
+		inline fp32x2 atan2(fp32x2 y, fp32x2 x) { return (fp32x2)atan2((fp32x2_Math)y, (fp32x2_Math)x); }
+		inline void sincos(fp32x2 x, fp32x2* p_sin, fp32x2* p_cos) {
+			fp32x2_Math p_sin_temp, p_cos_temp;
+			sincos((fp32x2_Math)x, &p_sin_temp, &p_cos_temp);
+			*p_sin = (fp32x2)p_sin_temp;
+			*p_cos = (fp32x2)p_cos_temp;
+		}
+		/* Logarithms and Exponents */
+		inline fp32x2 log  (fp32x2 x) { return (fp32x2)log  ((fp32x2_Math)x); }
+		inline fp32x2 log1p(fp32x2 x) { return (fp32x2)log1p((fp32x2_Math)x); }
+		inline fp32x2 logb (fp32x2 x) { return (fp32x2)logb ((fp32x2_Math)x); }
+		inline fp32x2 log2 (fp32x2 x) { return (fp32x2)log2 ((fp32x2_Math)x); }
+		inline fp32x2 log10(fp32x2 x) { return (fp32x2)log10((fp32x2_Math)x); }
+		inline fp32x2 exp  (fp32x2 x) { return (fp32x2)exp  ((fp32x2_Math)x); }
+		inline fp32x2 expm1(fp32x2 x) { return (fp32x2)expm1((fp32x2_Math)x); }
+		inline fp32x2 exp2 (fp32x2 x) { return (fp32x2)exp2 ((fp32x2_Math)x); }
+		inline fp32x2 pow(fp32x2 x, fp32x2 y) { return (fp32x2)pow((fp32x2_Math)x, (fp32x2_Math)y); }
+		/* Rounding */
+		inline fp32x2 trunc(fp32x2 x) { return (fp32x2)trunc((fp32x2_Math)x); }
+		inline fp32x2 floor(fp32x2 x) { return (fp32x2)floor((fp32x2_Math)x); }
+		inline fp32x2 ceil (fp32x2 x) { return (fp32x2)ceil ((fp32x2_Math)x); }
+		inline fp32x2 rint (fp32x2 x) { return (fp32x2)rint ((fp32x2_Math)x); }
+		inline fp32x2 round(fp32x2 x) { return (fp32x2)round((fp32x2_Math)x); }
+		inline long lrint (fp32x2 x) { return lrint ((fp32x2_Math)x); }
+		inline long lround(fp32x2 x) { return lround((fp32x2_Math)x); }
+		inline long long llrint (fp32x2 x) { return llrint ((fp32x2_Math)x); }
+		inline long long llround(fp32x2 x) { return llround((fp32x2_Math)x); }
+		/* Integer and Remainder */
+		inline fp32x2 fmod(fp32x2 x, fp32x2 y) { return (fp32x2)fmod((fp32x2_Math)x, (fp32x2_Math)y); }
+		inline fp32x2 modf(fp32x2 x, fp32x2* y) {
+			fp32x2_Math y_temp;
+			fp32x2 result = modf((fp32x2_Math)x, &y_temp);
+			*y = (fp32x2)y_temp;
+			return result;
+		}
+		inline fp32x2 nearbyint(fp32x2 x) { return (fp32x2)nearbyint((fp32x2_Math)x); }
+		inline fp32x2 nextafter(fp32x2 x) { return (fp32x2)nextafter((fp32x2_Math)x); }
+		inline fp32x2 remainder(fp32x2 x, fp32x2 y) { return (fp32x2)remainder((fp32x2_Math)x, (fp32x2_Math)y); }
+		inline fp32x2 remquo(fp32x2 x, fp32x2 y, int* quo) { return (fp32x2)remquo((fp32x2_Math)x, (fp32x2_Math)y, quo); }
+		/* Float Exponents */
+		inline int ilogb(fp32x2 x) { return ilogb((fp32x2_Math)x); }
+		inline fp32x2 frexp  (fp32x2 x, int* exp) { return (fp32x2)frexp  ((fp32x2_Math)x, exp); }
+		inline fp32x2 ldexp  (fp32x2 x, int  exp) { return (fp32x2)ldexp  ((fp32x2_Math)x, exp); }
+		inline fp32x2 scalbn (fp32x2 x, int  exp) { return (fp32x2)scalbn ((fp32x2_Math)x, exp); }
+		inline fp32x2 scalbln(fp32x2 x, long exp) { return (fp32x2)scalbln((fp32x2_Math)x, exp); }
+		/* Tests */
+		// inline bool signbit(fp32x2 x) { return (signbit((fp32x2_Math)x) != 0) ? true : false; }
+		inline bool isfinite(fp32x2 x) { return (isfinite((fp32x2_Math)x) != 0) ? true : false; }
+		inline bool isinf(fp32x2 x) { return (isinf((fp32x2_Math)x) != 0) ? true : false; }
+		inline bool isnan(fp32x2 x) { return (isnan((fp32x2_Math)x) != 0) ? true : false; }
+		/* Transcendental Functions */
+		inline fp32x2 erf (fp32x2 x) { return (fp32x2)erf ((fp32x2_Math)x); }
+		inline fp32x2 erfc(fp32x2 x) { return (fp32x2)erfc((fp32x2_Math)x); }
+		inline fp32x2 lgamma(fp32x2 x) { return (fp32x2)lgamma((fp32x2_Math)x); }
+		inline fp32x2 tgamma(fp32x2 x) { return (fp32x2)tgamma((fp32x2_Math)x); }
 
 #endif /* DOUBLE_FLOAT32_HPP */

@@ -281,19 +281,18 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 		"Formula: %3" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s Float%zu",
 		FRAC.formula,(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
 	);
-	constexpr size_t temp_FloatCoordinate_len = 64;
-	static char temp_FloatCoordinate_r[temp_FloatCoordinate_len];
-	static char temp_FloatCoordinate_i[temp_FloatCoordinate_len];
-	static char temp_FloatCoordinate_zr[temp_FloatCoordinate_len];
-	static char temp_FloatCoordinate_zi[temp_FloatCoordinate_len];
-	FloatCoordinate_snprintf(temp_FloatCoordinate_r , temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.r);
-	FloatCoordinate_snprintf(temp_FloatCoordinate_i , temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.i);
-	FloatCoordinate_snprintf(temp_FloatCoordinate_zr, temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.zr);
-	FloatCoordinate_snprintf(temp_FloatCoordinate_zi, temp_FloatCoordinate_len, "%15.12" PRIfpCord "f", FRAC.zi);
+	static std::string str_FloatCoordinate_r;
+	static std::string str_FloatCoordinate_i;
+	static std::string str_FloatCoordinate_zr;
+	static std::string str_FloatCoordinate_zi;
+	str_FloatCoordinate_r  = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.r );
+	str_FloatCoordinate_i  = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.i );
+	str_FloatCoordinate_zr = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.zr);
+	str_FloatCoordinate_zi = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.zi);
 
 	ImGui::Text(
 		"Zreal: %s Zimag: %s Rotation: %5.1" PRIfp64 "f Stetch: 2^%6.4" PRIfp64 "f",
-		temp_FloatCoordinate_zr, temp_FloatCoordinate_zi, FRAC.rot * 360.0 / TAU, FRAC.stretch
+		str_FloatCoordinate_zr.c_str(), str_FloatCoordinate_zi.c_str(), FRAC.rot * 360.0 / TAU, FRAC.stretch
 	);
 	ImGui::NewLine();
 	fp64 adjustedZoomValue = FRAC.zoom;
@@ -308,10 +307,36 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	
 	ImGui::Text(
 		"Real:  %s Imag:  %s Zoom: 10^%6.4" PRIfp64 "f Itr: %" PRIu32,
-		temp_FloatCoordinate_r, temp_FloatCoordinate_i, adjustedZoomValue, FRAC.maxItr
+		str_FloatCoordinate_r.c_str(), str_FloatCoordinate_i.c_str(), adjustedZoomValue, FRAC.maxItr
 	);
     // End the ImGui window
     ImGui::End();
+}
+
+void Float_InputText(
+	const char* label,
+	fp64& num,
+	const char* format,
+	char* num_buf,
+	size_t num_buf_length
+) {
+	snprintf(num_buf, num_buf_length, format, num);
+	if (ImGui::InputText(label, num_buf, num_buf_length)) {
+		num = stringTo_Float64(num_buf, nullptr);
+	}
+}
+
+void FloatCoordinate_InputText(
+	const char* label,
+	fpCord& cord,
+	const char* format,
+	char* cord_buf,
+	size_t cord_buf_length
+) {
+	FloatCoordinate_snprintf(cord_buf, cord_buf_length, format, cord);
+	if (ImGui::InputText(label, cord_buf, cord_buf_length)) {
+		cord = stringTo_FloatCoordinate(cord_buf, nullptr);
+	}
 }
 
 void Menu_Coordinates() {
@@ -320,12 +345,22 @@ void Menu_Coordinates() {
 		(int32_t)Master.resX, ImGui_WINDOW_MARGIN * 2, 240, 400,
 		(int32_t)Master.resY, ImGui_WINDOW_MARGIN * 2, 160, 320
 	);
-	ImGui::Begin("Coordinates Menu",&ShowTheXButton,ImGui_WINDOW_FLAGS);
+	ImGui::Begin("Coordinates Menu", &ShowTheXButton, ImGui_WINDOW_FLAGS);
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	ABS_Mandelbrot& FRAC = current_Fractal;
 	#define NumberTextLen (64)
 	
+	// 320 bits * log10(2) = 96.3 digits
+	constexpr size_t Maximum_Cord_Text_Length = 100;
+
+	static char str_input_C_Real[Maximum_Cord_Text_Length];
+	static char str_input_C_Imag[Maximum_Cord_Text_Length];
+	static char str_input_Zoom  [Maximum_Cord_Text_Length];
+	static char str_input_Z_Real[Maximum_Cord_Text_Length];
+	static char str_input_Z_Imag[Maximum_Cord_Text_Length];
+
+	/*
 	#define FloatCoordinate_InputText(lbl, num, fmt); do { \
 			static char Temp_Text_Input_Buf[NumberTextLen]; \
 			FloatCoordinate_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
@@ -333,7 +368,9 @@ void Menu_Coordinates() {
 				num = stringTo_FloatCoordinate(Temp_Text_Input_Buf, nullptr); \
 			} \
 		} while(0)
+	*/
 
+	/*
 	#define Float_InputText(lbl, num, fmt, func); do { \
 			static char Temp_Text_Input_Buf[NumberTextLen]; \
 			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
@@ -341,6 +378,8 @@ void Menu_Coordinates() {
 				num = func(Temp_Text_Input_Buf, nullptr); \
 			} \
 		} while(0)
+	*/
+
 	#define Int_InputText(lbl, num, fmt, func, base); do { \
 			static char Temp_Text_Input_Buf[NumberTextLen]; \
 			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
@@ -348,12 +387,22 @@ void Menu_Coordinates() {
 				num = func(Temp_Text_Input_Buf, nullptr, base); \
 			} \
 		} while(0)
+
 	ImGui::SeparatorText("Cordinates"); { ImGui::Indent();
 		ImGui::Text("Real and Imaginary Coordinate:");
-				FloatCoordinate_InputText("C-Real##input_C_Real", FRAC.r, "%35.32" PRIfpCord "f");
-				FloatCoordinate_InputText("C-Imag##input_C_Imag", FRAC.i, "%35.32" PRIfpCord "f");
+			FloatCoordinate_InputText(
+				"C-Real##input_C_Real", FRAC.r, "%43.40" PRIfpCord "f",
+				str_input_C_Real, ARRAY_LENGTH(str_input_C_Real)
+			);
+			FloatCoordinate_InputText(
+				"C-Imag##input_C_Imag", FRAC.i, "%43.40" PRIfpCord "f",
+				str_input_C_Imag, ARRAY_LENGTH(str_input_C_Imag)
+			);
 		ImGui::Text("Zoom:");
-			Float_InputText("##zoom_input", FRAC.zoom, "%.5lf", strtod);
+			Float_InputText(
+				"##zoom_input", FRAC.zoom, "%.5lf",
+				str_input_Zoom, ARRAY_LENGTH(str_input_Zoom)
+			);
 			
 		ImGui::NewLine();
 	ImGui::Unindent(); }
@@ -381,8 +430,14 @@ void Menu_Coordinates() {
 	ImGui::Unindent(); }
 	ImGui::SeparatorText("Julia Set:"); { ImGui::Indent();
 		ImGui::Text("Julia Coordinate:");
-		FloatCoordinate_InputText("Z-Real##input_Z_Real", FRAC.zr, "%35.32" PRIfpCord "f");
-		FloatCoordinate_InputText("Z-Imag##input_Z_Imag", FRAC.zi, "%35.32" PRIfpCord "f");
+		FloatCoordinate_InputText(
+			"Z-Real##input_Z_Real", FRAC.zr, "%43.40" PRIfpCord "f",
+			str_input_Z_Real, ARRAY_LENGTH(str_input_Z_Real)
+		);
+		FloatCoordinate_InputText(
+			"Z-Imag##input_Z_Imag", FRAC.zi, "%43.40" PRIfpCord "f",
+			str_input_Z_Imag, ARRAY_LENGTH(str_input_Z_Imag)
+		);
 		fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
 		if (ImGui::SliderAngle("Julia Angle",&juliaAngle, -360.0f, 360.0f, "%.1f deg")) {
 			fpCord juliaMagnitude = hypot(FRAC.zr, FRAC.zi);

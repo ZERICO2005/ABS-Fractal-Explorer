@@ -187,21 +187,6 @@ void pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, const ABS_Man
 	yO = (yC * cos((fpX)param.rot) + xC * sin((fpX)param.rot)) + param.i;
 }
 
-template <typename fpX>
-void cpu_pixel_to_coordinate(int32_t xI, int32_t yI, fpX& xO, fpX& yO, fpX zoomVal, fpX rotSin, fpX rotCos, const ABS_Mandelbrot& param, dim32_t resX, dim32_t resY, int32_t subSample) { \
-	/* Normalizes Coordinates */
-	dim32_t dimX = resX - 1;
-	dim32_t dimY = resY - 1;
-	fpX numX = ((fpX)dimX / (fpX)2.0);
-	fpX numY = ((fpX)dimY / (fpX)2.0);
-	fpX numZ = (dimX >= dimY) ? numY * zoomVal : numX * zoomVal;
-	/* Applies Transformations */
-	fpX xC = (((fpX)xI - numX) / numZ) * (fpX)param.sX;
-	fpX yC = -(((fpX)yI - numY) / numZ) * (fpX)param.sY;
-	*xO = (xC * rotCos - yC * rotSin) + (fpX)param.r;
-	*yO = (yC * rotCos + xC * rotSin) + (fpX)param.i;
-}
-
 constexpr fp64 POLAR_POWER_MINIMUM = 1.0100;
 constexpr fp64 POLAR_POWER_MAXIMUM = 20.0;
 constexpr int32_t MANDELBROT_POWER_MINIMUM = 2;

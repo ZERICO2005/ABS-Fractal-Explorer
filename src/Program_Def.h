@@ -37,11 +37,11 @@
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/07/23" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/07/25" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 2
 #define PROGRAM_V_PATCH 1
-#define PROGRAM_V_TAG "(Revision-7)"
+#define PROGRAM_V_TAG "(Revision-8)"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */
@@ -54,47 +54,48 @@
 		#include "floats/Float128.hpp"
 	#endif
 
-	#if defined(Enable_Float128)
+	/** 
+	 *  Highest precision for float to string conversions.
+	 */
+	#if defined(Enable_FloatMPFR)
+		// mpfr uses "R" for snprintf
+		#define PRIfpCord "R"
+	#elif defined(Enable_Float128)
+		#define PRIfpCord PRIfp128
+	#elif defined(Enable_Float80)
+		#define PRIfpCord PRIfp80
+	#else
+		#define PRIfpCord PRIfp64
+	#endif
+	
+	/** 
+	 *  Highest precision for float for coordinate calculations.
+	 */
+	#if defined(Enable_Float128) && !defined(Enable_Float80)
 		/* Float128 is the highest precision */
 		typedef fp128 fpCord;
-		#define FloatCoordinate_snprintf quadmath_snprintf
-		#define PRIfpCord PRIfp128
-		inline fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr) {
-			return stringTo_Float128(nPtr,endPtr);
-		}
 	#elif defined(Enable_Float80)
-		/* Float80 is the highest precision */
-		typedef fp80 fpCord;
-		#define FloatCoordinate_snprintf snprintf
-		#define PRIfpCord PRIfp80
-		inline fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr) {
-			return stringTo_Float80(nPtr, endPtr);
-		}
+		/* Float80x2 is the highest precision */
+		#include "floats/double_Float80.hpp"
+		typedef fp80x2 fpCord;
 	#else
-		/* Float64 is the highest precision */
-		typedef fp64 fpCord;
-		#define FloatCoordinate_snprintf snprintf
-		#define PRIfpCord PRIfp64
-		inline fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr) {
-			return stringTo_Float64(nPtr, endPtr);
-		}
+		/* Float64x2 is the highest precision */
+		#include "floats/double_Float64.hpp"
+		typedef fp64x2 fpCord;
 	#endif
 
-	#ifdef Enable_Float128
-		#ifdef Enable_Float80
-			/* Both Float80 and Float128 */
-			
-		#else
-			/* Only Float128 */
-		#endif
-	#else
-		#ifdef Enable_Float80
-			/* Only Float80 */
-		#else
-			/* Neither Float80 or Float128 */
-		#endif
-	#endif
-
+	fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr = nullptr);
+	
+	/**
+	 * @brief Writes a single fpCord value to a buffer
+	 */
+	int FloatCoordinate_snprintf(char* buf, size_t len, const char* format, fpCord cord);
+	
+	/**
+	 * @brief Writes a single fpCord value to a std::string
+	 */
+	std::string FloatCoordinate_toString(const char* format, fpCord cord);
+	
 /* Image Buffers and Framerate */
 
 	constexpr size_t IMAGE_BUFFER_CHANNELS = 4;

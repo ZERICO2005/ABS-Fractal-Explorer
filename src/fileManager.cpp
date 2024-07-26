@@ -42,7 +42,7 @@
 		ofn.lpstrTitle = title;
 		ofn.Flags = OFN_FILEMUSTEXIST;
 		if (GetOpenFileName(&ofn)) {
-			printFlush("\nOpened File: \"%s\"",filePath);
+			printFlush("Opened File: \"%s\"\n",filePath);
 		} else {
 			printWarning("Unable to Open File from: \"%s\"",filePath);
 			return 1;
@@ -83,7 +83,7 @@
 		FREE(defaultName_copy);
 
 		if (fileSaved == true) {
-			printFlush("\nFile Saved: \"%s\"", filePath);
+			printFlush("File Saved: \"%s\"\n", filePath);
 		} else {
 			printWarning("Unable to Save File to: \"%s\"",filePath);
 			return 1;
@@ -202,7 +202,7 @@ int writePNGImage(const BufferBox* buf, const char* path, const char* name, uint
 		return -1;
 	}
 	snprintf(fileName, total_filePathLen, "%s%s.png", path, name);
-	printf("\nWriting File: %s", fileName); fflush(stdout);
+	printf("Writing File: %s\n", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_png(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram, (int32_t)getBufferBoxPitch(buf));
 	FREE(fileName);
@@ -225,7 +225,7 @@ int writeJPGImage(const BufferBox* buf, const char* path, const char* name, uint
 		return -1;
 	}
 	snprintf(fileName, total_filePathLen, "%s%s.jpg", path, name);
-	printf("\nWriting File: %s", fileName); fflush(stdout);
+	printf("Writing File: %s\n", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_jpg(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram, (int32_t)quality);
 	FREE(fileName);
@@ -248,7 +248,7 @@ int writeTGAImage(const BufferBox* buf, const char* path, const char* name) {
 		return -1;
 	}
 	snprintf(fileName, total_filePathLen, "%s%s.tga", path, name);
-	printf("\nWriting File: %s", fileName); fflush(stdout);
+	printf("Writing File: %s\n", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_tga(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram);
 	FREE(fileName);
@@ -271,7 +271,7 @@ int writeBMPImage(const BufferBox* buf, const char* path, const char* name) {
 		return -1;
 	}
 	snprintf(fileName, total_filePathLen, "%s%s.bmp", path, name);
-	printf("\nWriting File: %s", fileName); fflush(stdout);
+	printf("Writing File: %s\n", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_bmp(fileName, (int32_t)buf->resX, (int32_t)buf->resY, (int32_t)buf->channels, buf->vram);
 	FREE(fileName);
@@ -293,7 +293,7 @@ int writeHDRImage(const float* buf, uint32_t resX, uint32_t resY, uint8_t channe
 		return -1;
 	}
 	snprintf(fileName, total_filePathLen, "%s%s.hdr", path, name);
-	printf("\nWriting File: %s", fileName); fflush(stdout);
+	printf("Writing File: %s\n", fileName); fflush(stdout);
 	//stbi_flip_vertically_on_write(1);
     ret = stbi_write_hdr(fileName, (int32_t)resX, (int32_t)resY, (int32_t)channels, buf);
 	FREE(fileName);
