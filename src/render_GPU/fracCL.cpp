@@ -20,8 +20,8 @@
 
 #include "../fnv1a_hash.hpp"
 
-#include "../floats/double_Float32.hpp"
-#include "../floats/double_Float64.hpp"
+// #include "../floats/double_Float32.hpp"
+// #include "../floats/double_Float64.hpp"
 
 #include "../render_Configuration.hpp"
 

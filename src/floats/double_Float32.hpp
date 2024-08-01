@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <math.h>
 #include <cmath>
+#include <cfenv>
 
 typedef float fp32;
 typedef double fp64;
@@ -32,7 +33,7 @@ private:
 		const Float32x2& x, const Float32x2& y
 	) const {
 		fp32 r_hi = x.hi + y.hi;
-		fp32 r_lo = 0.0;
+		fp32 r_lo = 0.0f;
 		if (fabsf(x.hi) > fabsf(y.hi)) {
 			r_lo = x.hi - r_hi + y.hi + y.lo + x.lo;
 		} else {
@@ -49,7 +50,7 @@ private:
 		const Float32x2& x, const Float32x2& y
 	) const {
 		fp32 r_hi = x.hi - y.hi;
-		fp32 r_lo = 0.0;
+		fp32 r_lo = 0.0f;
 		if (fabsf(x.hi) > fabsf(y.hi)) {
 			r_lo = x.hi - r_hi - y.hi - y.lo + x.lo;
 		} else {
@@ -161,24 +162,24 @@ public:
 /* Increment/Decrement */
 
 	inline Float32x2& operator++() {
-		*this = Dekker_Add(*this, (Float32x2)1.0);
+		*this = Dekker_Add(*this, static_cast<Float32x2>(1.0));
 		return *this;
 	}
 
 	inline Float32x2& operator--() {
-		*this = Dekker_Sub(*this, (Float32x2)1.0);
+		*this = Dekker_Sub(*this, static_cast<Float32x2>(1.0));
 		return *this;
 	}
 
 	inline Float32x2 operator++(int) {
 		Float32x2 temp = *this;
-		*this = Dekker_Add(*this, (Float32x2)1.0);
+		*this = Dekker_Add(*this, static_cast<Float32x2>(1.0));
 		return temp;
 	}
 
 	inline Float32x2 operator--(int) {
 		Float32x2 temp = *this;
-		*this = Dekker_Sub(*this, (Float32x2)1.0);
+		*this = Dekker_Sub(*this, static_cast<Float32x2>(1.0));
 		return temp;
 	}
 
@@ -250,8 +251,8 @@ public:
 /* Constructors */
 
 	inline Float32x2() {
-		this->hi = 0.0;
-		this->lo = 0.0;
+		// this->hi = 0.0;
+		// this->lo = 0.0;
 	}
 
 	inline Float32x2(const fp32& value) {
@@ -288,7 +289,8 @@ public:
 
 typedef Float32x2 fp32x2;
 
-/* Math functions */
+/* Math functions (Natively implemented) */
+
 	/* Arithmetic */
 	inline fp32x2 fmax(fp32x2 x, fp32x2 y) {
 		return (x > y) ? x : y;
@@ -297,22 +299,150 @@ typedef Float32x2 fp32x2;
 		return (x < y) ? x : y;
 	}
 	inline fp32x2 fabs(fp32x2 x) {
-		return (x < (fp32x2)0.0) ? -x : x;
+		return (x < static_cast<fp32x2>(0.0)) ? -x : x;
 	}
-	/* Tests */
-	inline bool signbit(fp32x2 x) {
-		return (x < (fp32x2)0.0) ? true : false;
+	inline fp32x2 fdim(fp32x2 x, fp32x2 y) {
+		return (x > y) ? (x - y) : static_cast<fp32x2>(0.0);
+	}
+	inline fp32x2 fma(fp32x2 x, fp32x2 y, fp32x2 z) {
+		return (x * y) + z;
+	}
+	inline fp32x2 copysign(fp32x2 x, fp32x2 y) {
+		return (
+			(x < static_cast<fp32x2>(0.0)) != (y < (static_cast<fp32x2>(0.0)))
+		) ? -x : x;
 	}
 
-/* Math overloads */
+	/* Tests */
+	inline bool signbit(fp32x2 x) {
+		return (x < static_cast<fp32x2>(0.0)) ? true : false;
+	}
+	/** Returns true if both x.hi and x.lo are finite */
+	inline bool isfinite(fp32x2 x) {
+		return (isfinite(x.hi) && isfinite(x.lo));
+	}
+	/** Returns true if either x.hi or x.lo are infinite */
+	inline bool isinf(fp32x2 x) {
+		return (isinf(x.hi) || isinf(x.lo));
+	}
+	/** Returns true if either x.hi or x.lo are nan */
+	inline bool isnan(fp32x2 x) {
+		return (isnan(x.hi) || isnan(x.lo));
+	}
+	/** Returns true if both x.hi and x.lo are normal */
+	inline bool isnormal(fp32x2 x) {
+		return (isnormal(x.hi) && isnormal(x.lo));
+	}
+	/** Returns true if either {x.hi, y.hi} or {x.lo, y.lo} are unordered */
+	inline bool isunordered(fp32x2 x, fp32x2 y) {
+		return (isunordered(x.hi, y.hi) || isunordered(x.lo, y.lo));
+	}
+	inline int fpclassify(fp32x2 x) {
+		if (isfinite(x)) { return FP_INFINITE; }
+		if (isnan(x)) { return FP_NAN; }
+		if (x == static_cast<fp32x2>(0.0)) { return FP_ZERO; }
+		if (isnormal(x)) { return FP_NORMAL; }
+		return FP_SUBNORMAL;
+	}
+
+	/* Comparison */
+	inline bool isgreater(fp32x2 x, fp32x2 y) {
+		return (x > y);
+	}
+	inline bool isgreaterequal(fp32x2 x, fp32x2 y) {
+		return (x >= y);
+	}
+	inline bool isless(fp32x2 x, fp32x2 y) {
+		return (x < y);
+	}
+	inline bool islessequal(fp32x2 x, fp32x2 y) {
+		return (x <= y);
+	}
+	inline bool islessgreater(fp32x2 x, fp32x2 y) {
+		return (x < y) || (x > y);
+	}
+
+    /* Rounding */
+    inline fp32x2 trunc(fp32x2 x) {
+        fp32 frac_hi = x.hi - trunc(x.hi);
+        fp32 frac_lo = x.lo - trunc(x.lo);
+        fp32x2 int_hi = trunc(x.hi);
+        fp32x2 int_lo = trunc(x.lo);
+        // Sum in increasing order
+        fp32x2 trunc_all = static_cast<fp32x2>(0.0);
+        trunc_all += (
+			(fp32x2)frac_hi + (fp32x2)frac_lo >= static_cast<fp32x2>(1.0)
+		) ? static_cast<fp32x2>(1.0) : static_cast<fp32x2>(0.0);
+        trunc_all += int_lo;
+        trunc_all += int_hi;
+        return trunc_all;
+    }
+	inline fp32x2 floor(fp32x2 x) {
+		fp32x2 int_part = trunc(x);
+		return (
+			x < static_cast<fp32x2>(0.0) && int_part != x
+		) ? int_part : int_part - static_cast<fp32x2>(1.0);
+	}
+	inline fp32x2 ceil(fp32x2 x) {
+		fp32x2 int_part = trunc(x);
+		return (
+			x > static_cast<fp32x2>(0.0) && int_part != x
+		) ? int_part + static_cast<fp32x2>(1.0) : int_part;
+	}
+	inline fp32x2 round(fp32x2 x) {
+		fp32x2 int_part = trunc(x);
+		fp32x2 frac_part = x - int_part;
+		if (x >= static_cast<fp32x2>(0.0)) {
+			if (frac_part >= static_cast<fp32x2>(0.5)) {
+				return int_part + static_cast<fp32x2>(1.0);
+			}
+			return int_part;
+		}
+		if (frac_part <= static_cast<fp32x2>(-0.5)) {
+			return int_part - static_cast<fp32x2>(1.0);
+		}
+		return int_part;
+	}
+	inline fp32x2 rint(fp32x2 x) {
+		switch (fegetround()) {
+			default:
+			case FE_TOWARDZERO:
+				return trunc(x);
+			case FE_DOWNWARD:
+				return floor(x);
+			case FE_UPWARD:
+				return ceil(x);
+			case FE_TONEAREST:
+				return round(x);
+		}
+	}
+	inline long lround(fp32x2 x) {
+		return (long)round(x);
+	}
+	inline long lrint(fp32x2 x) {
+		return (long)rint(x);
+	}
+	inline long long llround(fp32x2 x) {
+		return (long long)round(x);
+	}
+	inline long long llrint(fp32x2 x) {
+		return (long long)rint(x);
+	}
+
+	/* Integer and Remainder */
+	inline fp32x2 nearbyint(fp32x2 x) {
+		return rint(x);
+	}
+
+/* Math overloads (Casts to other types) */
 
 		/* Arithmetic */
 		// inline fp32x2 fmax(fp32x2 x, fp32x2 y) { return (fp32x2)fmax((fp32x2_Math)x, (fp32x2_Math)y); }
 		// inline fp32x2 fmin(fp32x2 x, fp32x2 y) { return (fp32x2)fmin((fp32x2_Math)x, (fp32x2_Math)y); }
 		// inline fp32x2 fabs(fp32x2 x) { return (fp32x2)fabs((fp32x2_Math)x); }
-		inline fp32x2 fdim(fp32x2 x, fp32x2 y) { return (fp32x2)fdim((fp32x2_Math)x, (fp32x2_Math)y); }
-		inline fp32x2 fma(fp32x2 x, fp32x2 y, fp32x2 z) { return (fp32x2)fma((fp32x2_Math)x, (fp32x2_Math)y, (fp32x2_Math)z); }
-		inline fp32x2 copysign(fp32x2 x, fp32x2 y) { return (fp32x2)copysign((fp32x2_Math)x, (fp32x2_Math)y); }
+		// inline fp32x2 fdim(fp32x2 x, fp32x2 y) { return (fp32x2)fdim((fp32x2_Math)x, (fp32x2_Math)y); }
+		// inline fp32x2 fma(fp32x2 x, fp32x2 y, fp32x2 z) { return (fp32x2)fma((fp32x2_Math)x, (fp32x2_Math)y, (fp32x2_Math)z); }
+		// inline fp32x2 copysign(fp32x2 x, fp32x2 y) { return (fp32x2)copysign((fp32x2_Math)x, (fp32x2_Math)y); }
 		inline fp32x2 sqrt(fp32x2 x) { return (fp32x2)sqrt((fp32x2_Math)x); }
 		inline fp32x2 cbrt(fp32x2 x) { return (fp32x2)cbrt((fp32x2_Math)x); }
 		inline fp32x2 hypot(fp32x2 x, fp32x2 y) { return (fp32x2)hypot((fp32x2_Math)x, (fp32x2_Math)y); }
@@ -331,10 +461,8 @@ typedef Float32x2 fp32x2;
 		inline fp32x2 atanh(fp32x2 x) { return (fp32x2)atanh((fp32x2_Math)x); }
 		inline fp32x2 atan2(fp32x2 y, fp32x2 x) { return (fp32x2)atan2((fp32x2_Math)y, (fp32x2_Math)x); }
 		inline void sincos(fp32x2 x, fp32x2* p_sin, fp32x2* p_cos) {
-			fp32x2_Math p_sin_temp, p_cos_temp;
-			sincos((fp32x2_Math)x, &p_sin_temp, &p_cos_temp);
-			*p_sin = (fp32x2)p_sin_temp;
-			*p_cos = (fp32x2)p_cos_temp;
+			*p_sin = sin(x);
+			*p_cos = cos(x);
 		}
 		/* Logarithms and Exponents */
 		inline fp32x2 log  (fp32x2 x) { return (fp32x2)log  ((fp32x2_Math)x); }
@@ -347,15 +475,15 @@ typedef Float32x2 fp32x2;
 		inline fp32x2 exp2 (fp32x2 x) { return (fp32x2)exp2 ((fp32x2_Math)x); }
 		inline fp32x2 pow(fp32x2 x, fp32x2 y) { return (fp32x2)pow((fp32x2_Math)x, (fp32x2_Math)y); }
 		/* Rounding */
-		inline fp32x2 trunc(fp32x2 x) { return (fp32x2)trunc((fp32x2_Math)x); }
-		inline fp32x2 floor(fp32x2 x) { return (fp32x2)floor((fp32x2_Math)x); }
-		inline fp32x2 ceil (fp32x2 x) { return (fp32x2)ceil ((fp32x2_Math)x); }
-		inline fp32x2 rint (fp32x2 x) { return (fp32x2)rint ((fp32x2_Math)x); }
-		inline fp32x2 round(fp32x2 x) { return (fp32x2)round((fp32x2_Math)x); }
-		inline long lrint (fp32x2 x) { return lrint ((fp32x2_Math)x); }
-		inline long lround(fp32x2 x) { return lround((fp32x2_Math)x); }
-		inline long long llrint (fp32x2 x) { return llrint ((fp32x2_Math)x); }
-		inline long long llround(fp32x2 x) { return llround((fp32x2_Math)x); }
+		// inline fp32x2 trunc(fp32x2 x) { return (fp32x2)trunc((fp32x2_Math)x); }
+		// inline fp32x2 floor(fp32x2 x) { return (fp32x2)floor((fp32x2_Math)x); }
+		// inline fp32x2 ceil (fp32x2 x) { return (fp32x2)ceil ((fp32x2_Math)x); }
+		// inline fp32x2 rint (fp32x2 x) { return (fp32x2)rint ((fp32x2_Math)x); }
+		// inline fp32x2 round(fp32x2 x) { return (fp32x2)round((fp32x2_Math)x); }
+		// inline long lrint (fp32x2 x) { return lrint ((fp32x2_Math)x); }
+		// inline long lround(fp32x2 x) { return lround((fp32x2_Math)x); }
+		// inline long long llrint (fp32x2 x) { return llrint ((fp32x2_Math)x); }
+		// inline long long llround(fp32x2 x) { return llround((fp32x2_Math)x); }
 		/* Integer and Remainder */
 		inline fp32x2 fmod(fp32x2 x, fp32x2 y) { return (fp32x2)fmod((fp32x2_Math)x, (fp32x2_Math)y); }
 		inline fp32x2 modf(fp32x2 x, fp32x2* y) {
@@ -364,8 +492,8 @@ typedef Float32x2 fp32x2;
 			*y = (fp32x2)y_temp;
 			return result;
 		}
-		inline fp32x2 nearbyint(fp32x2 x) { return (fp32x2)nearbyint((fp32x2_Math)x); }
-		inline fp32x2 nextafter(fp32x2 x) { return (fp32x2)nextafter((fp32x2_Math)x); }
+		// inline fp32x2 nearbyint(fp32x2 x) { return (fp32x2)nearbyint((fp32x2_Math)x); }
+		// Incorrect Function // inline fp32x2 nextafter(fp32x2 x) { return (fp32x2)nextafter((fp32x2_Math)x); }
 		inline fp32x2 remainder(fp32x2 x, fp32x2 y) { return (fp32x2)remainder((fp32x2_Math)x, (fp32x2_Math)y); }
 		inline fp32x2 remquo(fp32x2 x, fp32x2 y, int* quo) { return (fp32x2)remquo((fp32x2_Math)x, (fp32x2_Math)y, quo); }
 		/* Float Exponents */
@@ -376,9 +504,9 @@ typedef Float32x2 fp32x2;
 		inline fp32x2 scalbln(fp32x2 x, long exp) { return (fp32x2)scalbln((fp32x2_Math)x, exp); }
 		/* Tests */
 		// inline bool signbit(fp32x2 x) { return (signbit((fp32x2_Math)x) != 0) ? true : false; }
-		inline bool isfinite(fp32x2 x) { return (isfinite((fp32x2_Math)x) != 0) ? true : false; }
-		inline bool isinf(fp32x2 x) { return (isinf((fp32x2_Math)x) != 0) ? true : false; }
-		inline bool isnan(fp32x2 x) { return (isnan((fp32x2_Math)x) != 0) ? true : false; }
+		// inline bool isfinite(fp32x2 x) { return (isfinite((fp32x2_Math)x) != 0) ? true : false; }
+		// inline bool isinf(fp32x2 x) { return (isinf((fp32x2_Math)x) != 0) ? true : false; }
+		// inline bool isnan(fp32x2 x) { return (isnan((fp32x2_Math)x) != 0) ? true : false; }
 		/* Transcendental Functions */
 		inline fp32x2 erf (fp32x2 x) { return (fp32x2)erf ((fp32x2_Math)x); }
 		inline fp32x2 erfc(fp32x2 x) { return (fp32x2)erfc((fp32x2_Math)x); }

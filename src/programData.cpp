@@ -360,7 +360,7 @@ nano64_t getRenderDelta() {
 	void reset_Image_Render() {
 		std::lock_guard<std::mutex> lock(pDat_Image_Render_Mutex);
 		pDat_Image_Render_Ready = false;
-		memset(&pDat_Image_Render_Fractal, 0, sizeof(ABS_Mandelbrot));
+		memset((void*)&pDat_Image_Render_Fractal, 0, sizeof(ABS_Mandelbrot));
 		memset(&pDat_Image_Render_Data   , 0, sizeof(Render_Data   ));
 	}
 

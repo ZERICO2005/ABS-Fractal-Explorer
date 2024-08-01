@@ -98,6 +98,55 @@
 
 /* BOILERPLATE */
 
+/*
+	#define cond_fabs(b, x) \
+		(f[b] ? fabs(x) : (x))
+
+	#define cond_sign(b, x) \
+		(f[b] ? (-x) : (x))
+
+	template<typename fpX, typename fpColor>
+	void logisticRender_Generic(FractalParameters(fpX, fpColor)) {
+
+		Block_Init_Generic(fpX, fpColor);
+
+			bool f[14];
+			for (uint8_t q = 0; q < 14; q++) {
+				f[q] = ((param.formula >> q) & 1) ? true : false;
+			}
+			
+		Block_BeginLoop_Generic(fpX, fpColor);
+
+			// (-zi^2 * cr) + (zi * cr) - 2 * (ci * zi * zr) - 2 * (zi * cr * zr) - (ci * zr^2) - (cr * zr^2) + (ci * zr) + (cr * zr) - (ci * zi^2) + (ci * zi)
+
+			// temp_zr = (
+			// 	(-(-zi * zi) * cr) - (fpX)2.0 * (-ci * zi * zr) - (cr * (zr * zr)) + (cr * zr) + -(ci * zi)
+			// );
+			// zi = (
+			// 	(zi * cr) - (fpX)2.0 * (zi * cr * zr) - (ci * (zr * zr)) + (ci * zr) - (ci * -(zi * zi))
+			// );
+			// zr = temp_zr;
+
+			temp_zr = cond_sign(10, cond_sign(12,
+				cond_sign(0, (-(-zi * zi) * cr) )
+				- cond_sign(1, static_cast<fpX>(2.0) * (-ci * zi * zr) )
+				- cond_sign(2, (cr * (zr * zr)) )
+				+ cond_sign(3, (cr * zr) )
+				+ cond_sign(4, -(ci * zi) )
+			));
+			zi = cond_sign(11, cond_fabs(13,
+				cond_sign(5, (zi * cr) )
+				- cond_sign(6, static_cast<fpX>(2.0) * (zi * cr * zr) )
+				- cond_sign(7, (ci * (zr * zr)) )
+				+ cond_sign(8, (ci * zr) )
+				- cond_sign(9, (ci * -(zi * zi)) )
+			));
+			zr = temp_zr;
+
+		Block_EndLoop_Generic(fpX, fpColor, inverse_log2(2.0));
+	}
+*/
+
 template<typename fpX, typename fpColor>
 void quadraticRender_Generic(FractalParameters(fpX, fpColor)) {
 

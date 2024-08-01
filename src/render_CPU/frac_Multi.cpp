@@ -16,6 +16,8 @@
 #include "frac_Multi_AVX.h"
 #include "frac_Multi_AVX512_F.h"
 
+#include "frac_Multi_MPFR.h"
+
 #include "../floats/double_Float32.hpp"
 #include "../floats/double_Float64.hpp"
 #include "../floats/double_Float80.hpp"
@@ -177,14 +179,14 @@ void find_Render_Function(
 			return;
 		}
 	}
-	
+
 	constexpr Rendering_Method Render_Method_Attempt_Order[] = {
 		Render_Method_CPU_AVX512,
 		Render_Method_CPU_AVX,
 		Render_Method_CPU_SSE2,
 		Render_Method_CPU_Generic
 	};
-	
+
 	Rendering_Precision target_precision;
 	Rendering_Method target_method;
 	CPU_Rendering_Config.get_Rendering_Precision_and_Method_from_Preset(

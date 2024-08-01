@@ -28,14 +28,9 @@
 	);
 
 	inline fp80 stringTo_Float80(const char* nPtr, char** endPtr = nullptr) {
-		return (nPtr != nullptr) ? strtold(nPtr, endPtr) : (fp80)0.0;
+		return (nPtr != nullptr) ? strtold(nPtr, endPtr) : static_cast<fp80>(0.0);
 	}
 
-	inline void sincos(fp80 x, fp80* p_sin, fp80* p_cos) {
-		// Unsure why sin(long double) is not defined here.
-		*p_sin = sinl(x);
-		*p_cos = cosl(x);
-	}
 #endif
 
 #endif /* FLOAT80_HPP */

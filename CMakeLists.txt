@@ -16,7 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	# MPFR converts between dekker-floats and strings
 	set(FEATURE_FloatMPFR     "")
 	set(FEATURE_OpenCL        "")
-	set(FEATURE_WindowsFileIO "")
+#	set(FEATURE_WindowsFileIO "")
 
 #	set(FEATURE_OpenCV_Scaler "")
 #	set(STATIC_OpenCV_Scaler  "")

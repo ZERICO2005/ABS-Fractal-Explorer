@@ -40,18 +40,18 @@
 		const fpCord& cord
 	) {
 		#if defined(Enable_Float128) && !defined(Enable_Float80)
-			mpfr_set_float128(cord_value, cord, MPFR_RNDN);
+			mpfr_set_float128(cord_value, cord, MPFR_RNDZ);
 		#else
 			mpfr_t cord_hi, cord_lo;
 			mpfr_inits2(MPFR_PRECISION, cord_hi, cord_lo, nullptr);
 			#if defined(Enable_Float80)
-				mpfr_set_ld(cord_hi, cord.hi, MPFR_RNDN);
-				mpfr_set_ld(cord_lo, cord.lo, MPFR_RNDN);
+				mpfr_set_ld(cord_hi, cord.hi, MPFR_RNDZ);
+				mpfr_set_ld(cord_lo, cord.lo, MPFR_RNDZ);
 			#else
-				mpfr_set_d(cord_hi, cord.hi, MPFR_RNDN);
-				mpfr_set_d(cord_lo, cord.lo, MPFR_RNDN);
+				mpfr_set_d(cord_hi, cord.hi, MPFR_RNDZ);
+				mpfr_set_d(cord_lo, cord.lo, MPFR_RNDZ);
 			#endif
-			mpfr_add(cord_value, cord_hi, cord_lo, MPFR_RNDN);
+			mpfr_add(cord_value, cord_hi, cord_lo, MPFR_RNDZ);
 			mpfr_clears(cord_hi, cord_lo, nullptr);
 		#endif
 	}
@@ -104,24 +104,24 @@
 		const mpfr_t& cord_value
 	) {
 		#if defined(Enable_Float128) && !defined(Enable_Float80)
-			cord = mpfr_get_float128(cord_value, MPFR_RNDN);
+			cord = mpfr_get_float128(cord_value, MPFR_RNDZ);
 		#else
 			mpfr_t cord_diff;
 			mpfr_init2(cord_diff, MPFR_PRECISION);
 			#if defined(Enable_Float80)
-				cord.hi = mpfr_get_ld(cord_value, MPFR_RNDN);
+				cord.hi = mpfr_get_ld(cord_value, MPFR_RNDZ);
 				{ // mpfr_sub_ld doesn't exist
 					mpfr_t cord_hi_ld;
 					mpfr_init2(cord_hi_ld, MPFR_PRECISION);
-					mpfr_set_ld(cord_hi_ld, cord.hi, MPFR_RNDN);
-					mpfr_sub(cord_diff, cord_value, cord_hi_ld, MPFR_RNDN);
+					mpfr_set_ld(cord_hi_ld, cord.hi, MPFR_RNDZ);
+					mpfr_sub(cord_diff, cord_value, cord_hi_ld, MPFR_RNDZ);
 					mpfr_clear(cord_hi_ld);
 				}
-				cord.lo = mpfr_get_ld(cord_diff, MPFR_RNDN);
+				cord.lo = mpfr_get_ld(cord_diff, MPFR_RNDZ);
 			#else
-				cord.hi = mpfr_get_d(cord_value, MPFR_RNDN);
-				mpfr_sub_d(cord_diff, cord_value, cord.hi, MPFR_RNDN);
-				cord.lo = mpfr_get_d(cord_diff, MPFR_RNDN);
+				cord.hi = mpfr_get_d(cord_value, MPFR_RNDZ);
+				mpfr_sub_d(cord_diff, cord_value, cord.hi, MPFR_RNDZ);
+				cord.lo = mpfr_get_d(cord_diff, MPFR_RNDZ);
 			#endif
 			mpfr_clear(cord_diff);
 		#endif
@@ -130,7 +130,7 @@
 	fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr) {
 		mpfr_t cord_value;
 		mpfr_init2(cord_value, MPFR_PRECISION);
-		mpfr_strtofr(cord_value, nPtr, endPtr, 10, MPFR_RNDN);
+		mpfr_strtofr(cord_value, nPtr, endPtr, 10, MPFR_RNDZ);
 		fpCord cord;
 		mpfr_to_fpCord(cord, cord_value);
 		mpfr_clear(cord_value);

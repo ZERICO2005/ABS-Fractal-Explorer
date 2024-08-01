@@ -20,7 +20,7 @@
 
 #include "../user_data.h"
 #include "../displayInfo.h"
-
+ 
 #include "../programData.h"
 #include "../render.h"
 #include "../fractal_Information/Mandelbrot_Information.h"
@@ -285,10 +285,10 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	static std::string str_FloatCoordinate_i;
 	static std::string str_FloatCoordinate_zr;
 	static std::string str_FloatCoordinate_zi;
-	str_FloatCoordinate_r  = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.r );
-	str_FloatCoordinate_i  = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.i );
-	str_FloatCoordinate_zr = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.zr);
-	str_FloatCoordinate_zi = FloatCoordinate_toString("%15.12" PRIfpCord "f", FRAC.zi);
+	str_FloatCoordinate_r  = FloatCoordinate_toString("%+.12" PRIfpCord "f", FRAC.r );
+	str_FloatCoordinate_i  = FloatCoordinate_toString("%+.12" PRIfpCord "f", FRAC.i );
+	str_FloatCoordinate_zr = FloatCoordinate_toString("%+.12" PRIfpCord "f", FRAC.zr);
+	str_FloatCoordinate_zi = FloatCoordinate_toString("%+.12" PRIfpCord "f", FRAC.zi);
 
 	ImGui::Text(
 		"Zreal: %s Zimag: %s Rotation: %5.1" PRIfp64 "f Stetch: 2^%6.4" PRIfp64 "f",
@@ -349,7 +349,6 @@ void Menu_Coordinates() {
 	ImGui_BoundWindowPosition(config_data.GUI_Settings);
 
 	ABS_Mandelbrot& FRAC = current_Fractal;
-	#define NumberTextLen (64)
 	
 	// 320 bits * log10(2) = 96.3 digits
 	constexpr size_t Maximum_Cord_Text_Length = 100;
@@ -360,42 +359,14 @@ void Menu_Coordinates() {
 	static char str_input_Z_Real[Maximum_Cord_Text_Length];
 	static char str_input_Z_Imag[Maximum_Cord_Text_Length];
 
-	/*
-	#define FloatCoordinate_InputText(lbl, num, fmt); do { \
-			static char Temp_Text_Input_Buf[NumberTextLen]; \
-			FloatCoordinate_snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-				num = stringTo_FloatCoordinate(Temp_Text_Input_Buf, nullptr); \
-			} \
-		} while(0)
-	*/
-
-	/*
-	#define Float_InputText(lbl, num, fmt, func); do { \
-			static char Temp_Text_Input_Buf[NumberTextLen]; \
-			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-				num = func(Temp_Text_Input_Buf, nullptr); \
-			} \
-		} while(0)
-	*/
-
-	#define Int_InputText(lbl, num, fmt, func, base); do { \
-			static char Temp_Text_Input_Buf[NumberTextLen]; \
-			snprintf(Temp_Text_Input_Buf, NumberTextLen, fmt, num); \
-			if (ImGui::InputText(lbl,Temp_Text_Input_Buf,NumberTextLen)) { \
-				num = func(Temp_Text_Input_Buf, nullptr, base); \
-			} \
-		} while(0)
-
 	ImGui::SeparatorText("Cordinates"); { ImGui::Indent();
 		ImGui::Text("Real and Imaginary Coordinate:");
 			FloatCoordinate_InputText(
-				"C-Real##input_C_Real", FRAC.r, "%43.40" PRIfpCord "f",
+				"C-Real##input_C_Real", FRAC.r, "%+46.42" PRIfpCord "f",
 				str_input_C_Real, ARRAY_LENGTH(str_input_C_Real)
 			);
 			FloatCoordinate_InputText(
-				"C-Imag##input_C_Imag", FRAC.i, "%43.40" PRIfpCord "f",
+				"C-Imag##input_C_Imag", FRAC.i, "%+46.42" PRIfpCord "f",
 				str_input_C_Imag, ARRAY_LENGTH(str_input_C_Imag)
 			);
 		ImGui::Text("Zoom:");
@@ -431,11 +402,11 @@ void Menu_Coordinates() {
 	ImGui::SeparatorText("Julia Set:"); { ImGui::Indent();
 		ImGui::Text("Julia Coordinate:");
 		FloatCoordinate_InputText(
-			"Z-Real##input_Z_Real", FRAC.zr, "%43.40" PRIfpCord "f",
+			"Z-Real##input_Z_Real", FRAC.zr, "%+46.42" PRIfpCord "f",
 			str_input_Z_Real, ARRAY_LENGTH(str_input_Z_Real)
 		);
 		FloatCoordinate_InputText(
-			"Z-Imag##input_Z_Imag", FRAC.zi, "%43.40" PRIfpCord "f",
+			"Z-Imag##input_Z_Imag", FRAC.zi, "%+46.42" PRIfpCord "f",
 			str_input_Z_Imag, ARRAY_LENGTH(str_input_Z_Imag)
 		);
 		fp32 juliaAngle = (fp32)atan2(FRAC.zi, FRAC.zr);
@@ -549,11 +520,24 @@ void Menu_Fractal() {
 			if (FRAC.polarMandelbrot == false) {
 				ImGui::Text("Fractal Formula:");
 				static bool inputHexadecimal = false;
-				if (inputHexadecimal == true) {
-					Int_InputText("##input_formula", FRAC.formula, "%" PRIX64, stringTo_Uint64, 16);
-				} else {
-					Int_InputText("##input_formula", FRAC.formula, "%" PRIu64, stringTo_Uint64, 10);
+
+				{
+					static char input_formula_buf[64];
+					snprintf(
+						input_formula_buf, ARRAY_LENGTH(input_formula_buf),
+						(inputHexadecimal ? "%" PRIX64 : "%" PRIu64),
+						FRAC.formula
+					);
+					if (ImGui::InputText("##input_formula",
+						input_formula_buf, ARRAY_LENGTH(input_formula_buf)
+					)) {
+						FRAC.formula = stringTo_Uint64(
+							input_formula_buf, nullptr,
+							inputHexadecimal ? 16 : 10
+						);
+					}
 				}
+				
 				ImGui::Checkbox("Hexadecimal", &inputHexadecimal);
 			
 				switch (FRAC.power) {

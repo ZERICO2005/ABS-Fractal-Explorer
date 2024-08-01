@@ -201,8 +201,8 @@ constexpr fp64 ZOOM_VALUE_MINIMUM = -5.0;
 	constexpr fp64 ZOOM_VALUE_MAXIMUM = 324.0; // Float64 limit: log10(2^-1022 * 2^-52) rounded up
 #endif
 
-constexpr fp64 STRETCH_VALUE_MINIMUM = -100.0;
-constexpr fp64 STRETCH_VALUE_MAXIMUM =  100.0;
+constexpr fp64 STRETCH_VALUE_MINIMUM = -1000.0;
+constexpr fp64 STRETCH_VALUE_MAXIMUM =  1000.0;
 
 constexpr uint32_t ITERATION_COUNT_MINIMUM = 16;
 constexpr uint32_t ITERATION_COUNT_MAXIMUM = 16777216;

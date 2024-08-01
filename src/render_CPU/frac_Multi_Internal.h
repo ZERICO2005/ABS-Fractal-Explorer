@@ -25,6 +25,9 @@
 	// #define ENABLE_AVX512_FP16_RENDERING
 	// #define ENABLE_AVX512_BF16_RENDERING
 
+	// MPFR rendering will be put off for now.
+	// #define ENABLE_MPFR_RENDERING
+
 /* Constants */
 	constexpr size_t bitCount_Float16 = 16;
 	constexpr size_t bitCount_Float32 = 32;
@@ -144,7 +147,7 @@ void Generate_PreCalc_Param(
 		preCalc_Param.realCord = (fpX)param.r;
 		preCalc_Param.imagCord = (fpX)param.i;
 		bool use_startingZ = (param.startingZ || param.juliaSet) ? true : false;
-		preCalc_Param.realJulia = use_startingZ ? (fpX)param.zr : (fpX)0.0;
+		preCalc_Param.realJulia = use_startingZ ? (fpX)param.zr : (fpX)0.5;
 		preCalc_Param.imagJulia = use_startingZ ? (fpX)param.zi : (fpX)0.0;
 		const fpCord zoom_PC = pow((fpCord)10.0, (fpCord)param.zoom);
 		

@@ -80,11 +80,11 @@
 
 	#ifdef _WIN32
 		inline fp128 stringTo_Float128(const char* nPtr, char** endPtr = nullptr) {
-			return (nPtr != nullptr) ? strtoflt128(nPtr, endPtr) : (fp128)0.0;
+			return (nPtr != nullptr) ? strtoflt128(nPtr, endPtr) : static_cast<fp128>(0.0);
 		}
 	#else
 		inline fp128 stringTo_Float128(const char* nPtr, char** endPtr = nullptr) {
-			return (nPtr != nullptr) ? strtof128  (nPtr, endPtr) : (fp128)0.0;
+			return (nPtr != nullptr) ? strtof128  (nPtr, endPtr) : static_cast<fp128>(0.0);
 		}
 	#endif
 

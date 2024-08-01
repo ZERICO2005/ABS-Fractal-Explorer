@@ -101,7 +101,67 @@ __kernel void OpenCL_Mandelbrot_Float32(
 						}
 					}
 				} break;
+				/*
+					case 0: { // Logistic Mandelbrot Set
+						#define cond_fabs(b, x) \
+							(f[b] ? fabs(x) : (x))
+
+						#define cond_sign(b, x) \
+							(f[b] ? (-x) : (x))
+
+						uint8_t f[20];
+						for (uint8_t q = 0; q < 20; q++) {
+							f[q] = ((formula >> q) & 1) ? 1 : 0;
+						}
+						const fp32 wr = cond_sign(16, cond_fabs(18, cr));
+						const fp32 wi = cond_sign(17, cond_fabs(19, ci));
+						for (uint32_t itr = 0; itr < maxItr; itr++) {
+
+								temp = cond_sign(12, cond_fabs(14,
+									(-(-zi * cond_fabs(0, zi)) * wr)
+									- (2.0f * (-wi * cond_fabs(1, zi) * cond_fabs(2, zr)))
+									- (wr * (cond_fabs(3, zr) * zr))
+									+ (wr * cond_fabs(4, zr))
+									+ -(wi * cond_fabs(5, zi))
+								)) + cr;
+								zi = cond_sign(13, cond_fabs(15,
+									(cond_fabs(6, zi) * wr)
+									- (2.0f * (cond_fabs(7, zi) * wr * cond_fabs(8, zr)))
+									- (wi * (cond_fabs(9, zr) * zr))
+									+ (wi * cond_fabs(10, zr))
+									- (wi * -(cond_fabs(11, zi) * zi))
+								)) + ci;
+								zr = temp;
+							// temp = (
+							// 	(-(-zi * fabs(zi)) * cr) - 2.0f * (-ci * zi * zr) - (cr * (zr * zr)) + (cr * zr) + -(ci * zi)
+							// ) + cr;
+							// zi = -(
+							// 	(zi * cr) - 2.0f * (zi * cr * zr) - (ci * (zr * zr)) + (ci * zr) - (ci * -(zi * zi))
+							// ) + ci;
+							// zr = temp;
+							// zr1 = (f[3]) ? fabs(zr) : zr;
+							// zi1 = (f[4]) ? fabs(zi) : zi;
+							// zr2 = (f[5]) ? fabs(zr) : zr;
+							// zi2 = (f[6]) ? fabs(zi) : zi;
+							
+							zs = zr * zr + zi * zi;
+							if (zs < low) {
+								low = zs;
+							} else if (zs > breakoutValue) {
+								smooth = log1p(fmax(0.0f, (fp32)itr - log2(log2(zs) / 2.0f) / log2(2.0f)));
+								break;
+							}
+						}
+					} break;
+				*/
 				case 2: {
+
+					#define cond_fabs(b, x) \
+						(f[b] ? fabs(x) : (x))
+
+					#define cond_sign(b, x) \
+						(f[b] ? (-x) : (x))
+
 					fp32 zr1, zr2, zi1, zi2, s1, s2, s3;
 					uint8_t f[8];
 					for (uint8_t q = 0; q < 8; q++) {
