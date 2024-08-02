@@ -12,7 +12,6 @@
 #include "programData.h"
 #include "fileManager.h"
 
-#include "floats/double_Float32.hpp"
 #include <cstdio>
 
 std::atomic<bool> QUIT_FLAG(false);
