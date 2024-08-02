@@ -21,6 +21,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 #	set(FEATURE_OpenCV_Scaler "")
 #	set(STATIC_OpenCV_Scaler  "")
 
+	# Defines the NDEBUG macro to disable <cassert>
+#   target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
+
 #   set(COMPILE_FLTO "")
 
 # Compiling

@@ -8,10 +8,13 @@
 #ifndef DOUBLE_FLOAT32_HPP
 #define DOUBLE_FLOAT32_HPP
 
+#include <cstdarg>
 #include <cstdint>
 #include <math.h>
 #include <cmath>
 #include <cfenv>
+#include <limits>
+
 
 typedef float fp32;
 typedef double fp64;
@@ -26,8 +29,10 @@ class Float32x2 {
 public:
 	fp32 hi;
 	fp32 lo;
-	
+
 private:
+
+	/* Arithmetic */
 
 	inline Float32x2 Dekker_Add(
 		const Float32x2& x, const Float32x2& y
@@ -123,16 +128,83 @@ private:
 		return r;
 	}
 
-public:
+	/* Double-Single Arithmetic */
 
-// #ifdef Enable_Float128
-// 	inline void print() const {
-// 		char buf[128];
-// 		memset(buf, '\0', sizeof(buf));
-// 		quadmath_snprintf(buf, sizeof(buf), "%.25Qg", (fp128)this->hi + (fp128)this->lo);
-// 		printf("{%.25lg, %.25lg} | %s\n", this->hi, this->lo, buf);
-// 	}
-// #endif
+	inline Float32x2 Dekker_Add_Float32(
+		const Float32x2& x, const fp32& y
+	) const {
+		fp32 r_hi = x.hi + y;
+		fp32 r_lo = 0.0f;
+		if (fabsf(x.hi) > fabsf(y)) {
+			r_lo = x.hi - r_hi + y + x.lo;
+		} else {
+			r_lo = y - r_hi + x.hi + x.lo;
+		}
+
+		Float32x2 c;
+		c.hi = r_hi + r_lo;
+		c.lo = r_hi - c.hi + r_lo;
+		return c;
+	}
+
+	inline Float32x2 Dekker_Sub_Float32(
+		const Float32x2& x, const fp32& y
+	) const {
+		fp32 r_hi = x.hi - y;
+		fp32 r_lo = 0.0f;
+		if (fabsf(x.hi) > fabsf(y)) {
+			r_lo = x.hi - r_hi - y + x.lo;
+		} else {
+			r_lo = -y - r_hi + x.hi + x.lo;
+		}
+
+		Float32x2 c;
+		c.hi = r_hi + r_lo;
+		c.lo = r_hi - c.hi + r_lo;
+		return c;
+	}
+
+	inline Float32x2 Dekker_Mul_Float32(
+		const Float32x2& x, const fp32& y
+	) const {
+		Float32x2 t = Dekker_Mul12(x.hi, y);
+		fp32 c = x.lo * y + t.lo;
+
+		Float32x2 r;
+		r.hi = t.hi + c;
+		r.lo = t.hi - r.hi + c;
+		return r;
+	}
+
+	inline Float32x2 Dekker_Div_Float32(
+		const Float32x2& x, const fp32& y
+	) const {
+		Float32x2 u;
+		u.hi = x.hi / y;
+		Float32x2 t = Dekker_Mul12(u.hi, y);
+		fp32 l = (x.hi - t.hi - t.lo + x.lo) / y;
+
+		Float32x2 r;
+		r.hi = u.hi + l;
+		r.lo = u.hi - r.hi + l;
+		return r;
+	}
+
+	inline Float32x2 Float32_Div_Dekker(
+		const fp32& x, const Float32x2& y
+	) const {
+		Float32x2 u;
+		u.hi = x / y.hi;
+		Float32x2 t = Dekker_Mul12(u.hi, y.hi);
+		fp32 l = (x - t.hi - t.lo - u.hi * y.lo) / y.hi;
+
+		Float32x2 r;
+		r.hi = u.hi + l;
+		r.lo = u.hi - r.hi + l;
+		return r;
+	}
+
+public:
 
 /* Arithmetic */
 
@@ -150,6 +222,22 @@ public:
 
 	inline Float32x2 operator/(const Float32x2 &value) const {
 		return Dekker_Div(*this, value);
+	}
+
+	inline Float32x2 operator+(const fp32 &value) const {
+		return Dekker_Add_Float32(*this, value);
+	}
+
+	inline Float32x2 operator-(const fp32 &value) const {
+		return Dekker_Sub_Float32(*this, value);
+	}
+
+	inline Float32x2 operator*(const fp32 &value) const {
+		return Dekker_Mul_Float32(*this, value);
+	}
+
+	inline Float32x2 operator/(const fp32 &value) const {
+		return Dekker_Div_Float32(*this, value);
 	}
 
 	inline Float32x2 operator-() const {
@@ -202,6 +290,28 @@ public:
 
 	inline Float32x2& operator/=(const Float32x2 &value) {
 		*this = Dekker_Div(*this, value);
+		return *this;
+	}
+
+/* Double-Single Compound Assignment */
+
+	inline Float32x2& operator+=(const fp32 &value) {
+		*this = Dekker_Add_Float32(*this, value);
+		return *this;
+	}
+
+	inline Float32x2& operator-=(const fp32 &value) {
+		*this = Dekker_Sub_Float32(*this, value);
+		return *this;
+	}
+
+	inline Float32x2& operator*=(const fp32 &value) {
+		*this = Dekker_Mul_Float32(*this, value);
+		return *this;
+	}
+
+	inline Float32x2& operator/=(const fp32 &value) {
+		*this = Dekker_Div_Float32(*this, value);
 		return *this;
 	}
 
@@ -512,5 +622,42 @@ typedef Float32x2 fp32x2;
 		inline fp32x2 erfc(fp32x2 x) { return (fp32x2)erfc((fp32x2_Math)x); }
 		inline fp32x2 lgamma(fp32x2 x) { return (fp32x2)lgamma((fp32x2_Math)x); }
 		inline fp32x2 tgamma(fp32x2 x) { return (fp32x2)tgamma((fp32x2_Math)x); }
+
+	/* Strings */
+
+		#include "double_FloatN_stringTo.hpp"
+
+		inline Float32x2 stringTo_Float32x2(const char* nPtr, char** endPtr = nullptr) {
+			internal_double_FloatN_stringTo<Float32x2, fp32> stringTo_func;
+			return stringTo_func.stringTo_FloatNx2(nPtr, endPtr);
+		}
+
+		#include "double_FloatN_snprintf.hpp"
+
+		#define PRIFloat32x2 "D"
+		#define PRIfp32x2 "D"
+
+		/**
+		 * @brief snprintf a singular Float32x2/fp32x2.
+		 * Similar in functionallity to quadmath_snprintf.
+		 * @note $ not supported. This function ignore additional
+		 * format specifiers.
+		 * @return -1 on encoding failure. Otherwise the total length of the
+		 * string excluding the \0 terminator and ignoring the buffer size.
+		 */
+		inline int Float32x2_snprintf(
+			char* buf, size_t len,
+			const char* format, ...
+		) {
+			va_list args;
+			va_start(args, format);
+			internal_double_FloatN_snprintf<Float32x2> func_snprintf;
+			int ret_val = func_snprintf.FloatNx2_snprintf(
+				PRIFloat32x2, buf, len,
+				format, args
+			);
+			va_end(args);
+			return ret_val;
+		}
 
 #endif /* DOUBLE_FLOAT32_HPP */

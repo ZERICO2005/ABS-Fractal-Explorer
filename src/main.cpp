@@ -12,6 +12,9 @@
 #include "programData.h"
 #include "fileManager.h"
 
+#include "floats/double_Float32.hpp"
+#include <cstdio>
+
 std::atomic<bool> QUIT_FLAG(false);
 std::atomic<bool> ABORT_RENDERING(false);
 
@@ -35,7 +38,8 @@ int init_Fractal_Engine(int argc, char* argv[]) {
 	return 0;
 }
 
-void print_pointer_sizes() {
+/** Debugging Functions */
+__attribute__((unused)) void print_pointer_sizes() {
 	printf("CHAR_BIT: %2d bits\n", CHAR_BIT);
 	// printf("sizeof(void)        = %3zu | %3zub\n", sizeof(void)       , sizeof(void)        * CHAR_BIT);
 	printf("sizeof(void*)       = %3zu | %3zub\n", sizeof(void*)      , sizeof(void*)       * CHAR_BIT);

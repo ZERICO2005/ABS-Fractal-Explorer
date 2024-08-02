@@ -246,29 +246,17 @@ bool load_Fractal_Render(
 	return false;
 }
 
-// void test() {
-// 	fp128 y = (fp128)1.0 / (fp128)3.0;
-// 	fp64x2 x = y;
-// 	x.print();
-// 	x = (fp64x2)1.0;
-// 	x = exp(x);
-// 	x.print();
-// 	x = -x;
-// 	x.print();
-// }
-
 void renderCPU_ABS_Mandelbrot(
 	BufferBox* buf, Render_Data ren, ABS_Mandelbrot param,
 	const Render_Configurator& CPU_Render_Config,
 	std::atomic<bool>& ABORT_RENDERING, uint32_t threadCount
 ) {
-	//test();
 	using namespace Rendering_Configuration;
 	if (validateBufferBox(buf) == false) {
 		printError("BufferBox* buf is NULL or has invalid data in renderCPU_ABS_Mandelbrot()");
 		return;
 	}
-	
+
 	/* Thread Creation */
 
 	#define Thread_Arguments buf, ren, param, CPU_Render_Config, ABORT_RENDERING, threadCount
