@@ -10,20 +10,35 @@ project(${PROJECT_NAME})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
-# Configuration
+### Configuration ###
+
+	# x87 __float80 (long double)
 	set(FEATURE_Float80       "")
+
+	# GCC quadmath __float128
 	set(FEATURE_Float128      "")
+	
+	# Requires libqd.a
+#	set(FEATURE_LIBQD         "")
+	
 	# MPFR converts between dekker-floats and strings
 	set(FEATURE_FloatMPFR     "")
+	
+	# GPU Rendering (OpenCL 1.2 or later)
 	set(FEATURE_OpenCL        "")
-#	set(FEATURE_WindowsFileIO "")
 
+	# Uses the Windows File dialog over the generic ones
+	set(FEATURE_WindowsFileIO "")
+
+	# Provides higher quality frame scaling
 #	set(FEATURE_OpenCV_Scaler "")
+	# Requires libquadmath.a
 #	set(STATIC_OpenCV_Scaler  "")
 
 	# Defines the NDEBUG macro to disable <cassert>
 #   target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
 
+	# Long compile times! Optimizes and reduces the size of the binary for release
 #   set(COMPILE_FLTO "")
 
 # Compiling
@@ -35,7 +50,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(CMAKE_CXX_STANDARD 17)
 
 # Compiler Flags
-	set(PROGRAM_OPT_FLAG -O3 -g)
+	set(PROGRAM_OPT_FLAG -O3)
 	set(LIBRARY_OPT_FLAG -O3)
 	# -Ofast appears to have a noticable speedup compared to -O3 for SSE2 and AVX rendering.
 	set(RENDER_CPU_OPT_FLAG -Ofast)
@@ -86,6 +101,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		set(LIB_QuadMath "")
 	endif()
 
+	if(DEFINED FEATURE_LIBQD)
+		set(LIB_QuadDouble "-l:libqd.a")
+		target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
+	else()
+		set(LIB_QuadDouble "")
+	endif()
+
 	if(DEFINED FEATURE_FloatMPFR)
 		#set(LIB_MPFR "-lmpfr -lgmp")
 		set(LIB_MPFR "-l:libmpfr.a -l:libgmp.a")
@@ -134,15 +156,19 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		set(FLTO_FLAG "")
 	endif()
 
-# ImGui
+# Dear ImGui
 	file(GLOB IMGUI_FILES "${IMGUI_DIR}/*.c" "${IMGUI_DIR}/*.cpp" "${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp" "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer2.cpp")
 	add_library(IMGUI_LIB OBJECT ${IMGUI_FILES})
-	target_compile_options(IMGUI_LIB PRIVATE ${LIBRARY_OPT_FLAG} ${MARCH_FLAGS} -Wall -Wshadow)
+	target_compile_options(IMGUI_LIB PRIVATE ${LIBRARY_OPT_FLAG} ${FLTO_FLAG} ${MARCH_FLAGS} -Wall -Wshadow)
 
-	include_directories(SYSTEM ${SDL2_INCLUDE_DIRS} ${IMGUI_DIR} "${INCLUDE_DIR}/bitGraphics_Font" ${OpenCV_INCLUDE_DIRS})
+	include_directories(SYSTEM
+		${SDL2_INCLUDE_DIRS}
+		${IMGUI_DIR}
+		"${INCLUDE_DIR}/bitGraphics_Font"
+		${OpenCV_INCLUDE_DIRS}
+	)
 
-# Compiler Flags Debug(-g -O0) Release(-O3)
-	# set(OPT_FLAG -O3 -g ${FLTO_FLAG})
+# Compile Options
 
 	set(MARCH_FLAGS -msse2)
 
@@ -151,12 +177,25 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		-Werror=infinite-recursion
 		-Wconversion -Wsign-conversion -Wformat=2 -Wsign-compare -Wfloat-conversion
 	)
-	set(WARNING_IGNORE_FLAGS -Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces)
+	set(WARNING_IGNORE_FLAGS
+		-Wno-missing-field-initializers -Wno-format-nonliteral -Wno-missing-braces
+	)
 
 	set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fdiagnostics-color=always")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
 
-	target_compile_options(${PROJECT_NAME} PRIVATE ${PROGRAM_OPT_FLAG} ${MARCH_FLAGS} -fdiagnostics-color=always ${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS})
+	target_compile_options(${PROJECT_NAME} PRIVATE
+		${PROGRAM_OPT_FLAG} ${FLTO_FLAG} ${MARCH_FLAGS}
+		-fdiagnostics-color=always
+		${WARNING_FLAGS} ${WARNING_IGNORE_FLAGS}
+	)
 
 # If using the OpenCV Scaler, add ${OpenCV_LIBS}
-	target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -lSDL2 -lmpfr -lgmp ${LIB_OpenCL} ${LIB_OpenCV} ${LIB_QuadMath} IMGUI_LIB)
+	target_link_libraries(${PROJECT_NAME} PRIVATE
+		-static-libgcc -static-libstdc++ -lSDL2 IMGUI_LIB
+		${LIB_QuadMath}
+		${LIB_libQD}
+		${LIB_MPFR}
+		${LIB_OpenCL}
+		${LIB_OpenCV}
+	)
