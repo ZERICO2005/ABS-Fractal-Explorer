@@ -12,6 +12,9 @@
 #include "Common_Def.h"
 #include "Program_Def.h"
 
+// Excludes rendering configurations that are not supported in any version of ABS-Fractal-Explorer
+// #define INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+
 namespace Rendering_Configuration {
 	/*
 	Conventions:
@@ -24,7 +27,9 @@ namespace Rendering_Configuration {
 		enum Rendering_Precision {
 			Render_Precision_Automatic,
 			Render_Precision_Unknown = Render_Precision_Automatic,
-			Render_Precision_Float16,
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				Render_Precision_Float16,
+			#endif
 			Render_Precision_Float32,
 			Render_Precision_Float32x2,
 			Render_Precision_Float64,
@@ -35,7 +40,9 @@ namespace Rendering_Configuration {
 		};
 		const char* const Rendering_Precision_String[] = {
 			"Render_Precision_Automatic",
-			"Render_Precision_Float16"  ,
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"Render_Precision_Float16"  ,
+			#endif
 			"Render_Precision_Float32"  ,
 			"Render_Precision_Float32x2",
 			"Render_Precision_Float64"  ,
@@ -46,7 +53,9 @@ namespace Rendering_Configuration {
 		};
 		const char* const Rendering_Precision_Name[] = {
 			"Automatic Render Precision",
-			"16bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"16bit Float",
+			#endif
 			"32bit Float",
 			"2x32bit Float",
 			"64bit Float",
@@ -61,7 +70,9 @@ namespace Rendering_Configuration {
 		);
 		const char* const Rendering_Precision_Text[] = {
 			"Automatic Render Precision",
-			"(10^1.8 ) 16bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"(10^1.8 ) 16bit Float",
+			#endif
 			"(10^5.7 ) 32bit Float",
 			"(10^12.6) 2x32bit Float",
 			"(10^14.4) 64bit Float",
@@ -83,7 +94,9 @@ namespace Rendering_Configuration {
 			Render_Method_CPU_Generic,
 			Render_Method_CPU_SSE2,
 			Render_Method_CPU_AVX,
-			Render_Method_CPU_AVX512,
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				Render_Method_CPU_AVX512,
+			#endif
 		};
 		const char* const Rendering_Method_String[] = {
 			"Render_Method_Automatic",
@@ -91,7 +104,9 @@ namespace Rendering_Configuration {
 			"Render_Method_CPU_Generic",
 			"Render_Method_CPU_SSE2",
 			"Render_Method_CPU_AVX",
-			"Render_Method_CPU_AVX512",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"Render_Method_CPU_AVX512",
+			#endif
 		};
 		const char* const Rendering_Method_Name[] = {
 			"Automatic Render Method",
@@ -99,7 +114,9 @@ namespace Rendering_Configuration {
 			"CPU-Generic Rendering",
 			"CPU-SSE2 Rendering",
 			"CPU-AVX Rendering",
-			"CPU-AVX512 Rendering",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"CPU-AVX512 Rendering",
+			#endif
 		};
 		static_assert(
 			ARRAY_LENGTH(Rendering_Method_String) == ARRAY_LENGTH(Rendering_Method_Name),
@@ -111,7 +128,9 @@ namespace Rendering_Configuration {
 			"CPU-Generic Rendering",
 			"CPU-SSE2 Rendering",
 			"CPU-AVX Rendering",
-			"CPU-AVX512 Rendering",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"CPU-AVX512 Rendering",
+			#endif
 		};
 		static_assert(
 			ARRAY_LENGTH(Rendering_Method_String) == ARRAY_LENGTH(Rendering_Method_Text),
@@ -123,13 +142,17 @@ namespace Rendering_Configuration {
 			Render_Preset_Automatic,
 			Render_Preset_Unknown = Render_Preset_Automatic,
 			/* GPU Rendering */
-			Render_Preset_GPU_Float16,
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				Render_Preset_GPU_Float16,
+			#endif
 			Render_Preset_GPU_Float32,
-			Render_Preset_GPU_Float32x2,
+			// Render_Preset_GPU_Float32x2,
 			Render_Preset_GPU_Float64,
-			Render_Preset_GPU_Float64x2,
+			// Render_Preset_GPU_Float64x2,
 			/* CPU Generic Rendering */
-			Render_Preset_CPU_Generic_Float16,
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				Render_Preset_CPU_Generic_Float16,
+			#endif
 			Render_Preset_CPU_Generic_Float32,
 			Render_Preset_CPU_Generic_Float32x2,
 			Render_Preset_CPU_Generic_Float64,
@@ -143,25 +166,31 @@ namespace Rendering_Configuration {
 			/* CPU AVX Rendering */
 			Render_Preset_CPU_AVX_Float32,
 			Render_Preset_CPU_AVX_Float64,
-			/* CPU AVX512 Rendering */
-			Render_Preset_CPU_AVX512_Float16,
-			Render_Preset_CPU_AVX512_Float32,
-			Render_Preset_CPU_AVX512_Float64,
+			Render_Preset_CPU_AVX_Float64x2,
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				/* CPU AVX512 Rendering */
+				Render_Preset_CPU_AVX512_Float16,
+				Render_Preset_CPU_AVX512_Float32,
+				Render_Preset_CPU_AVX512_Float64,
+			#endif
 		};
 		const char* const Rendering_Preset_String[] = {
 			"Render_Preset_Automatic",
 			/* GPU Rendering */
-			"Render_Preset_GPU_Float16",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"Render_Preset_GPU_Float16",
+			#endif
 			"Render_Preset_GPU_Float32",
-			"Render_Preset_GPU_Float32x2",
+			// "Render_Preset_GPU_Float32x2",
 			"Render_Preset_GPU_Float64",
-			"Render_Preset_GPU_Float64x2",
+			// "Render_Preset_GPU_Float64x2",
 			/* CPU Generic Rendering */
-			"Render_Preset_CPU_Generic_Float16",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"Render_Preset_CPU_Generic_Float16",
+			#endif
 			"Render_Preset_CPU_Generic_Float32",
 			"Render_Preset_CPU_Generic_Float32x2",
 			"Render_Preset_CPU_Generic_Float64",
-
 			"Render_Preset_CPU_Generic_Float80",
 			"Render_Preset_CPU_Generic_Float64x2",
 			"Render_Preset_CPU_Generic_Float128",
@@ -172,21 +201,28 @@ namespace Rendering_Configuration {
 			/* CPU AVX Rendering */
 			"Render_Preset_CPU_AVX_Float32",
 			"Render_Preset_CPU_AVX_Float64",
-			/* CPU AVX512 Rendering */
-			"Render_Preset_CPU_AVX512_Float16",
-			"Render_Preset_CPU_AVX512_Float32",
-			"Render_Preset_CPU_AVX512_Float64",
+			"Render_Preset_CPU_AVX_Float64x2",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				/* CPU AVX512 Rendering */
+				"Render_Preset_CPU_AVX512_Float16",
+				"Render_Preset_CPU_AVX512_Float32",
+				"Render_Preset_CPU_AVX512_Float64",
+			#endif
 		};
 		const char* const Rendering_Preset_Name[] = {
 			"Automatic Render Preset",
 			/* GPU Rendering */
-			"GPU 16bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"GPU 16bit Float",
+			#endif
 			"GPU 32bit Float",
-			"GPU 2x32bit Float",
+			// "GPU 2x32bit Float",
 			"GPU 64bit Float",
-			"GPU 2x64bit Float",
+			// "GPU 2x64bit Float",
 			/* CPU Generic Rendering */
-			"CPU-Generic 16bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"CPU-Generic 16bit Float",
+			#endif
 			"CPU-Generic 32bit Float",
 			"CPU-Generic 2x32bit Float",
 			"CPU-Generic 64bit Float",
@@ -200,10 +236,13 @@ namespace Rendering_Configuration {
 			/* CPU AVX Rendering */
 			"CPU-AVX 32bit Float",
 			"CPU-AVX 64bit Float",
-			/* CPU AVX512 Rendering */
-			"CPU-AVX512 16bit Float",
-			"CPU-AVX512 32bit Float",
-			"CPU-AVX512 64bit Float",
+			"CPU-AVX 2x64bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				/* CPU AVX512 Rendering */
+				"CPU-AVX512 16bit Float",
+				"CPU-AVX512 32bit Float",
+				"CPU-AVX512 64bit Float",
+			#endif
 		};
 		static_assert(
 			ARRAY_LENGTH(Rendering_Preset_String) == ARRAY_LENGTH(Rendering_Preset_Name),
@@ -212,13 +251,17 @@ namespace Rendering_Configuration {
 		const char* const Rendering_Preset_Text[] = {
 			"Automatic Render Preset",
 			/* GPU Rendering */
-			"(10^1.8 ) GPU 16bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"(10^1.8 ) GPU 16bit Float",
+			#endif
 			"(10^5.7 ) GPU 32bit Float",
-			"(10^12.6) GPU 2x32bit Float",
+			// "(10^12.6) GPU 2x32bit Float",
 			"(10^14.4) GPU 64bit Float",
-			"(10^30.7) GPU 2x64bit Float",
+			// "(10^30.7) GPU 2x64bit Float",
 			/* CPU Generic Rendering */
-			"(10^1.8 ) CPU-Generic 16bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				"(10^1.8 ) CPU-Generic 16bit Float",
+			#endif
 			"(10^5.7 ) CPU-Generic 32bit Float",
 			"(10^12.6) CPU-Generic 2x32bit Float",
 			"(10^14.4) CPU-Generic 64bit Float",
@@ -232,10 +275,13 @@ namespace Rendering_Configuration {
 			/* CPU AVX Rendering */
 			"(10^5.7 ) CPU-AVX 32bit Float",
 			"(10^14.4) CPU-AVX 64bit Float",
-			/* CPU AVX512 Rendering */
-			"(10^1.8 ) CPU-AVX512 16bit Float",
-			"(10^5.7 ) CPU-AVX512 32bit Float",
-			"(10^14.4) CPU-AVX512 64bit Float",
+			"(10^30.7) CPU-AVX 2x64bit Float",
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				/* CPU AVX512 Rendering */
+				"(10^1.8 ) CPU-AVX512 16bit Float",
+				"(10^5.7 ) CPU-AVX512 32bit Float",
+				"(10^14.4) CPU-AVX512 64bit Float",
+			#endif
 		};
 		static_assert(
 			ARRAY_LENGTH(Rendering_Preset_String) == ARRAY_LENGTH(Rendering_Preset_Text),
@@ -251,13 +297,17 @@ namespace Rendering_Configuration {
 		const Rendering_Preset_Conversion Rendering_Preset_Conversion_Table[] {
 			{Render_Preset_Automatic            , Render_Precision_Automatic, Render_Method_Automatic  },
 			/* GPU Rendering */
-			{Render_Preset_GPU_Float16          , Render_Precision_Float16  , Render_Method_GPU        },
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				{Render_Preset_GPU_Float16          , Render_Precision_Float16  , Render_Method_GPU        },
+			#endif
 			{Render_Preset_GPU_Float32          , Render_Precision_Float32  , Render_Method_GPU        },
-			{Render_Preset_GPU_Float32x2        , Render_Precision_Float32x2, Render_Method_GPU        },
+			// {Render_Preset_GPU_Float32x2        , Render_Precision_Float32x2, Render_Method_GPU        },
 			{Render_Preset_GPU_Float64          , Render_Precision_Float64  , Render_Method_GPU        },
-			{Render_Preset_GPU_Float64x2        , Render_Precision_Float64x2, Render_Method_GPU        },
+			// {Render_Preset_GPU_Float64x2        , Render_Precision_Float64x2, Render_Method_GPU        },
 			/* CPU Generic Rendering */
-			{Render_Preset_CPU_Generic_Float16  , Render_Precision_Float16  , Render_Method_CPU_Generic},
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				{Render_Preset_CPU_Generic_Float16  , Render_Precision_Float16  , Render_Method_CPU_Generic},
+			#endif
 			{Render_Preset_CPU_Generic_Float32  , Render_Precision_Float32  , Render_Method_CPU_Generic},
 			{Render_Preset_CPU_Generic_Float32x2, Render_Precision_Float32x2, Render_Method_CPU_Generic},
 			{Render_Preset_CPU_Generic_Float64  , Render_Precision_Float64  , Render_Method_CPU_Generic},
@@ -271,10 +321,13 @@ namespace Rendering_Configuration {
 			/* CPU AVX Rendering */
 			{Render_Preset_CPU_AVX_Float32      , Render_Precision_Float32  , Render_Method_CPU_AVX    },
 			{Render_Preset_CPU_AVX_Float64      , Render_Precision_Float64  , Render_Method_CPU_AVX    },
-			/* CPU AVX512 Rendering */
-			{Render_Preset_CPU_AVX512_Float16   , Render_Precision_Float16  , Render_Method_CPU_AVX512 },
-			{Render_Preset_CPU_AVX512_Float32   , Render_Precision_Float32  , Render_Method_CPU_AVX512 },
-			{Render_Preset_CPU_AVX512_Float64   , Render_Precision_Float64  , Render_Method_CPU_AVX512 }
+			{Render_Preset_CPU_AVX_Float64x2    , Render_Precision_Float64x2, Render_Method_CPU_AVX    },
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				/* CPU AVX512 Rendering */
+				{Render_Preset_CPU_AVX512_Float16   , Render_Precision_Float16  , Render_Method_CPU_AVX512 },
+				{Render_Preset_CPU_AVX512_Float32   , Render_Precision_Float32  , Render_Method_CPU_AVX512 },
+				{Render_Preset_CPU_AVX512_Float64   , Render_Precision_Float64  , Render_Method_CPU_AVX512 }
+			#endif
 		};
 };
 

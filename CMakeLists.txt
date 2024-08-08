@@ -103,7 +103,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 	if(DEFINED FEATURE_LIBQD)
 		set(LIB_QuadDouble "-l:libqd.a")
-		target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_LIBQD)
 	else()
 		set(LIB_QuadDouble "")
 	endif()
@@ -170,7 +170,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 # Compile Options
 
-	set(MARCH_FLAGS -msse2)
+	set(MARCH_FLAGS -msse3 -mavx)
 
 	set(WARNING_FLAGS
 		-Wall -Wextra -Wshadow

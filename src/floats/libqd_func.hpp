@@ -9,6 +9,8 @@
 #ifndef LIBQD_FUNC_HPP
 #define LIBQD_FUNC_HPP
 
+#ifdef Enable_LIBQD
+
 /**
  * @brief libqd doesn't define all the cmath/math.h functions
  * so they are defined/implemented here.
@@ -148,5 +150,7 @@
 	inline bool islessgreater(const qd_real& a, const qd_real& b) {
 		return (a < b || a > b);
 	}
+
+#endif
 
 #endif /* LIBQD_FUNC_HPP */

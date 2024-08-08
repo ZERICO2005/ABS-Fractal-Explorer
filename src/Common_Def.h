@@ -282,7 +282,7 @@ typedef int32_t dim32_t;
 	} while(0)
 
 	// Print up to every (freq) seconds, also calls fflush(stdout);
-	#define printfInterval(freq, ...); do { \
+	#define printfInterval(freq, ...) do { \
 		static nano64_t ResetTime_PrintfInterval = getNanoTime(); \
 		if (getNanoTime() - ResetTime_PrintfInterval > SECONDS_TO_NANO(freq)) { \
 			ResetTime_PrintfInterval = getNanoTime(); \

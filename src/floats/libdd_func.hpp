@@ -9,7 +9,7 @@
 #ifndef LIBDD_FUNC_HPP
 #define LIBDD_FUNC_HPP
 
-#ifdef Enable_QuadDouble
+#ifdef Enable_LIBQD
 
 /**
  * @brief libqd doesn't define all the cmath/math.h functions

@@ -409,7 +409,7 @@ int32_t render_OpenCL_ABS_Mandelbrot(
 	int_enum GPU_Render_Preset = GPU_Render_Config.get_Render_Preset();
 	switch (GPU_Render_Preset) {
 		using namespace Rendering_Configuration;
-		case Render_Preset_GPU_Float32x2: // TEMP //
+		// case Render_Preset_GPU_Float32x2: // TEMP //
 		case Render_Preset_GPU_Float32: {
 			err = load_OpenCL_Render<fp32, fp32>(
 				Render_Kernel_Float32,
@@ -424,7 +424,7 @@ int32_t render_OpenCL_ABS_Mandelbrot(
 		// 		ABORT_RENDERING
 		// 	);
 		// } break;
-		case Render_Preset_GPU_Float64x2: // TEMP //
+		// case Render_Preset_GPU_Float64x2: // TEMP //
 		case Render_Preset_GPU_Float64: {
 			err = load_OpenCL_Render<fp64, fp64>(
 				Render_Kernel_Float64,

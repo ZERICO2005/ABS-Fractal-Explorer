@@ -73,7 +73,7 @@ private:
 	inline Float32x2 Dekker_Split(const fp32& x) const {
 		fp32 p = x * Dekker_Scale;
 		Float32x2 r;
-		r.hi = x - p + p;
+		r.hi = (x - p) + p;
 		r.lo = x - r.hi;
 		return r;
 	}

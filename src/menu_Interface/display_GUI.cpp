@@ -269,7 +269,7 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	ImGui::Separator();
 
 	const ABS_Mandelbrot& FRAC = current_Fractal;
-	size_t renderFP = Render_Config.get_Current_Float_Size();
+	const char* renderFP = Rendering_Configuration::Rendering_Precision_Text[Render_Config.get_Render_Precision()];
 	const char* const renderMethod = Render_Config.current_Render_Method_GPU() ? "GPU" : "CPU";
 	
 	static char powerText[64];
@@ -278,8 +278,12 @@ void horizontal_buttons_IMGUI(ImGuiWindowFlags window_flags) {
 	}
 
 	ImGui::Text(
-		"Formula: %3" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s Float%zu",
-		FRAC.formula,(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),primaryRenderData.sample * primaryRenderData.sample,renderMethod,renderFP
+		"Formula: %3" PRIu64 " Power: %s Super-Sample: %" PRIu32 " Rendering: %s %s",
+		FRAC.formula,
+		(FRAC.polarMandelbrot ? powerText : getPowerText(FRAC.power)),
+		primaryRenderData.sample * primaryRenderData.sample,
+		renderFP,
+		renderMethod
 	);
 	static std::string str_FloatCoordinate_r;
 	static std::string str_FloatCoordinate_i;
@@ -1031,11 +1035,13 @@ void Menu_Rendering() {
 			); Item_Tooltip("AVX allows the CPU to process 8 32bit floats or 4 64bit floats at a time."\
 				"\nAVX Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX_Family.AVX)
 			);
-			ImGui::Text("AVX512F Rendering: %s",
-				Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
-			); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
-				"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
-			);
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				ImGui::Text("AVX512F Rendering: %s",
+					Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+				); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
+					"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+				);
+			#endif
 			ImGui::NewLine();
 
 			ImGui::SeparatorText("CPU Instruction Sets"); {
@@ -1078,26 +1084,28 @@ void Menu_Rendering() {
 						ImGui::SameLine(); ImGui::Text("<None>");
 					}
 				}
-				ImGui::Text("AVX512 Family:"); {
-					const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
-					size_t count = 0;
-					if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
-					if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
-					if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
-					if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
-					if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
-					if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
-					if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
-					if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
-					if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
-					if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
-					if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
-					if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
-					if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
-					if (count == 0) {
-						ImGui::SameLine(); ImGui::Text("<None>");
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					ImGui::Text("AVX512 Family:"); {
+						const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
+						size_t count = 0;
+						if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
+						if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
+						if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
+						if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
+						if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
+						if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
+						if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
+						if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
+						if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
+						if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
+						if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
+						if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
+						if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
+						if (count == 0) {
+							ImGui::SameLine(); ImGui::Text("<None>");
+						}
 					}
-				}
+				#endif
 				ImGui::EndChild();
 				ImGui::NewLine();
 			}
@@ -1638,11 +1646,13 @@ void Menu_Status() {
 		); Item_Tooltip("AVX allows the CPU to process 8 32bit floats or 4 64bit floats at a time."\
 			"\nAVX Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX_Family.AVX)
 		);
-		ImGui::Text("AVX512F Rendering: %s",
-			Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
-		); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
-			"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
-		);
+		#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+			ImGui::Text("AVX512F Rendering: %s",
+				Enable_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+			); Item_Tooltip("AVX512F allows the CPU to process 16 32bit floats or 8 64bit floats at a time."\
+				"\nAVX512F Rendering is %s on your CPU.", Available_Text(Available_CPU_Instruction.AVX512_Family.AVX512_F)
+			);
+		#endif
 		ImGui::NewLine();
 
 		if (ImGui::CollapsingHeader("CPU Instruction Sets")) {
@@ -1684,26 +1694,28 @@ void Menu_Status() {
 					ImGui::SameLine(); ImGui::Text("<None>");
 				}
 			}
-			ImGui::Text("AVX512 Family:"); {
-				const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
-				size_t count = 0;
-				if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
-				if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
-				if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
-				if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
-				if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
-				if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
-				if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
-				if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
-				if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
-				if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
-				if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
-				if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
-				if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
-				if (count == 0) {
-					ImGui::SameLine(); ImGui::Text("<None>");
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				ImGui::Text("AVX512 Family:"); {
+					const Supported_AVX512_Family_Instruction& AVX512_Family = Available_CPU_Instruction.AVX512_Family;
+					size_t count = 0;
+					if (AVX512_Family.AVX512_F        ) { ImGui::SameLine(); ImGui::Text("AVX512_F"        ); count++; }
+					if (AVX512_Family.AVX512_BW       ) { ImGui::SameLine(); ImGui::Text("AVX512_BW"       ); count++; }
+					if (AVX512_Family.AVX512_CD       ) { ImGui::SameLine(); ImGui::Text("AVX512_CD"       ); count++; }
+					if (AVX512_Family.AVX512_DQ       ) { ImGui::SameLine(); ImGui::Text("AVX512_DQ"       ); count++; }
+					if (AVX512_Family.AVX512_IFMA52   ) { ImGui::SameLine(); ImGui::Text("AVX512_IFMA52"   ); count++; }
+					if (AVX512_Family.AVX512_VL       ) { ImGui::SameLine(); ImGui::Text("AVX512_VL"       ); count++; }
+					if (AVX512_Family.AVX512_VPOPCNTDQ) { ImGui::SameLine(); ImGui::Text("AVX512_VPOPCNTDQ"); count++; }
+					if (AVX512_Family.AVX512_BF16     ) { ImGui::SameLine(); ImGui::Text("AVX512_BF16"     ); count++; }
+					if (AVX512_Family.AVX512_BITALG   ) { ImGui::SameLine(); ImGui::Text("AVX512_BITALG"   ); count++; }
+					if (AVX512_Family.AVX512_VBMI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI"     ); count++; }
+					if (AVX512_Family.AVX512_VBMI2    ) { ImGui::SameLine(); ImGui::Text("AVX512_VBMI2"    ); count++; }
+					if (AVX512_Family.AVX512_VNNI     ) { ImGui::SameLine(); ImGui::Text("AVX512_VNNI"     ); count++; }
+					if (AVX512_Family.AVX512_FP16     ) { ImGui::SameLine(); ImGui::Text("AVX512_FP16"     ); count++; }
+					if (count == 0) {
+						ImGui::SameLine(); ImGui::Text("<None>");
+					}
 				}
-			}
+			#endif
 			ImGui::EndChild();
 			ImGui::NewLine();
 		}

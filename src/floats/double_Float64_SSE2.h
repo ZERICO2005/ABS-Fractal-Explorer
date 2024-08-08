@@ -5,32 +5,72 @@
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
 */
-#ifndef DOUBLE_FLOAT64_HPP
-#define DOUBLE_FLOAT64_HPP
+#ifndef DOUBLE_FLOAT64_SSE_H
+#define DOUBLE_FLOAT64_SSE_H
 
-#include <cstdint>
+/**
+ * @brief Double-Float64 SSE2 Dekker Float implementation.
+ * Source: Creel "Double it Like Dekker" on YouTube.
+ *
+ * @note Requires SSE2 or later.
+ * SSE3 allows for some optimizations if enabled.
+ * SSE4.1 allows for faster floor/ceil/round functions
+ */
+
+#include <stdint.h>
 #include <math.h>
-#include <cmath>
-#include <cfenv>
+#include <fenv.h>
+
+#ifndef __SSE2__
+	#error "SSE2 is not enabled in your compiler. Try -msse2
+#endif
+
+#include <emmintrin.h>
+#ifdef __SSE3__
+	#include <pmmintrin.h>
+#endif
+
+/**
+ * @brief Holds two Double-Float64 dekker floats
+ */
+typedef struct __m128dx2 {
+	__m128d hi;
+	__m128d lo;
+} __m128dx2;
 
 typedef float fp32;
 typedef double fp64;
 
-#if defined(Enable_Float128)
-	#include "Float128.hpp"
-	typedef fp128 fp64x2_Math;
-#elif defined(Enable_Float80)
-	#include "Float80.hpp"
-	typedef fp80 fp64x2_Math;
-#else
-	typedef fp64 fp64x2_Math;
+#ifndef _mm_fabs_pd
+/**
+ * @remarks _mm_andnot_pd cannot be used because 0x8000000000000000 gets
+ * converted from -0.0 to 0.0 on -Ofast
+ */
+inline __m128d _mm_fabs_pd(const __m128d x) {
+	return 
+	_mm_and_pd(
+		x,
+		_mm_castsi128_pd(_mm_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF))
+	);
+}
 #endif
 
+inline __m128dx2 _mm_add_pdx2(__m128dx2 x, __m128dx2 y) {
+	__m128d r_hi = _mm_add_pd(x.hi, y.hi);
+	__m128d r_lo = _mm_setzero_pd();
+	__m128d cmp_result = __m128d_mm_cmpgt_pd(_mm_fabs_pd(x.hi), _mm_fabs_pd(y.hi));
+	x.hi = _mm_shuffle_pd(x.hi, y.lo);
+	y = 
+	r_lo = _mm_add_pd(_mm_sub_pd(x.hi, r_hi));
+	r_lo = x.hi - r_hi + y.hi + y.lo + x.lo;
+	r_lo = y.hi - r_hi + x.hi + x.lo + y.lo;
 
-/**
- * @brief Double-Float64 Dekker Float implementation.
- * Source: Creel "Double it Like Dekker" on YouTube.
- */
+	__m128dx2 c;
+	c.hi = r_hi + r_lo;
+	c.lo = r_hi - c.hi + r_lo;
+	return c;
+}
+
 class Float64x2 {
 public:
 	fp64 hi;
@@ -79,7 +119,7 @@ private:
 	inline Float64x2 Dekker_Split(const fp64& x) const {
 		fp64 p = x * Dekker_Scale;
 		Float64x2 r;
-		r.hi = (x - p) + p;
+		r.hi = x - p + p;
 		r.lo = x - r.hi;
 		return r;
 	}
@@ -665,4 +705,4 @@ typedef Float64x2 fp64x2;
 			return ret_val;
 		}
 
-#endif /* DOUBLE_FLOAT64_HPP */
+#endif /* DOUBLE_FLOAT64_SSE_H */

@@ -16,11 +16,14 @@
 #include "frac_Multi_AVX.h"
 #include "frac_Multi_AVX512_F.h"
 
+
 #include "frac_Multi_MPFR.h"
 
 #include "../floats/double_Float32.hpp"
 #include "../floats/double_Float64.hpp"
 #include "../floats/double_Float80.hpp"
+
+#include "frac_Multi_Float64x2_AVX.h"
 
 // #include "../floats/libdd_func.hpp"
 // #include "../floats/libqd_func.hpp"
@@ -77,7 +80,7 @@ const Function_Lookup Function_Lookup_Table[] = {
 		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
 		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
-		#ifdef ENABLE_FLOAT80x2_RENDERING
+		#ifdef ENABLE_FLOAT80X2_RENDERING
 			/* CPU-Generic Float80x2 */
 			{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
 			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
@@ -111,28 +114,36 @@ const Function_Lookup Function_Lookup_Table[] = {
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_SSE2_FP64, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64},
 	#endif
 	#ifdef ENABLE_AVX_RENDERING
-		/* CPU-SSE2 Float32 */
+		/* CPU-AVX Float32 */
 		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_AVX_FP32, Spacing_AVX_Float32, Rendering_Configuration::Render_Preset_CPU_AVX_Float32},
 		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_AVX_FP32, Spacing_AVX_Float32, Rendering_Configuration::Render_Preset_CPU_AVX_Float32},
 		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_AVX_FP32, Spacing_AVX_Float32, Rendering_Configuration::Render_Preset_CPU_AVX_Float32},
 		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_AVX_FP32, Spacing_AVX_Float32, Rendering_Configuration::Render_Preset_CPU_AVX_Float32},
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_AVX_FP32, Spacing_AVX_Float32, Rendering_Configuration::Render_Preset_CPU_AVX_Float32},
-		/* CPU-SSE2 Float64 */
+		/* CPU-AVX Float64 */
 		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_AVX_FP64, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64},
 		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_AVX_FP64, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64},
 		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_AVX_FP64, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64},
 		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_AVX_FP64, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64},
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_AVX_FP64, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64},
+		#ifdef ENABLE_FLOAT64X2_RENDERING
+			/* CPU-AVX Float64x2 */
+			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
+			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
+			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
+			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
+			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
+		#endif
 	#endif
 	#ifdef ENABLE_AVX512_F_RENDERING
-		/* CPU-SSE2 Float32 */
+		/* CPU-AVX512_F Float32 */
 		{Mandelbrot_Polar    , (Render_Func)    polarRender_AVX512_F_FP32, Spacing_AVX512_F_Float32, Rendering_Configuration::Render_Preset_CPU_AVX512_Float32},
 		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_AVX512_F_FP32, Spacing_AVX512_F_Float32, Rendering_Configuration::Render_Preset_CPU_AVX512_Float32},
 		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_AVX512_F_FP32, Spacing_AVX512_F_Float32, Rendering_Configuration::Render_Preset_CPU_AVX512_Float32},
 		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_AVX512_F_FP32, Spacing_AVX512_F_Float32, Rendering_Configuration::Render_Preset_CPU_AVX512_Float32},
 		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_AVX512_F_FP32, Spacing_AVX512_F_Float32, Rendering_Configuration::Render_Preset_CPU_AVX512_Float32},
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_AVX512_F_FP32, Spacing_AVX512_F_Float32, Rendering_Configuration::Render_Preset_CPU_AVX512_Float32},
-		/* CPU-SSE2 Float64 */
+		/* CPU-AVX512_F Float64 */
 		{Mandelbrot_Polar    , (Render_Func)    polarRender_AVX512_F_FP64, Spacing_AVX512_F_Float64, Rendering_Configuration::Render_Preset_CPU_AVX512_Float64},
 		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_AVX512_F_FP64, Spacing_AVX512_F_Float64, Rendering_Configuration::Render_Preset_CPU_AVX512_Float64},
 		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_AVX512_F_FP64, Spacing_AVX512_F_Float64, Rendering_Configuration::Render_Preset_CPU_AVX512_Float64},
@@ -189,7 +200,9 @@ void find_Render_Function(
 	}
 
 	constexpr Rendering_Method Render_Method_Attempt_Order[] = {
-		Render_Method_CPU_AVX512,
+		#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+			Render_Method_CPU_AVX512,
+		#endif
 		Render_Method_CPU_AVX,
 		Render_Method_CPU_SSE2,
 		Render_Method_CPU_Generic
@@ -275,9 +288,11 @@ void renderCPU_ABS_Mandelbrot(
 	Rendering_Preset Render_Preset = CPU_Render_Config.get_Render_Preset();
 
 	switch(Render_Precision) {
-		case Render_Precision_Float16: {
-			printfInterval(0.5, "Error: Rendering_Precision Float16 is not supported\n");
-		} break;
+		#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+			case Render_Precision_Float16: {
+				printfInterval(0.5, "Error: Rendering_Precision Float16 is not supported\n");
+			} break;
+		#endif
 		case Render_Precision_Float32: {
 			load_Fractal_Render<fp32, fp32>(Fractal_Type, Render_Preset, Thread_Arguments);
 		} break;

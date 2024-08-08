@@ -80,7 +80,7 @@ private:
 	inline Float80x2 Dekker_Split(const fp80& x) const {
 		fp80 p = x * Dekker_Scale;
 		Float80x2 r;
-		r.hi = x - p + p;
+		r.hi = (x - p) + p;
 		r.lo = x - r.hi;
 		return r;
 	}

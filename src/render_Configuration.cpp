@@ -128,17 +128,21 @@ using namespace Rendering_Configuration;
 		) const {
 			switch(render_preset) {
 			/* GPU Rendering */
-				case Render_Preset_GPU_Float16:
-					return (GPU_Float16_Enabled) ? true : false;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					case Render_Preset_GPU_Float16:
+						return (GPU_Float16_Enabled) ? true : false;
+				#endif
 				case Render_Preset_GPU_Float32:
-				case Render_Preset_GPU_Float32x2:
+				// case Render_Preset_GPU_Float32x2:
 					return (GPU_Float32_Enabled) ? true : false;
 				case Render_Preset_GPU_Float64:
-				case Render_Preset_GPU_Float64x2:
+				// case Render_Preset_GPU_Float64x2:
 					return (GPU_Float64_Enabled) ? true : false;
 			/* CPU Generic Rendering */
-				case Render_Preset_CPU_Generic_Float16:
-					return (CPU_Float16_Enabled) ? true : false;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					case Render_Preset_CPU_Generic_Float16:
+						return (CPU_Float16_Enabled) ? true : false;
+				#endif
 				case Render_Preset_CPU_Generic_Float32:
 				case Render_Preset_CPU_Generic_Float32x2:
 					return true; // Always supported
@@ -160,13 +164,17 @@ using namespace Rendering_Configuration;
 					return (CPU_AVX_Enabled) ? true : false;
 				case Render_Preset_CPU_AVX_Float64:
 					return (CPU_AVX_Enabled) ? true : false;
-			/* CPU AVX512 Rendering */
-				case Render_Preset_CPU_AVX512_Float16:
-					return (CPU_AVX512_FP16_Enabled) ? true : false;
-				case Render_Preset_CPU_AVX512_Float32:
-					return (CPU_AVX512_F_Enabled) ? true : false;
-				case Render_Preset_CPU_AVX512_Float64:
-					return (CPU_AVX512_F_Enabled) ? true : false;
+				case Render_Preset_CPU_AVX_Float64x2:
+					return (CPU_AVX_Enabled) ? true : false;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				/* CPU AVX512 Rendering */
+					case Render_Preset_CPU_AVX512_Float16:
+						return (CPU_AVX512_FP16_Enabled) ? true : false;
+					case Render_Preset_CPU_AVX512_Float32:
+						return (CPU_AVX512_F_Enabled) ? true : false;
+					case Render_Preset_CPU_AVX512_Float64:
+						return (CPU_AVX512_F_Enabled) ? true : false;
+				#endif
 				default:
 					return false;
 			}
@@ -188,9 +196,11 @@ using namespace Rendering_Configuration;
 			Rendering_Precision render_precision
 		) const {
 			switch (render_precision) {
-				case Render_Precision_Float16:
-					return (GPU_Float16_Enabled || CPU_Float16_Enabled || CPU_AVX512_FP16_Enabled)
-						? true : false;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					case Render_Precision_Float16:
+						return (GPU_Float16_Enabled || CPU_Float16_Enabled || CPU_AVX512_FP16_Enabled)
+							? true : false;
+				#endif
 				case Render_Precision_Float32:
 				case Render_Precision_Float32x2:
 					return true; // Always supported
@@ -219,8 +229,10 @@ using namespace Rendering_Configuration;
 					return (CPU_SSE2_Enabled) ? true : false;
 				case Render_Method_CPU_AVX:
 					return (CPU_AVX_Enabled) ? true : false;
-				case Render_Method_CPU_AVX512:
-					return (CPU_AVX512_F_Enabled) ? true : false;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					case Render_Method_CPU_AVX512:
+						return (CPU_AVX512_F_Enabled) ? true : false;
+				#endif
 				default:
 					return false;
 			}
@@ -243,33 +255,40 @@ using namespace Rendering_Configuration;
 						repeatLoop = true;
 						continue;
 					}
-					case Render_Precision_Float16: {
-						if (GPU_Float16_Enabled) { output_method = Render_Method_GPU; }
-						if (CPU_AVX512_FP16_Enabled) { output_method = Render_Method_CPU_AVX512; }
-						output_precision = Render_Precision_Float32;
-						repeatLoop = true;
-						continue;
-					}
+					#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+						case Render_Precision_Float16: {
+							if (GPU_Float16_Enabled) { output_method = Render_Method_GPU; }
+							if (CPU_AVX512_FP16_Enabled) { output_method = Render_Method_CPU_AVX512; }
+							output_precision = Render_Precision_Float32;
+							repeatLoop = true;
+							continue;
+						}
+					#endif
 					case Render_Precision_Float32: {
 						if (GPU_Float32_Enabled) { output_method = Render_Method_GPU; return; }
-						if (CPU_AVX512_F_Enabled) { output_method = Render_Method_CPU_AVX512; return; }
+						#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+							if (CPU_AVX512_F_Enabled) { output_method = Render_Method_CPU_AVX512; return; }
+						#endif
 						if (CPU_AVX_Enabled) { output_method = Render_Method_CPU_AVX; return; }
 						if (CPU_SSE2_Enabled) { output_method = Render_Method_CPU_SSE2; return; }
 						output_method = Render_Method_CPU_Generic; return;
 					}
 					case Render_Precision_Float32x2: {
-						if (GPU_Float32_Enabled) { output_method = Render_Method_GPU; return; }
+						// if (GPU_Float32_Enabled) { output_method = Render_Method_GPU; return; }
 						output_method = Render_Method_CPU_Generic; return;
 					}
 					case Render_Precision_Float64: {
 						if (GPU_Float64_Enabled) { output_method = Render_Method_GPU; return; }
-						if (CPU_AVX512_F_Enabled) { output_method = Render_Method_CPU_AVX512; return; }
+						#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+							if (CPU_AVX512_F_Enabled) { output_method = Render_Method_CPU_AVX512; return; }
+						#endif
 						if (CPU_AVX_Enabled) { output_method = Render_Method_CPU_AVX; return; }
 						if (CPU_SSE2_Enabled) { output_method = Render_Method_CPU_SSE2; return; }
 						output_method = Render_Method_CPU_Generic; return; 
 					}
 					case Render_Precision_Float64x2: {
-						if (GPU_Float64_Enabled) { output_method = Render_Method_GPU; return; }
+						// if (GPU_Float64_Enabled) { output_method = Render_Method_GPU; return; }
+						if (CPU_AVX_Enabled) { output_method = Render_Method_CPU_AVX; return; }
 						output_method = Render_Method_CPU_Generic; return;
 					}
 					case Render_Precision_Float80: {
@@ -364,7 +383,9 @@ using namespace Rendering_Configuration;
 				Render_Precision_Float64x2,
 				Render_Precision_Float80x2,
 				Render_Precision_Float128,
-				Render_Precision_Float16
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					Render_Precision_Float16
+				#endif
 			};
 			// Attempts to find any precision that supports the render_method
 			for (size_t i = 0; i < sizeof(Render_Precision_Attempt_Order) / sizeof(Rendering_Precision); i++) {
@@ -405,8 +426,10 @@ using namespace Rendering_Configuration;
 
 		size_t Render_Configurator::get_Float_Size(Rendering_Precision render_precision) const {
 			switch (render_precision) {
-				case Render_Precision_Float16:
-					return 16;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					case Render_Precision_Float16:
+						return 16;
+				#endif
 				case Render_Precision_Float32:
 					return 32;
 				case Render_Precision_Float32x2:
@@ -427,8 +450,10 @@ using namespace Rendering_Configuration;
 		};
 		size_t Render_Configurator::get_Float_Mantissa_Size(Rendering_Precision render_precision) const {
 			switch (render_precision) {
-				case Render_Precision_Float16:
-					return 10;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					case Render_Precision_Float16:
+						return 10;
+				#endif
 				case Render_Precision_Float32:
 					return 23;
 				case Render_Precision_Float32x2:
@@ -449,8 +474,10 @@ using namespace Rendering_Configuration;
 		};
 		size_t Render_Configurator::get_Float_Exponent_Size(Rendering_Precision render_precision) const {
 			switch (render_precision) {
-				case Render_Precision_Float16:
-					return 5;
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					case Render_Precision_Float16:
+						return 5;
+				#endif
 				case Render_Precision_Float32:
 				case Render_Precision_Float32x2:
 					return 8;
@@ -481,10 +508,14 @@ using namespace Rendering_Configuration;
 
 		void Render_Configurator::print_Available_Rendering_Presets() const {
 			printf("\nAvailable Rendering Methods:\n\t");
-			if (GPU_Float16_Enabled) { printf("GPU_Float16 "); }
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				if (GPU_Float16_Enabled) { printf("GPU_Float16 "); }
+			#endif
 			if (GPU_Float32_Enabled) { printf("GPU_Float32 "); }
 			if (GPU_Float64_Enabled) { printf("GPU_Float64 "); }
-			if (CPU_Float16_Enabled) { printf("CPU_Float16 "); }
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				if (CPU_Float16_Enabled) { printf("CPU_Float16 "); }
+			#endif
 			printf("CPU_Float32 "); // Always Available
 			printf("CPU_Float64 "); // Always Available
 			if (CPU_Float80_Enabled) { printf("CPU_Float80 "); }
@@ -497,11 +528,13 @@ using namespace Rendering_Configuration;
 				printf("CPU_AVX_Float32 ");
 				printf("CPU_AVX_Float64 ");
 			}
-			if (CPU_AVX512_FP16_Enabled) { printf("CPU_AVX512_Float16 "); }
-			if (CPU_AVX512_F_Enabled) {
-				printf("CPU_AVX512_Float32 ");
-				printf("CPU_AVX512_Float64 ");
-			}
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+				if (CPU_AVX512_FP16_Enabled) { printf("CPU_AVX512_Float16 "); }
+				if (CPU_AVX512_F_Enabled) {
+					printf("CPU_AVX512_Float32 ");
+					printf("CPU_AVX512_Float64 ");
+				}
+			#endif
 			printf("\n");
 		}
 
@@ -557,7 +590,9 @@ using namespace Rendering_Configuration;
 			}
 			constexpr Rendering_Method Render_Method_Attempt_Order[] = {
 				Render_Method_GPU,
-				Render_Method_CPU_AVX512,
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					Render_Method_CPU_AVX512,
+				#endif
 				Render_Method_CPU_AVX,
 				Render_Method_CPU_SSE2,
 				Render_Method_CPU_Generic
@@ -585,7 +620,9 @@ using namespace Rendering_Configuration;
 				return false; // Precision not supported
 			}
 			constexpr Rendering_Method Render_Method_Attempt_Order[] = {
-				Render_Method_CPU_AVX512,
+				#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
+					Render_Method_CPU_AVX512,
+				#endif
 				Render_Method_CPU_AVX,
 				Render_Method_CPU_SSE2,
 				Render_Method_CPU_Generic,
@@ -656,7 +693,7 @@ using namespace Rendering_Configuration;
 			Rendering_Method temp_method = Render_Method;
 
 			constexpr fp64 zoom_offset = 2.3;
-			constexpr fp64 zoom_float16   =  1.8 - zoom_offset;
+			__attribute__((unused)) constexpr fp64 zoom_float16   =  1.8 - zoom_offset;
 			constexpr fp64 zoom_float32   =  5.7 - zoom_offset;
 			constexpr fp64 zoom_float32x2 = 12.6 - zoom_offset;
 			constexpr fp64 zoom_float64   = 14.4 - zoom_offset;
@@ -664,10 +701,12 @@ using namespace Rendering_Configuration;
 			constexpr fp64 zoom_float64x2 = 30.7 - zoom_offset;
 			constexpr fp64 zoom_float128  = 32.5 - zoom_offset;
 			__attribute__((unused)) constexpr fp64 zoom_float80x2 = 36.7 - zoom_offset;
-
+			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
 			if (zoom < zoom_float16) {
 				calculate_Rendering_Precision_and_Method(Render_Precision_Float16  , Render_Precision, Render_Method);
-			} else if (zoom < zoom_float32) {
+			} else
+			#endif
+			if (zoom < zoom_float32) {
 				calculate_Rendering_Precision_and_Method(Render_Precision_Float32  , Render_Precision, Render_Method);
 			} else if (zoom < zoom_float32x2) {
 				calculate_Rendering_Precision_and_Method(Render_Precision_Float32x2, Render_Precision, Render_Method);

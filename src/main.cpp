@@ -94,7 +94,15 @@ int main(int argc, char* argv[]) {
 	if (count_Supported_CPU_Instruction(Available_CPU_Instruction) == 0) {
 		printf("Warning: Unable to obtain available CPU instruction set extensions\n");
 		fflush(stdout);
+	#ifndef __SSE3__
 	}
+	#else
+	} else if (Available_CPU_Instruction.SSE_Family.SSE3 == false) {
+		// If the program can make it this far without crashing. I will need to find a better solution for this.
+		printf("Warning: The x86/x64 SSE3 instruction set was not detected on your CPU. It is required to run this version of ABS-Fractal-Explorer\n");
+		fflush(stdout);
+	}
+	#endif
 
 	/* Process .fracExp files */
 	if (argc >= 2) {
