@@ -1,6 +1,6 @@
 /*
-**	Author: zerico2005 (2023 - 2024)
-**	Project: ABS-Fractal-Explorer
+**	Author: zerico2005 (2024)
+**	Project: LIB-Dekker-Float
 **	License: MIT License
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
@@ -195,6 +195,53 @@ class internal_double_FloatN_snprintf {
 		return '?';
 	}
 
+	// /**
+	// * @brief Increments decimial/hexadecimal digit
+	// * @note Assumes base is either 10 or 16 for %f, %F, %a, and %A
+	// * @returns true if an overflow occured.
+	// */
+	// static bool inc_digit_from_base(
+	// 	char* digit, int base, bool upperCase
+	// ) {
+	// 	printf("L: %d %02X %p\n", __LINE__, *digit, digit);
+	// 	if (digit == nullptr) { return false; }
+	// 	assert(base == 10 || base == 16);
+	// 	if (base == 16) {
+	// 		printf("L: %d\n", __LINE__);
+	// 		if (
+	// 			(upperCase == true && *digit == 'F') ||
+	// 			(upperCase == false && *digit == 'f')
+	// 		) {
+	// 			*digit = '0';
+	// 			return true; // Overflow
+	// 		}
+	// 		if (*digit == '9') {
+	// 			*digit = (upperCase ? 'A' : 'a');
+	// 			return false;
+	// 		}
+	// 		if (
+	// 			(upperCase == true && *digit >= 'A' && *digit <= 'E') ||
+	// 			(upperCase == false && *digit >= 'a' && *digit <= 'e')
+	// 		) {
+	// 			(*digit)++;
+	// 			return false;
+	// 		}
+	// 	} else {
+	// 		printf("L: %d\n", __LINE__);
+	// 		if (*digit == '9') {
+	// 			*digit = '0';
+	// 			return true; // Overflow
+	// 		}
+	// 	}
+	// 	printf("L: %d\n", __LINE__);
+	// 	if (*digit >= '0' && *digit <= '8') {
+	// 		(*digit)++;
+	// 		return false;
+	// 	}
+	// 	printf("L: %d\n", __LINE__);
+	// 	return false;
+	// }
+
 	static std::string FloatNx2_write(
 		const FloatNx2_format_param& param,
 		FloatNx2 value, const int base, const bool upperCase
@@ -255,8 +302,25 @@ class internal_double_FloatN_snprintf {
 			{ /* Rounds the last digit */
 				value_frac *= (FloatNx2)base;
 				FloatNx2 digit_temp = round(value_frac);
-				char digit = get_digit_from_base((int)digit_temp, base, upperCase);
-				frac_digits += digit;
+				if ((int)digit_temp == base) {
+					/* round()
+					char* round_ptr = (char*)frac_digits.c_str();
+					frac_digits += '0';
+					while (inc_digit_from_base(round_ptr, base, upperCase)) {
+						round_ptr--;
+					}
+					*/
+					// /* trunc()
+					if (base == 16) {
+						frac_digits += upperCase ? 'F' : 'f';
+					} else {
+						frac_digits += '9';
+					}
+					// */
+				} else {
+					char digit = get_digit_from_base((int)digit_temp, base, upperCase);
+					frac_digits += digit;
+				}
 			}
 			
 			str += frac_digits;
@@ -297,7 +361,6 @@ class internal_double_FloatN_snprintf {
 		if (fm_ptr == nullptr || *fm_ptr == '\0') {
 			return -1; // Invalid format
 		}
-
 		const char* const fm_start = fm_ptr;
 
 		FloatNx2_format_param param;
@@ -384,7 +447,7 @@ class internal_double_FloatN_snprintf {
 		strncpy(buf, output_str.c_str(), len);
 
 		// va_end(args);
-		return (int)strlen(format);
+		return (int)strlen(output_str.c_str());
 	}
 };
 

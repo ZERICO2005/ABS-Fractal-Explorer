@@ -1,7 +1,7 @@
 Build Instructions<br>
-ABS-Fractal-Explorer v1.2.1 rev-2
+ABS-Fractal-Explorer v1.2.2
 
-Updated: 2024/06/09
+Updated: 2024/08/09
 
 You can read this guide:
 https://github.com/ZERICO2005/ABS-Fractal-Explorer/wiki/How-to-Compile
@@ -16,8 +16,14 @@ Enables 80bit floats (`long double` or `__float80`) for extra precision. Used to
 ## Float128
 Enables 128bit floats (quadmath.h) for extra precision. Used to store cordinates if it is the highest available precision.
 
+## libqd
+(Deprecated) Experimental double-double/quad-double float support. May require some manual configuration to enable it as a rendering mode.
+
 ## OpenCL
 Enables OpenCL GPU rendering
+
+## MPFR
+Used to convert between coordinates and strings
 
 ## WindowsFileIO
 (Not implemented in v1.2.1 rev-2)<br>

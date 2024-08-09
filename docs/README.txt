@@ -1,5 +1,5 @@
-ABS-Fractal-Explorer v1.2.1 (Revision-2) (Windows 10 Edition)
-zerico2005 | 2024/06/09
+ABS-Fractal-Explorer v1.2.2 (Windows 10 Edition)
+zerico2005 | 2024/08/09
 
 ABS-Fractal-Explorer will allow you to explore hundereds of different Mandelbrot variants. From Quadratic to Sextic fractals, there is always something new and novel to explore!
 
@@ -30,7 +30,9 @@ Controls (Full controls/keybinds are in the Key-binds Menu):
 		;": Inc/dec supersampling (Renders at higher quality but is much slower)
 		M : fp32 GPU rendering (10^5.7 max zoom, fastest)
 		N : fp64 CPU rendering (10^14.4 max zoom)
-		B : fp80 CPU rendering (10^17.7 max zoom)
+		B : fp80 CPU rendering (10^17.8 max zoom)
+		Rctrl: fp64x2 CPU rendering (10^30.7 max zoom)
+		View the rendering menu for more precision options.
 	Julia-Sets:
 		C: Toggle Julia Sets
 		V: Toggle Starting Z-Value

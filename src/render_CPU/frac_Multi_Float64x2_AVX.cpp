@@ -253,9 +253,9 @@
 			}
 			
 			// Bits 0-2 will flip signage
-			const __m256dx2 s1 = (f[0]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s2 = (f[1]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s3 = (f[2]) ? _mm256x2_set1_pd(-2.0) : _mm256x2_set1_pd(2.0);
+			const __m256d s1 = (f[0]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s2 = (f[1]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s3 = (f[2]) ? _mm256_set1_pd(-2.0) : _mm256_set1_pd(2.0);
 
 			// Bits 3-7 will apply fabs() via a mask
 			const __m256dx2 zr1_mask = (f[3]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
@@ -271,15 +271,15 @@
 			zi2 = _mm256x2_and_pdx2(zi2_mask, zi);
 			
 			// Calculates the new zr and zi
-			zr = _mm256x2_add_pdx2(_mm256x2_and_pdx2(zr_mask, _mm256x2_mul_pdx2(s1,
+			zr = _mm256x2_add_pdx2(_mm256x2_and_pdx2(zr_mask, _mm256x2_mul_pd_pdx2(s1,
 				_mm256x2_sub_pdx2(
 					_mm256x2_mul_pdx2(zr1, zr), 
-					_mm256x2_mul_pdx2(s2,
+					_mm256x2_mul_pd_pdx2(s2,
 						_mm256x2_mul_pdx2(zi1, zi)
 					)
 				)
 			)), cr);
-			zi = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr2, zi2), s3), ci);
+			zi = _mm256x2_add_pdx2(_mm256x2_mul_pdx2_pd(_mm256x2_mul_pdx2(zr2, zi2), s3), ci);
 
 			zs = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(zr, zr), _mm256x2_mul_pdx2(zi, zi));
 		
@@ -295,12 +295,12 @@
 			for (uint8_t q = 0; q < 14; q++) {
 				f[q] = ((param.formula >> q) & 1) ? true : false;
 			}
-			const __m256dx2 s1 = (f[0]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s2 = (f[1]) ? _mm256x2_set1_pd(-3.0) : _mm256x2_set1_pd(3.0);
-			const __m256dx2 s3 = (f[2]) ? _mm256x2_set1_pd(-3.0) : _mm256x2_set1_pd(3.0);
-			const __m256dx2 s4 = (f[3]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s5 = (f[4]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s6 = (f[5]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
+			const __m256d s1 = (f[0]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s2 = (f[1]) ? _mm256_set1_pd(-3.0) : _mm256_set1_pd(3.0);
+			const __m256d s3 = (f[2]) ? _mm256_set1_pd(-3.0) : _mm256_set1_pd(3.0);
+			const __m256d s4 = (f[3]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s5 = (f[4]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s6 = (f[5]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
 			
 			const __m256dx2 zr1_mask = (f[ 6]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
 			const __m256dx2 zi1_mask = (f[ 7]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
@@ -320,16 +320,16 @@
 			zr3 = _mm256x2_and_pdx2(zr3_mask, zr);
 			zi3 = _mm256x2_and_pdx2(zi3_mask, zi);
 
-			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s5, _mm256x2_and_pdx2(zr_mask,
+			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s5, _mm256x2_and_pdx2(zr_mask,
 				_mm256x2_sub_pdx2(
-					_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(s1, zr1), _mm256x2_mul_pdx2(zr , zr)),
-					_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(s2, zr2), _mm256x2_mul_pdx2(zi1, zi))
+					_mm256x2_mul_pdx2(_mm256x2_mul_pd_pdx2(s1, zr1), _mm256x2_mul_pdx2(zr , zr)),
+					_mm256x2_mul_pdx2(_mm256x2_mul_pd_pdx2(s2, zr2), _mm256x2_mul_pdx2(zi1, zi))
 				)
 			)), cr);
-			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s6, _mm256x2_and_pdx2(zi_mask,
+			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s6, _mm256x2_and_pdx2(zi_mask,
 				_mm256x2_sub_pdx2(
-					_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(s3, zr3), _mm256x2_mul_pdx2(zr, zi2)),
-					_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(s4, zi3), _mm256x2_mul_pdx2(zi, zi ))
+					_mm256x2_mul_pdx2(_mm256x2_mul_pd_pdx2(s3, zr3), _mm256x2_mul_pdx2(zr, zi2)),
+					_mm256x2_mul_pdx2(_mm256x2_mul_pd_pdx2(s4, zi3), _mm256x2_mul_pdx2(zi, zi ))
 				)
 			)), ci);
 			zr = temp_zr;
@@ -348,13 +348,13 @@
 			for (uint8_t q = 0; q < 17; q++) {
 				f[q] = ((param.formula >> q) & 1) ? true : false;
 			}
-			const __m256dx2 s1 = (f[0]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s2 = (f[1]) ? _mm256x2_set1_pd(-6.0) : _mm256x2_set1_pd(6.0);
-			const __m256dx2 s3 = (f[2]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s4 = (f[3]) ? _mm256x2_set1_pd(-4.0) : _mm256x2_set1_pd(4.0);
-			const __m256dx2 s5 = (f[4]) ? _mm256x2_set1_pd(-4.0) : _mm256x2_set1_pd(4.0);
-			const __m256dx2 s6 = (f[5]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
-			const __m256dx2 s7 = (f[6]) ? _mm256x2_set1_pd(-1.0) : _mm256x2_set1_pd(1.0);
+			const __m256d s1 = (f[0]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s2 = (f[1]) ? _mm256_set1_pd(-6.0) : _mm256_set1_pd(6.0);
+			const __m256d s3 = (f[2]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s4 = (f[3]) ? _mm256_set1_pd(-4.0) : _mm256_set1_pd(4.0);
+			const __m256d s5 = (f[4]) ? _mm256_set1_pd(-4.0) : _mm256_set1_pd(4.0);
+			const __m256d s6 = (f[5]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
+			const __m256d s7 = (f[6]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
 			
 			const __m256dx2 zr1_mask = (f[ 7]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
 			const __m256dx2 zi1_mask = (f[ 8]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
@@ -378,27 +378,27 @@
 			zr4 = _mm256x2_and_pdx2(zr4_mask, zr);
 			zi4 = _mm256x2_and_pdx2(zi4_mask, zi);
 
-			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s6, _mm256x2_and_pdx2(zr_mask,
+			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s6, _mm256x2_and_pdx2(zr_mask,
 				_mm256x2_add_pdx2(
 					_mm256x2_sub_pdx2(
-						_mm256x2_mul_pdx2(s1,
+						_mm256x2_mul_pd_pdx2(s1,
 							_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr1, zr ), _mm256x2_mul_pdx2(zr, zr))
 						),
-						_mm256x2_mul_pdx2(s2,
+						_mm256x2_mul_pd_pdx2(s2,
 							_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr2, zi1), _mm256x2_mul_pdx2(zr, zi))
 						)
 					),
-					_mm256x2_mul_pdx2(s3,
+					_mm256x2_mul_pd_pdx2(s3,
 						_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zi2, zi), _mm256x2_mul_pdx2(zi, zi))
 					)
 				)
 			)), cr);
-			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s7, _mm256x2_and_pdx2(zi_mask,
+			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s7, _mm256x2_and_pdx2(zi_mask,
 				_mm256x2_sub_pdx2(
-					_mm256x2_mul_pdx2(s4,
+					_mm256x2_mul_pd_pdx2(s4,
 						_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr3, zi3), _mm256x2_mul_pdx2(zr, zr))
 					),
-					_mm256x2_mul_pdx2(s5,
+					_mm256x2_mul_pd_pdx2(s5,
 						_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr4, zi4), _mm256x2_mul_pdx2(zi, zi))
 					)
 				)
@@ -430,14 +430,14 @@
 			for (uint8_t q = 18; q < 20; q++) { /* 18-19 */ 
 				fO[q - 16] = ((param.formula >> q) & 1) ? true : false;
 			}
-			const __m256dx2 s1 = (fS[0]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
-			const __m256dx2 s2 = (fS[1]) ? _mm256x2_set1_pd(-10.0) : _mm256x2_set1_pd(10.0);
-			const __m256dx2 s3 = (fS[2]) ? _mm256x2_set1_pd(-5.0 ) : _mm256x2_set1_pd(5.0 );
-			const __m256dx2 s4 = (fS[3]) ? _mm256x2_set1_pd(-5.0 ) : _mm256x2_set1_pd(5.0 );
-			const __m256dx2 s5 = (fS[4]) ? _mm256x2_set1_pd(-10.0) : _mm256x2_set1_pd(10.0);
-			const __m256dx2 s6 = (fS[5]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
-			const __m256dx2 s7 = (fO[0]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
-			const __m256dx2 s8 = (fO[1]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
+			const __m256d s1 = (fS[0]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
+			const __m256d s2 = (fS[1]) ? _mm256_set1_pd(-10.0) : _mm256_set1_pd(10.0);
+			const __m256d s3 = (fS[2]) ? _mm256_set1_pd(-5.0 ) : _mm256_set1_pd(5.0 );
+			const __m256d s4 = (fS[3]) ? _mm256_set1_pd(-5.0 ) : _mm256_set1_pd(5.0 );
+			const __m256d s5 = (fS[4]) ? _mm256_set1_pd(-10.0) : _mm256_set1_pd(10.0);
+			const __m256d s6 = (fS[5]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
+			const __m256d s7 = (fO[0]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
+			const __m256d s8 = (fO[1]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
 
 			const __m256dx2 zr1_mask = (fA[0]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
 			const __m256dx2 zi1_mask = (fA[1]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
@@ -465,38 +465,38 @@
 			zr5 = _mm256x2_and_pdx2(zr5_mask, zr);
 			zi5 = _mm256x2_and_pdx2(zi5_mask, zi);
 
-			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s7, _mm256x2_and_pdx2(zr_mask ,
+			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s7, _mm256x2_and_pdx2(zr_mask ,
 				_mm256x2_add_pdx2(
 					_mm256x2_sub_pdx2(
 						_mm256x2_mul_pdx2(
-							_mm256x2_mul_pdx2(s1, zr1),
+							_mm256x2_mul_pd_pdx2(s1, zr1),
 							_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr, zr), _mm256x2_mul_pdx2(zr , zr))
 						),
 						_mm256x2_mul_pdx2(
-							_mm256x2_mul_pdx2(s2, _mm256x2_mul_pdx2(zr2, zi1)),
+							_mm256x2_mul_pd_pdx2(s2, _mm256x2_mul_pdx2(zr2, zi1)),
 							_mm256x2_mul_pdx2(zi, _mm256x2_mul_pdx2(zr , zr ))
 						)
 					),
 					_mm256x2_mul_pdx2(
-						_mm256x2_mul_pdx2(s3, _mm256x2_mul_pdx2(zr3, zi2)),
+						_mm256x2_mul_pd_pdx2(s3, _mm256x2_mul_pdx2(zr3, zi2)),
 						_mm256x2_mul_pdx2(zi, _mm256x2_mul_pdx2(zi , zi ))
 					)
 				)
 			)), cr);
-			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s8, _mm256x2_and_pdx2(zi_mask,
+			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s8, _mm256x2_and_pdx2(zi_mask,
 				_mm256x2_add_pdx2(
 					_mm256x2_sub_pdx2(
 						_mm256x2_mul_pdx2(
-							_mm256x2_mul_pdx2(s4 , _mm256x2_mul_pdx2(zr4, zr)),
+							_mm256x2_mul_pd_pdx2(s4 , _mm256x2_mul_pdx2(zr4, zr)),
 							_mm256x2_mul_pdx2(zi3, _mm256x2_mul_pdx2(zr , zr))
 						),
 						_mm256x2_mul_pdx2(
-							_mm256x2_mul_pdx2(s5 , _mm256x2_mul_pdx2(zr5, zr)),
+							_mm256x2_mul_pd_pdx2(s5 , _mm256x2_mul_pdx2(zr5, zr)),
 							_mm256x2_mul_pdx2(zi4, _mm256x2_mul_pdx2(zi , zi))
 						)
 					),
 					_mm256x2_mul_pdx2(
-						_mm256x2_mul_pdx2(s6 , zi5),
+						_mm256x2_mul_pd_pdx2(s6 , zi5),
 						_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zi, zi), _mm256x2_mul_pdx2(zi , zi))
 					)
 				)
@@ -529,15 +529,15 @@
 				fO[q - 19] = ((param.formula >> q) & 1) ? true : false;
 			}
 
-			const __m256dx2 s1 = (fS[0]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
-			const __m256dx2 s2 = (fS[1]) ? _mm256x2_set1_pd(-15.0) : _mm256x2_set1_pd(15.0);
-			const __m256dx2 s3 = (fS[2]) ? _mm256x2_set1_pd(-15.0) : _mm256x2_set1_pd(15.0);
-			const __m256dx2 s4 = (fS[3]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
-			const __m256dx2 s5 = (fS[4]) ? _mm256x2_set1_pd(-6.0 ) : _mm256x2_set1_pd(6.0 );
-			const __m256dx2 s6 = (fS[5]) ? _mm256x2_set1_pd(-20.0) : _mm256x2_set1_pd(20.0);
-			const __m256dx2 s7 = (fS[6]) ? _mm256x2_set1_pd(-6.0 ) : _mm256x2_set1_pd(6.0 );
-			const __m256dx2 s8 = (fO[0]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
-			const __m256dx2 s9 = (fO[1]) ? _mm256x2_set1_pd(-1.0 ) : _mm256x2_set1_pd(1.0 );
+			const __m256d s1 = (fS[0]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
+			const __m256d s2 = (fS[1]) ? _mm256_set1_pd(-15.0) : _mm256_set1_pd(15.0);
+			const __m256d s3 = (fS[2]) ? _mm256_set1_pd(-15.0) : _mm256_set1_pd(15.0);
+			const __m256d s4 = (fS[3]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
+			const __m256d s5 = (fS[4]) ? _mm256_set1_pd(-6.0 ) : _mm256_set1_pd(6.0 );
+			const __m256d s6 = (fS[5]) ? _mm256_set1_pd(-20.0) : _mm256_set1_pd(20.0);
+			const __m256d s7 = (fS[6]) ? _mm256_set1_pd(-6.0 ) : _mm256_set1_pd(6.0 );
+			const __m256d s8 = (fO[0]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
+			const __m256d s9 = (fO[1]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
 		
 			const __m256dx2 zr1_mask = (fA[ 0]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
 			const __m256dx2 zi1_mask = (fA[ 1]) ? _mm256x2_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x2_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
@@ -569,44 +569,44 @@
 			zr6 = _mm256x2_and_pdx2(zr6_mask, zr);
 			zi6 = _mm256x2_and_pdx2(zi6_mask, zi);
 
-			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s8, _mm256x2_and_pdx2(zr_mask ,
+			temp_zr = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s8, _mm256x2_and_pdx2(zr_mask ,
 				_mm256x2_sub_pdx2(
 					_mm256x2_add_pdx2(
 						_mm256x2_sub_pdx2(
 							_mm256x2_mul_pdx2(
-								_mm256x2_mul_pdx2(s1, _mm256x2_mul_pdx2(zr1, zr)),
+								_mm256x2_mul_pd_pdx2(s1, _mm256x2_mul_pdx2(zr1, zr)),
 								_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr, zr), _mm256x2_mul_pdx2(zr, zr))
 							),
 							_mm256x2_mul_pdx2(
-								_mm256x2_mul_pdx2(s2, _mm256x2_mul_pdx2(zr2, zi1)),
+								_mm256x2_mul_pd_pdx2(s2, _mm256x2_mul_pdx2(zr2, zi1)),
 								_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr, zr), _mm256x2_mul_pdx2(zr, zi))
 							)
 						),
 						_mm256x2_mul_pdx2(
-							_mm256x2_mul_pdx2(s3, _mm256x2_mul_pdx2(zr3, zi2)),
+							_mm256x2_mul_pd_pdx2(s3, _mm256x2_mul_pdx2(zr3, zi2)),
 							_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr, zi), _mm256x2_mul_pdx2(zi, zi))
 						)
 					),
 					_mm256x2_mul_pdx2(
-						_mm256x2_mul_pdx2(s4, _mm256x2_mul_pdx2(zi3, zi)),
+						_mm256x2_mul_pd_pdx2(s4, _mm256x2_mul_pdx2(zi3, zi)),
 						_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zi, zi), _mm256x2_mul_pdx2(zi, zi))
 					)
 				)
 			)), cr);
-			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pdx2(s9, _mm256x2_and_pdx2(zi_mask,
+			zi      = _mm256x2_add_pdx2(_mm256x2_mul_pd_pdx2(s9, _mm256x2_and_pdx2(zi_mask,
 				_mm256x2_add_pdx2(
 					_mm256x2_sub_pdx2(
 						_mm256x2_mul_pdx2(
-							_mm256x2_mul_pdx2(s5, _mm256x2_mul_pdx2(zr4, zi4)),
+							_mm256x2_mul_pd_pdx2(s5, _mm256x2_mul_pdx2(zr4, zi4)),
 							_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr, zr), _mm256x2_mul_pdx2(zr, zr))
 						),
 						_mm256x2_mul_pdx2(
-							_mm256x2_mul_pdx2(s6, _mm256x2_mul_pdx2(zr5, zi5)),
+							_mm256x2_mul_pd_pdx2(s6, _mm256x2_mul_pdx2(zr5, zi5)),
 							_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zr, zr), _mm256x2_mul_pdx2(zi, zi))
 						)
 					),
 					_mm256x2_mul_pdx2(
-						_mm256x2_mul_pdx2(s7, _mm256x2_mul_pdx2(zr6, zi6)),
+						_mm256x2_mul_pd_pdx2(s7, _mm256x2_mul_pdx2(zr6, zi6)),
 						_mm256x2_mul_pdx2(_mm256x2_mul_pdx2(zi, zi), _mm256x2_mul_pdx2(zi, zi))
 					)
 				)

@@ -18,10 +18,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	# GCC quadmath __float128
 	set(FEATURE_Float128      "")
 	
-	# Requires libqd.a
+	# (Deprecated) Requires libqd.a
 #	set(FEATURE_LIBQD         "")
 	
-	# MPFR converts between dekker-floats and strings
+	# MPFR converts between coordinates and strings
 	set(FEATURE_FloatMPFR     "")
 	
 	# GPU Rendering (OpenCL 1.2 or later)
@@ -34,9 +34,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 #	set(FEATURE_OpenCV_Scaler "")
 	# Requires libquadmath.a
 #	set(STATIC_OpenCV_Scaler  "")
-
-	# Defines the NDEBUG macro to disable <cassert>
-#   target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
 
 	# Long compile times! Optimizes and reduces the size of the binary for release
 #   set(COMPILE_FLTO "")
@@ -54,7 +51,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(LIBRARY_OPT_FLAG -O3)
 	# -Ofast appears to have a noticable speedup compared to -O3 for SSE2 and AVX rendering.
 	set(RENDER_CPU_OPT_FLAG -Ofast)
-	set(MARCH_FLAGS -msse2)
+	set(MARCH_FLAGS -msse3)
 
 # Source Files
 	file(GLOB_RECURSE SRC_FILES
@@ -70,11 +67,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	endif()
 
 
-
-	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_AVX.cpp")
-	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG}")
 	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_SSE2.cpp")
 	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "${RENDER_CPU_OPT_FLAG}")
+	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_AVX.cpp")
+	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG}")
+	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_Float64x2_AVX.cpp")
+	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "-mavx ${PROGRAM_OPT_FLAG}")
+
 
 # Icon
 	set(ICON_FILE "./icons/ABS-Icon.o")
@@ -88,6 +87,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 
 # Packages and Macros
 	find_package(SDL2 REQUIRED)
+
+	# Defines the NDEBUG macro to disable <cassert>
+#	target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
 
 	if(DEFINED FEATURE_Float80)
 		target_compile_definitions(${PROJECT_NAME} PRIVATE Enable_Float80)
@@ -169,8 +171,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	)
 
 # Compile Options
-
-	set(MARCH_FLAGS -msse3 -mavx)
 
 	set(WARNING_FLAGS
 		-Wall -Wextra -Wshadow

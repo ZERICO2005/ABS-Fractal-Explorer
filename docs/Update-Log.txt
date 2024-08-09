@@ -1,5 +1,10 @@
 ABS-Fractal-Explorer Update-Log
 
+# v1.2.2 (2024/08/09)
+* Added Dekker floats, increasing the maximum precision from 10^32.5 to 10^36.7
+* Precisions added: Float32x2 (10^12.6), Float64x2 (10^30.7), Float80x2 (10^36.7)
+* General improvements and bug fixes.
+
 # v1.2.1 (Revision-2) (2024/06/09)
 * Corrected color averaging algorithm
 

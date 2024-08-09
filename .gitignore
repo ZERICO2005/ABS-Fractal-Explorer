@@ -1,4 +1,7 @@
 desktop.ini
 .vscode
+.vs
 imgui.ini
 .cache
+out
+CMakeSettings.json

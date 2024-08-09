@@ -140,10 +140,12 @@
 #else
 
 	int FloatCoordinate_snprintf(char* buf, size_t len, const char* format, fpCord cord) {
-		#if defined(Enable_Float128)
+		#if defined(Enable_Float80)
+			return Float80x2_snprintf(buf, len, format, cord);
+		#elif defined(Enable_Float128)
 			return quadmath_snprintf(buf, len, format, (fp128)cord);
 		#else
-			return snprintf(buf, len, format, cord);
+			return Float64x2_snprintf(buf, len, format, cord);
 		#endif
 	}
 
@@ -174,12 +176,12 @@
 	}
 
 	fpCord stringTo_FloatCoordinate(const char* nPtr, char** endPtr) {
-		#if defined(Enable_Float128)
+		#if defined(Enable_Float80)
+			return (fpCord)stringTo_Float80x2(nPtr, endPtr);
+		#elif defined(Enable_Float128)
 			return (fpCord)stringTo_Float128(nPtr, endPtr);
-		#elif defined(Enable_Float80)
-			return (fpCord)stringTo_Float80(nPtr, endPtr);
 		#else
-			return (fpCord)stringTo_Float64(nPtr, endPtr);
+			return (fpCord)stringTo_Float64x2(nPtr, endPtr);
 		#endif
 	}
 

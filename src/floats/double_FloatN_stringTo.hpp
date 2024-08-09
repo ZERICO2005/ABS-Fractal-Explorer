@@ -1,6 +1,6 @@
 /*
-**	Author: zerico2005 (2023 - 2024)
-**	Project: ABS-Fractal-Explorer
+**	Author: zerico2005 (2024)
+**	Project: LIB-Dekker-Float
 **	License: MIT License
 **	A copy of the MIT License should be included with
 **	this project. If not, see https://opensource.org/license/MIT
@@ -43,9 +43,12 @@ class internal_double_FloatN_stringTo {
 
 	static const char* get_exponent(const char* ptr, int& exponent) {
 		exponent = 0;
-		bool exp_sign = (*ptr == '-') ? true : false;
+		bool exp_sign = false;
 		if (*ptr == 'E' || *ptr == 'e') {
 			ptr++;
+			if (*ptr == '-') {
+				exp_sign = true;
+			}
 			if (*ptr == '+' || *ptr == '-') {
 				ptr++;
 			}

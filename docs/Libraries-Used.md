@@ -50,11 +50,22 @@ Used for GPU rendering
 https://gcc.gnu.org/onlinedocs/libquadmath/
 Used for high precision 128bit float calculations
 
+## MPFR
+Used for converting between coordinates and strings with greater accuracy.
+
+## libQD
+https://www.davidhbailey.com/dhbsoftware/
+Used for experimental quad-double and double-double arithmetic support.
+
+## LIB-Dekker-Float
+https://github.com/ZERICO2005/LIB-Dekker-Float
+A header-only library I wrote for the Dekker float implementations used in ABS-Fractal-Explorer. Float64x2 is roughly the same speed as dd_real in libQD, while Float64x2 AVX is ~3.3x faster for rendering fractals.
+
 ## STB Image
 https://github.com/nothings/stb
 Used for writing PNG/JPG images
 
 ## OpenCV
 https://opencv.org/
-Used for frame scaling in custom versions of ABS-Fractal-Explorer
+Used for frame scaling in some versions of ABS-Fractal-Explorer
 

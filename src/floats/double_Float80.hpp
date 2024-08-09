@@ -27,25 +27,22 @@ typedef double fp64;
 	typedef fp80 fp80x2_Math;
 #endif
 
-
 /**
  * @brief Double-Float80 Dekker Float implementation.
  * Source: Creel "Double it Like Dekker" on YouTube.
  */
-class Float80x2 {
-public:
+struct Float80x2 {
+	
 	fp80 hi;
 	fp80 lo;
-	
-private:
 
 	/* Arithmetic */
 
-	inline Float80x2 Dekker_Add(
+	static inline Float80x2 Dekker_Add(
 		const Float80x2& x, const Float80x2& y
-	) const {
+	) {
 		fp80 r_hi = x.hi + y.hi;
-		fp80 r_lo = 0.0;
+		fp80 r_lo = static_cast<fp80>(0.0);
 		if (fabsl(x.hi) > fabsl(y.hi)) {
 			r_lo = x.hi - r_hi + y.hi + y.lo + x.lo;
 		} else {
@@ -58,11 +55,11 @@ private:
 		return c;
 	}
 
-	inline Float80x2 Dekker_Sub(
+	static inline Float80x2 Dekker_Sub(
 		const Float80x2& x, const Float80x2& y
-	) const {
+	) {
 		fp80 r_hi = x.hi - y.hi;
-		fp80 r_lo = 0.0;
+		fp80 r_lo = static_cast<fp80>(0.0);
 		if (fabsl(x.hi) > fabsl(y.hi)) {
 			r_lo = x.hi - r_hi - y.hi - y.lo + x.lo;
 		} else {
@@ -77,7 +74,7 @@ private:
 
 	static constexpr fp80 Dekker_Scale = 4294967297.0; // (2^ceil(64 / 2) + 1)
 	
-	inline Float80x2 Dekker_Split(const fp80& x) const {
+	static inline Float80x2 Dekker_Split(const fp80& x) {
 		fp80 p = x * Dekker_Scale;
 		Float80x2 r;
 		r.hi = (x - p) + p;
@@ -96,9 +93,9 @@ private:
 	// 	return r;
 	// }
 
-	inline Float80x2 Dekker_Mul12(
+	static inline Float80x2 Dekker_Mul12(
 		const fp80& x, const fp80& y
-	) const {
+	) {
 		Float80x2 a = Dekker_Split(x);
 		Float80x2 b = Dekker_Split(y);
 		fp80 p = a.hi * b.hi;
@@ -110,9 +107,9 @@ private:
 		return r;
 	}
 
-	inline Float80x2 Dekker_Mul(
+	static inline Float80x2 Dekker_Mul(
 		const Float80x2& x, const Float80x2& y
-	) const {
+	) {
 		Float80x2 t = Dekker_Mul12(x.hi, y.hi);
 		fp80 c = x.hi * y.lo + x.lo * y.hi + t.lo;
 
@@ -122,9 +119,9 @@ private:
 		return r;
 	}
 
-	inline Float80x2 Dekker_Div(
+	static inline Float80x2 Dekker_Div(
 		const Float80x2& x, const Float80x2& y
-	) const {
+	) {
 		Float80x2 u;
 		u.hi = x.hi / y.hi;
 		Float80x2 t = Dekker_Mul12(u.hi, y.hi);
@@ -135,13 +132,39 @@ private:
 		r.lo = u.hi - r.hi + l;
 		return r;
 	}
+
+	static inline Float80x2 Dekker_Sqr12(
+		const fp80& x
+	) {
+		Float80x2 a = Dekker_Split(x);
+		fp80 p = a.hi * a.hi;
+		fp80 q = static_cast<fp80>(2.0) * a.hi * a.lo;
+
+		Float80x2 r;
+		r.hi = p + q;
+		r.lo = p - r.hi + q + a.lo * a.lo;
+		return r;
+	}
+
+	static inline Float80x2 Dekker_Sqr(
+		const Float80x2& x
+	) {
+		Float80x2 t = Dekker_Sqr12(x.hi);
+		fp80 c = static_cast<fp80>(2.0) * x.hi * x.lo + t.lo;
+
+		Float80x2 r;
+		r.hi = t.hi + c;
+		r.lo = t.hi - r.hi + c;
+		return r;
+	}
+
 	/* Double-Single Arithmetic */
 
-	inline Float80x2 Dekker_Add_Float80(
+	static inline Float80x2 Dekker_Add_Float80(
 		const Float80x2& x, const fp80& y
-	) const {
+	) {
 		fp80 r_hi = x.hi + y;
-		fp80 r_lo = 0.0f;
+		fp80 r_lo = static_cast<fp80>(0.0);
 		if (fabsl(x.hi) > fabsl(y)) {
 			r_lo = x.hi - r_hi + y + x.lo;
 		} else {
@@ -154,11 +177,11 @@ private:
 		return c;
 	}
 
-	inline Float80x2 Dekker_Sub_Float80(
+	static inline Float80x2 Dekker_Sub_Float80(
 		const Float80x2& x, const fp80& y
-	) const {
+	) {
 		fp80 r_hi = x.hi - y;
-		fp80 r_lo = 0.0f;
+		fp80 r_lo = static_cast<fp80>(0.0);
 		if (fabsl(x.hi) > fabsl(y)) {
 			r_lo = x.hi - r_hi - y + x.lo;
 		} else {
@@ -171,9 +194,9 @@ private:
 		return c;
 	}
 
-	inline Float80x2 Dekker_Mul_Float80(
+	static inline Float80x2 Dekker_Mul_Float80(
 		const Float80x2& x, const fp80& y
-	) const {
+	) {
 		Float80x2 t = Dekker_Mul12(x.hi, y);
 		fp80 c = x.lo * y + t.lo;
 
@@ -183,9 +206,9 @@ private:
 		return r;
 	}
 
-	inline Float80x2 Dekker_Div_Float80(
+	static inline Float80x2 Dekker_Div_Float80(
 		const Float80x2& x, const fp80& y
-	) const {
+	) {
 		Float80x2 u;
 		u.hi = x.hi / y;
 		Float80x2 t = Dekker_Mul12(u.hi, y);
@@ -197,9 +220,9 @@ private:
 		return r;
 	}
 
-	inline Float80x2 Float80_Div_Dekker(
+	static inline Float80x2 Float80_Div_Dekker(
 		const fp80& x, const Float80x2& y
-	) const {
+	) {
 		Float80x2 u;
 		u.hi = x / y.hi;
 		Float80x2 t = Dekker_Mul12(u.hi, y.hi);
@@ -210,8 +233,6 @@ private:
 		r.lo = u.hi - r.hi + l;
 		return r;
 	}
-
-public:
 
 /* Arithmetic */
 
@@ -415,12 +436,23 @@ typedef Float80x2 fp80x2;
 /* Math functions (Natively implemented) */
 
 	/* Arithmetic */
+	
 	inline fp80x2 fmax(fp80x2 x, fp80x2 y) {
 		return (x > y) ? x : y;
 	}
+	// inline fp80x2 fmax(fp80x2 x, fp80x2 y, fp80x2 z) {
+	// 	return (x > y) ?
+	// 	((x > z) ? x : z) :
+	// 	((y > z) ? y : z);
+	// }
 	inline fp80x2 fmin(fp80x2 x, fp80x2 y) {
 		return (x < y) ? x : y;
 	}
+	// inline fp80x2 fmin(fp80x2 x, fp80x2 y, fp80x2 z) {
+	// 	return (x < y) ?
+	// 	((x < z) ? x : z) :
+	// 	((y < z) ? y : z);
+	// }
 	inline fp80x2 fabs(fp80x2 x) {
 		return (x < static_cast<fp80x2>(0.0)) ? -x : x;
 	}
@@ -432,13 +464,44 @@ typedef Float80x2 fp80x2;
 	}
 	inline fp80x2 copysign(fp80x2 x, fp80x2 y) {
 		return (
-			(x < static_cast<fp80x2>(0.0)) != (y < (static_cast<fp80x2>(0.0)))
+			(x.hi < static_cast<fp80>(0.0)) != (y.hi < (static_cast<fp80>(0.0)))
 		) ? -x : x;
 	}
+	/** @note This function name may change to square() or etc */
+	inline fp80x2 sqr(fp80x2 x) {
+		return Float80x2::Dekker_Sqr(x);
+	}
+	inline fp80x2 sqrt(fp80x2 x) {
+		if (x == static_cast<fp80x2>(0.0)) {
+			return x;
+		}
+		fp80x2 guess = (fp80x2)sqrt(x.hi);
+		return (guess + x / guess) * static_cast<fp80>(0.5);
+	}
+	inline fp80x2 cbrt(fp80x2 x) {
+		if (x == static_cast<fp80x2>(0.0)) {
+			return x;
+		}
+		fp80x2 guess = (fp80x2)cbrt(x.hi);
+		return (
+			guess * static_cast<fp80>(2.0) + (x) / Float80x2::Dekker_Sqr(guess)
+		) / static_cast<fp80>(3.0);
+	}
+	inline fp80x2 hypot(fp80x2 x, fp80x2 y) {
+		return sqrt(
+			Float80x2::Dekker_Sqr(x) + Float80x2::Dekker_Sqr(y)
+		);
+	}
+	// inline fp80x2 hypot(fp80x2 x, fp80x2 y, fp80x2 z) {
+	// 	return sqrt(
+	// 		Float80x2::Dekker_Sqr(x) + Float80x2::Dekker_Sqr(y) + Float80x2::Dekker_Sqr(z)
+	// 	);
+	// }
 
 	/* Tests */
+
 	inline bool signbit(fp80x2 x) {
-		return (x < static_cast<fp80x2>(0.0)) ? true : false;
+		return (x.hi < static_cast<fp80>(0.0)) ? true : false;
 	}
 	/** Returns true if both x.hi and x.lo are finite */
 	inline bool isfinite(fp80x2 x) {
@@ -469,6 +532,7 @@ typedef Float80x2 fp80x2;
 	}
 
 	/* Comparison */
+
 	inline bool isgreater(fp80x2 x, fp80x2 y) {
 		return (x > y);
 	}
@@ -486,25 +550,26 @@ typedef Float80x2 fp80x2;
 	}
 
 	/* Rounding */
-    inline fp80x2 trunc(fp80x2 x) {
-        fp80 frac_hi = x.hi - trunc(x.hi);
-        fp80 frac_lo = x.lo - trunc(x.lo);
-        fp80x2 int_hi = trunc(x.hi);
-        fp80x2 int_lo = trunc(x.lo);
-        // Sum in increasing order
-        fp80x2 trunc_all = static_cast<fp80x2>(0.0);
-        trunc_all += (
+
+	inline fp80x2 trunc(fp80x2 x) {
+		fp80x2 int_hi = trunc(x.hi);
+		fp80x2 int_lo = trunc(x.lo);
+		fp80 frac_hi = x.hi - int_hi.hi;
+		fp80 frac_lo = x.lo - int_lo.hi;
+		// Sum in increasing order
+		fp80x2 trunc_all = static_cast<fp80x2>(0.0);
+		trunc_all += (
 			(fp80x2)frac_hi + (fp80x2)frac_lo >= static_cast<fp80x2>(1.0)
 		) ? static_cast<fp80x2>(1.0) : static_cast<fp80x2>(0.0);
-        trunc_all += int_lo;
-        trunc_all += int_hi;
-        return trunc_all;
-    }
+		trunc_all += int_lo;
+		trunc_all += int_hi;
+		return trunc_all;
+	}
 	inline fp80x2 floor(fp80x2 x) {
 		fp80x2 int_part = trunc(x);
 		return (
 			x < static_cast<fp80x2>(0.0) && int_part != x
-		) ? int_part : int_part - static_cast<fp80x2>(1.0);
+		) ? int_part - static_cast<fp80x2>(1.0) : int_part;
 	}
 	inline fp80x2 ceil(fp80x2 x) {
 		fp80x2 int_part = trunc(x);
@@ -553,8 +618,34 @@ typedef Float80x2 fp80x2;
 	}
 
 	/* Integer and Remainder */
+
+	inline fp80x2 modf(fp80x2 x, fp80x2* int_part) {
+		fp80x2 trunc_part = trunc(x);
+		if (int_part != nullptr) {
+			*int_part = trunc_part;
+		}
+		return x - trunc_part;
+	}
 	inline fp80x2 nearbyint(fp80x2 x) {
 		return rint(x);
+	}
+
+	/* Float Exponents */
+
+	inline fp80x2 ldexp(fp80x2 x, int exp) {
+		x.hi = ldexp(x.hi, exp);
+		x.lo = isfinite(x.hi) ? ldexp(x.lo, exp) : x.hi;
+		return x;
+	}
+	inline fp80x2 scalbn(fp80x2 x, int exp) {
+		x.hi = scalbn(x.hi, exp);
+		x.lo = isfinite(x.hi) ? scalbn(x.lo, exp) : x.hi;
+		return x;
+	}
+	inline fp80x2 scalbln(fp80x2 x, long exp) {
+		x.hi = scalbln(x.hi, exp);
+		x.lo = isfinite(x.hi) ? scalbln(x.lo, exp) : x.hi;
+		return x;
 	}
 
 /* Math overloads (Casts to other types) */
@@ -566,9 +657,9 @@ typedef Float80x2 fp80x2;
 		// inline fp80x2 fdim(fp80x2 x, fp80x2 y) { return (fp80x2)fdim((fp80x2_Math)x, (fp80x2_Math)y); }
 		// inline fp80x2 fma(fp80x2 x, fp80x2 y, fp80x2 z) { return (fp80x2)fma((fp80x2_Math)x, (fp80x2_Math)y, (fp80x2_Math)z); }
 		// inline fp80x2 copysign(fp80x2 x, fp80x2 y) { return (fp80x2)copysign((fp80x2_Math)x, (fp80x2_Math)y); }
-		inline fp80x2 sqrt(fp80x2 x) { return (fp80x2)sqrt((fp80x2_Math)x); }
-		inline fp80x2 cbrt(fp80x2 x) { return (fp80x2)cbrt((fp80x2_Math)x); }
-		inline fp80x2 hypot(fp80x2 x, fp80x2 y) { return (fp80x2)hypot((fp80x2_Math)x, (fp80x2_Math)y); }
+		// inline fp80x2 sqrt(fp80x2 x) { return (fp80x2)sqrt((fp80x2_Math)x); }
+		// inline fp80x2 cbrt(fp80x2 x) { return (fp80x2)cbrt((fp80x2_Math)x); }
+		// inline fp80x2 hypot(fp80x2 x, fp80x2 y) { return (fp80x2)hypot((fp80x2_Math)x, (fp80x2_Math)y); }
 		/* Trigonometry */
 		inline fp80x2  sin (fp80x2 x) { return (fp80x2) sin ((fp80x2_Math)x); }
 		inline fp80x2  cos (fp80x2 x) { return (fp80x2) cos ((fp80x2_Math)x); }
@@ -609,12 +700,12 @@ typedef Float80x2 fp80x2;
 		// inline long long llround(fp80x2 x) { return llround((fp80x2_Math)x); }
 		/* Integer and Remainder */
 		inline fp80x2 fmod(fp80x2 x, fp80x2 y) { return (fp80x2)fmod((fp80x2_Math)x, (fp80x2_Math)y); }
-		inline fp80x2 modf(fp80x2 x, fp80x2* y) {
-			fp80x2_Math y_temp;
-			fp80x2 result = modf((fp80x2_Math)x, &y_temp);
-			*y = (fp80x2)y_temp;
-			return result;
-		}
+		// inline fp80x2 modf(fp80x2 x, fp80x2* y) {
+		// 	fp80x2_Math y_temp;
+		// 	fp80x2 result = modf((fp80x2_Math)x, &y_temp);
+		// 	*y = (fp80x2)y_temp;
+		// 	return result;
+		// }
 		// inline fp80x2 nearbyint(fp80x2 x) { return (fp80x2)nearbyint((fp80x2_Math)x); }
 		// Incorrect Function // inline fp80x2 nextafter(fp80x2 x, fp80x2 y) { return (fp80x2)nextafter((fp80x2_Math)x, (fp80x2_Math)y); }
 		inline fp80x2 remainder(fp80x2 x, fp80x2 y) { return (fp80x2)remainder((fp80x2_Math)x, (fp80x2_Math)y); }
@@ -622,9 +713,9 @@ typedef Float80x2 fp80x2;
 		/* Float Exponents */
 		inline int ilogb(fp80x2 x) { return ilogb((fp80x2_Math)x); }
 		inline fp80x2 frexp  (fp80x2 x, int* exp) { return (fp80x2)frexp  ((fp80x2_Math)x, exp); }
-		inline fp80x2 ldexp  (fp80x2 x, int  exp) { return (fp80x2)ldexp  ((fp80x2_Math)x, exp); }
-		inline fp80x2 scalbn (fp80x2 x, int  exp) { return (fp80x2)scalbn ((fp80x2_Math)x, exp); }
-		inline fp80x2 scalbln(fp80x2 x, long exp) { return (fp80x2)scalbln((fp80x2_Math)x, exp); }
+		// inline fp80x2 ldexp  (fp80x2 x, int  exp) { return (fp80x2)ldexp  ((fp80x2_Math)x, exp); }
+		// inline fp80x2 scalbn (fp80x2 x, int  exp) { return (fp80x2)scalbn ((fp80x2_Math)x, exp); }
+		// inline fp80x2 scalbln(fp80x2 x, long exp) { return (fp80x2)scalbln((fp80x2_Math)x, exp); }
 		/* Tests */
 		// inline bool signbit(fp80x2 x) { return (signbit((fp80x2_Math)x) != 0) ? true : false; }
 		// inline bool isfinite(fp80x2 x) { return (isfinite((fp80x2_Math)x) != 0) ? true : false; }
@@ -675,4 +766,4 @@ typedef Float80x2 fp80x2;
 
 #endif
 
-#endif /* DOUBLE_FLOAT64_HPP */
+#endif /* DOUBLE_FLOAT80_HPP */
