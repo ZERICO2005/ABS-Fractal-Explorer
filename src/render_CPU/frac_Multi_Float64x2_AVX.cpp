@@ -8,8 +8,8 @@
 
 #include "frac_Multi_Internal.h"
 #include "frac_Multi_Float64x2_AVX.h"
-#include "../floats/double_Float64.hpp"
-#include "../floats/double_Float64_AVX.h"
+#include "Float64x2/Float64x2.hpp"
+#include "Float64x2/Float64x2_AVX.h"
 
 #ifdef ENABLE_AVX_RENDERING
 
@@ -86,18 +86,18 @@
 		constexpr size_t SIMD_Spacing = 4; /* 4 Registers in AVX FP64 */\
 		\
 		/* Load Precalculated constants */\
-		const __m256dx2 realCord       = _mm256x2_set1_pdx2(param.realCord     .hi, param.realCord     .lo);\
-		const __m256dx2 imagCord       = _mm256x2_set1_pdx2(param.imagCord     .hi, param.imagCord     .lo);\
-		const __m256dx2 realJulia      = _mm256x2_set1_pdx2(param.realJulia    .hi, param.realJulia    .lo);\
-		const __m256dx2 imagJulia      = _mm256x2_set1_pdx2(param.imagJulia    .hi, param.imagJulia    .lo);\
-		const __m256dx2 rotSin_PC      = _mm256x2_set1_pdx2(param.rotSin_PC    .hi, param.rotSin_PC    .lo);\
-		const __m256dx2 rotCos_PC      = _mm256x2_set1_pdx2(param.rotCos_PC    .hi, param.rotCos_PC    .lo);\
-		const __m256dx2 breakoutValue  = _mm256x2_set1_pdx2(param.breakoutValue.hi, param.breakoutValue.lo);\
+		const __m256dx2 realCord       = _mm256x2_set1_pd_pd(param.realCord     .hi, param.realCord     .lo);\
+		const __m256dx2 imagCord       = _mm256x2_set1_pd_pd(param.imagCord     .hi, param.imagCord     .lo);\
+		const __m256dx2 realJulia      = _mm256x2_set1_pd_pd(param.realJulia    .hi, param.realJulia    .lo);\
+		const __m256dx2 imagJulia      = _mm256x2_set1_pd_pd(param.imagJulia    .hi, param.imagJulia    .lo);\
+		const __m256dx2 rotSin_PC      = _mm256x2_set1_pd_pd(param.rotSin_PC    .hi, param.rotSin_PC    .lo);\
+		const __m256dx2 rotCos_PC      = _mm256x2_set1_pd_pd(param.rotCos_PC    .hi, param.rotCos_PC    .lo);\
+		const __m256dx2 breakoutValue  = _mm256x2_set1_pd_pd(param.breakoutValue.hi, param.breakoutValue.lo);\
 		/* numX, numY, numZ, and numW are constants used to caluculate the cordinates */\
-		const __m256dx2 numY           = _mm256x2_set1_pdx2(param.numY          .hi, param.numY          .lo);\
-		const __m256dx2 numX           = _mm256x2_set1_pdx2(param.numX          .hi, param.numX          .lo);\
-		const __m256dx2 recip_numZ     = _mm256x2_set1_pdx2(param.recip_numZ    .hi, param.recip_numZ    .lo);\
-		const __m256dx2 neg_recip_numW = _mm256x2_set1_pdx2(param.neg_recip_numW.hi, param.neg_recip_numW.lo);\
+		const __m256dx2 numY           = _mm256x2_set1_pd_pd(param.numY          .hi, param.numY          .lo);\
+		const __m256dx2 numX           = _mm256x2_set1_pd_pd(param.numX          .hi, param.numX          .lo);\
+		const __m256dx2 recip_numZ     = _mm256x2_set1_pd_pd(param.recip_numZ    .hi, param.recip_numZ    .lo);\
+		const __m256dx2 neg_recip_numW = _mm256x2_set1_pd_pd(param.neg_recip_numW.hi, param.neg_recip_numW.lo);\
 		\
 		/* Init Loop */\
 		size_t dataPtr = p0 * IMAGE_BUFFER_CHANNELS; /* Determines the starting image offset/index */\
@@ -120,7 +120,7 @@
 				for (int32_t v = 0; v < param.sample; v++) {\
 					/* Calculates y cordinate-value */\
 					Float64x2 y_val = (Float64x2)(fp64)y;\
-					__m256dx2 yCord = _mm256x2_set1_pdx2(y_val.hi, y_val.lo);\
+					__m256dx2 yCord = _mm256x2_set1_pd_pd(y_val.hi, y_val.lo);\
 					yCord = _mm256x2_sub_pdx2(yCord, numY);\
 					yCord = _mm256x2_mul_pdx2(yCord, neg_recip_numW);\
 					\
@@ -132,7 +132,7 @@
 							(Float64x2)(fp64)(x + 1 * param.sample),\
 							(Float64x2)(fp64)(x + 0 * param.sample) \
 						};\
-						__m256dx2 xCord = _mm256x2_set_pdx2(\
+						__m256dx2 xCord = _mm256x2_set_pd_pd(\
 							x_val[0].hi, x_val[0].lo,\
 							x_val[1].hi, x_val[1].lo,\
 							x_val[2].hi, x_val[2].lo,\

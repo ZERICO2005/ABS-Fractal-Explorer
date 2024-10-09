@@ -15,6 +15,7 @@
 // Excludes rendering configurations that are not supported in any version of ABS-Fractal-Explorer
 // #define INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
 
+#define INCLUDE_FLOAT80X4
 namespace Rendering_Configuration {
 	/*
 	Conventions:
@@ -37,6 +38,8 @@ namespace Rendering_Configuration {
 			Render_Precision_Float64x2,
 			Render_Precision_Float128,
 			Render_Precision_Float80x2,
+			Render_Precision_Float64x4,
+			Render_Precision_Float80x4,
 		};
 		const char* const Rendering_Precision_String[] = {
 			"Render_Precision_Automatic",
@@ -50,6 +53,8 @@ namespace Rendering_Configuration {
 			"Render_Precision_Float64x2",
 			"Render_Precision_Float128" ,
 			"Render_Precision_Float80x2",
+			"Render_Precision_Float64x4",
+			"Render_Precision_Float80x4",
 		};
 		const char* const Rendering_Precision_Name[] = {
 			"Automatic Render Precision",
@@ -63,6 +68,8 @@ namespace Rendering_Configuration {
 			"2x64bit Float",
 			"128bit Float",
 			"2x80bit Float",
+			"4x64bit Float",
+			"4x80bit Float",
 		};
 		static_assert(
 			ARRAY_LENGTH(Rendering_Precision_String) == ARRAY_LENGTH(Rendering_Precision_Name),
@@ -80,6 +87,8 @@ namespace Rendering_Configuration {
 			"(10^30.7) 2x64bit Float",
 			"(10^32.5) 128bit Float",
 			"(10^36.7) 2x80bit Float",
+			"(10^61.4) 4x64bit Float",
+			"(10^74.7) 4x80bit Float",
 		};
 		static_assert(
 			ARRAY_LENGTH(Rendering_Precision_String) == ARRAY_LENGTH(Rendering_Precision_Text),
@@ -160,6 +169,8 @@ namespace Rendering_Configuration {
 			Render_Preset_CPU_Generic_Float64x2,
 			Render_Preset_CPU_Generic_Float128,
 			Render_Preset_CPU_Generic_Float80x2,
+			Render_Preset_CPU_Generic_Float64x4,
+			Render_Preset_CPU_Generic_Float80x4,
 			/* CPU SSE2 Rendering */
 			Render_Preset_CPU_SSE2_Float32,
 			Render_Preset_CPU_SSE2_Float64,
@@ -167,6 +178,7 @@ namespace Rendering_Configuration {
 			Render_Preset_CPU_AVX_Float32,
 			Render_Preset_CPU_AVX_Float64,
 			Render_Preset_CPU_AVX_Float64x2,
+			Render_Preset_CPU_AVX_Float64x4,
 			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
 				/* CPU AVX512 Rendering */
 				Render_Preset_CPU_AVX512_Float16,
@@ -195,6 +207,8 @@ namespace Rendering_Configuration {
 			"Render_Preset_CPU_Generic_Float64x2",
 			"Render_Preset_CPU_Generic_Float128",
 			"Render_Preset_CPU_Generic_Float80x2",
+			"Render_Preset_CPU_Generic_Float64x4",
+			"Render_Preset_CPU_Generic_Float80x4",
 			/* CPU SSE2 Rendering */
 			"Render_Preset_CPU_SSE2_Float32",
 			"Render_Preset_CPU_SSE2_Float64",
@@ -202,6 +216,7 @@ namespace Rendering_Configuration {
 			"Render_Preset_CPU_AVX_Float32",
 			"Render_Preset_CPU_AVX_Float64",
 			"Render_Preset_CPU_AVX_Float64x2",
+			"Render_Preset_CPU_AVX_Float64x4",
 			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
 				/* CPU AVX512 Rendering */
 				"Render_Preset_CPU_AVX512_Float16",
@@ -230,6 +245,8 @@ namespace Rendering_Configuration {
 			"CPU-Generic 2x64bit Float",
 			"CPU-Generic 128bit Float",
 			"CPU-Generic 2x80bit Float",
+			"CPU-Generic 4x64bit Float",
+			"CPU-Generic 4x80bit Float",
 			/* CPU SSE2 Rendering */
 			"CPU-SSE2 32bit Float",
 			"CPU-SSE2 64bit Float",
@@ -237,6 +254,7 @@ namespace Rendering_Configuration {
 			"CPU-AVX 32bit Float",
 			"CPU-AVX 64bit Float",
 			"CPU-AVX 2x64bit Float",
+			"CPU-AVX 4x64bit Float",
 			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
 				/* CPU AVX512 Rendering */
 				"CPU-AVX512 16bit Float",
@@ -269,6 +287,8 @@ namespace Rendering_Configuration {
 			"(10^30.7) CPU-Generic 2x64bit Float",
 			"(10^32.5) CPU-Generic 128bit Float",
 			"(10^36.7) CPU-Generic 2x80bit Float",
+			"(10^61.4) CPU-Generic 4x64bit Float",
+			"(10^74.7) CPU-Generic 4x80bit Float",
 			/* CPU SSE2 Rendering */
 			"(10^5.7 ) CPU-SSE2 32bit Float",
 			"(10^14.4) CPU-SSE2 64bit Float",
@@ -276,6 +296,7 @@ namespace Rendering_Configuration {
 			"(10^5.7 ) CPU-AVX 32bit Float",
 			"(10^14.4) CPU-AVX 64bit Float",
 			"(10^30.7) CPU-AVX 2x64bit Float",
+			"(10^61.4) CPU-AVX 4x64bit Float",
 			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
 				/* CPU AVX512 Rendering */
 				"(10^1.8 ) CPU-AVX512 16bit Float",
@@ -315,6 +336,8 @@ namespace Rendering_Configuration {
 			{Render_Preset_CPU_Generic_Float64x2, Render_Precision_Float64x2, Render_Method_CPU_Generic},
 			{Render_Preset_CPU_Generic_Float128 , Render_Precision_Float128 , Render_Method_CPU_Generic},
 			{Render_Preset_CPU_Generic_Float80x2, Render_Precision_Float80x2, Render_Method_CPU_Generic},
+			{Render_Preset_CPU_Generic_Float64x4, Render_Precision_Float64x4, Render_Method_CPU_Generic},
+			{Render_Preset_CPU_Generic_Float80x4, Render_Precision_Float80x4, Render_Method_CPU_Generic},
 			/* CPU SSE2 Rendering */
 			{Render_Preset_CPU_SSE2_Float32     , Render_Precision_Float32  , Render_Method_CPU_SSE2   },
 			{Render_Preset_CPU_SSE2_Float64     , Render_Precision_Float64  , Render_Method_CPU_SSE2   },
@@ -322,6 +345,7 @@ namespace Rendering_Configuration {
 			{Render_Preset_CPU_AVX_Float32      , Render_Precision_Float32  , Render_Method_CPU_AVX    },
 			{Render_Preset_CPU_AVX_Float64      , Render_Precision_Float64  , Render_Method_CPU_AVX    },
 			{Render_Preset_CPU_AVX_Float64x2    , Render_Precision_Float64x2, Render_Method_CPU_AVX    },
+			{Render_Preset_CPU_AVX_Float64x4    , Render_Precision_Float64x4, Render_Method_CPU_AVX    },
 			#ifdef INCLUDE_UNSUPPORTED_RENDER_CONFIGURATION
 				/* CPU AVX512 Rendering */
 				{Render_Preset_CPU_AVX512_Float16   , Render_Precision_Float16  , Render_Method_CPU_AVX512 },

@@ -19,11 +19,20 @@
 
 #include "frac_Multi_MPFR.h"
 
-#include "../floats/double_Float32.hpp"
-#include "../floats/double_Float64.hpp"
-#include "../floats/double_Float80.hpp"
+#include "Float32x2/Float32x2.hpp"
+#include "Float64x2/Float64x2.hpp"
+#include "Float64x4/Float64x4.hpp"
+#include "Float80x2/Float80x2.hpp"
+
+#include "Float80x4/Float80x4.hpp"
+
+// Legacy typedef's
+	typedef Float32x2 fp32x2;
+	typedef Float64x2 fp64x2;
+	typedef Float80x2 fp80x2;
 
 #include "frac_Multi_Float64x2_AVX.h"
+#include "frac_Multi_Float64x4_AVX.h"
 
 // #include "../floats/libdd_func.hpp"
 // #include "../floats/libqd_func.hpp"
@@ -49,12 +58,12 @@ const Function_Lookup Function_Lookup_Table[] = {
 	{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp32, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32},
 	#ifdef ENABLE_FLOAT32X2_RENDERING
 		/* CPU-Generic Float32x2 */
-		{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<fp32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
-		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<fp32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
-		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<fp32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
-		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<fp32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
-		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<fp32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
-		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
+		{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<Float32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
+		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<Float32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
+		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<Float32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
+		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<Float32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
+		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<Float32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
+		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<Float32x2, fp32>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float32x2},
 	#endif
 	/* CPU-Generic Float64 */
 	{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<fp64, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64},
@@ -64,13 +73,22 @@ const Function_Lookup Function_Lookup_Table[] = {
 	{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<fp64, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64},
 	{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp64, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64},
 	#ifdef ENABLE_FLOAT64X2_RENDERING
-		/* CPU-Generic Float64 */
-		{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<fp64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
-		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<fp64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
-		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<fp64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
-		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<fp64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
-		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<fp64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
-		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
+		/* CPU-Generic Float64x2 */
+		{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<Float64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
+		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<Float64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
+		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<Float64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
+		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<Float64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
+		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<Float64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
+		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<Float64x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x2},
+	#endif
+	#ifdef ENABLE_FLOAT64X4_RENDERING
+		/* CPU-Generic Float64x4 */
+		{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<Float64x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x4},
+		{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<Float64x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x4},
+		{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<Float64x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x4},
+		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<Float64x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x4},
+		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<Float64x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x4},
+		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<Float64x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float64x4},
 	#endif
 	#ifdef Enable_Float80
 		/* CPU-Generic Float80 */
@@ -82,12 +100,21 @@ const Function_Lookup Function_Lookup_Table[] = {
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp80, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80},
 		#ifdef ENABLE_FLOAT80X2_RENDERING
 			/* CPU-Generic Float80x2 */
-			{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
-			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
-			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
-			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
-			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
-			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<fp80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
+			{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
+			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
+			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
+			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
+			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
+			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
+		#endif
+		#ifdef ENABLE_FLOAT80X4_RENDERING
+			/* CPU-Generic Float80x4 */
+			{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
+			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
+			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
+			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
+			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
+			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
 		#endif
 	#endif
 	#ifdef Enable_Float128
@@ -133,6 +160,14 @@ const Function_Lookup Function_Lookup_Table[] = {
 			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
 			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
 			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_AVX_FP64x2, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x2},
+		#endif
+		#ifdef ENABLE_FLOAT64X4_RENDERING
+			/* CPU-AVX Float64x4 */
+			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_AVX_FP64x4, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x4},
+			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_AVX_FP64x4, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x4},
+			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_AVX_FP64x4, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x4},
+			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_AVX_FP64x4, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x4},
+			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_AVX_FP64x4, Spacing_AVX_Float64, Rendering_Configuration::Render_Preset_CPU_AVX_Float64x4},
 		#endif
 	#endif
 	#ifdef ENABLE_AVX512_F_RENDERING
@@ -298,7 +333,7 @@ void renderCPU_ABS_Mandelbrot(
 		} break;
 		#ifdef ENABLE_FLOAT32X2_RENDERING
 			case Render_Precision_Float32x2: {
-				load_Fractal_Render<fp32x2, fp32>(Fractal_Type, Render_Preset, Thread_Arguments);
+				load_Fractal_Render<Float32x2, fp32>(Fractal_Type, Render_Preset, Thread_Arguments);
 			} break;
 		#endif
 		case Render_Precision_Float64: {
@@ -306,7 +341,7 @@ void renderCPU_ABS_Mandelbrot(
 		} break;
 		#ifdef ENABLE_FLOAT64X2_RENDERING
 			case Render_Precision_Float64x2: {
-				load_Fractal_Render<fp64x2, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
+				load_Fractal_Render<Float64x2, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
 			} break;
 		#endif
 		#ifdef Enable_Float80
@@ -315,13 +350,23 @@ void renderCPU_ABS_Mandelbrot(
 			} break;
 			#ifdef ENABLE_FLOAT80X2_RENDERING
 				case Render_Precision_Float80x2: {
-					load_Fractal_Render<fp80x2, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
+					load_Fractal_Render<Float80x2, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
 				} break;
 			#endif
 		#endif
 		#ifdef Enable_Float128
 			case Render_Precision_Float128: {
 				load_Fractal_Render<fp128, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
+			} break;
+		#endif
+		#ifdef ENABLE_FLOAT64X4_RENDERING
+			case Render_Precision_Float64x4: {
+				load_Fractal_Render<Float64x4, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
+			} break;
+		#endif
+		#ifdef ENABLE_FLOAT80X4_RENDERING
+			case Render_Precision_Float80x4: {
+				load_Fractal_Render<Float80x4, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
 			} break;
 		#endif
 		default:

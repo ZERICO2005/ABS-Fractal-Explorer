@@ -56,6 +56,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 # Source Files
 	file(GLOB_RECURSE SRC_FILES
 		"${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/*.cpp" "${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/*.c"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/*.cpp" "${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/*.c"
 	)
 	if(NOT DEFINED FEATURE_OpenCL)
 		file (GLOB REMOVE_FILES "${SRC_DIR}/render_GPU/*.c" "${SRC_DIR}/render_GPU/*.cpp")
@@ -67,22 +69,35 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	endif()
 
 
-	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_SSE2.cpp")
-	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "${RENDER_CPU_OPT_FLAG}")
+	file(GLOB SRC_SSE2_FILES "${SRC_DIR}/render_CPU/frac_Multi_SSE2.cpp")
+	set_source_files_properties(SOURCE ${SRC_SSE2_FILES} PROPERTY COMPILE_FLAGS "-msse2 ${RENDER_CPU_OPT_FLAG}")
+	
 	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_AVX.cpp")
 	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG}")
-	file(GLOB SRC_AVX_FILES "${SRC_DIR}/render_CPU/frac_Multi_Float64x2_AVX.cpp")
-	set_source_files_properties(SOURCE ${SRC_AVX_FILES} PROPERTY COMPILE_FLAGS "-mavx ${PROGRAM_OPT_FLAG}")
+	
+	file(GLOB SRC_AVX_DEKKER_FILES
+		"${SRC_DIR}/render_CPU/frac_Multi_Float64x2_AVX.cpp"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/Float64x2_AVX.c"
+		"${SRC_DIR}/render_CPU/frac_Multi_Float64x4_AVX.cpp"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/Float64x4_AVX.c"
+	)
+	set_source_files_properties(SOURCE ${SRC_AVX_DEKKER_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG} -fno-associative-math")
 
+	file(GLOB SRC_GENERIC_DEKKER_FILES
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/Float64x2.cpp"
+		"${SRC_DIR}/render_CPU/frac_Multi.cpp"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/Float64x4.cpp"
+	)
+	set_source_files_properties(SOURCE ${SRC_GENERIC_DEKKER_FILES} PROPERTY COMPILE_FLAGS "${RENDER_CPU_OPT_FLAG} -fno-associative-math")
 
 # Icon
 	set(ICON_FILE "./icons/ABS-Icon.o")
 
 # Create an executable
 	if(WIN32)
-		add_executable(${PROJECT_NAME} ${SRC_FILES} ${ICON_FILE} ${SRC_MAVX})
+		add_executable(${PROJECT_NAME} ${SRC_FILES} ${ICON_FILE})
 	elseif(UNIX AND NOT APPLE)
-		add_executable(${PROJECT_NAME} ${SRC_FILES} ${SRC_MAVX})
+		add_executable(${PROJECT_NAME} ${SRC_FILES})
 	endif()
 
 # Packages and Macros
@@ -167,6 +182,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 		${SDL2_INCLUDE_DIRS}
 		${IMGUI_DIR}
 		"${INCLUDE_DIR}/bitGraphics_Font"
+		"${INCLUDE_DIR}/LIB-Dekker-Float"
 		${OpenCV_INCLUDE_DIRS}
 	)
 

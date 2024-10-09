@@ -789,9 +789,9 @@ int init_Render(std::atomic<bool>& QUIT_FLAG, std::atomic<bool>& ABORT_RENDERING
 	init_config_data();
 	const User_Display_Preferences& Display_Preferences = config_data.Display_Preferences;
 
-	//SDL_Init(SDL_INIT_VIDEO);
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		printFatalError("SDL_Init(SDL_INIT_EVERYTHING) failed to initialize");
+	//if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+		printFatalError("SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) failed to initialize");
 		return -1;
 	}
 	#ifndef BUILD_RELEASE

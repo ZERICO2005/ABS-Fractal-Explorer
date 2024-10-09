@@ -37,21 +37,21 @@
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/08/09" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/08/28" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 2
 #define PROGRAM_V_PATCH 2
-#define PROGRAM_V_TAG ""
+#define PROGRAM_V_TAG "rev-1"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */
 
 	#ifdef Enable_Float80
-		#include "floats/Float80.hpp"
+		#include "Float80/Float80.hpp"
 	#endif
 
 	#ifdef Enable_Float128
-		#include "floats/Float128.hpp"
+		#include "Float128/Float128.hpp"
 	#endif
 
 	/** 
@@ -76,11 +76,13 @@
 		typedef fp128 fpCord;
 	#elif defined(Enable_Float80)
 		/* Float80x2 is the highest precision */
-		#include "floats/double_Float80.hpp"
+		#include "Float80x2/Float80x2.hpp"
+		typedef Float80x2 fp80x2; // legacy typedef
 		typedef fp80x2 fpCord;
 	#else
 		/* Float64x2 is the highest precision */
-		#include "floats/double_Float64.hpp"
+		#include "Float64x2/Float64x2.hpp"
+		typedef Float64x2 fp64x2; // legacy typedef
 		typedef fp64x2 fpCord;
 	#endif
 

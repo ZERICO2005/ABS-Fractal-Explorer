@@ -240,9 +240,9 @@ void Menu_Keybinds() {
 		memset(KeyBindName,'\0',ARRAY_LENGTH(KeyBindName));
 		memcpy(KeyBindName,currentKBPreset->name.c_str(),TEXT_LENGTH(KeyBindName));
 		if (currentKBPreset->kList.size() < 6) {
-			ImGui::Text("Warning: The current Key-bind Preset has %" PRIu64 " key-binds, and may not be functional or practical.",currentKBPreset->kList.size());
-			ImGui::Text("Current Key-bind Preset[%" PRId32 "]: ",get_currentKBPreset_Pos()); ImGui::SameLine(0.0,1.0);
-			ImGui::TextColored({1.0,0.5,0.5,1.0},"%" PRIu64,currentKBPreset->kList.size()); ImGui::SameLine(0.0,1.0);
+			ImGui::Text("Warning: The current Key-bind Preset has %zu key-binds, and may not be functional or practical.",currentKBPreset->kList.size());
+			ImGui::Text("Current Key-bind Preset[%zu]: ",get_currentKBPreset_Pos()); ImGui::SameLine(0.0,1.0);
+			ImGui::TextColored({1.0,0.5,0.5,1.0},"%zu",currentKBPreset->kList.size()); ImGui::SameLine(0.0,1.0);
 			ImGui::Text(" key-binds");
 		} else {
 			ImGui::Text("Current Key-bind Preset[%" PRId32 "]: %" PRIu64 " key-binds",get_currentKBPreset_Pos(),currentKBPreset->kList.size());

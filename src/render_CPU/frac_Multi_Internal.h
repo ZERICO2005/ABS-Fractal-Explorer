@@ -31,8 +31,13 @@
 	
 	/* Dekker-Float Rendering may be disabled to reduce compile times. */
 	#define ENABLE_FLOAT32X2_RENDERING
+	// #define ENABLE_FLOAT32X4_RENDERING
+	
 	#define ENABLE_FLOAT64X2_RENDERING
+	#define ENABLE_FLOAT64X4_RENDERING
+	
 	#define ENABLE_FLOAT80X2_RENDERING
+	#define ENABLE_FLOAT80X4_RENDERING
 	
 
 /* Constants */
