@@ -29,16 +29,16 @@ Bit_Graphics::Bit_Graphics(size_t resX, size_t resY) {
 	initialized = false;
 	init_Bit_Graphics(resX,resY);
 }
-bool Bit_Graphics::isInitialized() const { return initialized; }
+
 void Bit_Graphics::init_Bit_Graphics(size_t resX, size_t resY) {
 	if (initialized == true) { return; }
 	if (resX == 0 || resY == 0) { return; }
 	ResX = resX;
 	ResY = resY;
-	ResZ = resX * resY;
-	buf0 = (uint8_t*)malloc(ResZ * Bit_Graphics_Channels);
+	const size_t pixel_count = resX * resY;
+	buf0 = (uint32_t*)calloc(pixel_count, sizeof(uint32_t));
 	if (buf0 == nullptr) { terminate_Bit_Graphics(); return; }
-	buf1 = (uint8_t*)malloc(ResZ * Bit_Graphics_Channels);
+	buf1 = (uint32_t*)calloc(pixel_count, sizeof(uint32_t));
 	if (buf1 == nullptr) { terminate_Bit_Graphics(); return; }
 	buf = buf1;
 	gColor_RGB(0,0,0);
@@ -55,20 +55,19 @@ void Bit_Graphics::terminate_Bit_Graphics() {
 	FREE(buf1);
 	ResX = 0;
 	ResY = 0;
-	ResZ = 0;
 	gColor_RGB(0,0,0);
 }
 void Bit_Graphics::resizeBuffer(size_t resX, size_t resY) {
 	if (initialized == false) { return; }
 	if (resX == ResX && resY == ResY) { return; } // No changes made
 	if (resX == 0 || resY == 0) { return; }
+	const size_t prev_pixel_count = getPixelCount();
 	ResX = resX;
 	ResY = resY;
-	if (ResX * ResY != ResZ) { // Different amount of bytes allocated
-		ResZ = ResX * ResY;
-		buf0 = (uint8_t*)realloc(buf0,ResZ * Bit_Graphics_Channels);
+	if (getPixelCount() != prev_pixel_count) { // Different amount of bytes allocated
+		buf0 = (uint32_t*)realloc(buf0, getBufferSize());
 		if (buf0 == nullptr) { terminate_Bit_Graphics(); return; }
-		buf1 = (uint8_t*)realloc(buf1,ResZ * Bit_Graphics_Channels);
+		buf1 = (uint32_t*)realloc(buf1, getBufferSize());
 		if (buf1 == nullptr) { terminate_Bit_Graphics(); return; }
 	}
 	buf = buf0;
@@ -81,13 +80,14 @@ void Bit_Graphics::swapBuffer() {
 	buf = (buf == buf0) ? buf1 : buf0;
 }
 void Bit_Graphics::clearBuffer() {
-	memset(buf,0,ResZ * Bit_Graphics_Channels);
+	if (initialized == false) { return; }
+	memset(buf, 0, getBufferSize());
 }
-uint8_t* Bit_Graphics::getDrawBuffer() const {
+uint32_t* Bit_Graphics::getDrawBuffer() const {
 	if (initialized == false) { return nullptr; }
 	return (buf == buf0) ? buf0 : buf1;
 }
-uint8_t* Bit_Graphics::getDisplayBuffer() const {
+uint32_t* Bit_Graphics::getDisplayBuffer() const {
 	if (initialized == false) { return nullptr; }
 	return (buf == buf0) ? buf1 : buf0;
 }
@@ -100,7 +100,7 @@ void Bit_Graphics::getDrawBufferBox(BufferBox* box) {
 		box->channels = 0;
 		box->padding = 0;
 	}
-	box->vram = (buf == buf0) ? buf0 : buf1;
+	box->vram = reinterpret_cast<uint8_t*>((buf == buf0) ? buf0 : buf1);
 	box->resX = (dim32_t)ResX;
 	box->resY = (dim32_t)ResY;
 	box->channels = Bit_Graphics_Channels;
@@ -115,98 +115,73 @@ void Bit_Graphics::getDisplayBufferBox(BufferBox* box) {
 		box->channels = 0;
 		box->padding = 0;
 	}
-	box->vram = (buf == buf0) ? buf1 : buf0;
+	box->vram = reinterpret_cast<uint8_t*>((buf == buf0) ? buf1 : buf0);
 	box->resX = (dim32_t)ResX;
 	box->resY = (dim32_t)ResY;
 	box->channels = Bit_Graphics_Channels;
 	box->padding = 0;
 }
-size_t Bit_Graphics::getResX() const { return ResX; }
-size_t Bit_Graphics::getResY() const { return ResY; }
-size_t Bit_Graphics::getResZ() const { return ResZ; }
-size_t Bit_Graphics::getBufferSize() const { return ResZ * Bit_Graphics_Channels; }
 /* Set color */
-void Bit_Graphics::gColor_RGB(uint8_t r, uint8_t g, uint8_t b) {
-	gColor[0] = r;
-	gColor[1] = g;
-	gColor[2] = b;
-	gColor[3] = 0xFF;
+void Bit_Graphics::gColor_HSV(fp64 hue, fp64 sat, fp64 val) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
+	uint8_t* const gColor8 = reinterpret_cast<uint8_t*>(&gColor);
+	getRGBfromHSV(&gColor8[0], &gColor8[1], &gColor8[2], hue, sat, val);
+	gColor8[3] = 0xFF;
 }
-void Bit_Graphics::gColor_Hex(uint32_t col) {
-	gColor[2] = col & 0xFF; col >>= 8;
-	gColor[1] = col & 0xFF; col >>= 8;
-	gColor[0] = col & 0xFF;
-	gColor[3] = 0xFF;
-}
-void Bit_Graphics::gColor_HSV(fp64 h, fp64 s, fp64 v) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
-	getRGBfromHSV(&gColor[0],&gColor[1],&gColor[2],h,s,v);
-	gColor[3] = 0xFF;
-}
-void Bit_Graphics::gColor_HSV(fp32 h, fp32 s, fp32 v) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
-	getRGBfromHSV(&gColor[0],&gColor[1],&gColor[2],h,s,v);
-	gColor[3] = 0xFF;
+void Bit_Graphics::gColor_HSV(fp32 hue, fp32 sat, fp32 val) { // 0.0-360.0, 0.0-1.0, 0.0-1.0
+	uint8_t* const gColor8 = reinterpret_cast<uint8_t*>(&gColor);
+	getRGBfromHSV(&gColor8[0], &gColor8[1], &gColor8[2], hue, sat, val);
+	gColor8[3] = 0xFF;
 }
 
 /* Internal Routines | No safety checks */
 inline void Bit_Graphics::internal_plot(size_t x, size_t y) {
-	size_t z = (y * ResX + x) * Bit_Graphics_Channels;
-	buf[z] = gColor[0]; z++;
-	buf[z] = gColor[1]; z++;
-	buf[z] = gColor[2]; z++;
-	buf[z] = gColor[3];
+	uint32_t* fill = buf + (y * ResX + x);
+	*fill = gColor;
 }
 inline void Bit_Graphics::internal_plotFast(size_t z) { //z position
-	z *= Bit_Graphics_Channels;
-	buf[z] = gColor[0]; z++;
-	buf[z] = gColor[1]; z++;
-	buf[z] = gColor[2]; z++;
-	buf[z] = gColor[3];
+	uint32_t* fill = buf + z;
+	*fill = gColor;
 }
 inline void Bit_Graphics::internal_horiz(size_t x0, size_t y, size_t x1) { //x start, y postion, x length
-	size_t fill = (x0 + y * ResX) * Bit_Graphics_Channels;
-	patternMemcpy(&buf[fill], x1 * Bit_Graphics_Channels, gColor, Bit_Graphics_Channels);
+	uint32_t* fill = buf + (x0 + y * ResX);
+	patternMemcpy(fill, x1 * sizeof(uint32_t), &gColor, sizeof(uint32_t));
 }
 /* Primatives */
 void Bit_Graphics::plot(size_t x, size_t y) { //x position, y position
 	if (x >= ResX || y >= ResY) { return; }
-	size_t z = (y * ResX + x);
-	memcpy(&buf[z * Bit_Graphics_Channels], gColor, Bit_Graphics_Channels);
+	uint32_t* fill = buf + (y * ResX + x);
+	*fill = gColor;
 }
 void Bit_Graphics::plotFast(size_t z) { //z position
-	if (z > ResZ) { return; }
-	memcpy(&buf[z * Bit_Graphics_Channels], gColor, Bit_Graphics_Channels);
+	if (z > getPixelCount()) { return; }
+	uint32_t* fill = buf + z;
+	*fill = gColor;
 }
 void Bit_Graphics::fillScreen() {
-	patternMemcpy(buf, ResZ * Bit_Graphics_Channels, gColor, Bit_Graphics_Channels);
+	patternMemcpy(buf, getBufferSize(), &gColor, sizeof(uint32_t));
 }
 void Bit_Graphics::fillRect(size_t x0, size_t y0, size_t x1, size_t y1) { //x start, y start, x length, y length
 	if (x0 >= ResX || y0 >= ResY || x1 == 0 || y1 == 0) { return; }
 	if (x0 + x1 > ResX || y0 + y1 > ResY) { return; }
-	size_t v = (y0 * ResX + x0);
-	//const size_t jump = ResX - x1;
+	uint32_t* fill = buf + (y0 * ResX + x0);
 	for (size_t dY = 0; dY < y1; dY++) {
-		// for (size_t dX = 0; dX < x1; dX++) {
-		// 	internal_plotFast(v);
-		// 	v++;
-		// }
-		// v += jump;
-		patternMemcpy(&buf[v * Bit_Graphics_Channels], x1 * Bit_Graphics_Channels, gColor, Bit_Graphics_Channels);
-		v += ResX;
+		patternMemcpy(fill, x1 * sizeof(uint32_t), &gColor, sizeof(uint32_t));
+		fill += ResX;
 	}
 }
 void Bit_Graphics::horiz(size_t x0, size_t y, size_t x1) { //x start, y postion, x length
 	if (x0 >= ResX || y >= ResY || x1 == 0) { return; }
 	if (x0 + x1 > ResX) { return; }
-	size_t fill = (x0 + y * ResX) * Bit_Graphics_Channels;
-	patternMemcpy(&buf[fill],x1 * Bit_Graphics_Channels,gColor,Bit_Graphics_Channels);
+	uint32_t* fill = buf + (x0 + y * ResX);
+	patternMemcpy(fill, x1 * sizeof(uint32_t), &gColor, sizeof(uint32_t));
 }
 void Bit_Graphics::vert(size_t x, size_t y0, size_t y1) { //x postion, y start, y length
 	if (x >= ResX || y0 >= ResY || y1 == 0) { return; }
 	if (y0 + y1 > ResY) { return; }
-	size_t fill = x + y0 * ResX;
-	size_t z = fill + y1 * ResX;
-	for (; fill < z; fill += ResX) {
-		internal_plotFast(fill);
+	uint32_t* fill = buf + x + y0 * ResX;
+	for (size_t i = 0; i < y1; i++) {
+		*fill = gColor;
+		fill += ResX;
 	}
 }
 void Bit_Graphics::drawRect(size_t x0, size_t y0, size_t x1, size_t y1) { //x start, y start, x length, y length
@@ -282,13 +257,13 @@ void Bit_Graphics::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
 void Bit_Graphics::text6x8(size_t xW, size_t yW, char lexicon) {
 	if (xW > ResX || yW > ResY) { return; }
 	if (xW + 6 > ResX || yW + 8 > ResY) { return; }
-	uint8_t* bitImage = (uint8_t*)char6x8 + ((size_t)((uint8_t)lexicon) * 6);
-	size_t fill = (yW * ResX + xW);
+	const uint8_t* bitImage = (const uint8_t*)char6x8 + ((size_t)((uint8_t)lexicon) * 6);
+	uint32_t* fill = buf + (yW * ResX + xW);
 	uint8_t b = 1;
 	for (uint8_t y = 0; y < 8; y++) {
 		for (uint8_t x = 0; x < 6; x++) {
 			if (*bitImage & b) {
-				internal_plotFast(fill);
+				*fill = gColor;
 			}
 			bitImage++;
 			fill++;

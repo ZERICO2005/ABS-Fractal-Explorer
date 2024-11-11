@@ -40,10 +40,10 @@ static void renderKeyText(
 ) {
 	if (Text_Graphic.isInitialized() == false) { return; }
 	if (x0 < 0 || y0 < 0 || x1 < 0 || y1 < 0) { return; }
-	Text_Graphic.turbo_gColor_RGB(cR,cG,cB);
-	Text_Graphic.turbo_fillScreen();
+	Text_Graphic.gColor_RGB(cR,cG,cB);
+	Text_Graphic.fillScreen();
 	if (text != NULL) {
-		Text_Graphic.turbo_gColor_RGB(0x00,0x00,0x00);
+		Text_Graphic.gColor_RGB(0x00,0x00,0x00);
 		Text_Graphic.printText6x8(0,0,text);
 	}
 	BufferBox src;
@@ -184,10 +184,10 @@ void renderBoard(
 			if (keyPressed(k.Scancode) && col != Scancode_Color_Click) {
 				col = Scancode_Color_Press;
 			}
-			Keyboard_Graphic.turbo_gColor_RGB(0x40,0x40,0x40);
-			Keyboard_Graphic.turbo_drawRect((size_t)(int64_t)x0,(size_t)(int64_t)y0,(size_t)(int64_t)x1,(size_t)(int64_t)y1);
-			Keyboard_Graphic.turbo_gColor_RGB(col[pos], col[pos + 1], col[pos + 2]);
-			Keyboard_Graphic.turbo_fillRect((size_t)(int64_t)(x0+1),(size_t)(int64_t)(y0+1),(size_t)(int64_t)(x1-2),(size_t)(int64_t)(y1-2));
+			Keyboard_Graphic.gColor_RGB(0x40,0x40,0x40);
+			Keyboard_Graphic.drawRect((size_t)(int64_t)x0,(size_t)(int64_t)y0,(size_t)(int64_t)x1,(size_t)(int64_t)y1);
+			Keyboard_Graphic.gColor_RGB(col[pos], col[pos + 1], col[pos + 2]);
+			Keyboard_Graphic.fillRect((size_t)(int64_t)(x0+1),(size_t)(int64_t)(y0+1),(size_t)(int64_t)(x1-2),(size_t)(int64_t)(y1-2));
 			renderKeyText(
 				(char*)Keyboard_List[board][i].name,
 				col[pos],col[pos + 1],col[pos + 2],
@@ -296,8 +296,8 @@ void renderKeyboard(
 	if (KB_scancode != nullptr) { *KB_scancode = SDL_SCANCODE_UNKNOWN; }
 	if (KB_keycode != nullptr) { *KB_keycode = SDLK_UNKNOWN; }
 
-	Keyboard_Graphic.turbo_gColor_Hex(0xC0C0C0);
-	Keyboard_Graphic.turbo_fillScreen();
+	Keyboard_Graphic.gColor_RGB_hex(0xC0C0C0);
+	Keyboard_Graphic.fillScreen();
 
 	renderBoard(
 		KEYB_ANSI,
@@ -335,7 +335,7 @@ void renderKeyboard(
 	}
 
 	Keyboard_Graphic.swapBuffer();
-	buf->vram = Keyboard_Graphic.getDisplayBuffer();
+	buf->vram = reinterpret_cast<uint8_t*>(Keyboard_Graphic.getDisplayBuffer());
 
 	// nano64_t endTime = getNanoTime();
 	// printfInterval(0.3, "\nTime: %5.3lfms %7.1lffps", NANO_TO_SECONDS(endTime - startTime) * 1.0e3, NANO_TO_FRAMERATE(endTime - startTime));

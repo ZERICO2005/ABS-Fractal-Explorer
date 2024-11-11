@@ -55,6 +55,25 @@
 
 /* Function Definition AVX FP64 */
 
+	static inline __m256d _mm256_mask_set_pd(bool b) {
+		return b ?
+		_mm256_castsi256_pd(_mm256_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF)) :
+		_mm256_castsi256_pd(_mm256_set1_epi64x((int64_t)0x0000000000000000));
+	}
+
+	static inline __m256dx4 _mm256x4_mask_fabs_pdx4(__m256dx4 x, __m256d mask) {
+		const __m256d sign_mask = _mm256_blendv_pd(
+			_mm256_set1_pd( 1.0),
+			_mm256_set1_pd(-1.0),
+			_mm256_and_pd(x.val[0], mask)
+		);
+		x.val[0] = _mm256_mul_pd(x.val[0], sign_mask);
+		x.val[1] = _mm256_mul_pd(x.val[1], sign_mask);
+		x.val[2] = _mm256_mul_pd(x.val[2], sign_mask);
+		x.val[3] = _mm256_mul_pd(x.val[3], sign_mask);
+		return x;
+	}
+
 	#define color_pow_2_AVX_FP64x4(x) ((x) * (x))
 
 	static void CPU_Interior_Coloring_AVX_FP64x4(
@@ -93,9 +112,9 @@
 		const __m256dx4 rotSin_PC      = _mm256x4_set1_pdx4(param.rotSin_PC    );\
 		const __m256dx4 rotCos_PC      = _mm256x4_set1_pdx4(param.rotCos_PC    );\
 		const __m256dx4 breakoutValue  = _mm256x4_set1_pdx4(param.breakoutValue);\
-		/* numX, numY, numZ, and numW are constants used to caluculate the cordinates */\
-		const __m256dx4 numY           = _mm256x4_set1_pdx4(param.numY          );\
-		const __m256dx4 numX           = _mm256x4_set1_pdx4(param.numX          );\
+		/* numX, numY, numZ, and numW are constants used to calculate the cordinates */\
+		const __m256d   numY           = _mm256_set1_pd((fp64)param.numY        );\
+		const __m256d   numX           = _mm256_set1_pd((fp64)param.numX        );\
 		const __m256dx4 recip_numZ     = _mm256x4_set1_pdx4(param.recip_numZ    );\
 		const __m256dx4 neg_recip_numW = _mm256x4_set1_pdx4(param.neg_recip_numW);\
 		\
@@ -119,26 +138,20 @@
 				/* Calculates 4 pixels (with super sampling) at a time */\
 				for (int32_t v = 0; v < param.sample; v++) {\
 					/* Calculates y cordinate-value */\
-					Float64x4 y_val = (Float64x4)(fp64)y;\
-					__m256dx4 yCord = _mm256x4_set1_pdx4(y_val);\
-					yCord = _mm256x4_sub_pdx4(yCord, numY);\
+					__m256dx4 yCord = _mm256x4_sub_pd_pd(_mm256_set1_pd((fp64)y), numY);\
 					yCord = _mm256x4_mul_pdx4(yCord, neg_recip_numW);\
 					\
 					for (int32_t u = 0; u < param.sample; u++) {\
 						/* Calculates the 4 x cordinate-values */\
-						Float64x4 x_val[4] = {\
-							(Float64x4)(fp64)(x + 3 * param.sample),\
-							(Float64x4)(fp64)(x + 2 * param.sample),\
-							(Float64x4)(fp64)(x + 1 * param.sample),\
-							(Float64x4)(fp64)(x + 0 * param.sample) \
-						};\
-						__m256dx4 xCord = _mm256x4_set_pdx4(\
-							x_val[0],\
-							x_val[1],\
-							x_val[2],\
-							x_val[3]\
+						__m256dx4 xCord = _mm256x4_sub_pd_pd(\
+							_mm256_set_pd(\
+								(fp64)(x + 3 * param.sample),\
+								(fp64)(x + 2 * param.sample),\
+								(fp64)(x + 1 * param.sample),\
+								(fp64)(x + 0 * param.sample)\
+							),\
+							numX\
 						);\
-						xCord = _mm256x4_sub_pdx4(xCord, numX);\
 						xCord = _mm256x4_mul_pdx4(xCord, recip_numZ);\
 						\
 						/* Transforms the x and y cordinate-values into the cordinates */\
@@ -268,30 +281,32 @@
 			const __m256d s3 = (f[2]) ? _mm256_set1_pd(-2.0) : _mm256_set1_pd(2.0);
 
 			// Bits 3-7 will apply fabs() via a mask
-			const __m256dx4 zr1_mask = (f[3]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi1_mask = (f[4]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr2_mask = (f[5]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi2_mask = (f[6]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr_mask  = (f[7]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
+			const __m256d zr1_mask = _mm256_mask_set_pd(f[3]);
+			const __m256d zi1_mask = _mm256_mask_set_pd(f[4]);
+			const __m256d zr2_mask = _mm256_mask_set_pd(f[5]);
+			const __m256d zi2_mask = _mm256_mask_set_pd(f[6]);
+			const __m256d zr_mask  = _mm256_mask_set_pd(f[7]);
 		Block_BeginLoop_AVX_FP64x4();
+			
 			// Applies fabs() to zr and zi
-			zr1 = _mm256x4_and_pdx4(zr1_mask, zr);
-			zr2 = _mm256x4_and_pdx4(zr2_mask, zr);
-			zi1 = _mm256x4_and_pdx4(zi1_mask, zi);
-			zi2 = _mm256x4_and_pdx4(zi2_mask, zi);
+			zr1 = _mm256x4_mask_fabs_pdx4(zr, zr1_mask);
+			zr2 = _mm256x4_mask_fabs_pdx4(zr, zr2_mask);
+			zi1 = _mm256x4_mask_fabs_pdx4(zi, zi1_mask);
+			zi2 = _mm256x4_mask_fabs_pdx4(zi, zi2_mask);
 			
 			// Calculates the new zr and zi
-			zr = _mm256x4_add_pdx4(_mm256x4_and_pdx4(zr_mask, _mm256x4_mul_pd_pdx4(s1,
+			zr = _mm256x4_add_pdx4(_mm256x4_mask_fabs_pdx4(_mm256x4_mul_pd_pdx4(s1,
 				_mm256x4_sub_pdx4(
 					_mm256x4_mul_pdx4(zr1, zr), 
 					_mm256x4_mul_pd_pdx4(s2,
 						_mm256x4_mul_pdx4(zi1, zi)
 					)
 				)
-			)), cr);
+			), zr_mask), cr);
 			zi = _mm256x4_add_pdx4(_mm256x4_mul_pdx4_pd(_mm256x4_mul_pdx4(zr2, zi2), s3), ci);
 
 			zs = _mm256x4_add_pdx4(_mm256x4_mul_pdx4(zr, zr), _mm256x4_mul_pdx4(zi, zi));
+			
 		
 		Block_EndLoop_AVX_FP64x4();
 	}
@@ -312,36 +327,36 @@
 			const __m256d s5 = (f[4]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
 			const __m256d s6 = (f[5]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
 			
-			const __m256dx4 zr1_mask = (f[ 6]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi1_mask = (f[ 7]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr2_mask = (f[ 8]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi2_mask = (f[ 9]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr3_mask = (f[10]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi3_mask = (f[11]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr_mask  = (f[12]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi_mask  = (f[13]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
+			const __m256d zr1_mask = _mm256_mask_set_pd(f[ 6]);
+			const __m256d zi1_mask = _mm256_mask_set_pd(f[ 7]);
+			const __m256d zr2_mask = _mm256_mask_set_pd(f[ 8]);
+			const __m256d zi2_mask = _mm256_mask_set_pd(f[ 9]);
+			const __m256d zr3_mask = _mm256_mask_set_pd(f[10]);
+			const __m256d zi3_mask = _mm256_mask_set_pd(f[11]);
+			const __m256d zr_mask  = _mm256_mask_set_pd(f[12]);
+			const __m256d zi_mask  = _mm256_mask_set_pd(f[13]);
 
 		Block_BeginLoop_AVX_FP64x4();
 
-			zr1 = _mm256x4_and_pdx4(zr1_mask, zr);
-			zi1 = _mm256x4_and_pdx4(zi1_mask, zi);
-			zr2 = _mm256x4_and_pdx4(zr2_mask, zr);
-			zi2 = _mm256x4_and_pdx4(zi2_mask, zi);
-			zr3 = _mm256x4_and_pdx4(zr3_mask, zr);
-			zi3 = _mm256x4_and_pdx4(zi3_mask, zi);
+			zr1 = _mm256x4_mask_fabs_pdx4(zr, zr1_mask);
+			zi1 = _mm256x4_mask_fabs_pdx4(zi, zi1_mask);
+			zr2 = _mm256x4_mask_fabs_pdx4(zr, zr2_mask);
+			zi2 = _mm256x4_mask_fabs_pdx4(zi, zi2_mask);
+			zr3 = _mm256x4_mask_fabs_pdx4(zr, zr3_mask);
+			zi3 = _mm256x4_mask_fabs_pdx4(zi, zi3_mask);
 
-			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s5, _mm256x4_and_pdx4(zr_mask,
+			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s5, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_sub_pdx4(
 					_mm256x4_mul_pdx4(_mm256x4_mul_pd_pdx4(s1, zr1), _mm256x4_mul_pdx4(zr , zr)),
 					_mm256x4_mul_pdx4(_mm256x4_mul_pd_pdx4(s2, zr2), _mm256x4_mul_pdx4(zi1, zi))
-				)
-			)), cr);
-			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s6, _mm256x4_and_pdx4(zi_mask,
+				),
+			zr_mask)), cr);
+			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s6, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_sub_pdx4(
 					_mm256x4_mul_pdx4(_mm256x4_mul_pd_pdx4(s3, zr3), _mm256x4_mul_pdx4(zr, zi2)),
 					_mm256x4_mul_pdx4(_mm256x4_mul_pd_pdx4(s4, zi3), _mm256x4_mul_pdx4(zi, zi ))
-				)
-			)), ci);
+				),
+			zi_mask)), ci);
 			zr = temp_zr;
 
 			zs = _mm256x4_add_pdx4(_mm256x4_mul_pdx4(zr, zr), _mm256x4_mul_pdx4(zi, zi));
@@ -366,29 +381,29 @@
 			const __m256d s6 = (f[5]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
 			const __m256d s7 = (f[6]) ? _mm256_set1_pd(-1.0) : _mm256_set1_pd(1.0);
 			
-			const __m256dx4 zr1_mask = (f[ 7]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi1_mask = (f[ 8]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr2_mask = (f[ 9]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi2_mask = (f[10]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr3_mask = (f[11]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi3_mask = (f[12]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr4_mask = (f[13]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi4_mask = (f[14]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr_mask  = (f[15]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi_mask  = (f[16]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
+			const __m256d zr1_mask = _mm256_mask_set_pd(f[ 7]);
+			const __m256d zi1_mask = _mm256_mask_set_pd(f[ 8]);
+			const __m256d zr2_mask = _mm256_mask_set_pd(f[ 9]);
+			const __m256d zi2_mask = _mm256_mask_set_pd(f[10]);
+			const __m256d zr3_mask = _mm256_mask_set_pd(f[11]);
+			const __m256d zi3_mask = _mm256_mask_set_pd(f[12]);
+			const __m256d zr4_mask = _mm256_mask_set_pd(f[13]);
+			const __m256d zi4_mask = _mm256_mask_set_pd(f[14]);
+			const __m256d zr_mask  = _mm256_mask_set_pd(f[15]);
+			const __m256d zi_mask  = _mm256_mask_set_pd(f[16]);
 
 		Block_BeginLoop_AVX_FP64x4();
 
-			zr1 = _mm256x4_and_pdx4(zr1_mask, zr);
-			zi1 = _mm256x4_and_pdx4(zi1_mask, zi);
-			zr2 = _mm256x4_and_pdx4(zr2_mask, zr);
-			zi2 = _mm256x4_and_pdx4(zi2_mask, zi);
-			zr3 = _mm256x4_and_pdx4(zr3_mask, zr);
-			zi3 = _mm256x4_and_pdx4(zi3_mask, zi);
-			zr4 = _mm256x4_and_pdx4(zr4_mask, zr);
-			zi4 = _mm256x4_and_pdx4(zi4_mask, zi);
+			zr1 = _mm256x4_mask_fabs_pdx4(zr, zr1_mask);
+			zi1 = _mm256x4_mask_fabs_pdx4(zi, zi1_mask);
+			zr2 = _mm256x4_mask_fabs_pdx4(zr, zr2_mask);
+			zi2 = _mm256x4_mask_fabs_pdx4(zi, zi2_mask);
+			zr3 = _mm256x4_mask_fabs_pdx4(zr, zr3_mask);
+			zi3 = _mm256x4_mask_fabs_pdx4(zi, zi3_mask);
+			zr4 = _mm256x4_mask_fabs_pdx4(zr, zr4_mask);
+			zi4 = _mm256x4_mask_fabs_pdx4(zi, zi4_mask);
 
-			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s6, _mm256x4_and_pdx4(zr_mask,
+			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s6, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_add_pdx4(
 					_mm256x4_sub_pdx4(
 						_mm256x4_mul_pd_pdx4(s1,
@@ -401,9 +416,9 @@
 					_mm256x4_mul_pd_pdx4(s3,
 						_mm256x4_mul_pdx4(_mm256x4_mul_pdx4(zi2, zi), _mm256x4_mul_pdx4(zi, zi))
 					)
-				)
-			)), cr);
-			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s7, _mm256x4_and_pdx4(zi_mask,
+				),
+			zr_mask)), cr);
+			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s7, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_sub_pdx4(
 					_mm256x4_mul_pd_pdx4(s4,
 						_mm256x4_mul_pdx4(_mm256x4_mul_pdx4(zr3, zi3), _mm256x4_mul_pdx4(zr, zr))
@@ -411,8 +426,8 @@
 					_mm256x4_mul_pd_pdx4(s5,
 						_mm256x4_mul_pdx4(_mm256x4_mul_pdx4(zr4, zi4), _mm256x4_mul_pdx4(zi, zi))
 					)
-				)
-			)), ci);
+				),
+			zi_mask)), ci);
 			zr = temp_zr;
 
 			zs = _mm256x4_add_pdx4(_mm256x4_mul_pdx4(zr, zr), _mm256x4_mul_pdx4(zi, zi));
@@ -449,33 +464,33 @@
 			const __m256d s7 = (fO[0]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
 			const __m256d s8 = (fO[1]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
 
-			const __m256dx4 zr1_mask = (fA[0]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi1_mask = (fA[1]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr2_mask = (fA[2]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi2_mask = (fA[3]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr3_mask = (fA[4]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi3_mask = (fA[5]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr4_mask = (fA[6]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi4_mask = (fA[7]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr5_mask = (fA[8]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi5_mask = (fA[9]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr_mask  = (fO[2]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi_mask  = (fO[3]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
+			const __m256d zr1_mask = _mm256_mask_set_pd(fA[0]);
+			const __m256d zi1_mask = _mm256_mask_set_pd(fA[1]);
+			const __m256d zr2_mask = _mm256_mask_set_pd(fA[2]);
+			const __m256d zi2_mask = _mm256_mask_set_pd(fA[3]);
+			const __m256d zr3_mask = _mm256_mask_set_pd(fA[4]);
+			const __m256d zi3_mask = _mm256_mask_set_pd(fA[5]);
+			const __m256d zr4_mask = _mm256_mask_set_pd(fA[6]);
+			const __m256d zi4_mask = _mm256_mask_set_pd(fA[7]);
+			const __m256d zr5_mask = _mm256_mask_set_pd(fA[8]);
+			const __m256d zi5_mask = _mm256_mask_set_pd(fA[9]);
+			const __m256d zr_mask  = _mm256_mask_set_pd(fO[2]);
+			const __m256d zi_mask  = _mm256_mask_set_pd(fO[3]);
 
 		Block_BeginLoop_AVX_FP64x4();
 
-			zr1 = _mm256x4_and_pdx4(zr1_mask, zr);
-			zi1 = _mm256x4_and_pdx4(zi1_mask, zi);
-			zr2 = _mm256x4_and_pdx4(zr2_mask, zr);
-			zi2 = _mm256x4_and_pdx4(zi2_mask, zi);
-			zr3 = _mm256x4_and_pdx4(zr3_mask, zr);
-			zi3 = _mm256x4_and_pdx4(zi3_mask, zi);
-			zr4 = _mm256x4_and_pdx4(zr4_mask, zr);
-			zi4 = _mm256x4_and_pdx4(zi4_mask, zi);
-			zr5 = _mm256x4_and_pdx4(zr5_mask, zr);
-			zi5 = _mm256x4_and_pdx4(zi5_mask, zi);
+			zr1 = _mm256x4_mask_fabs_pdx4(zr, zr1_mask);
+			zi1 = _mm256x4_mask_fabs_pdx4(zi, zi1_mask);
+			zr2 = _mm256x4_mask_fabs_pdx4(zr, zr2_mask);
+			zi2 = _mm256x4_mask_fabs_pdx4(zi, zi2_mask);
+			zr3 = _mm256x4_mask_fabs_pdx4(zr, zr3_mask);
+			zi3 = _mm256x4_mask_fabs_pdx4(zi, zi3_mask);
+			zr4 = _mm256x4_mask_fabs_pdx4(zr, zr4_mask);
+			zi4 = _mm256x4_mask_fabs_pdx4(zi, zi4_mask);
+			zr5 = _mm256x4_mask_fabs_pdx4(zr, zr5_mask);
+			zi5 = _mm256x4_mask_fabs_pdx4(zi, zi5_mask);
 
-			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s7, _mm256x4_and_pdx4(zr_mask ,
+			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s7, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_add_pdx4(
 					_mm256x4_sub_pdx4(
 						_mm256x4_mul_pdx4(
@@ -491,9 +506,9 @@
 						_mm256x4_mul_pd_pdx4(s3, _mm256x4_mul_pdx4(zr3, zi2)),
 						_mm256x4_mul_pdx4(zi, _mm256x4_mul_pdx4(zi , zi ))
 					)
-				)
-			)), cr);
-			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s8, _mm256x4_and_pdx4(zi_mask,
+				),
+			zr_mask)), cr);
+			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s8, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_add_pdx4(
 					_mm256x4_sub_pdx4(
 						_mm256x4_mul_pdx4(
@@ -509,8 +524,8 @@
 						_mm256x4_mul_pd_pdx4(s6 , zi5),
 						_mm256x4_mul_pdx4(_mm256x4_mul_pdx4(zi, zi), _mm256x4_mul_pdx4(zi , zi))
 					)
-				)
-			)), ci);
+				),
+			zi_mask)), ci);
 			zr = temp_zr;
 
 			zs = _mm256x4_add_pdx4(_mm256x4_mul_pdx4(zr, zr), _mm256x4_mul_pdx4(zi, zi));
@@ -549,37 +564,37 @@
 			const __m256d s8 = (fO[0]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
 			const __m256d s9 = (fO[1]) ? _mm256_set1_pd(-1.0 ) : _mm256_set1_pd(1.0 );
 		
-			const __m256dx4 zr1_mask = (fA[ 0]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi1_mask = (fA[ 1]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr2_mask = (fA[ 2]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi2_mask = (fA[ 3]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr3_mask = (fA[ 4]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi3_mask = (fA[ 5]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr4_mask = (fA[ 6]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi4_mask = (fA[ 7]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr5_mask = (fA[ 8]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi5_mask = (fA[ 9]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr6_mask = (fA[10]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi6_mask = (fA[11]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zr_mask  = (fO[ 2]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
-			const __m256dx4 zi_mask  = (fO[ 3]) ? _mm256x4_set1_epi64x((int64_t)0x7FFFFFFFFFFFFFFF) : _mm256x4_set1_epi64x((int64_t)0xFFFFFFFFFFFFFFFF);
+			const __m256d zr1_mask = _mm256_mask_set_pd(fA[ 0]);
+			const __m256d zi1_mask = _mm256_mask_set_pd(fA[ 1]);
+			const __m256d zr2_mask = _mm256_mask_set_pd(fA[ 2]);
+			const __m256d zi2_mask = _mm256_mask_set_pd(fA[ 3]);
+			const __m256d zr3_mask = _mm256_mask_set_pd(fA[ 4]);
+			const __m256d zi3_mask = _mm256_mask_set_pd(fA[ 5]);
+			const __m256d zr4_mask = _mm256_mask_set_pd(fA[ 6]);
+			const __m256d zi4_mask = _mm256_mask_set_pd(fA[ 7]);
+			const __m256d zr5_mask = _mm256_mask_set_pd(fA[ 8]);
+			const __m256d zi5_mask = _mm256_mask_set_pd(fA[ 9]);
+			const __m256d zr6_mask = _mm256_mask_set_pd(fA[10]);
+			const __m256d zi6_mask = _mm256_mask_set_pd(fA[11]);
+			const __m256d zr_mask  = _mm256_mask_set_pd(fO[ 2]);
+			const __m256d zi_mask  = _mm256_mask_set_pd(fO[ 3]);
 		
 		Block_BeginLoop_AVX_FP64x4();
 
-			zr1 = _mm256x4_and_pdx4(zr1_mask, zr);
-			zi1 = _mm256x4_and_pdx4(zi1_mask, zi);
-			zr2 = _mm256x4_and_pdx4(zr2_mask, zr);
-			zi2 = _mm256x4_and_pdx4(zi2_mask, zi);
-			zr3 = _mm256x4_and_pdx4(zr3_mask, zr);
-			zi3 = _mm256x4_and_pdx4(zi3_mask, zi);
-			zr4 = _mm256x4_and_pdx4(zr4_mask, zr);
-			zi4 = _mm256x4_and_pdx4(zi4_mask, zi);
-			zr5 = _mm256x4_and_pdx4(zr5_mask, zr);
-			zi5 = _mm256x4_and_pdx4(zi5_mask, zi);
-			zr6 = _mm256x4_and_pdx4(zr6_mask, zr);
-			zi6 = _mm256x4_and_pdx4(zi6_mask, zi);
+			zr1 = _mm256x4_mask_fabs_pdx4(zr, zr1_mask);
+			zi1 = _mm256x4_mask_fabs_pdx4(zi, zi1_mask);
+			zr2 = _mm256x4_mask_fabs_pdx4(zr, zr2_mask);
+			zi2 = _mm256x4_mask_fabs_pdx4(zi, zi2_mask);
+			zr3 = _mm256x4_mask_fabs_pdx4(zr, zr3_mask);
+			zi3 = _mm256x4_mask_fabs_pdx4(zi, zi3_mask);
+			zr4 = _mm256x4_mask_fabs_pdx4(zr, zr4_mask);
+			zi4 = _mm256x4_mask_fabs_pdx4(zi, zi4_mask);
+			zr5 = _mm256x4_mask_fabs_pdx4(zr, zr5_mask);
+			zi5 = _mm256x4_mask_fabs_pdx4(zi, zi5_mask);
+			zr6 = _mm256x4_mask_fabs_pdx4(zr, zr6_mask);
+			zi6 = _mm256x4_mask_fabs_pdx4(zi, zi6_mask);
 
-			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s8, _mm256x4_and_pdx4(zr_mask ,
+			temp_zr = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s8, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_sub_pdx4(
 					_mm256x4_add_pdx4(
 						_mm256x4_sub_pdx4(
@@ -601,9 +616,9 @@
 						_mm256x4_mul_pd_pdx4(s4, _mm256x4_mul_pdx4(zi3, zi)),
 						_mm256x4_mul_pdx4(_mm256x4_mul_pdx4(zi, zi), _mm256x4_mul_pdx4(zi, zi))
 					)
-				)
-			)), cr);
-			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s9, _mm256x4_and_pdx4(zi_mask,
+				),
+			zr_mask)), cr);
+			zi      = _mm256x4_add_pdx4(_mm256x4_mul_pd_pdx4(s9, _mm256x4_mask_fabs_pdx4(
 				_mm256x4_add_pdx4(
 					_mm256x4_sub_pdx4(
 						_mm256x4_mul_pdx4(
@@ -619,8 +634,8 @@
 						_mm256x4_mul_pd_pdx4(s7, _mm256x4_mul_pdx4(zr6, zi6)),
 						_mm256x4_mul_pdx4(_mm256x4_mul_pdx4(zi, zi), _mm256x4_mul_pdx4(zi, zi))
 					)
-				)
-			)), ci);
+				),
+			zi_mask)), ci);
 			zr = temp_zr;
 
 			zs = _mm256x4_add_pdx4(_mm256x4_mul_pdx4(zr, zr), _mm256x4_mul_pdx4(zi, zi));

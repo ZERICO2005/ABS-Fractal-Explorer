@@ -37,11 +37,11 @@
 /* Version */
 
 #define PROGRAM_NAME "ABS-Fractal-Explorer"
-#define PROGRAM_DATE "2024/10/09" /* YYYY/MM/DD */
+#define PROGRAM_DATE "2024/11/11" /* YYYY/MM/DD */
 #define PROGRAM_V_MAJOR 1
 #define PROGRAM_V_MINOR 2
 #define PROGRAM_V_PATCH 2
-#define PROGRAM_V_TAG "rev-2"
+#define PROGRAM_V_TAG "rev-3"
 #define PROGRAM_VERSION STR_N(PROGRAM_V_MAJOR) "." STR_N(PROGRAM_V_MINOR) "." STR_N(PROGRAM_V_PATCH) " " PROGRAM_V_TAG
 
 /* Float80 and Float128 */
@@ -68,10 +68,17 @@
 		#define PRIfpCord PRIfp64
 	#endif
 	
+	#define FP64X4_AS_CORD
+
 	/** 
 	 *  Highest precision for float for coordinate calculations.
 	 */
-	#if defined(Enable_Float128) && !defined(Enable_Float80)
+	#ifdef FP64X4_AS_CORD
+		/* Float64x4 as the highest precision */
+		#include "Float64x4/Float64x4.hpp"
+		typedef Float64x4 fp64x4; // legacy typedef
+		typedef fp64x4 fpCord;
+	#elif defined(Enable_Float128) && !defined(Enable_Float80)
 		/* Float128 is the highest precision */
 		typedef fp128 fpCord;
 	#elif defined(Enable_Float80)

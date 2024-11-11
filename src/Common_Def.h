@@ -78,8 +78,11 @@ typedef int32_t dim32_t;
 
 /* Constants */
 
+/** @deprecated */
 #define PI 		3.1415926535897932384626433832795
+/** @deprecated */
 #define TAU 	6.2831853071795864769252867665590
+/** @deprecated */
 #define EULER 	2.7182818284590452353602874713527
 
 /* Macros */
@@ -103,7 +106,7 @@ typedef int32_t dim32_t;
 	constexpr inline const char* Bool_Text(const bool& b) { return b ? "True" : "False"; }
 	constexpr inline const char* BOOL_Text(const bool& b) { return b ? "TRUE" : "FALSE"; }
 
-	// Replace with valueClamp<cast, minimum, maximum>(value)
+	/** @deprecated */
 	#define valueClamp(value,minimum,maximum)\
 	(\
 		((value) < (minimum)) ?\
@@ -115,18 +118,21 @@ typedef int32_t dim32_t;
 		)\
 	)
 	
+	/** @deprecated */
 	#define valueMinimumClamp(value,minimum) (\
 		((value) < (minimum)) ?\
 		((value) = (minimum)) :\
 		((value) = (value))\
 	)
 	
+	/** @deprecated */
 	#define valueMaximumClamp(value,maximum) (\
 		((value) > (maximum)) ?\
 		((value) = (maximum)) :\
 		((value) = (value))\
 	)
 
+	/** @deprecated */
 	#define valueRestore(value,restore,minimum,maximum) (\
 		((value) >= (minimum) && (value) <= (maximum)) ?\
 		((value) = (value)) :\
@@ -232,14 +238,14 @@ typedef int32_t dim32_t;
 	inline fp32 stringTo_Float32(const char* nPtr, char** endPtr = nullptr) { return (nPtr != nullptr) ? strtof(nPtr,endPtr) : 0.0f; }
 	inline fp64 stringTo_Float64(const char* nPtr, char** endPtr = nullptr) { return (nPtr != nullptr) ? strtod(nPtr,endPtr) : 0.0 ; }
 
-	inline uint8_t  stringTo_Uint8 (const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (uint8_t) strtoul (nPtr, nullptr, base) : 0; }
-	inline uint16_t stringTo_Uint16(const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (uint16_t)strtoul (nPtr, nullptr, base) : 0; }
-	inline uint32_t stringTo_Uint32(const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (uint32_t)strtoul (nPtr, nullptr, base) : 0; }
-	inline uint64_t stringTo_Uint64(const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (uint64_t)strtoull(nPtr, nullptr, base) : 0; }
-	inline int8_t   stringTo_Int8  (const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (int8_t)  strtol  (nPtr, nullptr, base) : 0; }
-	inline int16_t  stringTo_Int16 (const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (int16_t) strtol  (nPtr, nullptr, base) : 0; }
-	inline int32_t  stringTo_Int32 (const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (int32_t) strtol  (nPtr, nullptr, base) : 0; }
-	inline int64_t  stringTo_Int64 (const char* nPtr, int base = 10) {  return (nPtr != nullptr) ? (int64_t) strtoll (nPtr, nullptr, base) : 0; }
+	inline uint8_t  stringTo_Uint8 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (uint8_t) strtoul (nPtr,nullptr,base) : 0; }
+	inline uint16_t stringTo_Uint16(const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (uint16_t)strtoul (nPtr,nullptr,base) : 0; }
+	inline uint32_t stringTo_Uint32(const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (uint32_t)strtoul (nPtr,nullptr,base) : 0; }
+	inline uint64_t stringTo_Uint64(const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (uint64_t)strtoull(nPtr,nullptr,base) : 0; }
+	inline int8_t   stringTo_Int8  (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int8_t)  strtol  (nPtr,nullptr,base) : 0; }
+	inline int16_t  stringTo_Int16 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int16_t) strtol  (nPtr,nullptr,base) : 0; }
+	inline int32_t  stringTo_Int32 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int32_t) strtol  (nPtr,nullptr,base) : 0; }
+	inline int64_t  stringTo_Int64 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int64_t) strtoll (nPtr,nullptr,base) : 0; }
 #else
 	inline uint8_t  stringTo_Uint8 (const char* nPtr, char** endPtr, int base = 10) { return (nPtr != nullptr) ? (uint8_t) strtoul(nPtr,endPtr,base) : 0; }
 	inline uint16_t stringTo_Uint16(const char* nPtr, char** endPtr, int base = 10) { return (nPtr != nullptr) ? (uint16_t)strtoul(nPtr,endPtr,base) : 0; }
@@ -262,6 +268,59 @@ typedef int32_t dim32_t;
 	inline int32_t  stringTo_Int32 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int32_t) strtol (nPtr,nullptr,base) : 0; }
 	inline int64_t  stringTo_Int64 (const char* nPtr, int base = 10) { return (nPtr != nullptr) ? (int64_t) strtol (nPtr,nullptr,base) : 0; }
 #endif
+
+/* Utilities */
+
+/**
+ * @brief Fills a buffer with a repeating pattern of N bytes
+ */
+inline void* patternMemcpy(void* __restrict__ buf, size_t bufSize, const void* __restrict PatternData, size_t PatternSize) {
+	if (buf == nullptr || PatternData == nullptr || PatternSize == 0) { return nullptr; }
+	if (bufSize == 0) { return buf; } // 0 Bytes to copy
+	// if (PatternSize == 1) {
+	// 	memset(buf, ((uint8_t*)PatternData)[0], bufSize);
+	// 	return buf;
+	// }
+	if (bufSize <= PatternSize) {
+		memcpy(buf, PatternData, bufSize);
+		return buf;
+	}
+	memcpy(buf, PatternData, PatternSize); // Initial Copy
+	size_t len = PatternSize;
+	size_t pos = PatternSize;
+	
+	while (pos + len <= bufSize) {
+		memcpy((uint8_t*)buf + pos, buf, len); 
+		pos += len;
+		len *= 2; // Doubles copy size each iteration
+	}
+	memcpy((uint8_t*)buf + pos, buf, bufSize - len); // Copies the remaining portion
+	return buf;
+}
+
+
+/**
+ * @brief Assumes the pattern is set in the first N bytes in buf
+ */
+inline void* inPlacePatternMemcpy(void* __restrict buf, size_t bufSize, size_t PatternSize) {
+	if (buf == nullptr || PatternSize == 0) { return nullptr; }
+	if (bufSize <= PatternSize) { return buf; }
+	// if (PatternSize == 1) {
+	// 	memset(buf, ((uint8_t*)buf)[0], bufSize);
+	// 	return buf;
+	// }
+	size_t len = PatternSize;
+	size_t pos = PatternSize;
+	while (pos + len <= bufSize) {
+		memcpy((uint8_t*)buf + pos, buf, len); 
+		pos += len;
+		len *= 2; // Doubles copy size each iteration
+	}
+	memcpy((uint8_t*)buf + pos, buf, bufSize - len); // Copies the remaining portion
+	return 0;
+}
+
+/* Functions */
 
 /* Print Functions */
 	#define printFlush(...) do { printf(__VA_ARGS__); fflush(stdout); } while(0)
