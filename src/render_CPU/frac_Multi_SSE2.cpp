@@ -177,7 +177,7 @@
 							/* Excludes any Z^2 values that have already exceeded the breakout value by setting them to 0.0 */\
 							zs = _mm_and_pd(zs, current_value_mask);\
 							/* Gets a mask with all the Z^2 values that exceeded the breakout value */\
-							int break_mask = _mm_movemask_pd(_mm_cmpgt_pd(zs, breakoutValue));\
+							int break_mask = _mm_movemask_pd(_mm_cmpnle_pd(zs, breakoutValue));\
 							\
 							if (break_mask != 0) {\
 								/* Z^2 values that exceeded the breakout value will use `Exterior_Coloring` */\
@@ -372,7 +372,7 @@
 							/* Excludes any Z^2 values that have already exceeded the breakout value by setting them to 0.0 */\
 							zs = _mm_and_ps(zs, current_value_mask);\
 							/* Gets a mask with all the Z^2 values that exceeded the breakout value */\
-							int break_mask = _mm_movemask_ps(_mm_cmpgt_ps(zs, breakoutValue));\
+							int break_mask = _mm_movemask_ps(_mm_cmpnle_ps(zs, breakoutValue));\
 							\
 							if (break_mask != 0) {\
 								/* Z^2 values that exceeded the breakout value will use `Exterior_Coloring` */\

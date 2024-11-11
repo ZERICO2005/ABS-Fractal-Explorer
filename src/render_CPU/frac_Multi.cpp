@@ -24,8 +24,6 @@
 #include "Float64x4/Float64x4.hpp"
 #include "Float80x2/Float80x2.hpp"
 
-#include "Float80x4/Float80x4.hpp"
-
 // Legacy typedef's
 	typedef Float32x2 fp32x2;
 	typedef Float64x2 fp64x2;
@@ -106,15 +104,6 @@ const Function_Lookup Function_Lookup_Table[] = {
 			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
 			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
 			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<Float80x2, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x2},
-		#endif
-		#ifdef ENABLE_FLOAT80X4_RENDERING
-			/* CPU-Generic Float80x4 */
-			{Mandelbrot_Polar    , (Render_Func)    polarRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
-			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
-			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
-			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
-			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
-			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_Generic<Float80x4, fp64>, Spacing_Generic, Rendering_Configuration::Render_Preset_CPU_Generic_Float80x4},
 		#endif
 	#endif
 	#ifdef Enable_Float128
@@ -362,11 +351,6 @@ void renderCPU_ABS_Mandelbrot(
 		#ifdef ENABLE_FLOAT64X4_RENDERING
 			case Render_Precision_Float64x4: {
 				load_Fractal_Render<Float64x4, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
-			} break;
-		#endif
-		#ifdef ENABLE_FLOAT80X4_RENDERING
-			case Render_Precision_Float80x4: {
-				load_Fractal_Render<Float80x4, fp64>(Fractal_Type, Render_Preset, Thread_Arguments);
 			} break;
 		#endif
 		default:

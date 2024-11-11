@@ -104,7 +104,6 @@ typedef int32_t dim32_t;
 	constexpr inline const char* BOOL_Text(const bool& b) { return b ? "TRUE" : "FALSE"; }
 
 	// Replace with valueClamp<cast, minimum, maximum>(value)
-
 	#define valueClamp(value,minimum,maximum)\
 	(\
 		((value) < (minimum)) ?\

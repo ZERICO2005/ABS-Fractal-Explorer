@@ -165,7 +165,7 @@
 							zs = _mm256x4_and_pdx4(zs, current_value_mask);\
 							\
 							/* Gets a mask with all the Z^2 values that exceeded the breakout value */\
-							int break_mask = _mm256_movemask_pd(_mm256_cmpgt_pdx4(zs, breakoutValue));\
+							int break_mask = _mm256_movemask_pd(_mm256_cmpnle_pdx4(zs, breakoutValue));\
 							\
 							if (break_mask != 0) {\
 								/* Z^2 values that exceeded the breakout value will use `Exterior_Coloring` */\
@@ -190,13 +190,13 @@
 										cvmask_arr[i + 12] = 0.0;\
 									}\
 								}\
-								if (_mm256_movemask_pd(_mm256_cmpeq_pdx4(current_value_mask, _mm256x4_setzero_pdx4())) == 0) {\
+								if (_mm256_movemask_pd(_mm256_cmpnlg_pdx4(current_value_mask, _mm256x4_setzero_pdx4())) == 0) {\
 									break; /* If all the Z^2 values have exceeded the breakout value, break the loop */\
 								}\
 							}\
 						}\
 						/* Checks if any values did Not exceed the breakout value */\
-						int inside_value_mask = _mm256_movemask_pd(_mm256_cmpneq_pdx4(current_value_mask, _mm256x4_setzero_pdx4()));\
+						int inside_value_mask = _mm256_movemask_pd(_mm256_cmplg_pdx4(current_value_mask, _mm256x4_setzero_pdx4()));\
 						if (inside_value_mask != 0) {\
 							/* Z^2 values that did Not exceed the breakout value will use `Interior_Coloring` */\
 							for (int i = 0; i < (int)SIMD_Spacing; i++) {\

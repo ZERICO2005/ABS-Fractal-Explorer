@@ -12,7 +12,7 @@
 
 #include <mpfr.h>
 
-#define MPFR_RoundMode MPFR_RNDZ
+#define MPFR_RoundMode MPFR_RNDN
 
 constexpr mpfr_prec_t MPFR_Precision = 256;
 
@@ -338,7 +338,7 @@ constexpr mpfr_sign_t Negative_MPFR = -1;
 							mpfr_set_zero(temp_zr, Positive_MPFR);
 							uint32_t itr = 0;
 							for (; itr < param.maxItr; itr++) {
-		
+		#if 0
 			// Applies fabs() to zr and zi
 			MPFR_from_MPFR(zr1, zr); MPFR_Fabs_Mask(zr1, zr1_mask);
 			MPFR_from_MPFR(zr2, zr); MPFR_Fabs_Mask(zr2, zr2_mask);
@@ -355,6 +355,37 @@ constexpr mpfr_sign_t Negative_MPFR = -1;
 			MPFR_Mul_Int(zi, zi2, s3_2);
 			MPFR_FMA(zi, zi, zr2, ci);
 			MPFR_FMMA(zs, zr, zr, zi, zi);
+		#else
+			// Applies fabs() to zr and zi
+			MPFR_from_MPFR(zr1, zr); MPFR_Fabs_Mask(zr1, zr1_mask);
+			MPFR_from_MPFR(zr2, zr); MPFR_Fabs_Mask(zr2, zr2_mask);
+			MPFR_from_MPFR(zi1, zi); MPFR_Fabs_Mask(zi1, zi1_mask);
+			MPFR_from_MPFR(zi2, zi); MPFR_Fabs_Mask(zi2, zi2_mask);
+			
+			// Calculates the new zr and zi
+			MPFR_Mul_Int(zi1, zi1, s2_1);
+
+			// MPFR_FMMS(zr, zr1, zr, zi1, zi);
+				MPFR_Mul(zr1, zr1, zr);
+				MPFR_Mul(zi1, zi1, zi);
+				MPFR_Sub(zr, zr1, zi1);
+
+			MPFR_Mul_Int(zr, zr, s1_1);
+			MPFR_Fabs_Mask(zr, zr_mask);
+			MPFR_Add(zr, zr, cr);
+
+			MPFR_Mul_Int(zi, zi2, s3_2);
+
+			// MPFR_FMA(zi, zi, zr2, ci);
+				MPFR_Mul(zi, zi, zr2);
+				MPFR_Add(zi, zi, ci);
+
+			// MPFR_FMMA(zs, zr, zr, zi, zi);
+				MPFR_Square(zr2, zr);
+				MPFR_Square(zs , zi);
+				MPFR_Add   (zs, zs, zr2);
+
+		#endif
 			
 		Block_EndLoop_MPFR();
 								/* Tracks the lowest value */\

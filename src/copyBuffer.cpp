@@ -10,7 +10,7 @@
 #include "copyBuffer.h"
 
 void initBufferBox(BufferBox* box, uint8_t* vram, dim32_t resX, dim32_t resY, size_t channels, size_t padding) {
-	if (box == NULL) {
+	if (box == nullptr) {
 		return;
 	}
 	box->vram = vram;
@@ -37,8 +37,8 @@ size_t getBufferBoxSize(const BufferBox* box) {
 
 bool validateBufferBox(const BufferBox* box, bool checkForNullVram) {
 	if (
-		(box == NULL) ||
-		(box->vram == NULL && checkForNullVram) ||
+		(box == nullptr) ||
+		(box->vram == nullptr && checkForNullVram) ||
 		(box->resX <= 0 || box->resY <= 0) ||
 		(box->channels == 0)
 	) { return false; }
@@ -46,16 +46,16 @@ bool validateBufferBox(const BufferBox* box, bool checkForNullVram) {
 }
 
 bool printValidateBufferBox(const BufferBox* box) {
-	if (box == NULL) { printError("BufferBox is NULL"); return false; }
-	if (box->vram == NULL) { printError("BufferBox->vram is NULL"); return false; }
+	if (box == nullptr) { printError("BufferBox is nullptr"); return false; }
+	if (box->vram == nullptr) { printError("BufferBox->vram is nullptr"); return false; }
 	if (box->resX == 0 || box->resY == 0) { printError("Invalid BufferBox dimensions %ux%u == 0",box->resX,box->resY); return false; }
 	if (box->channels == 0) { printError("BufferBox has 0 channels"); return false; }
 	return true;
 }
 
 /* Internal use only, does not contain safety measures */
-void blitBuffer(
-	const uint8_t* srcBuf, uint8_t* dstBuf,
+static void blitBuffer(
+	const uint8_t* __restrict srcBuf, uint8_t* __restrict dstBuf,
 	uint32_t srcPitch, uint32_t dstPitch, uint32_t channels,
 	uint32_t sizeX, uint32_t sizeY,
 	uint32_t srcX, uint32_t srcY,
@@ -66,7 +66,7 @@ void blitBuffer(
 	uint32_t dstPtr = (dstY * dstPitch) + (dstX * channels);
 	uint32_t copySize = (sizeX * channels);
 	for (uint32_t y = 0; y < sizeY; y++) {
-		memcpy(&dstBuf[dstPtr],&srcBuf[srcPtr],copySize);
+		memcpy(&dstBuf[dstPtr], &srcBuf[srcPtr], copySize);
 		srcPtr += srcPitch;
 		dstPtr += dstPitch;
 	}
@@ -83,12 +83,12 @@ void copyBuffer(
 ) {
 	//printf("\nsrc{%u,%u: %ux%u} dst{%d,%d: %ux%u}",sx0,sy0,sx1,sy1,dx0,dy0,dx1,dy1); fflush(stdout);
 	/* Trival Errors (Null pointers and scalars with 0 magnitude) */
-	if (bufSrc.vram == NULL) {
-		//printf("\nError: bufScr.vram is NULL"); fflush(stdout);
+	if (bufSrc.vram == nullptr) {
+		//printf("\nError: bufScr.vram is nullptr"); fflush(stdout);
 		return;
 	}
-	if (bufDst.vram == NULL) {
-		//printf("\nError: bufDst.vram is NULL"); fflush(stdout);
+	if (bufDst.vram == nullptr) {
+		//printf("\nError: bufDst.vram is nullptr"); fflush(stdout);
 		return;
 	}
 	if ( /* Added due to change from unsigned to signed */

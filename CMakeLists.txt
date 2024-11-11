@@ -51,13 +51,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	set(LIBRARY_OPT_FLAG -O3)
 	# -Ofast appears to have a noticable speedup compared to -O3 for SSE2 and AVX rendering.
 	set(RENDER_CPU_OPT_FLAG -Ofast)
-	set(MARCH_FLAGS -msse3)
+	set(MARCH_FLAGS -msse2)
 
 # Source Files
 	file(GLOB_RECURSE SRC_FILES
 		"${SRC_DIR}/*.c" "${SRC_DIR}/*.cpp"
 		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/*.cpp" "${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/*.c"
 		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/*.cpp" "${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/*.c"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float80x2/*.cpp" "${INCLUDE_DIR}/LIB-Dekker-Float/Float80x2/*.c"
 	)
 	if(NOT DEFINED FEATURE_OpenCL)
 		file (GLOB REMOVE_FILES "${SRC_DIR}/render_GPU/*.c" "${SRC_DIR}/render_GPU/*.cpp")
@@ -77,16 +78,17 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	
 	file(GLOB SRC_AVX_DEKKER_FILES
 		"${SRC_DIR}/render_CPU/frac_Multi_Float64x2_AVX.cpp"
-		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/Float64x2_AVX.c"
 		"${SRC_DIR}/render_CPU/frac_Multi_Float64x4_AVX.cpp"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/Float64x2_AVX.c"
 		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/Float64x4_AVX.c"
 	)
 	set_source_files_properties(SOURCE ${SRC_AVX_DEKKER_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG} -fno-associative-math")
 
 	file(GLOB SRC_GENERIC_DEKKER_FILES
-		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/Float64x2.cpp"
 		"${SRC_DIR}/render_CPU/frac_Multi.cpp"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/Float64x2.cpp"
 		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x4/Float64x4.cpp"
+		"${INCLUDE_DIR}/LIB-Dekker-Float/Float80x2/Float80x2.cpp"
 	)
 	set_source_files_properties(SOURCE ${SRC_GENERIC_DEKKER_FILES} PROPERTY COMPILE_FLAGS "${RENDER_CPU_OPT_FLAG} -fno-associative-math")
 

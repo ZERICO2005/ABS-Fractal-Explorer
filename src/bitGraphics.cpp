@@ -16,16 +16,16 @@ constexpr size_t Bit_Graphics_Channels = 4;
 extern const uint8_t char6x8[1536]; // bitGraphics_Font.h
 
 Bit_Graphics::Bit_Graphics() {
-	buf = NULL;
-	buf0 = NULL;
-	buf1 = NULL;
+	buf = nullptr;
+	buf0 = nullptr;
+	buf1 = nullptr;
 	initialized = false;
 	terminate_Bit_Graphics();
 }
 Bit_Graphics::Bit_Graphics(size_t resX, size_t resY) {
-	buf = NULL;
-	buf0 = NULL;
-	buf1 = NULL;
+	buf = nullptr;
+	buf0 = nullptr;
+	buf1 = nullptr;
 	initialized = false;
 	init_Bit_Graphics(resX,resY);
 }
@@ -37,9 +37,9 @@ void Bit_Graphics::init_Bit_Graphics(size_t resX, size_t resY) {
 	ResY = resY;
 	ResZ = resX * resY;
 	buf0 = (uint8_t*)malloc(ResZ * Bit_Graphics_Channels);
-	if (buf0 == NULL) { terminate_Bit_Graphics(); return; }
+	if (buf0 == nullptr) { terminate_Bit_Graphics(); return; }
 	buf1 = (uint8_t*)malloc(ResZ * Bit_Graphics_Channels);
-	if (buf1 == NULL) { terminate_Bit_Graphics(); return; }
+	if (buf1 == nullptr) { terminate_Bit_Graphics(); return; }
 	buf = buf1;
 	gColor_RGB(0,0,0);
 	initialized = true;
@@ -50,7 +50,7 @@ void Bit_Graphics::init_Bit_Graphics(size_t resX, size_t resY) {
 }
 void Bit_Graphics::terminate_Bit_Graphics() {
 	initialized = false;
-	buf = NULL;
+	buf = nullptr;
 	FREE(buf0);
 	FREE(buf1);
 	ResX = 0;
@@ -67,9 +67,9 @@ void Bit_Graphics::resizeBuffer(size_t resX, size_t resY) {
 	if (ResX * ResY != ResZ) { // Different amount of bytes allocated
 		ResZ = ResX * ResY;
 		buf0 = (uint8_t*)realloc(buf0,ResZ * Bit_Graphics_Channels);
-		if (buf0 == NULL) { terminate_Bit_Graphics(); return; }
+		if (buf0 == nullptr) { terminate_Bit_Graphics(); return; }
 		buf1 = (uint8_t*)realloc(buf1,ResZ * Bit_Graphics_Channels);
-		if (buf1 == NULL) { terminate_Bit_Graphics(); return; }
+		if (buf1 == nullptr) { terminate_Bit_Graphics(); return; }
 	}
 	buf = buf0;
 	clearBuffer();
@@ -84,17 +84,17 @@ void Bit_Graphics::clearBuffer() {
 	memset(buf,0,ResZ * Bit_Graphics_Channels);
 }
 uint8_t* Bit_Graphics::getDrawBuffer() const {
-	if (initialized == false) { return NULL; }
+	if (initialized == false) { return nullptr; }
 	return (buf == buf0) ? buf0 : buf1;
 }
 uint8_t* Bit_Graphics::getDisplayBuffer() const {
-	if (initialized == false) { return NULL; }
+	if (initialized == false) { return nullptr; }
 	return (buf == buf0) ? buf1 : buf0;
 }
 void Bit_Graphics::getDrawBufferBox(BufferBox* box) {
-	if (box == NULL) { return; }
+	if (box == nullptr) { return; }
 	if (initialized == false) {
-		box->vram = NULL;
+		box->vram = nullptr;
 		box->resX = 0;
 		box->resY = 0;
 		box->channels = 0;
@@ -107,9 +107,9 @@ void Bit_Graphics::getDrawBufferBox(BufferBox* box) {
 	box->padding = 0;
 }
 void Bit_Graphics::getDisplayBufferBox(BufferBox* box) {
-	if (box == NULL) { return; }
+	if (box == nullptr) { return; }
 	if (initialized == false) {
-		box->vram = NULL;
+		box->vram = nullptr;
 		box->resX = 0;
 		box->resY = 0;
 		box->channels = 0;
@@ -384,5 +384,3 @@ void Bit_Graphics::debugPrintBuffer() {
 	}
 }
 */
-
-#undef Bit_Graphics_Channels
