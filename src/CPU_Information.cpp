@@ -80,6 +80,7 @@ void get_Supported_CPU_Instruction(Supported_CPU_Instruction& instruction_list) 
 	if (Feature_ID >= 0x00000001) {
 		cpuid_func(info, 0x00000001);
 		/* SSE Family */
+			instruction_list.SSE_Family.MMX    = (info[EDX] & bit_MMX   ) ? true : false;
 			instruction_list.SSE_Family.SSE    = (info[EDX] & bit_SSE   ) ? true : false;
 			instruction_list.SSE_Family.SSE2   = (info[EDX] & bit_SSE2  ) ? true : false;
 			instruction_list.SSE_Family.SSE3   = (info[ECX] & bit_SSE3  ) ? true : false;
@@ -97,9 +98,7 @@ void get_Supported_CPU_Instruction(Supported_CPU_Instruction& instruction_list) 
 		/* AVX512 Family */
 			instruction_list.AVX512_Family.AVX512_BF16 = (info[EAX] & bit_AVX512BF16) ? true : false;
 		/* AMX Family */
-			// instruction_list.AMX_Family.AMX_FP16 = (info[EAX] & bit_AMX_FP16) ? true : false;
-		/* Others */
-			instruction_list.MMX = (info[EDX] & bit_MMX) ? true : false;
+			// instruction_list.AMX_Family.AMX_FP16 = (info[EAX] & bit_AMX_FP16) ? true : false;	
 	}
 	if (Feature_ID >= 0x00000007) {
 		cpuid_func(info, 0x00000007);
@@ -139,6 +138,7 @@ static inline size_t count_if_supported(const bool& input) {
 size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list) {
 	size_t count = 0;
 	/* SSE Family */
+		count += count_if_supported(instruction_list.SSE_Family.MMX);
 		count += count_if_supported(instruction_list.SSE_Family.SSE);
 		count += count_if_supported(instruction_list.SSE_Family.SSE2);
 		count += count_if_supported(instruction_list.SSE_Family.SSE3);
@@ -180,8 +180,6 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 		// count += count_if_supported(instruction_list.AMX_Family.AMX_TILE);
 		// count += count_if_supported(instruction_list.AMX_Family.AMX_FP16);
 		// count += count_if_supported(instruction_list.AMX_Family.AMX_COMPLEX);
-	/* Others */
-		count += count_if_supported(instruction_list.MMX);
 
 	return count;
 }
@@ -195,8 +193,9 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 		printf("\n");
 		printf(
 			"SSE Family:\n"\
-			"\tSSE   | SSE2  | SSE3  | SSSE3 | SSE4.1 | SSE4.2 | SSE4a\n"\
-			"\t%-5s | %-5s | %-5s | %-5s | %-5s  | %-5s  | %-5s\n",
+			"\tMMX   | SSE   | SSE2  | SSE3  | SSSE3 | SSE4.1 | SSE4.2 | SSE4a\n"\
+			"\t| %-5s | %-5s | %-5s | %-5s | %-5s | %-5s  | %-5s  | %-5s\n",
+			bool_Text(SSE_Family.MMX),
 			bool_Text(SSE_Family.SSE), bool_Text(SSE_Family.SSE2),
 			bool_Text(SSE_Family.SSE3), bool_Text(SSE_Family.SSSE3),
 			bool_Text(SSE_Family.SSE4_1), bool_Text(SSE_Family.SSE4_1),
@@ -271,7 +270,7 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 		);
 	}
 
-	/*
+#if 0
 	void print_Supported_AMX_Family_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		const Supported_AMX_Family_Instruction& AMX_Family = instruction_list.AMX_Family;
 		printf(
@@ -284,17 +283,19 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 		);
 		printf("\n");
 	}
-	*/
+#endif
 
+#if 0
 	void print_Supported_Other_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		printf("\n");
 		printf(
 			"Other Instruction Sets:\n"\
-			"\tMMX\n"\
+			"\tAAA\n"\
 			"\t%-5s\n",
-			bool_Text(instruction_list.MMX)
+			bool_Text(instruction_list.AAA)
 		);
 	}
+#endif
 
 	void print_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list) {
 		printf(
@@ -306,5 +307,5 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 		print_Supported_AVX_Family_Instruction   (instruction_list);
 		print_Supported_AVX512_Family_Instruction(instruction_list);
 		//print_Supported_AMX_Family_Instruction   (instruction_list);
-		print_Supported_Other_Instruction        (instruction_list);
+		// print_Supported_Other_Instruction        (instruction_list);
 	}

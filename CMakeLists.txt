@@ -84,6 +84,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 	)
 	set_source_files_properties(SOURCE ${SRC_AVX_DEKKER_FILES} PROPERTY COMPILE_FLAGS "-mavx ${RENDER_CPU_OPT_FLAG} -fno-associative-math")
 
+	file(GLOB SRC_SSE2_DEKKER_FILES
+		"${SRC_DIR}/render_CPU/frac_Multi_Float64x2_SSE2.cpp"
+		"${SRC_DIR}/render_CPU/frac_Multi_Float64x4_SSE2.cpp"
+	)
+	set_source_files_properties(SOURCE ${SRC_SSE2_DEKKER_FILES} PROPERTY COMPILE_FLAGS "-msse2 ${RENDER_CPU_OPT_FLAG} -fno-associative-math")
+
 	file(GLOB SRC_GENERIC_DEKKER_FILES
 		"${SRC_DIR}/render_CPU/frac_Multi.cpp"
 		"${INCLUDE_DIR}/LIB-Dekker-Float/Float64x2/Float64x2.cpp"

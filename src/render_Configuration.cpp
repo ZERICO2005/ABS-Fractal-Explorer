@@ -160,6 +160,10 @@ using namespace Rendering_Configuration;
 					return (CPU_SSE2_Enabled) ? true : false;
 				case Render_Preset_CPU_SSE2_Float64:
 					return (CPU_SSE2_Enabled) ? true : false;
+				case Render_Preset_CPU_SSE2_Float64x2:
+					return (CPU_SSE2_Enabled) ? true : false;
+				case Render_Preset_CPU_SSE2_Float64x4:
+					return (CPU_SSE2_Enabled) ? true : false;
 			/* CPU AVX Rendering */
 				case Render_Preset_CPU_AVX_Float32:
 					return (CPU_AVX_Enabled) ? true : false;
@@ -292,10 +296,12 @@ using namespace Rendering_Configuration;
 					case Render_Precision_Float64x2: {
 						// if (GPU_Float64_Enabled) { output_method = Render_Method_GPU; return; }
 						if (CPU_AVX_Enabled) { output_method = Render_Method_CPU_AVX; return; }
+						if (CPU_SSE2_Enabled) { output_method = Render_Method_CPU_SSE2; return; }
 						output_method = Render_Method_CPU_Generic; return;
 					}
 					case Render_Precision_Float64x4: {
 						if (CPU_AVX_Enabled) { output_method = Render_Method_CPU_AVX; return; }
+						if (CPU_SSE2_Enabled) { output_method = Render_Method_CPU_SSE2; return; }
 						output_method = Render_Method_CPU_Generic; return;
 					}
 					case Render_Precision_Float80: {

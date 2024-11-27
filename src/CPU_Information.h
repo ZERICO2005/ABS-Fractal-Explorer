@@ -11,9 +11,12 @@
 
 #include <cstddef>
 
+
+
 // The commented out sections of code are to ensure compatibility with GCC and Clang
 
 struct Supported_SSE_Family_Instruction {
+	bool MMX;
 	bool SSE;
 	bool SSE2;
 	bool SSE3;
@@ -69,7 +72,6 @@ struct Supported_CPU_Instruction {
 	Supported_AVX_Family_Instruction AVX_Family;
 	Supported_AVX512_Family_Instruction AVX512_Family;
 	// Supported_AMX_Family_Instruction AMX_Family;
-	bool MMX;
 };
 
 void get_Supported_CPU_Instruction(Supported_CPU_Instruction& instruction_list);
@@ -94,8 +96,8 @@ size_t count_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruct
 	// // Formatted to fit on an 80 column screen
 	// void print_Supported_AMX_Family_Instruction   (const Supported_CPU_Instruction& instruction_list);
 	
-	// Formatted to fit on an 80 column screen
-	void print_Supported_Other_Instruction        (const Supported_CPU_Instruction& instruction_list);
+	// // Formatted to fit on an 80 column screen
+	// void print_Supported_Other_Instruction        (const Supported_CPU_Instruction& instruction_list);
 
 	// Prints all available CPU instruction sets, formatted to fit on an 80 column screen.
 	void print_Supported_CPU_Instruction(const Supported_CPU_Instruction& instruction_list);

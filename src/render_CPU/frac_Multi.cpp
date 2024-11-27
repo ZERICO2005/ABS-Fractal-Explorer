@@ -32,6 +32,9 @@
 #include "frac_Multi_Float64x2_AVX.h"
 #include "frac_Multi_Float64x4_AVX.h"
 
+#include "frac_Multi_Float64x2_SSE2.h"
+#include "frac_Multi_Float64x4_SSE2.h"
+
 // #include "../floats/libdd_func.hpp"
 // #include "../floats/libqd_func.hpp"
 
@@ -128,6 +131,22 @@ const Function_Lookup Function_Lookup_Table[] = {
 		{Mandelbrot_Quartic  , (Render_Func)  quarticRender_SSE2_FP64, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64},
 		{Mandelbrot_Quintic  , (Render_Func)  quinticRender_SSE2_FP64, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64},
 		{Mandelbrot_Sextic   , (Render_Func)   sexticRender_SSE2_FP64, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64},
+		#ifdef ENABLE_FLOAT64X2_RENDERING
+			/* CPU-SSE2 Float64x2 */
+			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_SSE2_FP64x2, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x2},
+			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_SSE2_FP64x2, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x2},
+			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_SSE2_FP64x2, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x2},
+			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_SSE2_FP64x2, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x2},
+			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_SSE2_FP64x2, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x2},
+		#endif
+		#ifdef ENABLE_FLOAT64X2_RENDERING
+			/* CPU-SSE2 Float64x2 */
+			{Mandelbrot_Quadratic, (Render_Func)quadraticRender_SSE2_FP64x4, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x4},
+			{Mandelbrot_Cubic    , (Render_Func)    cubicRender_SSE2_FP64x4, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x4},
+			{Mandelbrot_Quartic  , (Render_Func)  quarticRender_SSE2_FP64x4, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x4},
+			{Mandelbrot_Quintic  , (Render_Func)  quinticRender_SSE2_FP64x4, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x4},
+			{Mandelbrot_Sextic   , (Render_Func)   sexticRender_SSE2_FP64x4, Spacing_SSE2_Float64, Rendering_Configuration::Render_Preset_CPU_SSE2_Float64x4},
+		#endif
 	#endif
 	#ifdef ENABLE_AVX_RENDERING
 		/* CPU-AVX Float32 */

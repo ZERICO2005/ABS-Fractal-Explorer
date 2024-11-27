@@ -1055,9 +1055,7 @@ void Menu_Rendering() {
 				ImGui::Text("SSE Family:"); {
 					const Supported_SSE_Family_Instruction& SSE_Family = Available_CPU_Instruction.SSE_Family;
 					size_t count = 0;
-					if (Available_CPU_Instruction.MMX) {
-						ImGui::SameLine(); ImGui::Text("MMX"); count++;
-					}
+					if (SSE_Family.MMX   ) { ImGui::SameLine(); ImGui::Text("MMX"   ); count++; }
 					if (SSE_Family.SSE   ) { ImGui::SameLine(); ImGui::Text("SSE"   ); count++; }
 					if (SSE_Family.SSE2  ) { ImGui::SameLine(); ImGui::Text("SSE2"  ); count++; }
 					if (SSE_Family.SSE3  ) { ImGui::SameLine(); ImGui::Text("SSE3"  ); count++; }
@@ -1665,9 +1663,7 @@ void Menu_Status() {
 			ImGui::Text("SSE Family:"); {
 				const Supported_SSE_Family_Instruction& SSE_Family = Available_CPU_Instruction.SSE_Family;
 				size_t count = 0;
-				if (Available_CPU_Instruction.MMX) {
-					ImGui::SameLine(); ImGui::Text("MMX"); count++;
-				}
+				if (SSE_Family.MMX   ) { ImGui::SameLine(); ImGui::Text("MMX"   ); count++; }
 				if (SSE_Family.SSE   ) { ImGui::SameLine(); ImGui::Text("SSE"   ); count++; }
 				if (SSE_Family.SSE2  ) { ImGui::SameLine(); ImGui::Text("SSE2"  ); count++; }
 				if (SSE_Family.SSE3  ) { ImGui::SameLine(); ImGui::Text("SSE3"  ); count++; }

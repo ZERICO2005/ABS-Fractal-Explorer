@@ -168,6 +168,8 @@ namespace Rendering_Configuration {
 			/* CPU SSE2 Rendering */
 			Render_Preset_CPU_SSE2_Float32,
 			Render_Preset_CPU_SSE2_Float64,
+			Render_Preset_CPU_SSE2_Float64x2,
+			Render_Preset_CPU_SSE2_Float64x4,
 			/* CPU AVX Rendering */
 			Render_Preset_CPU_AVX_Float32,
 			Render_Preset_CPU_AVX_Float64,
@@ -205,6 +207,8 @@ namespace Rendering_Configuration {
 			/* CPU SSE2 Rendering */
 			"Render_Preset_CPU_SSE2_Float32",
 			"Render_Preset_CPU_SSE2_Float64",
+			"Render_Preset_CPU_SSE2_Float64x2",
+			"Render_Preset_CPU_SSE2_Float64x4",
 			/* CPU AVX Rendering */
 			"Render_Preset_CPU_AVX_Float32",
 			"Render_Preset_CPU_AVX_Float64",
@@ -242,6 +246,8 @@ namespace Rendering_Configuration {
 			/* CPU SSE2 Rendering */
 			"CPU-SSE2 32bit Float",
 			"CPU-SSE2 64bit Float",
+			"CPU-SSE2 2x64bit Float",
+			"CPU-SSE2 4x64bit Float",
 			/* CPU AVX Rendering */
 			"CPU-AVX 32bit Float",
 			"CPU-AVX 64bit Float",
@@ -283,6 +289,8 @@ namespace Rendering_Configuration {
 			/* CPU SSE2 Rendering */
 			"(10^5.7 ) CPU-SSE2 32bit Float",
 			"(10^14.4) CPU-SSE2 64bit Float",
+			"(10^30.7) CPU-SSE2 2x64bit Float",
+			"(10^61.4) CPU-SSE2 4x64bit Float",
 			/* CPU AVX Rendering */
 			"(10^5.7 ) CPU-AVX 32bit Float",
 			"(10^14.4) CPU-AVX 64bit Float",
@@ -331,6 +339,8 @@ namespace Rendering_Configuration {
 			/* CPU SSE2 Rendering */
 			{Render_Preset_CPU_SSE2_Float32     , Render_Precision_Float32  , Render_Method_CPU_SSE2   },
 			{Render_Preset_CPU_SSE2_Float64     , Render_Precision_Float64  , Render_Method_CPU_SSE2   },
+			{Render_Preset_CPU_SSE2_Float64x2   , Render_Precision_Float64x2, Render_Method_CPU_SSE2   },
+			{Render_Preset_CPU_SSE2_Float64x4   , Render_Precision_Float64x4, Render_Method_CPU_SSE2   },
 			/* CPU AVX Rendering */
 			{Render_Preset_CPU_AVX_Float32      , Render_Precision_Float32  , Render_Method_CPU_AVX    },
 			{Render_Preset_CPU_AVX_Float64      , Render_Precision_Float64  , Render_Method_CPU_AVX    },
